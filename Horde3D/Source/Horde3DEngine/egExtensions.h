@@ -27,6 +27,7 @@ namespace Horde3D {
 class IExtension
 {
 public:
+    virtual ~IExtension() {}
 	virtual const char *getName() = 0;
 	virtual bool init() = 0;
 	virtual void release() = 0;

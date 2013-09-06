@@ -11,19 +11,19 @@
 <h1>Horde3D Data Format Reference</h1>
 
 <h2>Texture Maps</h2>
-<p>
-Horde3D supports two-dimensional textures and cube maps. 2D textures can be loaded from the Direct3D DDS format
+
+<p>Horde3D supports two-dimensional textures and cube maps. 2D textures can be loaded from the Direct3D DDS format
 or from any other image format listed below. Cube maps need to be stored in the DDS format. In contrast to
 other image formats, DDS files can store mipmaps and DXT compressed data. Therefore, the texture-related resource
-flags for mipmap generation and compression are ignored for DDS textures.<br />
+flags for mipmap generation and compression are ignored for DDS textures.
+<br />
 In order to guarantee optimal loading performance for DDS textures, Horde3D uses the D3D texture coordinate system
 convention where the origin is at the top left corner of the image. This is different from the OpenGL coordinate
 system which defines the image origin as the lower left corner. For that reason, texture coordinates for 2D texture
-maps need to be flipped manually in the shaders.
-<br /><br />
-The engine can load the following image formats. Since Horde3D uses a pretty lightweight image loading library, there
-are some limitations concerning exotic formats like 1 bpp textures.
-</p>
+maps need to be flipped manually in the shaders.</p>
+
+<p>The engine can load the following image formats. Since Horde3D uses a pretty lightweight image loading library, there
+are some limitations concerning exotic formats like 1 bpp textures.</p>
 <ul>
     <li>DDS (pixel formats: RGB8, RGBA8, RGBA16F, DXT1, DXT3, DXT5 and a few other)</li>
 	<li>JPEG (non-progressive)</li>
@@ -33,16 +33,16 @@ are some limitations concerning exotic formats like 1 bpp textures.
     <li>PSD (RGB format only)</li>
     <li>HDR</li>
 </ul>
-<br />
 
 <h2>Materials</h2>
+
 <p><i>Filename-extension: .material.xml</i></p>
-<p>
-Materials are used to bind data to shaders. They can reference a shader and setup texture samplers
+
+<p>Materials are used to bind data to shaders. They can reference a shader and setup texture samplers
 with images. They can also define shader uniforms which are four-dimensional float vectors with arbitrary
 user defined data. Materials are also responsible for setting shader flags which are used to select a shader
 combination from an übershader.
-<br />
+<br/>
 A material can for example be used to define the appearance of a surface. Every material can have a class string which
 is useful for accessing geometry with specific properties, e.g. translucency. Since the material class system is
 hierarchical, names can contain subclasses which are separated from the parent class using a dot character.
@@ -50,14 +50,11 @@ A further feature of the material system is that a single material can link to a
 texture samplers and uniforms. This is useful to define global data (e.g. ambient lighting settings) at a single
 location.
 <br />
-In Horde3D materials are specified with an XML syntax.
-<br />
-<br />
-The following XML node elements with the described attributes are supported:
-<br />
-</p>
+In Horde3D materials are specified with an XML syntax.</p>
 
-<div class="syntaxbox">
+<p>The following XML node elements with the described attributes are supported:</p>
+
+<div class="descbox">
 <table>
     <tr>
         <td><b>Material</b></td>
@@ -167,11 +164,10 @@ The following XML node elements with the described attributes are supported:
     </tr>
 </table>
 </div>
-<br />
 
 <h4>Sample</h4>
 
-<div class="memdoc">
+<div class="codebox">
 <pre>
 &lt;Material class="Translucent.MyClass"&gt;
     &lt;Shader source="myshader.shader.xml" /&gt;
@@ -180,45 +176,28 @@ The following XML node elements with the described attributes are supported:
 &lt;/Material&gt;
 </pre>
 </div>
-<br /><br /><br />
 
 
 <h2>Pipeline Files</h2>
 <p><i>Filename-extension: .pipeline.xml</i></p>
-<p>
-Pipeline files are used to configure the rendering pipeline. A detailed description can bed found in the
-<a href="_pipeline.html" >pipeline documentation</a>.
-</p>
-<br /><br /><br />
-
+<p>Pipeline files are used to configure the rendering pipeline. A detailed description can bed found in the
+<a href="_pipeline.html" >pipeline documentation</a>.</p>
 
 <h2>Shader Files</h2>
 <p><i>Filename-extension: .shader</i></p>
-<p>
-Shader files define render states and hardware shader code. A detailed description can bed found in the
-<a href="_pipeline.html" >pipeline documentation</a>.
-</p>
-<br /><br /><br />
-
+<p>Shader files define render states and hardware shader code. A detailed description can bed found in the
+<a href="_pipeline.html" >pipeline documentation</a>.</p>
 
 <h2>Code Files</h2>
 <p><i>Filename-extension: arbitrary, usually .glsl</i></p>
-<p>
-Code files are pure text files that can be used to define shader code. These files can be referenced by shader resources.
-</p>
-<br /><br /><br />
+<p>Code files are pure text files that can be used to define shader code. These files can be referenced by shader resources.</p>
 
 
 <h2>Scene Graph Files</h2>
 <p><i>Filename-extension: .scene.xml</i></p>
-<p>
-Scene graph files are XML documents that define a subtree of the scene graph.
-<br />
-<br />
-Each scene node defined as XML element can have the following XML attributes:
-<br />
-</p>
-<div class="syntaxbox">
+<p>Scene graph files are XML documents that define a subtree of the scene graph.</p>
+<p>Each scene node defined as XML element can have the following XML attributes:</p>
+<div class="descbox">
 <table>
     <tr>
         <td><b>name</b></td>
@@ -238,11 +217,9 @@ Each scene node defined as XML element can have the following XML attributes:
     </tr>
 </table>
 </div>
-<br />
-<p>
-The following XML elements and attributes are supported for defining the scene nodes.
-</p>
-<div class="syntaxbox">
+
+<p>The following XML elements and attributes are supported for defining the scene nodes.</p>
+<div class="descbox">
 <table>
     <tr>
         <td><b>Group</b></td>
@@ -498,22 +475,17 @@ The following XML elements and attributes are supported for defining the scene n
     </tr>
 </table>
 </div>
-<br />
-<p>
-The XML document can have an arbitrary scene node as root element.
-</p>
-<br /><br />
+<p>The XML document can have an arbitrary scene node as root element.</p>
 
 
 <h2>ParticleEffect Files</h2>
 <p><i>Filename-extension: .particle.xml</i></p>
-<p>
-ParticleEffect files are used to configure particles of a particle system. Each particle has a randomly selected
+<p>ParticleEffect files are used to configure particles of a particle system. Each particle has a randomly selected
 life time which is assigned when the particle is created. This time is continually decreased and when
 it is equal to zero the particle has died and can possibly be reborn. The particle has several channels
-defining its properties over the life time. The following channels are available:
-<br /><br />
+defining its properties over the life time. The following channels are available:</p>
 
+<p>
 <b>moveVel</b> - Velocity defining how many units per second particle is moving <br />
 <b>rotVel</b> - Velocity defining how many degrees per second particle is rotating <br />
 <b>drag</b> - Amount of velocity that particles inherit from emitter; if value is positive, particles move in same direction as the emitter <br />
@@ -522,12 +494,10 @@ defining its properties over the life time. The following channels are available
 <b>colG</b> - Color green intensity between 0.0 and 1.0 <br />
 <b>colB</b> - Color blue intensity between 0.0 and 1.0 <br />
 <b>colA</b> - Color alpha intensity between 0.0 and 1.0 <br />
-
-
-<br /><br />
-The following XML node elements with the described attributes are supported for a particle-effect file:
 </p>
-<div class="syntaxbox">
+
+<p>The following XML node elements with the described attributes are supported for a particle-effect file:</p>
+<div class="descbox">
 <table>
     <tr>
         <td><b>ParticleEffect</b></td>
@@ -571,9 +541,9 @@ The following XML node elements with the described attributes are supported for 
     </tr>
 </table>
 </div>
-<br />
+
 <h4>Sample</h4>
-<div class="memdoc">
+<div class="codebox">
 <pre>
 &lt;ParticleConfig lifeMin="4.0" lifeMax="7.0"&gt;
     &lt;ChannelOverLife channel="moveVel" startMin="3.0" startMax="3.0" endRate="0.0" /&gt;
@@ -581,7 +551,6 @@ The following XML node elements with the described attributes are supported for 
 &lt;/ParticleConfig&gt;
 </pre>
 </div>
-<br /><br />
 
 
 <h2>Geometry</h2>
@@ -589,14 +558,12 @@ The following XML node elements with the described attributes are supported for 
 <p>The file format for geometry is a binary format and has to be created with a suitable tool
 like the Collada Converter described above.
 A geometry resource contains the raw vertex data with optional morph targets organized as streams. Furthermore
-it contains the triangle data as well as information about the skeleton of a model.
-<br /><br />
-<b>Important Note:</b> Currently the maximum number of joints for skeletal animation is limited to 75.
-</p>
-<br /><br />
+it contains the triangle data as well as information about the skeleton of a model.</p>
+
+<p><b>Important Note:</b> Currently the maximum number of joints for skeletal animation is limited to 75.</p>
 
 <h3>Version 5</h3>
-The file format is based on streams. The streams are written in that order:
+<p>The file format is based on streams. The streams are written in that order:
 <ul>
 	<li>header</li>
 	<li>joints (number of joints: <b>#J</b>)</li>
@@ -604,8 +571,9 @@ The file format is based on streams. The streams are written in that order:
 	<li>triangle indices (number of triangle indices: <b>#TI</b>)</li>
 	<li>morph targets</li>
 </ul>
+</p>
 
-<div class="syntaxbox">
+<div class="descbox">
 <table>
     <tr>
         <td><b>Header</b></td>
@@ -951,24 +919,18 @@ The file format is based on streams. The streams are written in that order:
 		</td>
     </tr>
     <tr>
-
-
-
-
 </table>
 </div>
-<br /><br />
-
 
 
 <h2>Animation</h2>
 <p><i>Filename-extensions: .anim</i></p>
 
-The animation resource consists of sampled animation data for the joints and meshes of a model.
-<br /><br />
+<p>The animation resource consists of sampled animation data for the joints and meshes of a model.</p>
+
 <h3>Version 3</h3>
 
-<div class="syntaxbox">
+<div class="descbox">
 <table>
     <tr>
         <td><b>Header</b></td>
@@ -1034,20 +996,9 @@ The animation resource consists of sampled animation data for the joints and mes
             </table>
 		</td>
     </tr>
-
-	
 </table>
 </div>
 <br /><br />
-
-
-
-<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
-</div>
-
-<div id="logo">
-    <img src="images/doclogo.gif" />
-</div>
 
 </body>
 </html>

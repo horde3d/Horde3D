@@ -343,6 +343,7 @@ struct DaeGeometry
 		if( id == "" ) return false;
 		
 		name = geometryNode.getAttribute( "name", "" );
+		if( name.empty() ) name = id;
 
 		// Parse sources
 		XMLNode node2 = node1.getFirstChild( "source" );

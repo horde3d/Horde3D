@@ -312,6 +312,11 @@ public:
 	{
 		return Vec4f( x + v.x, y + v.y, z + v.z, w + v.w );
 	}
+
+	Vec4f operator-() const
+	{
+		return Vec4f( -x, -y, -z, -w );
+	}
 	
 	Vec4f operator*( const float f ) const
 	{
@@ -816,6 +821,15 @@ public:
 			rot.y = atan2f( c[2][0] / scale.z, c[2][2] / scale.z );
 			rot.z = atan2f( c[0][1] / scale.x, c[1][1] / scale.y );
 		}
+	}
+
+	
+	void setCol( unsigned int col, const Vec4f& v ) 
+	{
+		x[col * 4 + 0] = v.x;
+		x[col * 4 + 1] = v.y;
+		x[col * 4 + 2] = v.z;
+		x[col * 4 + 3] = v.w;
 	}
 
 	Vec4f getCol( unsigned int col ) const

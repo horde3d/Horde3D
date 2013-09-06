@@ -52,6 +52,8 @@ struct TriGroup
 	TriGroup() : posIndexToVertices( 0x0 )
 	{
 	}
+
+	~TriGroup() { delete posIndexToVertices; }
 };
 
 
@@ -75,12 +77,17 @@ struct SceneNode
 		daeInstance = 0x0;
 		parent = 0x0;
 	}
+
+	virtual ~SceneNode()
+	{
+		for( unsigned int i = 0; i < children.size(); ++i ) delete children[i];
+	}
 };
 
 
 struct Mesh : public SceneNode
 {
-	std::vector< TriGroup >  triGroups;
+	std::vector< TriGroup* > triGroups;
 	unsigned int             lodLevel;
 	
 	Mesh()
@@ -89,6 +96,9 @@ struct Mesh : public SceneNode
 		parent = 0x0;
 		lodLevel = 0;
 	}
+
+	~Mesh() { for( int i = triGroups.size(); i>0; ) delete triGroups[--i];  }
+
 };
 
 
@@ -165,6 +175,7 @@ private:
 	std::vector< Mesh * >        _meshes;
 	std::vector< Joint * >       _joints;
 	std::vector< MorphTarget >   _morphTargets;
+	std::vector< SceneNode* >    _nodes;
 
 	std::string                  _outPath;
 	float                        _lodDist1, _lodDist2, _lodDist3, _lodDist4;

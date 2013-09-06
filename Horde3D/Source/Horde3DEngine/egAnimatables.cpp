@@ -31,7 +31,7 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 	SceneNode( meshTpl ),
 	_materialRes( meshTpl.matRes ), _batchStart( meshTpl.batchStart ), _batchCount( meshTpl.batchCount ),
 	_vertRStart( meshTpl.vertRStart ), _vertREnd( meshTpl.vertREnd ), _lodLevel( meshTpl.lodLevel ),
-	_parentModel( 0x0 ), _ignoreAnim( false )
+	_parentModel( 0x0 )
 {
 	_renderable = true;
 	
@@ -250,7 +250,7 @@ void MeshNode::onPostUpdate()
 // *************************************************************************************************
 
 JointNode::JointNode( const JointNodeTpl &jointTpl ) :
-	SceneNode( jointTpl ), _jointIndex( jointTpl.jointIndex ), _parentModel( 0x0 ), _ignoreAnim( false )
+	SceneNode( jointTpl ), _jointIndex( jointTpl.jointIndex ), _parentModel( 0x0 )
 {
 }
 

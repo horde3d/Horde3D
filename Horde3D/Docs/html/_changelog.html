@@ -10,75 +10,74 @@
 <div id="content">
 
 <h1>Horde3D SDK Change Log</h1>
+<br />
 <p>You can find out here what has changed in the Horde3D SDK releases.</p>
 
-<h3>Version [1.0.0] Beta5</h3>
+<h2>Version [1.0.0] Beta5</h2>
+
+<h4>Core Engine</h4>
 <ul>
-	<li><b>Core Engine</b></li>
-	<ul>
-		<li>Added support for 3d/volume textures.</li>
-		<li>Added support for input gamma correction (sRGB texture support).</li>
-		<li>Refactored overlay system and h3dShowOverlay: layers were removed and overlays are batched for better performance.</li>
-		<li>Changed overlay coordinate system to go from (0,0) to (aspect,1) for better compatibility with different screen aspect ratios.</li>
-		<li>Refactored extension system.</li>
-		<li>Exchanged current XML parser by RapidXml.</li>
-		<li>Removed requirement that resource data has to be null-terminated.</li>
-		<li>Removed restriction that resource names may not contain colons.</li>
-		<li>Improved particle spawning: particles are created along emitter's motion vector to avoid blobs when framerate is low.</li>
-		<li>Added particle parameter 'drag' with which particles can inherit the velocity of their emitter.</li>
-		<li>Added support for weighted additive animations.</li>
-		<li>Added support for negative morpher weights.</li>
-		<li>Added support for individual viewport settings for each camera and removed API functions h3dSetupViewport/h3dGetViewportParams.</li>
-		<li>Added API function h3dResizePipelineBuffers to change the output buffer size.</li>
-		<li>Renamed API function getPipelineRenderTargetData to getRenderTargetData and added support for reading out the backbuffer directly.</li>
-		<li>Added color intensity multiplier for light nodes.</li>
-		<li>Introduced scene node flags to give more control over where nodes should be processed.</li>
-		<li>Removed API function h3dSetNodeActivation which is redundant due to new node flags.</li>
-		<li>Optimized deferred shading by drawing light volumes.</li>
-		<li>Added more CPU timing stats.</li>
-		<li>Added basic GPU timing stats (requires ARB_timer_query to work).</li>
-		<li>Removed most of the deprecated OpenGL fixed function calls.</li>
-		<li>Introduced FX sampler parameter 'Texture' for specifying default textures.</li>
-		<li>Introduced FX context state 'ZEnable'.</li>
-		<li>Added backface culling configuration to FX context.</li>
-		<li>Changed declaration of FX samplers to include type.</li>
-		<li>Added support for single float uniforms.</li>
-		<li>Added shader uniform 'nodeId' which contains the object's node handle.</li>
-		<li>Changed overlay shader vertex attributes.</li>
-		<li>Replaced all built-in GLSL vertex attributes by custom ones.</li>
-		<li>Removed vertex attribute 'bitangent' as it can be derived in the shader.</li>
-		<li>Replaced fixed-function modelview and projection matrices by custom uniforms (viewMat, viewMatInv, projMat, viewProjMat, viewProjMatInv).</li>
-		<li>Renamed uniform 'viewer' to 'viewerPos'.</li>
-		<li>Merged uniform 'lightCosCutoff' into w component of 'lightDir'.</li>
-		<li>Simplified particle vertex shader and removed unnecessary attributes and uniforms from renderer.</li>
-		<li>Added log messages to the debugger output (Win only).</li>
-		<li>Fixed several issues in shadow mapping implementation.</li>
-		<li>Fixed a plenty of different bugs.</li>
-	</ul>
-	<li><b>Utility Lib</b></li>
-	<ul>
-		<li>Changed filename of default engine log file to 'Horde3D_Log.html'.</li>
-		<li>Added utility function h3dutScreenshot.</li>
-		<li>Added utility function h3dutCreateGeometryRes to create dynamic geometry resources.</li>
-	</ul>
-	<li><b>ColladaConv</b></li>
-	<ul>
-		<li>Implemented batch processing that can be used to recompile an entire asset repository.</li>
-		<li>Improved parsing performance.</li>
-		<li>Improved COLLADA compatibility and fixed several bugs.</li>
-	</ul>
-	<li><b>Samples</b></li>
-	<ul>
-		<li>Updated sample framework to GLFW version 2.7</li>
-		<li>Added possibility to freeze camera.</li>
-		<li>Set window resolution of samples to widescreen format by default.</li>
-		<li>Fixed precision issues in deferred shading pipeline.</li>
-		<li>Switched to Blinn-Phong shading model.</li>
-	</ul>
+	<li>Added support for 3d/volume textures.</li>
+	<li>Added support for input gamma correction (sRGB texture support).</li>
+	<li>Refactored overlay system and h3dShowOverlay: layers were removed and overlays are batched for better performance.</li>
+	<li>Changed overlay coordinate system to go from (0,0) to (aspect,1) for better compatibility with different screen aspect ratios.</li>
+	<li>Refactored extension system.</li>
+	<li>Exchanged current XML parser by RapidXml.</li>
+	<li>Removed requirement that resource data has to be null-terminated.</li>
+	<li>Removed restriction that resource names may not contain colons.</li>
+	<li>Improved particle spawning: particles are created along emitter's motion vector to avoid blobs when framerate is low.</li>
+	<li>Added particle parameter 'drag' with which particles can inherit the velocity of their emitter.</li>
+	<li>Added support for weighted additive animations.</li>
+	<li>Added support for negative morpher weights.</li>
+	<li>Added support for individual viewport settings for each camera and removed API functions h3dSetupViewport/h3dGetViewportParams.</li>
+	<li>Added API function h3dResizePipelineBuffers to change the output buffer size.</li>
+	<li>Renamed API function getPipelineRenderTargetData to getRenderTargetData and added support for reading out the backbuffer directly.</li>
+	<li>Added color intensity multiplier for light nodes.</li>
+	<li>Introduced scene node flags to give more control over where nodes should be processed.</li>
+	<li>Removed API function h3dSetNodeActivation which is redundant due to new node flags.</li>
+	<li>Optimized deferred shading by drawing light volumes.</li>
+	<li>Added more CPU timing stats.</li>
+	<li>Added basic GPU timing stats (requires ARB_timer_query to work).</li>
+	<li>Removed most of the deprecated OpenGL fixed function calls.</li>
+	<li>Introduced FX sampler parameter 'Texture' for specifying default textures.</li>
+	<li>Introduced FX context state 'ZEnable'.</li>
+	<li>Added backface culling configuration to FX context.</li>
+	<li>Changed declaration of FX samplers to include type.</li>
+	<li>Added support for single float uniforms.</li>
+	<li>Added shader uniform 'nodeId' which contains the object's node handle.</li>
+	<li>Changed overlay shader vertex attributes.</li>
+	<li>Replaced all built-in GLSL vertex attributes by custom ones.</li>
+	<li>Removed vertex attribute 'bitangent' as it can be derived in the shader.</li>
+	<li>Replaced fixed-function modelview and projection matrices by custom uniforms (viewMat, viewMatInv, projMat, viewProjMat, viewProjMatInv).</li>
+	<li>Renamed uniform 'viewer' to 'viewerPos'.</li>
+	<li>Merged uniform 'lightCosCutoff' into w component of 'lightDir'.</li>
+	<li>Simplified particle vertex shader and removed unnecessary attributes and uniforms from renderer.</li>
+	<li>Added log messages to the debugger output (Win only).</li>
+	<li>Fixed several issues in shadow mapping implementation.</li>
+	<li>Fixed a plenty of different bugs.</li>
+</ul>
+<h4>Utility Lib</h4>
+<ul>
+	<li>Changed filename of default engine log file to 'Horde3D_Log.html'.</li>
+	<li>Added utility function h3dutScreenshot.</li>
+	<li>Added utility function h3dutCreateGeometryRes to create dynamic geometry resources.</li>
+</ul>
+<h4>ColladaConv</h4>
+<ul>
+	<li>Implemented batch processing that can be used to recompile an entire asset repository.</li>
+	<li>Improved parsing performance.</li>
+	<li>Improved COLLADA compatibility and fixed several bugs.</li>
+</ul>
+<h4>Samples</h4>
+<ul>
+	<li>Updated sample framework to GLFW version 2.7</li>
+	<li>Added possibility to freeze camera.</li>
+	<li>Set window resolution of samples to widescreen format by default.</li>
+	<li>Fixed precision issues in deferred shading pipeline.</li>
+	<li>Switched to Blinn-Phong shading model.</li>
 </ul>
 
-
-<h3>Version [1.0.0] Beta4</h3>
+<h2>Version [1.0.0] Beta4</h2>
 <ul>
 	<li><b>Changed license from LGPL to Eclipse Public License.</b></li>
 	<br />
@@ -104,7 +103,7 @@
 </ul>
 
 
-<h3>Version [1.0.0] Beta3</h3>
+<h2>Version [1.0.0] Beta3</h2>
 <ul>
 	<li>Refactored shader system: new shader file format without XML CDATA sections, support for #include directive and automatic permutation generation based on flags.</li>
 	<li>Replaced texture unit configuration in materials by named samplers (pipeline command BindBuffer was changed and UnbindBuffers added).</li>
@@ -139,7 +138,7 @@
 </ul>
 
 
-<h3>Version [1.0.0] Beta2</h3>
+<h2>Version [1.0.0] Beta2</h2>
 <ul>
 	<li>Implemented simple animation compression scheme and updated animation format to version 3.</li>
 	<li>Reduced shadow map aliasing by taking into account exclusively visible geometry when calculating PSSM crop matrix.</li>
@@ -171,7 +170,7 @@
 	<li>Updated documentation with geometry and animation format specifications (thanks to Codepoet).</li>
 </ul>
 
-<h3>Version [1.0.0] Beta1</h3>
+<h2>Version [1.0.0] Beta1</h2>
 <ul>
 	<li>Implemented occlusion culling for models and emitters.</li>
 	<li>Implemented API based render-to-texture for rendering reflections and other effects which require several cameras.</li>
@@ -201,10 +200,9 @@
 	<li>Reverted Utility Library to be a separate DLL again instead of an extension.</li>
 	<li>Extended utility function loadResourcesFromDisk to take several search paths.</li>
 	<li>Completely rewrote usage guide to offer more information.</li>
-	
 </ul>
 
-<h3>Version [0.15.0]</h3>
+<h2>Version [0.15.0]</h2>
 <ul>
 	<li>Implemented an extension mechanism with support for new node and resource types. Created the official Terrain extension as proof of concept.</li>
 	<li>Realized the Utility Library as extension instead as separate DLL.</li>
@@ -249,7 +247,7 @@
 	<li>Removed ColladaConv option '-opt' and added '-noopt' instead. Geometry optimization is now enabled by default.</li>
 </ul>
 
-<h3>Version [0.14.0]</h3>
+<h2>Version [0.14.0]</h2>
 <ul>
 	<li>Added support for loading Photoshop PSD files.</li>
 	<li>Slightly modified pipeline syntax to make binding of render buffers more generic and powerful.</li>
@@ -276,7 +274,7 @@
 	<li>Improved ColladaConv to support generic animation names.</li>
 </ul>
 
-<h3>Version [0.13.0]</h3>
+<h2>Version [0.13.0]</h2>
 <ul>
 	<li>Extended pipeline (access to depth texture, explicit size) config and changed syntax.</li>
 	<li>Replaced corona image loading library with Sean Barret's public domain stbi code.</li>
@@ -304,7 +302,7 @@
 	<li>Added output of morph target names to scene graph files in Collada Converter.</li>
 </ul>
 
-<h3>Version [0.12.0]</h3>
+<h2>Version [0.12.0]</h2>
 <ul>
 	<li>Made basic Parallel Split Shadow Map implementation (still many opportunities for improvements).</li>
 	<li>Added shader uniforms shadowMapSize, shadowSplitDists and shadowMats.</li>
@@ -326,7 +324,7 @@
 	<li>Switched default pipeline of Chicago sample to forward shading.</li>
 </ul>
 
-<h3>Version [0.11.1]</h3>
+<h2>Version [0.11.1]</h2>
 <ul>
 	<li>Added API function getNodeAABB which returns the axis aligned bounding box of a scene node.</li>
 	<li>Added API function getNodeParent which returns the parent node of a scene node.</li>
@@ -345,7 +343,7 @@
 	<li>Improved compatibility of Collada converter regarding materials.</li>
 </ul>
 
-<h3>Version [0.11.0]</h3>
+<h2>Version [0.11.0]</h2>
 <ul>
 	<li>Implemented Horde3D Integration Library which gives applications more control over scene graph and simplifies integration with other middleware.</li>
 	<li>Implemented particle systems. Particles are fully integrated into the pipeline making it easy to let them cast shadows or receive lighting.</li>
@@ -370,7 +368,7 @@
 </ul>
 
 
-<h3>Version [0.10.0]</h3>
+<h2>Version [0.10.0]</h2>
 <ul>
 	<li>Added NoQuery flag for addResource to exclude resource from being listed with queryUnloadedResource.</li>
 	<li>Introduced new Code resource type for shader programs.</li>
@@ -400,7 +398,7 @@
 </ul>
 
 
-<h3>Version [0.9.0]</h3>
+<h2>Version [0.9.0]</h2>
 <ul>
 	<li>Modified API style to be more flexible for specific scene node functionality.</li>
 	<li>Changed API function for showing overlays to take 4 points instead of 2 extreme points.</li>
@@ -430,7 +428,7 @@
 </ul>
 
 
-<h3>Version [0.8.0]</h3>
+<h2>Version [0.8.0]</h2>
 <ul>
     <li>Added API getter-functions for most setter-functions.</li>
     <li>Added API function to access resource data and node data. This makes it it possible to read out geometry data and use it for collision detection or physics.</li>
@@ -456,7 +454,8 @@
     <li>Made other smaller improvements to Collada tool.</li>
 </ul>
 
-<h3>Version [0.7.0]</h3>
+
+<h2>Version [0.7.0]</h2>
 <ul>
 	<li>Added new API function for setting morph target weights.</li>
 	<li>Changed geometry resource format to include morph data.</li>
@@ -466,7 +465,8 @@
     <li>Made other smaller improvements to Collada tool.</li>
 </ul>
 
-<h3>Version [0.6.1]</h3>
+
+<h2>Version [0.6.1]</h2>
 <ul>
 	<li>Fixed problems with shadows on older ATI hardware by unrolling for-loops in the blur shaders.</li>
 	<li>Reduced joint maximum from 60 to 59 to avoid shader register overflows; this will have to be improved in upcoming versions.</li>
@@ -475,7 +475,8 @@
     <li>Made other smaller improvements to Collada tool.</li>
 </ul>
 
-<h3>Version [0.6.0]</h3>
+
+<h2>Version [0.6.0]</h2>
 <ul>
     <li>Introduced shader context concept.</li>
     <li>Integrated basic shadow mapping implementation with screen-space blurring.</li>
@@ -485,24 +486,19 @@
     <li>Updated Chicago sample to demonstrate shadow mapping.</li>
 </ul>
 
-<h3>Version [0.5.1]</h3>
+
+<h2>Version [0.5.1]</h2>
 <ul>
-    <li>* First source code release *</li>
+    <li><b>First source code release</b></li>
+	<br />
     <li>Added log message when G-Buffer creation fails.</li>
 </ul>
 
-<h3>Version [0.5.0]</h3>
+
+<h2>Version [0.5.0]</h2>
 <ul>
-    <li>* First public release *</li>
+    <li><b>First public release</b></li>
 </ul>
-
-
-<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
-</div>
-
-<div id="logo">
-   <img src="images/doclogo.gif" />
-</div>
 
 </body>
 </html>

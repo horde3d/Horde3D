@@ -30,7 +30,7 @@ bool ColladaDocument::parseFile( const string &fileName )
 	XMLDoc doc;
 	if( !doc.parseFile( fileName.c_str() ) )
 	{
-		log( "Error: file not found" );
+		log( "Error: file '" + fileName + "' not found" );
 		return false;
 	}
 

@@ -2,10 +2,41 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
         <title>Horde3D Documentation</title>
+		
+		<style type="text/css">
+			html, body, div, iframe { margin:0; padding:0; }
+			html, body, iframe { height: 100%; }
+			iframe { display: block; width: 100%; border: none; }
+			a img { border: none; }
+			
+			body {
+				background-image: url(html/images/docbg.gif);
+				background-repeat: repeat-x;
+			}
+			
+			#header { position:absolute; top: 0px; left:0px; right:0px; height:130px; }
+			#wrapper { position:absolute; top: 130px; left:0px; right:0px; bottom:0px; }
+			#leftcolumn { position:absolute; top:0px; bottom:0px; left:0px; width:20%; }
+			#rightcolumn { position:absolute; top:0px; bottom:0px; right:0px; width:80%; }
+		</style>
     </head>
 	
-    <frameset cols="320,*">
-        <frame name="navigation" src="html/navigation.html">
-        <frame name="content" src="html/_main.html">
-    </frameset>  
+	<body>
+		<div id="header">
+			<a href="http://www.horde3d.org" target="_blank"><img src="html/images/doclogo.gif" /></a>
+		</div>
+		<div id="wrapper">
+			<div id="leftcolumn">
+				<iframe name="navigation" src="html/navigation.html" frameborder="0">Your browser doesn't support iframes.</iframe>
+			</div>
+			<div id="rightcolumn">
+				<iframe name="content" src="html/_main.html" frameborder="0">Your browser doesn't support iframes.</iframe>
+			</div>
+		</div>
+	</body>
 </html>
+
+
+
+
+

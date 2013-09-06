@@ -258,6 +258,9 @@ struct RDIRenderBuffer
 // Render states
 // ---------------------------------------------------------
 
+// Note: Render states use unions to provide a hash value. Writing to and reading from different members of a
+//       union is not guaranteed to work by the C++ standard but is common practice and supported by many compilers.
+
 enum RDISamplerState
 {
 	SS_FILTER_BILINEAR   = 0x0,
@@ -297,14 +300,94 @@ const uint32 SS_ADDR_START = 6;
 const uint32 SS_ADDR_MASK = SS_ADDR_CLAMP | SS_ADDR_WRAP | SS_ADDR_CLAMPCOL;
 
 
+enum RDIFillMode
+{
+	RS_FILL_SOLID = 0,
+	RS_FILL_WIREFRAME = 1
+};
+
+enum RDICullMode
+{
+	RS_CULL_BACK = 0,
+	RS_CULL_FRONT,
+	RS_CULL_NONE,
+};
+
+struct RDIRasterState
+{
+	union
+	{
+		uint32  hash;
+		struct
+		{
+			uint32  fillMode : 1;  // RDIFillMode
+			uint32  cullMode : 2;  // RDICullMode
+			uint32  scissorEnable : 1;
+			uint32  multisampleEnable : 1;
+			uint32  renderTargetWriteMask : 1;
+		};
+	};
+};
+
+enum RDIBlendFunc
+{
+	BS_BLEND_ZERO = 0,
+	BS_BLEND_ONE,
+	BS_BLEND_SRC_ALPHA,
+	BS_BLEND_INV_SRC_ALPHA,
+	BS_BLEND_DEST_COLOR
+};
+
+struct RDIBlendState
+{
+	union
+	{
+		uint32  hash;
+		struct
+		{
+			uint32  alphaToCoverageEnable : 1;
+			uint32  blendEnable : 1;
+			uint32  srcBlendFunc : 4;
+			uint32  destBlendFunc : 4;
+		};
+	};
+};
+
+enum RDIDepthFunc
+{
+	DSS_DEPTHFUNC_LESS_EQUAL = 0,
+	DSS_DEPTHFUNC_LESS,
+	DSS_DEPTHFUNC_EQUAL,
+	DSS_DEPTHFUNC_GREATER,
+	DSS_DEPTHFUNC_GREATER_EQUAL,
+	DSS_DEPTHFUNC_ALWAYS
+};
+
+struct RDIDepthStencilState
+{
+	union
+	{
+		uint32  hash;
+		struct
+		{
+			uint32  depthWriteMask : 1;
+			uint32  depthEnable : 1;
+			uint32  depthFunc : 4;  // RDIDepthFunc
+		};
+	};
+};
+
 // ---------------------------------------------------------
 // Draw calls and clears
 // ---------------------------------------------------------
 
 enum RDIClearFlags
 {
-	CLR_COLOR = 0x00000001,
-	CLR_DEPTH = 0x00000002
+	CLR_COLOR_RT0 = 0x00000001,
+	CLR_COLOR_RT1 = 0x00000002,
+	CLR_COLOR_RT2 = 0x00000004,
+	CLR_COLOR_RT3 = 0x00000008,
+	CLR_DEPTH = 0x00000010
 };
 
 enum RDIIndexFormat
@@ -327,10 +410,10 @@ class RenderDevice
 public:
 
 	RenderDevice();
-	virtual ~RenderDevice();
+	~RenderDevice();
 	
 	void initStates();
-	virtual bool init();
+	bool init();
 	
 // -----------------------------------------------------------------------------
 // Resources
@@ -340,6 +423,7 @@ public:
 	uint32 registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs );
 	
 	// Buffers
+	void beginRendering();
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	void destroyBuffer( uint32 bufObj );
@@ -365,6 +449,8 @@ public:
 	int getShaderSamplerLoc( uint32 shaderId, const char *name );
 	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 );
 	void setShaderSampler( int loc, uint32 texUnit );
+	const char *getDefaultVSCode();
+	const char *getDefaultFSCode();
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
@@ -400,6 +486,50 @@ public:
 	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState )
 		{ ASSERT( slot < 16 ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
 	      _pendingMask |= PM_TEXTURES; }
+	
+	// Render states
+	void setColorWriteMask( bool enabled )
+		{ _newRasterState.renderTargetWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
+	void getColorWriteMask( bool &enabled )
+		{ enabled = _newRasterState.renderTargetWriteMask; }
+	void setFillMode( RDIFillMode fillMode )
+		{ _newRasterState.fillMode = fillMode; _pendingMask |= PM_RENDERSTATES; }
+	void getFillMode( RDIFillMode &fillMode )
+		{ fillMode = (RDIFillMode)_newRasterState.fillMode; }
+	void setCullMode( RDICullMode cullMode )
+		{ _newRasterState.cullMode = cullMode; _pendingMask |= PM_RENDERSTATES; }
+	void getCullMode( RDICullMode &cullMode )
+		{ cullMode = (RDICullMode)_newRasterState.cullMode; }
+	void setScissorTest( bool enabled )
+		{ _newRasterState.scissorEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
+	void getScissorTest( bool &enabled )
+		{ enabled = _newRasterState.scissorEnable; }
+	void setMulisampling( bool enabled )
+		{ _newRasterState.multisampleEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
+	void getMulisampling( bool &enabled )
+		{ enabled = _newRasterState.multisampleEnable; }
+	void setAlphaToCoverage( bool enabled )
+		{ _newBlendState.alphaToCoverageEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
+	void getAlphaToCoverage( bool &enabled )
+		{ enabled = _newBlendState.alphaToCoverageEnable; }
+	void setBlendMode( bool enabled, RDIBlendFunc srcBlendFunc = BS_BLEND_ZERO, RDIBlendFunc destBlendFunc = BS_BLEND_ZERO )
+		{ _newBlendState.blendEnable = enabled; _newBlendState.srcBlendFunc = srcBlendFunc;
+		  _newBlendState.destBlendFunc = destBlendFunc; _pendingMask |= PM_RENDERSTATES; }
+	void getBlendMode( bool &enabled, RDIBlendFunc &srcBlendFunc, RDIBlendFunc &destBlendFunc )
+		{ enabled = _newBlendState.blendEnable; srcBlendFunc = (RDIBlendFunc)_newBlendState.srcBlendFunc;
+		  destBlendFunc = (RDIBlendFunc)_newBlendState.destBlendFunc; }
+	void setDepthMask( bool enabled )
+		{ _newDepthStencilState.depthWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
+	void getDepthMask( bool &enabled )
+		{ enabled = _newDepthStencilState.depthWriteMask; }
+	void setDepthTest( bool enabled )
+		{ _newDepthStencilState.depthEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
+	void getDepthTest( bool &enabled )
+		{ enabled = _newDepthStencilState.depthEnable; }
+	void setDepthFunc( RDIDepthFunc depthFunc )
+		{ _newDepthStencilState.depthFunc = depthFunc; _pendingMask |= PM_RENDERSTATES; }
+	void getDepthFunc( RDIDepthFunc &depthFunc )
+		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
 
 	bool commitStates( uint32 filter = 0xFFFFFFFF );
 	void resetStates();
@@ -425,11 +555,12 @@ protected:
 
 	enum RDIPendingMask
 	{
-		PM_VIEWPORT    = 0x00000001,
-		PM_INDEXBUF    = 0x00000002,
-		PM_VERTLAYOUT  = 0x00000004,
-		PM_TEXTURES    = 0x00000008,
-		PM_SCISSOR     = 0x00000010
+		PM_VIEWPORT      = 0x00000001,
+		PM_INDEXBUF      = 0x00000002,
+		PM_VERTLAYOUT    = 0x00000004,
+		PM_TEXTURES      = 0x00000008,
+		PM_SCISSOR       = 0x00000010,
+		PM_RENDERSTATES  = 0x00000020
 	};
 
 protected:
@@ -441,6 +572,7 @@ protected:
 	void checkGLError();
 	bool applyVertexLayout();
 	void applySamplerState( RDITexture &tex );
+	void applyRenderStates();
 
 protected:
 
@@ -455,6 +587,7 @@ protected:
 	int           _outputBufferIndex;  // Left and right eye for stereo rendering
 	uint32        _textureMem, _bufferMem;
 
+	int                            _defaultFBO;
 	uint32                         _numVertexLayouts;
 	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
 	RDIObjects< RDIBuffer >        _buffers;
@@ -462,14 +595,17 @@ protected:
 	RDIObjects< RDIShader >        _shaders;
 	RDIObjects< RDIRenderBuffer >  _rendBufs;
 
-	RDIVertBufSlot    _vertBufSlots[16];
-	RDITexSlot        _texSlots[16];
-	uint32            _prevShaderId, _curShaderId;
-	uint32            _curVertLayout, _newVertLayout;
-	uint32            _curIndexBuf, _newIndexBuf;
-	uint32            _indexFormat;
-	uint32            _activeVertexAttribsMask;
-	uint32            _pendingMask;
+	RDIVertBufSlot        _vertBufSlots[16];
+	RDITexSlot            _texSlots[16];
+	RDIRasterState        _curRasterState, _newRasterState;
+	RDIBlendState         _curBlendState, _newBlendState;
+	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
+	uint32                _prevShaderId, _curShaderId;
+	uint32                _curVertLayout, _newVertLayout;
+	uint32                _curIndexBuf, _newIndexBuf;
+	uint32                _indexFormat;
+	uint32                _activeVertexAttribsMask;
+	uint32                _pendingMask;
 };
 
 }

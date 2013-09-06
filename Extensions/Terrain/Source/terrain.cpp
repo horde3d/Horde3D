@@ -238,19 +238,19 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 }
 
 
-void TerrainNode::renderFunc( const string &shaderContext, const string &theClass, bool debugView,
-                              const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
+void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
+                              bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
                               int occSet )
 {
 	CameraNode *curCam = Modules::renderer().getCurCamera();
 	if( curCam == 0x0 ) return;
 
+	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
+
 	// Loop through terrain queue
-	for( uint32 i = 0, s = (uint32)Modules::sceneMan().getRenderableQueue().size(); i < s; ++i )
+	for( uint32 i = firstItem; i <= lastItem; ++i )
 	{
-		if( Modules::sceneMan().getRenderableQueue()[i].type != SNT_TerrainNode ) continue;
-		
-		TerrainNode *terrain = (TerrainNode *)Modules::sceneMan().getRenderableQueue()[i].node;
+		TerrainNode *terrain = (TerrainNode *)renderQueue[i].node;
 		
 		if( !debugView )
 		{

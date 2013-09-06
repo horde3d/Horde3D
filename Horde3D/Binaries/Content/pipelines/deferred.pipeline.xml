@@ -1,7 +1,7 @@
 <!-- Deferred Shading Pipeline -->
 <Pipeline>
 	<Setup>
-		<RenderTarget id="GBUFFER" depthBuf="true" numColBufs="3" format="RGBA16F" scale="1.0" />
+		<RenderTarget id="GBUFFER" depthBuf="true" numColBufs="4" format="RGBA16F" scale="1.0" />
 	</Setup>
 	
 	<CommandQueue>
@@ -20,9 +20,10 @@
 			<DrawQuad material="materials/light.material.xml" context="COPY_DEPTH" />
 			<UnbindBuffers />
 			
-			<BindBuffer sampler="buf0" sourceRT="GBUFFER" bufIndex="0" />
-			<BindBuffer sampler="buf1" sourceRT="GBUFFER" bufIndex="1" />
-			<BindBuffer sampler="buf2" sourceRT="GBUFFER" bufIndex="2" />
+			<BindBuffer sampler="gbuf0" sourceRT="GBUFFER" bufIndex="0" />
+			<BindBuffer sampler="gbuf1" sourceRT="GBUFFER" bufIndex="1" />
+			<BindBuffer sampler="gbuf2" sourceRT="GBUFFER" bufIndex="2" />
+			<BindBuffer sampler="gbuf3" sourceRT="GBUFFER" bufIndex="3" />
 			
 			<DrawQuad material="materials/light.material.xml" context="AMBIENT" />
 			<DoDeferredLightLoop />

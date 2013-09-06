@@ -425,6 +425,7 @@ bool TextureResource::loadSTBI( const char *data, int size )
 		*ptr++ = (col & 0xFF00FF00) | ((col & 0x000000FF) << 16) | ((col & 0x00FF0000) >> 16);
 	}
 	
+	_depth = 1;
 	_texType = TextureTypes::Tex2D;
 	_texFormat = hdr ? TextureFormats::RGBA16F : TextureFormats::BGRA8;
 	_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;

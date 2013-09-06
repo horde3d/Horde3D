@@ -98,7 +98,6 @@ public:
 	virtual const std::string &getANName() = 0;
 	virtual IAnimatableNode *getANParent() = 0;
 	virtual Matrix4f &getANRelTransRef() = 0;
-	virtual bool &getANIgnoreAnimRef() = 0;
 };
 
 struct AnimStage

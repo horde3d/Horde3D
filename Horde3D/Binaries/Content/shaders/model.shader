@@ -11,7 +11,11 @@
 
 
 // Samplers
-sampler2D albedoMap;
+sampler2D albedoMap = sampler_state
+{
+	Texture = "textures/common/white.tga";
+};
+
 sampler2D normalMap = sampler_state
 {
 	Texture = "textures/common/defnorm.tga";
@@ -32,10 +36,15 @@ samplerCube envMap = sampler_state
 };
 
 // Uniforms
-float4 specParams <
-	string desc_a = "a: specular mask";
-	string desc_b = "b: specular exponent";
-> = {0.1, 16.0, 0, 0};
+float4 matDiffuseCol <
+	string desc_abc = "abc: diffuse color";
+	string desc_d   = "d: alpha for opacity";
+> = {1.0, 1.0, 1.0, 1.0};
+
+float4 matSpecParams <
+	string desc_abc = "abc: specular color";
+	string desc_d   = "d: gloss";
+> = {0.04, 0.04, 0.04, 0.5};
 
 // Contexts
 context ATTRIBPASS
@@ -160,7 +169,8 @@ void main( void )
 #include "shaders/utilityLib/fragDeferredWrite.glsl" 
 
 uniform vec3 viewerPos;
-uniform vec4 specParams;
+uniform vec4 matDiffuseCol;
+uniform vec4 matSpecParams;
 uniform sampler2D albedoMap;
 
 #ifdef _F02_NormalMapping
@@ -200,7 +210,7 @@ void main( void )
 	// Flip texture vertically to match the GL coordinate system
 	newCoords.t *= -1.0;
 
-	vec4 albedo = texture2D( albedoMap, newCoords.st );
+	vec4 albedo = texture2D( albedoMap, newCoords.st ) * matDiffuseCol;
 	
 #ifdef _F05_AlphaTest
 	if( albedo.a < 0.01 ) discard;
@@ -223,7 +233,7 @@ void main( void )
 	setPos( newPos - viewerPos );
 	setNormal( normalize( normal ) );
 	setAlbedo( albedo.rgb );
-	setSpecMask( specParams.x );
+	setSpecParams( matSpecParams.rgb, matSpecParams.a );
 }
 
 	
@@ -268,6 +278,7 @@ uniform float shadowBias;
 varying vec3 lightVec;
 
 #ifdef _F05_AlphaTest
+	uniform vec4 matDiffuseCol;
 	uniform sampler2D albedoMap;
 	varying vec2 texCoords;
 #endif
@@ -275,7 +286,7 @@ varying vec3 lightVec;
 void main( void )
 {
 #ifdef _F05_AlphaTest
-	vec4 albedo = texture2D( albedoMap, texCoords * vec2( 1, -1 ) );
+	vec4 albedo = texture2D( albedoMap, texCoords * vec2( 1, -1 ) ) * matDiffuseCol;
 	if( albedo.a < 0.01 ) discard;
 #endif
 	
@@ -296,7 +307,8 @@ void main( void )
 
 #include "shaders/utilityLib/fragLighting.glsl" 
 
-uniform vec4 specParams;
+uniform vec4 matDiffuseCol;
+uniform vec4 matSpecParams;
 uniform sampler2D albedoMap;
 
 #ifdef _F02_NormalMapping
@@ -336,7 +348,7 @@ void main( void )
 	// Flip texture vertically to match the GL coordinate system
 	newCoords.t *= -1.0;
 
-	vec4 albedo = texture2D( albedoMap, newCoords.st );
+	vec4 albedo = texture2D( albedoMap, newCoords.st ) * matDiffuseCol;
 	
 #ifdef _F05_AlphaTest
 	if( albedo.a < 0.01 ) discard;
@@ -356,7 +368,8 @@ void main( void )
 #endif
 	
 	gl_FragColor.rgb =
-		calcPhongSpotLight( newPos, normalize( normal ), albedo.rgb, specParams.x, specParams.y, -vsPos.z, 0.3 );
+		calcPhongSpotLight( newPos, normalize( normal ), albedo.rgb, matSpecParams.rgb,
+		                    matSpecParams.a, -vsPos.z, 0.3 );
 }
 
 

@@ -393,7 +393,7 @@ DLLEXP bool h3dutDumpMessages()
 DLLEXP void h3dutShowText( const char *text, float x, float y, float size, float colR,
                            float colG, float colB, H3DRes fontMaterialRes )
 {
-	if( text == 0x0 ) return;
+	if( text == 0x0 || *text == '\0' ) return;
 	
 	float ovFontVerts[64 * 16];
 	float *p = ovFontVerts;
@@ -756,7 +756,7 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height, int bpp,
                                  char **outData, int *outSize )
 {
-	if( pixels == 0x0 || outData == 0x0 || outSize == 0x0 ) return false;
+	if( outData == 0x0 || outSize == 0x0 ) return false;
 	
 	*outData = 0x0; *outSize = 0;
 	
@@ -783,7 +783,7 @@ DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int hei
 	c = 0;      memcpy( data, &c, 1 ); data += 1;  // imageDesc
 
 	// Copy data
-	memcpy( data, pixels, width * height * (bpp / 8) );
+	if( pixels ) memcpy( data, pixels, width * height * (bpp / 8) );
 
 	return true;
 }

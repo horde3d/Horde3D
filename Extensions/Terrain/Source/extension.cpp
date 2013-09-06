@@ -32,13 +32,14 @@ const char *ExtTerrain::getName()
 
 bool ExtTerrain::init()
 {
-	Modules::sceneMan().registerType( SNT_TerrainNode, "Terrain",
-		TerrainNode::parsingFunc, TerrainNode::factoryFunc, TerrainNode::renderFunc );
+	Modules::sceneMan().registerNodeType( SNT_TerrainNode, "Terrain",
+		TerrainNode::parsingFunc, TerrainNode::factoryFunc );
+	Modules::renderer().registerRenderFunc( SNT_TerrainNode, TerrainNode::renderFunc );
 
 	// Create vertex layout
 	VertexLayoutAttrib attribs[2] = {
-		"vertPos", 0, 3, 0,
-		"terHeight", 1, 1, 0
+		{"vertPos", 0, 3, 0},
+		{"terHeight", 1, 1, 0}
 	};
 	TerrainNode::vlTerrain = gRDI->registerVertexLayout( 2, attribs );
 

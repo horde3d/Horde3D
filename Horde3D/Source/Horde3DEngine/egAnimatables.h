@@ -70,7 +70,6 @@ public:
 	// IAnimatableNode
 	const std::string &getANName() { return _name; }
 	Matrix4f &getANRelTransRef() { return _relTrans; }
-	bool &getANIgnoreAnimRef() { return _ignoreAnim; }
 	IAnimatableNode *getANParent();
 	
 	bool canAttach( SceneNode &parent );
@@ -102,7 +101,6 @@ protected:
 	
 	ModelNode           *_parentModel;
 	BoundingBox         _localBBox;
-	bool                _ignoreAnim;
 
 	std::vector< uint32 >  _occQueries;
 	std::vector< uint32 >  _lastVisited;
@@ -149,7 +147,6 @@ public:
 	// IAnimatableNode
 	const std::string &getANName() { return _name; }
 	Matrix4f &getANRelTransRef() { return _relTrans; }
-	bool &getANIgnoreAnimRef() { return _ignoreAnim; }
 	IAnimatableNode *getANParent();
 	
 	bool canAttach( SceneNode &parent );
@@ -167,7 +164,6 @@ protected:
 	
 	ModelNode  *_parentModel;
 	Matrix4f   _relModelMat;  // Transformation relative to parent model
-	bool       _ignoreAnim;
 
 	friend class SceneNode;
 	friend class ModelNode;

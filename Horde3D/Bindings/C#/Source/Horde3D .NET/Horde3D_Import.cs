@@ -240,6 +240,9 @@ namespace Horde3DNET
         internal static extern int h3dGetNodeFindResult(int index);
         
         [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dSetNodeUniforms(int node, float[] uniformData, int count);
+
+        [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
         internal static extern int h3dCastRay(int node, float ox, float oy, float oz, float dx, float dy, float dz, int numNearest);
 
         [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
@@ -267,6 +270,9 @@ namespace Horde3DNET
         [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
         [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
         internal static extern bool h3dSetModelMorpher(int node, string target, float weight);
+
+        [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dUpdateModel(int modelNode, int flags);
 
         // Mesh specific
         [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
@@ -302,8 +308,8 @@ namespace Horde3DNET
 								       int matRes, int effectRes,
 								       int maxParticleCount, int respawnCount );
 
-        [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]        
-        internal static extern void h3dAdvanceEmitterTime(int node, float timeDelta);
+        [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dUpdateEmitter(int node, float timeDelta);
 
         [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
         [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
