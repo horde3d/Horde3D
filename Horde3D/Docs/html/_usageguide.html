@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Horde3D Documentation</title>
+    <link rel="stylesheet" type="text/css" href="css/manual.css" title="ALL" media="screen,projection" />
+</head>
+
+<body>
+<div id="content">
+
+<h1>Horde3D Usage Guide</h1>
+
+
+<a id="Concepts"></a>
+<h2>Basic concepts</h2>
+
+<a id="GeneralConcepts"></a>
+<h3>General concepts of Horde3D</h3>
+<p>
+Horde3D has an integration strategy which differs from that of other well-known graphics engines like OGRE 3D or
+Irrlicht. While these provide an object-oriented class library from which the user can derive his own implementations,
+Horde3D should rather be considered as a software component. As such Horde3D has a higher abstraction level and is
+accessible through a quite small procedural interface that is in some concepts similar to the Microsoft Win32 API. A
+simple C-style interface has the advantage of being easier to overview and learn since it just offers what is really
+needed by the user. Another benefit is a much better portability. Almost any programming and scripting language has
+some mechanism to access imperative functions in a shared library, whereas importing classes is more complicated or
+not possible at all. In fact several wrappers have already been written for the original interface, so that Horde3D
+can easily be used with C#, Java, LUA and other languages.
+<br /><br />
+The procedural interface doesn't keep the engine from being used in object-oriented languages. Internally Horde3D
+itself is strictly object-oriented. The engine's objects like scene graph nodes and resources are exposed to an
+application via handles. A handle is similar to a pointer but adds an additional level of indirection to provide more
+safety. Horde3D has special functions to create objects which always return a handle to the constructed object or a
+NULL-handle (basically the same as a NULL-pointer) in case of failure. The handle should be stored by the application
+and can be used to access the object in order to change its properties or release it.
+<br /><br />
+Due to the high abstraction level of the application programming interface, it is not possible for the user to add
+custom graphics functionality like a new scene node type without modifying the engine source code. To overcome this
+drawback, Horde3D provides an extension mechanism where the user has full access to the internal class framework of
+Horde3D. The finished extension is statically linked with the engine's shared library and exposes its functionality
+through a custom procedural interface. The extension mechanism also greatly facilitates the process of upgrading
+Horde3D with supplemental third-party functionality.
+</p>
+<br /><br />
+
+
+<a id="ResManagement"></a>
+<h3>Resource management</h3>
+<p>
+A resource is a data object that is required to render the scene, for example a texture or shader. One important property
+of resources is that they are reusable. This means that they can be referenced by several different objects like scene
+nodes but only have to be loaded once. Every resource is identified by a name that is unique for the resource type and by
+which the resource can referenced from other objects.
+<br /><br />
+All resources are managed by a resource manager. The resource manager contains a list of resources and ensures that they
+are only loaded once and reused after that. It is also responsible for finding, accessing and removing resources.
+In contrast to some other engines, Horde3D uses one single manager for all resources and not different ones for each
+type of resource. To make resource handling more robust, the manager is applying reference counting. A resource can
+only be removed if it is no longer referenced by some other object, e.g. another resource or scene node. It is also
+possible to perform explicit garbage collection in order to release and remove all unused resources.
+<br /><br />
+Horde3D uses deferred loading of resources. This means that resource creation and loading are discrete steps. This
+separation brings the advantage that the data doesn't need to be available immediately when the resource is added and
+makes it in principle possible to have a dedicated thread for background loading. When the resource is created, it is
+initialized with type-specific default data and is already available to be referenced by other objects. After creation
+the resource can be loaded and filled with the desired data. In this process the basic data structures are set up and
+initialized. After loading it is usually possible to alter the data values of a resource but not the data structure.
+For a texture as an example this means that the color values of all pixels can be changed but not the dimensions or
+color depth of the image. When a resource has already been loaded, it can not be loaded again but it is possible to
+unload the resource and thus reset it to the initial state it had directly after creation.
+<br /><br />
+The loading of resources is completely virtualized in Horde3D. The engine doesn't do any file accesses and just expects
+a memory block from the application. It is up to the application to decide from where to get this block, e.g. to read
+it from an appropriate file. The advantage of this system is that Horde3D doesn't force the user to have some specific
+archive format. Resource data can come from any source and could even be streamed over a network. It is also possible
+to generate the data block dynamically to realize procedural content.
+<br /><br />
+
+The following resource types are part of the Horde3D core:
+<br /><br />
+
+<b>SceneGraph</b>
+<br /><br />
+A scene graph resource is an XML document that defines a branch of the scene graph. Each XML element is interpreted
+as scene node according to its name. The XML node structure is directly mapped to the scene hierarchy. All the
+properties of scene nodes which are accessible through the Horde3D API can also be configured by setting the
+corresponding XML attributes. One special feature of Horde3D is that all 3D models, static and articulated ones, are
+also represented as SceneGraph files. This makes it possible to access the components of a model like meshes and joints
+using the scene graph API and avoids the need for additional specific functions.
+<br /><br />
+
+<b>Geometry</b>
+<br /><br />
+Geometry resources are loaded from binary files and store the polygonal data used by models and meshes. The resource
+contains triangle indices and several streams for vertex attributes like positions, normals, tangents, texture
+coordinates and joint weights. It can also include additional information about the skeleton of a model and separate
+data streams for morph targets.
+<br /><br />
+
+<b>Animation</b>
+<br /><br />
+An animation resource contains keyframe data for animatable nodes. The two node types animatable in Horde3D are meshes
+and joints. Theses nodes are identified by their name and store the local transformation for each frame in form of a
+translation vector, a scale vector and a rotation quaternion.
+<br /><br />
+
+<b>Pipeline</b>
+<br /><br />
+A pipeline is an XML document that defines the steps to be performed for rendering the scene. The pipeline contains
+a list of render commands organized in stages that determine which geometry is rendered to what output buffer. Each
+pipeline can have an arbitrary number of different output buffers called render targets. The render targets can store
+temporary rendering results that are required in a later stage. In combination with shaders, the configurable pipeline
+is a powerful system that enables to realize many modern rendering techniques like deferred shading and other advanced
+post-processing effects.
+<br /><br />
+
+<b>Material</b>
+<br /><br />
+Materials define the visual appearance of a mesh or renderable object in general. A material references a shader
+and binds the uniforms to it. The uniforms can either be texture maps, floating point vectors that pass arbitrary
+application-specific data to the shader.
+<br /><br />
+
+<b>Shader</b>
+<br /><br />
+A shader in Horde3D has extended semantics compared to the usual notion since it is not just the code executed by
+the graphics card. The basic idea of the Horde3D shader concept is that a model needs to be drawn in different stages
+of the rendering process with different shaders. Generating the shadow map for example requires other shader code than
+calculating the ambient lighting. So in Horde3D a shader resource is a group of programs executed in different contexts.
+A single pair of vertex and fragment program code is called a shader context. The pipeline usually selects the shader
+context that it requires for the current step. The actual shader code of the context that is executed by the graphics
+card is specified in the OpenGL Shading Language.
+<br /><br />
+
+<b>Code</b>
+<br /><br />
+A code resource is a plain text file that can contain arbitrary code. Code resources can be referenced by shader
+resources and are usually employed to define shader program fragments in a reusable fashion.
+<br /><br />
+
+<b>Texture</b>
+<br /><br />
+A texture resource can contain a two-dimensional texture map or a cube map. A 2D texture map simply represents an image.
+2D textures are used by shaders to define the appearance of a surface but they can also encode non-photographic data like
+normals or a lookup table.
+Cube maps are a special form of texture maps which are comprised of a series of six images that correspond to the
+sides of a cube. Cube maps represent the environment around a point. Therefore, it is possible to use a three-dimensional
+vector to look up the texel that lies in the corresponding direction.
+<br /><br />
+
+<b>ParticleEffect</b>
+<br /><br />
+A particle effect resource is used to configure particle systems. The resource defines in which way the properties of a particle
+like its color, size and velocity change over its lifetime. ParticleEffect resources are usually assigned to emitter nodes
+which bring forth the particles.
+<br /><br />
+
+For detailed information see the API Reference section dealing with
+<a href="_api.html#General_resource_management_functions">resource management functions</a>.
+</p>
+<br /><br />
+
+
+<a id="SceneGraph"></a>
+<h3>Scene Graph</h3>
+<p>
+A scene graph is used to represent the logical or spatial structure of the scene to be rendered. Usually it also
+serves for accelerating scene-based search and query operations like frustum culling or collision queries. In practice
+many different scene graph designs and implementations exist, all with their specific benefits and drawbacks. Some
+engines realize their scene organization as a real directed or undirected graph and some even allow cycles. Others
+are just implementing simple trees.  Another important design question affects the relational properties of an entity.
+For example, how should the material of a mesh be realized? Should it be the parent node of the mesh, an attachment to
+the mesh or rather just an attribute? It is possible to create very powerful designs but usually there is a clear
+tradeoff between flexibility and performance since more complex graph structures are more expensive to traverse. As
+Horde3D was originally written to render large crowds of animated characters, it tries to find a good balance between
+flexibility and the inherent performance costs.
+<br /><br />
+In Horde3D the scene graph is realized as a tree structure. Each node can have an arbitrary number of children but
+the engine imposes a few restrictions to the hierarchy and defines rules constituting which node type can be attached
+to what parent. As a rule of thumb solely concrete entities that have a transformation and hence location in the virtual
+world are represented as nodes. All other abstract entities like materials are realized as attributes of the nodes.
+This philosophy keeps the number of nodes in the graph relatively small and enables faster operations on the tree.
+<br /><br />
+Every node has two transformations, a local and a global one. The local transformation, sometimes also called object
+transformation, is relative to the parent and can be set explicitly by the application. The global one (world
+transformation) is calculated automatically by traversing the parent-child hierarchy and accumulating the transformations.
+So when a node is transformed, all of its children are transformed accordingly. If, for example, the complete scene has
+to be rotated, it is sufficient to transform the root node and the engine rotates all children automatically. Each node
+also has an axis-aligned bounding box which is the union of the bounding boxes of its children. The emerging bounding
+volume hierarchy is used by Horde3D to optimize the visibility detection algorithms.
+<br /><br />
+
+The following scene node types are available in Horde3D:
+<br /><br />
+
+<b>Group</b>
+<br /><br />
+A group node is a generic container for other nodes. The root node for example is of that type. The group node has
+two attributes which define the minimum and maximum distance from which the node (and all of its children) is visible.
+These attributes are useful to realize a simple distance-based level of detail scheme.
+<br /><br />
+
+<b>Camera</b>
+<br /><br />
+A scene is always rendered from the perspective of a virtual camera which is just a special scene node in Horde3D.
+This gives all the flexibility of the scene graph system also to cameras and makes it for example possible to attach
+a camera to a joint of an animated model, so that it is automatically transformed according to the model animation.
+<br /><br />
+
+<b>Light</b>
+<br /><br />
+Light sources are used to setup the illumination of a scene. The node has several parameters which determine the
+light source properties like the light color, radius of influence and field of view for spot lights. Shadows can also
+be customized using the corresponding attributes. A special point of interest is that a material can be assigned to a
+light source. This is necessary for deferred shading where lighting is done as a post-processing step with a unified
+light-source-specific shader. For performing standard forward shading, light sources provide a lighting context
+attribute that defines which shader context is used for computing illumination intensities.
+<br /><br />
+
+<b>Model</b>
+<br /><br />
+A model node represents a polygonal 3D object which has usually been exported from some modeling software like Blender
+or 3D Studio Max. The model can either be a static object or an articulated character. The node references a geometry
+resource which contains its polygonal data. Model nodes act as an abstract container for meshes and joints, and can be
+animated with an animation resource. A model by itself is not renderable and requires a mesh to become visible. Usually
+a model node with its joints and meshes is created automatically by an export or conversion tool and stored in a scene
+graph resource.
+<br /><br />
+
+<b>Mesh</b>
+<br /><br />
+Mesh nodes define a group of polygons with a single material. Each mesh represents a part of a geometry resource and
+is drawn by the renderer using the associated material. Since meshes point to a geometry resource, they require a parent
+model node somewhere upwards in the hierarchy.
+<br /><br />
+
+<b>Joint</b>
+<br /><br />
+A hierarchy of joint nodes is used to represent the skeleton for skeletal animation. As meshes, joint nodes can solely
+exist with a model-ancestor in the scene graph hierarchy. Each joint has an index attribute that points to a bind matrix
+in the model's geometry resource. This bind matrix is used by the engine to do the skinning.
+<br /><br />
+
+<b>Emitter</b>
+<br /><br />
+Emitter nodes are used to setup particle systems. They are responsible for creating particles based on the description
+from a ParticleEffect resource and have several parameters to configure properties like the birth rate or the maximum number
+of particles.\newline
+<br /><br />
+
+Every node type has a specific creation function that takes a different set of parameters. Most parameters can be changed
+after creation but a few that are crucial for the internal structure of the node are immutable. Basic attributes common
+to all scene nodes are accessed with general API functions. For getting or setting type-specific properties, the API
+provides special functions which usually require a handle to a scene node of the corresponding type.
+<br /><br />
+
+For more detailed information see the API Reference section dealing with
+<a href="_api.html#General_scene_graph_functions">scene graph functions</a>
+</p>
+<br /><br />
+
+
+<a id="Advanced"></a>
+<h2>Advanced topics</h2>
+
+<a id="AnimSystem"></a>
+<h3>Animation system</h3>
+<p>
+Horde3D has an animation system that enables to perform rigid body and skeletal character animation, as well as
+facial animation using morph targets. The system supports smooth transitions from one frame to another and allows
+animation blending and mixing. Since the animation system works directly on the scene graph, it is easy to
+manipulate the transformations manually in order to perform dynamic animations like inverse kinematics (IK) or
+ragdoll physics.
+<br /><br />
+<i><b>Blending between animations</b></i>
+<br />
+Achieving a smooth transition from one animation to another is realized with animation blending. When a game changes
+the state of a character from idle to walking or from walking to running, animation blending is required to get
+visually appealing results. To achieve that, models in Horde3D can have several animations applied at the same time
+which are combined to generate the final animation. Each animation has a blend weight that determines the influence
+on the overall result. Changing a character animation, for example, from walking to running, can be realized with
+a so called cross-fade. For a cross-fade, both animations are applied to the character model. At the beginning,
+the walk animation has the weight 1.0 and the run animation 0.0. In order to perform the transition, the blend
+weights are adapted so that the weight of the walk animation is linearly reduced, while the run animation weight
+is increased by the same amount. Finally, the run animation has a weight of 1.0 while the walk animation is at 0.0.
+The end result is that the character appears to be running.
+<br /><br />
+<i><b>Using animation layers</b></i>
+<br />
+Horde3D supports animation layers to make it easier to switch between animations. A layer has a signed number, the
+layer id, which determines the priority of the layer. Layers with a higher index have a higher priority and their
+animations are processed before the ones on lower layers. All animations on a single layer have normalized blend
+weights. For example that means, if there are two animations both with weight 1.0 on layer 0, both animations
+will contribute 50% to the final animation. If the sum of the blend weights of a single layer is smaller than 1.0,
+the remainder is propagated to the lower layers. So if there are two layers 1 and 0 and if the two animations on
+layer 1 have a weight sum of 0.6, the remaining weight of 0.4 is available for the animations on layer 0.
+<br /><br />
+As an example, we can consider a character that plays a weighted combination of walk and run cycles on a single
+layer, depending on the walking speed of the player. We want to replace the resulting animation with a shoot animation
+when the player hits a button. Doing this is very easy using the layer system: we just need to add the shoot animation
+on a higher layer, so that it has a higher priority than the other animations. The weight of the shoot animation
+can gradually be increased from 0.0 to 1.0. Since the shoot animation has a higher priority than the combined
+walk cycle, only the remaining weight is available for the walk cycle. As a consequence, the walk cycle is fully
+active at first and gets gradually less influence until it is fully replaced by the shoot animation in the end.
+The great advantage of this approach is that only the weight of the shoot animation needs to be adapted while the
+walk and run animations can remain untouched.
+<br /><br />
+<i><b>Mixing different animations</b></i>
+<br />
+Another common scenario besides the transition from one animation to another is that a character has to perform
+several movements at the same time. Although it is in theory possible to create single animations for all
+combinations of actions, this would neither be memory-efficient nor productive for artists. A better solution is
+to combine the animations at run-time in the engine. The difference to animation blending is that for mixing the
+animations are usually independent and acting on different parts of the body. So the animations should not be
+blended but rather both be played with full intensity at the same time. For realizing this, Horde3D provides two
+ways.
+<br /><br />
+The first is to define a start node from which the animation system begins to apply the animation. Joints
+that are above the start node in the skeletal hierarchy are ignored and thus not animated. As an example, imagine
+a character that should play two animations at the same time, a walking and a waving animation. To get full intensity
+for both animations, you could set the pelvis joint to be the start node of the walking animation, so that the
+animation solely affects the lower body. The wave animation does not need a start node and can act on the whole
+skeleton. Now the priority concept of the layers can do the trick. If the walk animation is on a lower layer than
+the wave animation, the weight sum of the lower body is already 1.0 and the wave animation will only affect the
+upper body and ignore the lower part.
+<br /><br />
+Another more intuitive way to realize mixing is using additive animations. When a stage is additive, the engine
+calculates the transformation delta of the current frame to the first frame in the animation resource and adds
+this difference to the transformation of the joints. The blend weight factor makes it possible to apply only a
+percentage of the difference animation. For the just mentioned example, using additive animations means that
+the character can simply have the walk animation applied to the whole body. The wave animation can be configured
+to be additive so that solely the movement of the hand is applied. When done correctly, the result is a walking
+and waving character.
+<br /><br />
+<i><b>Applying procedural animations</b></i>
+<br />
+Another topic of importance for advanced games is dynamic animations like ragdoll physics or inverse kinematics.
+In general it is easy to apply these in Horde3D. Joints are just standard scene nodes and consequently you have full
+control over their transformations using the API functions. As the animation system is working directly on the scene
+graph, it is possible to get the transformation after an animation has been applied and use that for computations in the
+IK or ragdoll system. The results coming from the external system can finally be applied to the joints again to
+make them visible for the model.
+<br /><br />
+
+For more information see the
+<a href="_api.html#Model-specific_scene_graph_functions">Model node functions</a> in the API Reference.
+</p>
+<br /><br />
+
+
+<a id="Integration"></a>
+<h3>Game engine integration</h3>
+<p>
+Horde3D is a pure graphics engine and can solely perform the rendering and animations. A complete application as a
+game or serious game usually requires additional modules like input, physics and AI logics that are all composed and
+synchronized in a game engine.
+<br /><br />
+The integration strategy of Horde3D is straightforward but still effective. In Horde3D all scene nodes as well as
+resources are accessed by handles. These handles can simply be stored in the entity objects of the game world. This
+strategy fits nicely the increasingly popular concept of component based entity systems where Horde3D can be considered
+as the graphical output component. To enable the more complex synchronization with e.g. a physics engine, Horde3D
+provides some special functions which can for example determine if a scene node has been modified by an animation.
+<br /><br />
+A further integration feature that can be useful for some applications are node attachments. The basic idea is that
+each node in the Horde3D scene graph files can store additional application-specific data like physics or AI properties.
+The data is parsed by the engine and can easily be retrieved using an API function. The attachment system would in
+principle make it possible to use the scene graph files as sole format for storing the complete game world.
+</p>
+<br /><br />
+
+
+<a id="MatSystem"></a>
+<h3>Pipeline and material system</h3>
+<p>
+<b>Pipeline concept</b>
+<br /><br />
+
+Much of the flexibility of Horde3D comes from the deep integration of shaders and a configurable pipeline system for
+realizing advanced rendering techniques. In Horde3D a pipeline resource is an XML document that describes the individual
+steps of the rendering process. A pipeline can define render targets that act as output buffers and store temporary
+rendering results. The render targets can have different sizes and formats and can contain several color and depth
+buffers. A number of pipeline commands exist that basically define which geometry is rendered to what output buffer
+and in which way. The geometry to be rendered is configured with material classes, while the rendering technique is
+chosen by setting the current shader context. These concepts will be explained in more detail later. The commands are
+grouped in stages that can be switched on and off individually. When an output buffer is filled, it can be used again
+as an input texture in a further rendering step. This chaining of output and input buffers makes it possible to implement
+a plenty of different post-processing effects and advanced rendering techniques.
+<br /><br />
+
+<b>Short introduction to hardware shaders</b>
+<br /><br />
+
+An essential core element of the Horde3D rendering system are shaders. In the common notion a shader is a program that
+is executed on the graphics card. All graphics cards have a hardware pipeline to process polygonal input data and bring
+it to the screen. This pipeline has different stages that among other operations transform input vertices, rasterize
+triangles and calculate the final color of the pixels in the frame buffer. In the past this pipeline was fixed and
+could only be configured to a very limited degree (fixed function pipeline). Later generations of graphics hardware
+have a programmable pipeline that enables to control particular stages by using software instructions.
+<br /><br />
+There are three types of shaders to configure the stages of the graphics hardware: vertex, geometry and fragment shaders.
+<br /><br />
+A vertex shader is executed for each vertex of the input data. Its main task is to transform the original 3D position
+and calculate a 2D screen space coordinate. A vertex shader can also manipualate other vertex attributes like the color
+or texture coordinates and hand the results to the next stage but it cannot create or remove any vertices.
+<br /><br />
+Geometry shaders can create new primitives like triangles or lines and are executed after vertex shaders. They are
+especially useful to implement some algorithms like shadow volumes completely on the GPU. Geometry shaders are
+exclusively supported by DirectX 10 hardware. Since OpenGL does not yet have vendor-independent extensions, this type
+of shader is not supported by Horde3D.
+<br /><br />
+Finally, a fragment shader (also known as pixel shader) calculates the color and depth value of each single pixel in
+the output buffer. Since nowadays most lighting operations are done per-pixel and no more per-vertex, fragment shaders
+are used to realize most of the advanced visual effects.
+<br /><br />
+The first programmable graphics cards had very strict limitations for the number of instructions and had to be
+programmed using an assembler syntax. Today all major graphics APIs provide high level shading languages with a C-like
+syntax. The most important shading languages are HLSL used by DirectX, GLSL as part of OpenGL and Cg invented by NVidia.
+Horde3D uses the OpenGL Shading Language (GLSL) to specify shader code.
+<br /><br />
+
+<b>Shaders and materials in Horde3D</b>
+<br /><br />
+In Horde3D the definition of a shader goes beyond the notion of a simple hardware shader as it has just been described.
+A Horde3D shader resource is a group of several shader programs where a pair of vertex and fragment shaders constitutes
+a so called shader context. The idea of the shader contexts is that a mesh needs to be treated differently at distinct
+stages of the rendering process. Generating the shadow map requires another shader program than computing the illumination
+contribution from a light source or writing velocity information to an off-screen buffer for creating motion blur effects.
+A shader resource provides all the required shader programs as contexts, and the Horde3D pipeline selects the context
+that it needs for the current rendering step.
+<br /><br />
+Every shader context is identified by a unique name. Most pipeline draw commands have an attribute which sets the current
+context used for rendering. It is worth mentioning that light sources also have two context attributes that define the
+shader contexts used for generating shadow maps and calculating illumination in forward rendering configurations. If a
+shader context is not defined in a shader resource, the associated geometry is ignored and not rendered.
+<br /><br />
+Hardware shaders used in shader contexts are just a description of how data needs to be processed. In order to become
+effective, they require input data. One part of that input data consists of the geometry information that the renderer
+pulls from the scene graph and the associated geometry resources. The other part are texture maps and constants. In the
+OpenGL Shading Language this data is referenced by a shader using uniforms. Horde3D materials are acting as the glue
+between a shader and the uniform data. The material resource references a shader for which it binds texture images.
+Furthermore, it enables to define arbitrarily named vector uniforms that can be used to exchange data between the
+application and the shader. A vector uniform could for example be used to set the glow intensity of an object from
+the application.
+<br /><br />
+One important property of materials is the material class. Some pipeline commands enable to restrict the rendering
+to a particular class to render solely a particular group of geometry. With classes it is for example possible to draw
+exclusively translucent objects in a particular pipeline stage. It is important to note that the material class system
+is hierarchical, so a material can be part of several super and sub classes.
+<br /><br />
+Another powerful feature of the material system is the possibility to link from one material to another one. The link
+feature makes it possible to import uniforms and texture bindings from other materials which is very useful for defining
+global data at a single location. For example, the ambient intensity of the scene could be defined in a single material
+which is linked to all mesh materials. This avoids the need to update the intensity value individually for all mesh
+materials if the ambient lighting is changed.
+<br /><br />
+
+For more information see the <a href="_pipeline.html">pipeline documentation</a>.
+</p>
+<br /><br />
+
+
+<a id="OccCulling"></a>
+<h3>Occlusion Culling</h3>
+<p>
+Occlusion culling is an optimization technique that makes it possible to cull objects that are not visible since they are hidden/occluded
+by other objects. Horde3D uses hardware occlusion queries for its occlusion culling implementation. These queries have a delay of one
+frame to avoid stalls that would happen when waiting for the query result directly. The drawback of this approach is that some slight
+popping can occur when an object that was hidden in the previous frame becomes visible in the current frame. The implementation uses the
+depth buffer to check for occlusion of objects, so occlusion culling is only working if the rendering pass has proper scene depth
+information.
+<br /><br />
+Horde3D supports multiple occlusion sets for different cameras. Enabling occlusion culling for a camera is basically very simple
+and works by setting a Camera node parameter. But in order that occlusion culling works efficiently, the scene needs to be sorted
+in front-to-back order. In Horde3D this sorting can be achieved through a special parameter in the pipeline drawing commands.
+<br /><br />
+All renderable objects act automatically as occluders. Occludees (objects that can be culled because of occlusion) are currently
+models and particle emitters. Meshes of a model can occlude other models but a single mesh cannot occlude a mesh of the same Model node.
+Light sources can also be occluded by other geometry which can be very useful in indoor scenes. Again, this only works if a proper
+depth buffer is available which usually requires special care for deferred shading.
+</p>
+
+<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
+</div>
+
+<div id="logo">
+    <img src="images/doclogo.gif" />
+</div>
+
+</body>
+</html>

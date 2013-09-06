@@ -1,0 +1,2 @@
+<Terrain name="Terrain1" sx="1024.0" sy="300.0" sz="1024.0" heightmap="terrains/terrain1/heightmap.tga" material="terrains/terrain1/terrain1.material.xml" />
+

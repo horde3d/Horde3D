@@ -1,0 +1,8 @@
+<Material>
+	<Shader source="shaders/model.shader" />
+	<ShaderFlag name="_F01_Skinning"/>
+	<ShaderFlag name="_F04_EnvMapping"/>
+
+	<Sampler name="albedoMap" map="models/knight/knight.jpg" />
+	<Sampler name="envMap" map="models/skybox/skybox.dds" />
+</Material>

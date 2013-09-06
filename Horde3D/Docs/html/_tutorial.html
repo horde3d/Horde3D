@@ -1,0 +1,171 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Horde3D Documentation</title>
+    <link rel="stylesheet" type="text/css" href="css/manual.css" title="ALL" media="screen,projection" />
+</head>
+
+<body>
+<div id="content">
+
+<h1>Getting started - a small tutorial</h1>
+
+<p>
+In this section we will create a simple application that loads a character and animates it
+using a walk cycle. You will see how straightforward it is to use the Horde3D API. As a first step
+you have to create an application that opens a window which can be used for rendering. This
+is a pretty standard task and if you are a novice and have problems with that on your platform
+use google to find one of the numerous good tutorials on the net or have a look at the samples
+that come with the Horde3D SDK. The next step is to initialize an OpenGL context for our rendering
+window. You can do this manually or use the Horde3D Utility Library to make your life easier. After
+that is done we can finally get to the engine related part.
+</p>
+
+<br />
+
+<div class="memdoc">
+<pre>
+#include &lt;Horde3D.h&gt;
+#include &lt;Horde3DUtils.h&gt;
+
+<b>H3DNode</b> model = 0, cam = 0;
+
+<b>void</b> initGame( <b>int</b> winWidth, <b>int</b> winHeight )
+{
+    <i>// Initialize engine</i>
+    h3dInit();
+   
+    <i>// Add pipeline resource</i>
+    <b>H3DRes</b> pipeRes = h3dAddResource( H3DResTypes::Pipeline, <em>"standard.pipeline.xml"</em>, 0 );
+    <i>// Add model resource</i>
+    <b>H3DRes</b> modelRes = h3dAddResource( H3DResTypes::SceneGraph, <em>"character.scene.xml"</em>, 0 );
+    <i>// Add animation resource</i>
+    <b>H3DRes</b> animRes = h3dAddResource( H3DResTypes::Animation, <em>"walk.anim.xml"</em>, 0 );
+    <i>// Load added resources</i>
+    h3dutLoadResourcesFromDisk( <em>""</em> );
+    
+    <i>// Add model to scene</i>
+    model = h3dAddNodes( H3DRootNode, modelRes );
+    <i>// Apply animation</i>
+    h3dSetupModelAnimStage( model, 0, animRes, 0, <em>""</em>, false );
+    
+    <i>// Add light source</i>
+    <b>H3DNode</b> light = h3dAddLightNode( H3DRootNode, <em>"Light1"</em>, 0, <em>"LIGHTING"</em>, <em>"SHADOWMAP"</em> );
+    <i>// Set light position and radius</i>
+    h3dSetNodeTransform( light, 0, 20, 0, 0, 0, 0, 1, 1, 1 );
+    h3dSetNodeParamF( light, H3DLight::RadiusF, 0, 50.0f );
+	
+    <i>// Add camera</i>
+    <b>H3DNode</b> cam = h3dAddCameraNode( H3DRootNode, <em>"Camera"</em>, pipeRes );
+
+    <i>// Setup viewport and render target sizes</i>
+    h3dSetNodeParamI( cam, H3DCamera::ViewportXI, 0 );
+    h3dSetNodeParamI( cam, H3DCamera::ViewportYI, 0 );
+    h3dSetNodeParamI( cam, H3DCamera::ViewportWidthI, winWidth );
+    h3dSetNodeParamI( cam, H3DCamera::ViewportHeightI, winHeight );
+    h3dSetupCameraView( cam, 45.0f, (float)winWidth / winHeight, 0.5f, 2048.0f );
+    h3dResizePipelineBuffers( pipeRes, winWidth, winHeight );
+}
+</pre>
+</div>
+
+<br />
+<p>
+The first line of the code above declares two global handles to Horde scene graph nodes. All objects in Horde
+are accessible via handles, a concept similar to pointers. The first thing we need to do in our <i>initGame</i>
+function to use Horde3D is initializing the engine. This happens with the function <b>h3dInit</b>. 
+<br /><br />
+The next step is to load the required resources. In Horde resources are data files that are loaded once and
+can be referenced by several objects for rendering. The function <b>h3dAddResource</b> takes the resource type
+we want to add and the name of the resource (usually the filename) as parameters and returns a handle to the
+created resource object. In our case we want a model which is represented as a scene graph file in Horde and
+additionally an animation. Now the resources are created but we still need to load them. Horde supports loading
+from any sources including encrypted archives or a network but in this case we just want to load our resources
+from the local hard disk which is done with the utility function <b>h3dutLoadResourcesFromDisk</b>. 
+Besides our model and animation we also load a pipeline resource. A pipeline defines how the the scene is rendered
+and can be used to realize post-processing effects or high dynamic range rendering. For the beginning you can just use
+the files that come with the SDK samples. 
+<br /><br />
+After we have loaded the required resources we can finally build up the scene graph. The scene graph represents
+the objects in our virtual world in a hierachical tree structure. First we add the model that we have loaded before.
+We use the function <b>h3dAddNodes</b> for doing this which takes a scene graph resource and a parent node. The parent
+is the scene object to which the new node is attached, in our case just the root node which is the base of the
+virtual world. Similar to h3dAddResource, this function also returns a handle to the created scene graph subtree.
+After that we assign the loaded animation to our model node with the function <b>h3dSetupModelAnimStage</b>. Horde
+allows you to apply several different animations to a model and makes it possible to blend and mix them but for
+the beginning one should be enough. Now that adding the model is finished we still need a light source. It would be
+possible to load another scene graph file which contains the light source but we want to add it manually by using
+the <b>h3dAddLightNode</b> function. This function requires several parameters specifying the shaders used for
+rendering. More information on this can be found in other sections of the manual. The next step is to set the
+position and orientation which is done with <b>h3dSetNodeTransform</b>. After that we specify the light radius which
+defines the zone of influence using <b>h3dSetNodeParamF</b>. Finally we still need a camera which represents the viewer.
+It is added with the function <b>h3dAddCameraNode</b> and takes our loaded pipeline resource as parameter.
+The view parameters of the camera and the render targets of the pipeline resource depend on the size of the rendering window. 
+So in the last step we apply the viewport settings to the camera node and resize the output buffers of the pipeline.
+</p>
+<br />
+
+<div class="memdoc">
+<pre>
+<b>void</b> gameLoop( <b>float</b> fps )
+{
+    <b>static float</b> t = 0;
+    
+    <i>// Increase animation time</i>
+    t = t + 10.0f * (1 / fps);
+    
+    <i>// Play animation</i>
+    h3dSetModelAnimParams( model, 0, t, 1.0f );
+    
+    <i>// Set new model position</i>
+    h3dSetNodeTransform( model, t * 10, 0, 0,  <i>// Translation</i>
+                         0, 0, 0,              <i>// Rotation</i>
+                         1, 1, 1 );            <i>// Scale</i>
+										   
+    <i>// Render scene</i>
+    h3dRender( cam );
+    
+    <i>// Finish rendering of frame</i>
+    h3dFinalizeFrame();
+}
+
+
+<b>void</b> releaseGame()
+{
+    <i>// Release engine</i>
+    h3dRelease();
+}
+</pre>
+</div>
+
+<br />
+
+<p>
+The next function in our sample is the game loop which is called once every frame. Here we will animate our
+character model. For doing this we define a time counter which is increased in every frame. To make the animation
+speed independent from the framerate, we scale the time step by the inverse of the current frames per second value.
+After that we tell the engine to update the model animation using the <b>h3dSetModelAnimParams</b> function. We could
+also specify a blend weight for combining animations here but since we have only one animation we don't need that.
+Now we can displace our character a bit so that it moves through the scene. This is achieved by updating the model
+node transformation. Finally we need to tell the engine to render the scene and recalculate the model animation. This
+happens with the function <b>h3dRender</b> that expects the camera from which the scene is viewed. The very last step is
+to inform the engine that rendering for the current frame is finished now.
+<br /><br />
+The last function <i>releaseGame</i> is called when the application is closed. All we have to do here is freeing the
+engine with the <b>h3dRelease</b> function.
+<br /><br />
+That's it so far with the basic tutorial. You can have a look at the <a href="_usageguide.html">Usage Guide</a>
+now to learn more details. 
+</p>
+<br /><br />
+
+
+<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
+</div>
+
+<div id="logo">
+    <img src="images/doclogo.gif" />
+</div>
+
+</body>
+</html>

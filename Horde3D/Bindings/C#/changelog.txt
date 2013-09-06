@@ -1,0 +1,144 @@
+--------------------------------------------
+Change log 28-may-2011
+--------------------------------------------
+- Supports Horde3D SDK [1.0.0Beta5]
+
+--------------------------------------------
+Change log 23-august-2009
+--------------------------------------------
+- Switched license to EPL
+
+--------------------------------------------
+Change log 11-august-2009
+--------------------------------------------
+- Supports Horde3D SDK [1.0.0Beta4]
+
+--------------------------------------------
+Change log 16-march-2009
+--------------------------------------------
+- Supports Horde3D SDK [1.0.0Beta3]
+
+--------------------------------------------
+Change log 05-June-2008
+--------------------------------------------
+- Supports Horde3D SDK [1.0.0Beta]
+
+--------------------------------------------
+Change log 04-December-2007
+--------------------------------------------
+
+Bugfixes:
+- As a result of multithreading instability all samples are now single-threaded, using the application event handler Idle.
+- Identified and removed the FPS-Bug. After resetting the stopwatch the time interval measurement has to be startet again.
+- Workaround implemented into sample source, because Horde3D crashes in case resize() is called before init().
+
+Remarks:
+If you would like to disable the mouse tracking don't forget to call Invalidate() to redraw the scene
+
+--------------------------------------------
+Change log 30-November-2007
+--------------------------------------------
+
+New features:
+- Supports Horde3D SDK [0.13.0] with support for HDR textures and ray collision queries
+- Added and tested new Horde3D functions
+- C# samples are up-to-date
+
+Changes:
+- Removed obsolete Horde3D functionality
+- Removed VB.NET samples due to dubious inner exceptions
+
+Known issues:
+- Horde3D is not thread safe. So multithreading will cause instability.
+- The clear()-method is not stable
+- The sample source-code has to be revised
+- Casting int to uint is no long term solution
+- FPS calculation might be wrong yet still
+- Security permission levels have to be analyzed
+- Horde3D.NET does not support 64bit
+
+--------------------------------------------
+Change log 30-November-2007
+--------------------------------------------
+
+New features:
+- Supports Horde3D SDK [0.12.0] with Parallel Split shadow mapping
+- Added and tested new Horde3D functions
+- C# and VB.NET samples are up-to-date
+
+Changes:
+- Removed obsolete Horde3D functionality
+
+Fixed bugs:
+- Changed target platform to x86 in order to prevent incompatibility on Windows (XP/Vista) 64 Bit systems
+
+Known issues:
+- Horde3D is not thread safe. So multithreading will cause instability.
+- The clear()-method is not stable
+- The sample source-code has to be revised
+- Casting int to uint is no long term solution
+- FPS calculation might be wrong yet still
+- Security permission levels have to be analyzed
+- Horde3D.NET does not support 64bit
+
+--------------------------------------------
+Change log 09-August-2007
+--------------------------------------------
+
+New features:
+- Supports Horde3D SDK [0.11.1] with Deferred Shading Pipeline
+- All functions are implemented and tested
+- C# and VB.NET samples are up-to-date
+
+Changes:
+- Accessed unmanaged memory content by marshalling in order to fill in the functionality gap
+- Activated Common Language Specification support and replaced uint by int
+- Requested minimum security permission for code access
+- SuppressUnmanagedCodeSecurity attribute optimizes unmanaged code access
+
+Fixed bugs:
+- converting boolean values from unmanaged to managed code requires MarshalAs attributes
+
+Known issues:
+- Horde3D is not thread safe. So multithreading will cause instability.
+- The clear()-method is not stable
+- The sample source-code has to be revised
+- casting int to uint is no long term solution
+- FPS calculation might be wrong yet still
+- security permission levels have to be analyzed
+
+--------------------------------------------
+Change log 05-July-2007
+--------------------------------------------
+
+New features:
+- Supports Horde3D SDK [0.11.0]
+- Knight .NET Sample (conversion)
+- Visual Basic .NET samples
+
+--------------------------------------------
+Change log 09-May-2007
+--------------------------------------------
+
+New features:
+- Chicago .NET Sample (conversion) in VB.NET
+
+--------------------------------------------
+Change log 06-May-2007
+--------------------------------------------
+
+New features:
+- Model Viewer added
+
+--------------------------------------------
+Change log 02-May-2007
+--------------------------------------------
+
+New features:
+- Supports Horde3D SDK [0.10.0]
+- Chicago .NET Sample (conversion)
+- Asynchronous key handling
+
+Fixed bugs:
+- Thread join issues
+- FPS calculation

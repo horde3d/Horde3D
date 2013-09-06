@@ -1,0 +1,46 @@
+<Model name="man" geometry="models/man/man.geo" lodDist1="10" lodDist2="20" lodDist3="40">
+	<Joint name="Hips" tx="0.003413" ty="0.899222" tz="0.0192515" rx="5.12489" ry="0" rz="0" sx="0.009444" sy="0.009444" sz="0.009444" jointIndex="1">
+		<Joint name="RightUpLeg" tx="-10" ty="-2.10541" tz="-0.189289" rx="-1.45421" ry="-89.8994" rz="-95.7041" jointIndex="2">
+			<Joint name="RightLeg" tx="44.2048" ty="-1e-006" tz="-1.5e-005" rx="-0.117227" ry="4.76155" rz="-6.74527" jointIndex="3">
+				<Joint name="RightFoot" tx="38.2707" ty="-9.8e-005" tz="0" rx="0.476649" ry="-3.38179" rz="65.8498" jointIndex="4">
+					<Joint name="RightToeBase" tx="16.0902" ty="8e-006" tz="0" rx="0.0934495" ry="0.0577542" rz="30.3111" jointIndex="5" />
+				</Joint>
+			</Joint>
+		</Joint>
+		<Joint name="LeftUpLeg" tx="10" ty="-2.1054" tz="-0.189282" rx="1.3644" ry="-89.487" rz="-71.1373" jointIndex="6">
+			<Joint name="LeftLeg" tx="44.2045" ty="-1.1e-005" tz="-7e-006" rx="-0.290147" ry="-4.74528" rz="-13.813" jointIndex="7">
+				<Joint name="LeftFoot" tx="38.2707" ty="4e-006" tz="-1e-006" rx="-0.257717" ry="3.69968" rz="74.9424" jointIndex="8">
+					<Joint name="LeftToeBase" tx="16.0905" ty="-2e-006" tz="0" rx="-0.0949392" ry="-0.058671" rz="30.297" jointIndex="9" />
+				</Joint>
+			</Joint>
+		</Joint>
+		<Joint name="Spine1" tx="0" ty="7.3373" tz="1e-006" rx="0.00126051" ry="90.0144" rz="84.8278" jointIndex="10">
+			<Joint name="Spine2" tx="9.22869" ty="0" tz="-1e-006" rx="-0" ry="0" rz="-7.52016" jointIndex="11">
+				<Joint name="Spine3" tx="9.66098" ty="3e-006" tz="0" rx="0.00114592" ry="0.000343775" rz="11.9558" jointIndex="12">
+					<Joint name="Neck" tx="32.4826" ty="-1.1e-005" tz="9e-006" rx="-5.37852" ry="0.413955" rz="13.9686" jointIndex="13">
+						<Joint name="Head" tx="7.05983" ty="-7e-005" tz="9e-006" rx="-0.000286479" ry="0" rz="-3.05944" jointIndex="14" />
+					</Joint>
+					<Joint name="RightShoulder" tx="23.5114" ty="-0.951058" tz="-3.99999" rx="78.7311" ry="11.2248" rz="-67.8302" jointIndex="15">
+						<Joint name="RightArm" tx="15.9639" ty="-2e-006" tz="-1.1e-005" rx="-0.800792" ry="25.7824" rz="-61.6414" jointIndex="16">
+							<Joint name="RightForeArm" tx="29.4973" ty="9e-006" tz="2.2e-005" rx="3.61048" ry="46.2001" rz="-51.5617" jointIndex="17">
+								<Joint name="RightHand" tx="27.9107" ty="2e-006" tz="1e-006" rx="4.57971" ry="2.69585" rz="-22.0318" jointIndex="18" />
+							</Joint>
+						</Joint>
+					</Joint>
+					<Joint name="LeftShoulder" tx="23.5114" ty="-0.950981" tz="4.00003" rx="-63.5482" ry="-49.7037" rz="-32.2015" jointIndex="19">
+						<Joint name="LeftArm" tx="15.9639" ty="-8e-006" tz="1e-006" rx="3.5855" ry="-41.8116" rz="-56.4397" jointIndex="20">
+							<Joint name="LeftForeArm" tx="29.4974" ty="-1e-005" tz="-9e-006" rx="0.67582" ry="-69.7993" rz="-26.649" jointIndex="21">
+								<Joint name="LeftHand" tx="27.9106" ty="5e-006" tz="1.8e-005" rx="-0.0799277" ry="2.29743" rz="2.09715" jointIndex="22" />
+							</Joint>
+						</Joint>
+					</Joint>
+				</Joint>
+			</Joint>
+		</Joint>
+	</Joint>
+
+	<Mesh name="body" lodLevel="1" material="models/man/civilian1.material.xml" batchStart="0" batchCount="2976" vertRStart="0" vertREnd="860" />
+	<Mesh name="body" material="models/man/civilian1.material.xml" batchStart="2976" batchCount="5994" vertRStart="861" vertREnd="2430" />
+	<Mesh name="body" lodLevel="2" material="models/man/civilian1.material.xml" batchStart="8970" batchCount="1461" vertRStart="2431" vertREnd="2911" />
+	<Mesh name="body" lodLevel="3" material="models/man/civilian1.material.xml" batchStart="10431" batchCount="729" vertRStart="2912" vertREnd="3184" />
+</Model>

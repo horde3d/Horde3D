@@ -1,0 +1,112 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Horde3D Documentation</title>
+    <link rel="stylesheet" type="text/css" href="css/manual.css" title="ALL" media="screen,projection" />
+</head>
+
+<body>
+<div id="content">
+
+<h1>FAQ (Frequently Asked Questions)</h1>
+
+<h2>General</h2>
+<ul>
+    <li><a href="#What">What is Horde3D?</a></li>
+    <li><a href="#License">Under which license is Horde3D distributed?</a></li>
+    <li><a href="#Requirements">What are the minimum system requirements?</a></li>
+</ul>
+
+<h2>Features</h2>
+<ul>
+    <li><a href="#NextGen">Why is Horde3D entitled as next-generation engine?</a></li>
+    <li><a href="#Crowd">What makes Horde3D especially suitable for rendering crowds?</a></li>
+    <li><a href="#Lightweight">Horde3D is very lightweight compared to other engines. Doesn't that mean it is lacking power and flexiblity?</a></li>
+</ul>
+
+<br /><br /><br />
+
+
+<h2>General</h2>
+
+<a id="What"></a>
+<h3>What is Horde3D?</h3>
+<p>
+Horde3D is a small open source 3D rendering engine. It is written in an effort to
+create a graphics engine that offers the stunning visual effects expected in next-generation
+games while at the same time being as lightweight and conceptually clean as possible.
+Horde3D has a simple and intuitive interface accessible from virtually any programming
+language and is particularly suitable for rendering large crowds of animated characters
+in next-generation quality.
+</p>
+<br />
+
+<a id="License"></a>
+<h3>Under which license is Horde3D distributed?</h3>
+<p>
+Horde3D is distributed under the terms of the Eclipse Public License.
+See the <a href="http://www.horde3d.org/license.html">licensing site</a> for more information.
+</p>
+<br />
+
+<a id="Requirements"></a>
+<h3>What are the minimum system requirements?</h3>
+<p>
+Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of DirectX that means a card supporting
+at least Shader Model 2.0 or better SM 3.0. Hence the minimum hardware needed to run an application using Horde3D is a
+NVidia GeForce FX or ATI Radeon 9500 graphics accelerator.
+</p>
+
+<br /><br />
+
+
+<h2>Features</h2>
+
+<a id="NextGen"></a>
+<h3>Why is Horde3D entitled as next-generation engine?</h3>
+<p>
+There are many discussions about what makes a game nextgen but on what most people agree
+is that you have many details, immersive gameplay and vivid worlds. Horde3D tries to
+do justice to these requirements from the perspective of a graphics engine. Horde has a
+shader driven architecture which makes it possible to do most cutting edge graphics effects
+like parallax mapping or HDR. Furthermore, it is possible to combine the engine with other
+specific middleware. For example, the scene graph and animation system are designed in a way
+that you can use dynamic animations calculated by an IK or ragdoll system. Another point is
+that Horde3D is optimized for rendering large crowds of animated characters which is also a
+feature in several newer games.
+</p>
+<br />
+
+<a id="Crowd"></a>
+<h3>What makes Horde3D especially suitable for rendering crowds?</h3>
+<p>
+The complete scene graph and animation systems are designed with this requirement in mind. For
+example, Horde3D tries to keep node hierachies small to reduce call overhead and to use cached
+data for faster animations. The geometry is optimized for efficient cache usage and you can
+use several levels of detail for a model. Furthermore, it is possible to use vertex skinning
+and apply deferred shading to reduce the number of draw calls for scenes with many lights.
+</p>
+<br />
+
+<a id="Lightweight"></a>
+<h3>Horde3D is very lightweight compared to other engines. Doesn't that mean it is lacking power and flexiblity?</h3>
+<p>
+One of the major goals of Horde3D is to keep the design and code simple and clear. Nevertheless, we don't
+want any compromises when it comes to functionality and flexibility. A good portion of the development effort is
+spent on finding concepts which satisfy these sometimes conflicting requirements. The key to this is abstraction
+and orthogonality which help to reduce the number of special cases and thus to keep the code small and well
+comprehensible.
+</p>
+<br />
+
+<br /><br />
+
+<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
+</div>
+
+<div id="logo">
+    <img src="images/doclogo.gif" />
+</div>
+
+</body>
+</html>

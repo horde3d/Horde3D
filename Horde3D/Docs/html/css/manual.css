@@ -1,0 +1,204 @@
+body
+{
+    background-image: url(../images/docbg.gif);
+    background-repeat: repeat-x;
+	background-color: White;
+    margin: 0px;
+    font-family: Arial, Sans-Serif;
+    font-size: 13px;
+    color: Black;
+}
+a:link, a:active, a:visited
+{
+    text-decoration: none;
+    display: inline;
+    color: #ED7518;
+}
+a:hover
+{
+    text-decoration: underline;
+}
+img
+{
+	border: none;
+}
+
+
+/* Logo for all Pages */
+#logo
+{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+/* Copyright */
+#copy
+{
+    padding-top: 10px;
+    text-align:center;
+    font-size: 10px;
+    border-top: solid 3px #8C8B90;
+    padding-bottom: 10px;
+}
+
+/* Navigation bar */
+#navbar
+{
+    position:absolute; 
+    top: 120px; 
+    left: 0px;
+	white-space: nowrap;
+}
+#navbar ul
+{
+	margin: 0px;
+	padding: 5px;
+}
+#navbar a
+{
+	color: black;
+}
+#navbar a:hover
+{
+	color: #ED7518;
+}
+body.navbar
+{
+    background-image: url(../images/navbg.gif);
+    background-repeat: repeat-x;
+}
+/* navbar tree: put this inside a @media qualifier so Netscape 4 ignores it */
+@media screen, print { 
+	/* Turn off list bullets */
+	ul.mktree  li { list-style: none; } 
+	/* Control how "spaced out" the tree is */
+	ul.mktree, ul.mktree ul , ul.mktree li { margin-left:8px; padding:1px; }
+	/* Provide space for our own "bullet" inside the LI */
+	ul.mktree  li  .bullet { padding-left: 15px; }
+	/* Show "bullets" in the links, depending on the class of the LI that the link's in */
+	ul.mktree  li.liOpen    .bullet { cursor: pointer; background: url(../images/navminus.gif) center left no-repeat; }
+	ul.mktree  li.liClosed  .bullet { cursor: pointer; background: url(../images/navplus.gif) center left no-repeat; }
+	ul.mktree  li.liBullet  .bullet { cursor: default; background: url(../images/navlink.gif) center left no-repeat; }
+	/* Sublists are visible or not based on class of parent LI */
+	ul.mktree  li.liOpen    ul { display: block; }
+	ul.mktree  li.liClosed  ul { display: none; }	
+}
+
+
+/* subpage Content Box */
+#content
+{
+    position:absolute; 
+    top: 130px; 
+    left: 20px; 
+    width: 900px;   
+}
+#content h1
+{
+    margin: 0px;
+    margin-bottom: 15px;
+    padding: 5px 5px 5px 10px;
+    font-size: 20px;
+}
+#content h2
+{
+    border-top: solid 1px #ADACB0;
+    background-color: #E7E7E7;
+    margin: 0px;
+    margin-bottom: 5px;
+    padding: 5px 5px 5px 10px;
+    font-size: 13px;
+}
+#content h2 i
+{
+    font-weight:normal;
+    font-style: normal;
+}
+#content h3
+{
+    border-top: dashed 1px #ADACB0;
+    /*background-color: #65676C;*/
+    margin: 0px;
+    padding: 10px 5px 5px 10px;
+    font-size: 13px;
+}
+#content h3 i
+{
+    font-weight:normal;
+    font-style: normal;
+}
+#content p
+{
+    /*border-bottom: solid 1px #ADACB0;*/
+    margin: 0px 0px 5px 0px;
+    padding: 5px 5px 5px 10px;
+    font-size: 13px;
+}
+
+.memproto, .memdoc
+{
+	padding: 5px;
+	background-color: #F5F5F5;
+    border: 1px solid #CCCCCC;
+    display: block;
+    font-size: 14px;
+}
+        
+.memproto
+{
+    background-image: url(../images/memproto.gif);
+    background-repeat: repeat-x;
+    background-color: #ED7518; 
+    color: White;   
+}
+
+.memproto a:link, .memproto a:active, .memproto a:visited
+{
+    text-decoration: underline;
+    display: inline;
+    color: White;
+}
+
+.memdoc td
+{
+	padding: 2px;
+}
+
+li
+{
+    list-style-type: square;
+}
+
+pre i
+{
+	color: #007700;    
+}
+        
+pre b
+{
+	color: #000077;
+}
+        
+pre em
+{
+	color: #770000;
+}
+
+.syntaxbox table
+{
+    border-spacing: 10px;
+    background-color: #F5F5F5;
+    border: 1px solid #CCCCCC;
+}
+        
+.syntaxbox table table
+{
+	border-spacing: 10px;
+    border: 0px;
+}
+        
+.syntaxbox tr
+{
+	vertical-align: top;
+}

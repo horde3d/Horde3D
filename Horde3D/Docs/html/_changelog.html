@@ -1,0 +1,508 @@
+<!-- saved from url=(0022)http://internet.e-mail -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Horde3D Documentation</title>
+    <link rel="stylesheet" type="text/css" href="css/manual.css" title="ALL" media="screen,projection" />
+</head>
+
+<body>
+<div id="content">
+
+<h1>Horde3D SDK Change Log</h1>
+<p>You can find out here what has changed in the Horde3D SDK releases.</p>
+
+<h3>Version [1.0.0] Beta5</h3>
+<ul>
+	<li><b>Core Engine</b></li>
+	<ul>
+		<li>Added support for 3d/volume textures.</li>
+		<li>Added support for input gamma correction (sRGB texture support).</li>
+		<li>Refactored overlay system and h3dShowOverlay: layers were removed and overlays are batched for better performance.</li>
+		<li>Changed overlay coordinate system to go from (0,0) to (aspect,1) for better compatibility with different screen aspect ratios.</li>
+		<li>Refactored extension system.</li>
+		<li>Exchanged current XML parser by RapidXml.</li>
+		<li>Removed requirement that resource data has to be null-terminated.</li>
+		<li>Removed restriction that resource names may not contain colons.</li>
+		<li>Improved particle spawning: particles are created along emitter's motion vector to avoid blobs when framerate is low.</li>
+		<li>Added particle parameter 'drag' with which particles can inherit the velocity of their emitter.</li>
+		<li>Added support for weighted additive animations.</li>
+		<li>Added support for negative morpher weights.</li>
+		<li>Added support for individual viewport settings for each camera and removed API functions h3dSetupViewport/h3dGetViewportParams.</li>
+		<li>Added API function h3dResizePipelineBuffers to change the output buffer size.</li>
+		<li>Renamed API function getPipelineRenderTargetData to getRenderTargetData and added support for reading out the backbuffer directly.</li>
+		<li>Added color intensity multiplier for light nodes.</li>
+		<li>Introduced scene node flags to give more control over where nodes should be processed.</li>
+		<li>Removed API function h3dSetNodeActivation which is redundant due to new node flags.</li>
+		<li>Optimized deferred shading by drawing light volumes.</li>
+		<li>Added more CPU timing stats.</li>
+		<li>Added basic GPU timing stats (requires ARB_timer_query to work).</li>
+		<li>Removed most of the deprecated OpenGL fixed function calls.</li>
+		<li>Introduced FX sampler parameter 'Texture' for specifying default textures.</li>
+		<li>Introduced FX context state 'ZEnable'.</li>
+		<li>Added backface culling configuration to FX context.</li>
+		<li>Changed declaration of FX samplers to include type.</li>
+		<li>Added support for single float uniforms.</li>
+		<li>Added shader uniform 'nodeId' which contains the object's node handle.</li>
+		<li>Changed overlay shader vertex attributes.</li>
+		<li>Replaced all built-in GLSL vertex attributes by custom ones.</li>
+		<li>Removed vertex attribute 'bitangent' as it can be derived in the shader.</li>
+		<li>Replaced fixed-function modelview and projection matrices by custom uniforms (viewMat, viewMatInv, projMat, viewProjMat, viewProjMatInv).</li>
+		<li>Renamed uniform 'viewer' to 'viewerPos'.</li>
+		<li>Merged uniform 'lightCosCutoff' into w component of 'lightDir'.</li>
+		<li>Simplified particle vertex shader and removed unnecessary attributes and uniforms from renderer.</li>
+		<li>Added log messages to the debugger output (Win only).</li>
+		<li>Fixed several issues in shadow mapping implementation.</li>
+		<li>Fixed a plenty of different bugs.</li>
+	</ul>
+	<li><b>Utility Lib</b></li>
+	<ul>
+		<li>Changed filename of default engine log file to 'Horde3D_Log.html'.</li>
+		<li>Added utility function h3dutScreenshot.</li>
+		<li>Added utility function h3dutCreateGeometryRes to create dynamic geometry resources.</li>
+	</ul>
+	<li><b>ColladaConv</b></li>
+	<ul>
+		<li>Implemented batch processing that can be used to recompile an entire asset repository.</li>
+		<li>Improved parsing performance.</li>
+		<li>Improved COLLADA compatibility and fixed several bugs.</li>
+	</ul>
+	<li><b>Samples</b></li>
+	<ul>
+		<li>Updated sample framework to GLFW version 2.7</li>
+		<li>Added possibility to freeze camera.</li>
+		<li>Set window resolution of samples to widescreen format by default.</li>
+		<li>Fixed precision issues in deferred shading pipeline.</li>
+		<li>Switched to Blinn-Phong shading model.</li>
+	</ul>
+</ul>
+
+
+<h3>Version [1.0.0] Beta4</h3>
+<ul>
+	<li><b>Changed license from LGPL to Eclipse Public License.</b></li>
+	<br />
+	<li>Refactored API to be clearer and less verbose; replaced namespaces by prefixes.</li>
+	<li>Changed API error handling: usage errors (e.g. invalid function parameters) are no longer indicated by a return value but can be retrieved with a new error function.</li>
+	<li>Implemented more powerful API for accessing resource data. Resource data is organized as elements, parameters and streams now.</li>
+	<li>Enabled read and write access to all mipmaps and slices (cubemap faces) of Texture resources.</li>
+	<li>Reorganized geometry vertex data as three streams to which API provides full read and write access.</li>
+	<li>Enabled creation of dynamic cubemap textures and 2D textures with different pixel formats.</li>
+	<li>Improved animation system: Layers are defined explicitly now and it is possible to have several animations on the same layer. The blend weights of animations that share the same layer get normalized. See documentation for more details.</li>
+	<li>Replaced XML based shader FX syntax by a custom CgFX-like syntax.</li>
+	<li>Removed fixed-function alpha test from shader FX section (alpha testing can be done in shaders).</li>
+	<li>Added more stats for animation time and estimated video memory footprint of textures and geometry.</li>
+	<li>Added visualization of skeletons in debug view.</li>
+	<li>Fixed bounding box update when using hardware skinning.</li>
+	<li>Disabled some log messages (e.g. message when scene node is added).</li>
+	<li>Fixed many smaller bugs and did a lot of internal refactorings.</li>
+	<li>Improved Collada support: polylists are supported now.</li>
+	<li>Fixed several other issues in ColladaConv.</li>
+	<li>Added simple benchmark mode to samples (can be activated with command line argument -bm).</li>
+	<li>Added AlphaTest flag in model shader.</li>
+	<li>Improved documentation style and layout.</li>
+</ul>
+
+
+<h3>Version [1.0.0] Beta3</h3>
+<ul>
+	<li>Refactored shader system: new shader file format without XML CDATA sections, support for #include directive and automatic permutation generation based on flags.</li>
+	<li>Replaced texture unit configuration in materials by named samplers (pipeline command BindBuffer was changed and UnbindBuffers added).</li>
+	<li>Added more configurable render states to shader contexts.</li>
+	<li>Added configurable sampler states to shader format (resource flags NoTexFiltering and NoTexRepeat were removed).</li>
+	<li>Adapted all sample shaders to refactored shader system and implemented a single übershader for models.</li>
+	<li>Refactored LOD system: models can have LOD meshes now (Group node params MinDist and MaxDist were removed).</li>
+	<li>Optimized scene management by implementing a basic spatial graph.</li>
+	<li>Optimized performance of adding nodes to large scene graphs.</li>
+	<li>Added support for loading DDS files (cube maps must be stored as dds now; vertical cross layout no longer supported).</li>
+	<li>Merged Texture2D and TextureCube resources to a single Texture resource.</li>
+	<li>Removed POT conversion of NPOT textures.</li>
+	<li>Added color support for overlays (added shader uniform and modified API function showOverlay and utility function showText).</li>
+	<li>Extended utility function showFrameStats.</li>
+	<li>Changed overlay coordinate system origin from bottom-left to top-left in order to make overlay system more intuitive.</li>
+	<li>Exposed camera transformation to pipeline fullscreen-quad passes.</li>
+	<li>Added nicer looking info box for frame stats.</li>
+	<li>Added engine option DumpFailedShaders for dumping corrupt shader code to a file.</li>
+	<li>Added API function getNextResource for iterating over resources.</li>
+	<li>Added API function finalizeFrame which should be called after all rendering for the current frame has been done.</li>
+	<li>Added API function setMaterialSampler.</li>
+	<li>Replaced API function resize by setupViewport.</li>
+	<li>Added API function checkNodeVisibility to find out if a node is visible.</li>
+	<li>Renamed API function calcCameraProjectionMatrix to getCameraProjectionMatrix since it just returns the matrix now instead of recalculating it.</li>
+	<li>Renamed AnisotropyFactor to MaxAnisotropy in EngineOptions enum.</li>
+	<li>Renamed resource Effect to ParticleEffect in order to avoid confusion with shader effects (also adapted emitter node params and default file extension).</li>
+	<li>Did many smaller bug fixes, code cleanups and optimizations in engine core.</li>
+	<li>ColladaConv update: Removed shader name command line parameter since it is usually not required with übershaders.</li>
+	<li>ColladaConv update: ColladaConv writes skinning shader flag to materials when the model has joints.</li>
+	<li>Added support for node libraries to ColladaConv.</li>
+	<li>Added support for polygon tags to ColladaConv.</li>
+</ul>
+
+
+<h3>Version [1.0.0] Beta2</h3>
+<ul>
+	<li>Implemented simple animation compression scheme and updated animation format to version 3.</li>
+	<li>Reduced shadow map aliasing by taking into account exclusively visible geometry when calculating PSSM crop matrix.</li>
+	<li>Implemented occlusion culling for light sources (light sources can be completely occluded by geometry).</li>
+	<li>Fixeded several bugs in scene graph and animation system.</li>
+	<li>Integrated several smaller fixes to improve cross-platform compatibility (especially thanks to Codepoet).</li>
+	<li>Did a few other smaller bug fixes and code improvements.</li>
+	<li>Replaced makefiles by CMake build scripts (thanks to Codepoet and swiftcoder).</li>
+	<li>Added API function getStat and EngineStats enum for reading statistic values like triangle and batch count.</li>
+	<li>Added utility function showFrameStats to display frame statistics.</li>
+	<li>Added API functions setResourceParami, setResourceParamf, getResourceParamstr and setResourceParamstr.</li>
+	<li>Added EffectResParams enum and MaterialResParams enum to query and modify resource parameters.</li>
+	<li>Added MaxNumMessages to EngineOptions enum for setting the maximum number of log messages.</li>
+	<li>Modified castRay API function (and added getCastRayResult) to support querying several intersection points (thanks to CodePoet).</li>	
+	<li>Added API function hasEmitterFinished to check if an emitter is no longer active.</li>
+	<li>Modified API function queryUnloadedResource to take an index for querying the n-th unloaded resource.</li>
+	<li>Added API function isResourceLoaded to check if a resource has been loaded.</li>
+	<li>Added API functions getNodeParamstr and setNodeParamstr.</li>
+	<li>Added SceneNodeParams enum.</li>
+	<li>Removed API functions getNodeName, setNodeName, getNodeAttachmentString (replaced by get/setNodeParamstr with SceneNodeParams enum).</li>
+	<li>Changed API function addNodes to return 0 when an unloaded scenegraph resource is specified.</li>
+	<li>Changed return value of API function init to true if engine is already initialized.</li>
+	<li>Added GLFW source to SDK distribution.</li>
+	<li>Added support for non baked transformation data in ColladaConv.</li>
+	<li>Fixed serious texture seam bug and other smaller issues in ColladaConv.</li>
+	<li>Improved font rendering and updated sample font texture.</li>
+	<li>Added enhanced shadow map bias calculation to sample shaders (commented out by default since it requires SM3).</li>
+	<li>Fixed bug in sample parallax mapping shader.</li>
+	<li>Updated documentation with geometry and animation format specifications (thanks to Codepoet).</li>
+</ul>
+
+<h3>Version [1.0.0] Beta1</h3>
+<ul>
+	<li>Implemented occlusion culling for models and emitters.</li>
+	<li>Implemented API based render-to-texture for rendering reflections and other effects which require several cameras.</li>
+	<li>Implemented stereo rendering.</li>
+	<li>Implemented orthographic projections and added Orthographic to CameraParams enum.<li>
+	<li>Implemented node sorting and added rendering order param for some pipeline commands.</li>
+	<li>Implemented software skinning and added SoftwareSkinning to ModelNodeParams enum.</li>
+	<li>Improved all log messages and added more error messages.</li>
+	<li>Made it possible to call render-function several times.</li>
+	<li>Implemented resource cloning for Geometry resources.</li>
+	<li>Made it possible to specify an empty string for cloneResource to let the engine generate a unique name.</li>
+	<li>Added API function createTexture2D.</li>
+	<li>Added API function clearOverlays.</li>
+	<li>Removed API function setMeshUniform (functionality available via resource cloning).</li>
+	<li>Made it possible to set the Geometry resource for Model nodes.<li>
+	<li>Added MaxLogLevel to EngineOptions enum.</li>
+	<li>Added OutputBufferIndex CameraParams enum to select left or right eye for stereo rendering.</li>
+	<li>Added OutputTex to CameraParams enum.</li>
+	<li>Renamed Texture2DResParams to TextureResParams and added Width, Height, Comps and HDR params.</li>
+	<li>Removed OcclusionCulling from EngineOptions and added it to CameraNodeParams enum.</li>
+	<li>Renamed a few API parameters for more clearness.</li>
+	<li>Disallowed colon character for resource names (reserved for internal use).</li>
+	<li>Changed Shader attribute 'name' to 'source' in Material resources for more consistency.</li>
+	<li>Added flag to pipeline lighting commands to disable shadows for a pass.</li>
+	<li>Made many smaller improvements and optimizations.</li>
+	<li>Improved directory structure for extensions.</li>
+	<li>Reverted Utility Library to be a separate DLL again instead of an extension.</li>
+	<li>Extended utility function loadResourcesFromDisk to take several search paths.</li>
+	<li>Completely rewrote usage guide to offer more information.</li>
+	
+</ul>
+
+<h3>Version [0.15.0]</h3>
+<ul>
+	<li>Implemented an extension mechanism with support for new node and resource types. Created the official Terrain extension as proof of concept.</li>
+	<li>Realized the Utility Library as extension instead as separate DLL.</li>
+	<li>Added API function checkExtension.</li>
+	<li>Added support for anti-aliasing to render targets (many thanks to Jasmine Langridge).</li>
+	<li>Added SampleCount and WireframeMode to EngineOptions enum.</li>
+	<li>Realized pipelines as resources.</li>
+	<li>Removed API function loadPipelineConfig.</li>
+	<li>Added API function setPipelineStageActivation and added XML attribute 'enabled' to Pipeline 'Stage' element.</li>
+	<li>Modified API function addCameraNode and added PipelineRes to CameraNodeParams enum.</li>
+	<li>Replaced API function getRenderTargetData by getPipelineRenderTargetData.</li>
+	<li>Removed default Camera node (PrimeTimeCam).</li>
+	<li>Added camera parameter to API render function.</li>
+	<li>Removed API functions getActiveCamera and setActiveCamera.</li>
+	<li>Added camera parameter to Utility function pickNode.</li>
+	<li>Relocated API functions getResourcePath and setResourcePath from engine core to Utility Library.</li>
+	<li>Removed Integration Library class and added C-compatible API functions getNodeAttachmentString and checkNodeTransformFlag as replacement.</li>
+	<li>Replaced node-specific get/set functions by global ones. Added API functions getNodeParami, setNodeParami, getNodeParamf and setNodeParamf.</li>
+	<li>Changed numbers of API enums.</li>
+	<li>Changed all API function paramters from unsigned int to int for better compatibility with other programming languages like C#.</li>
+	<li>Changed handles from unsigned int to int.</li>
+	<li>Changed all Utility Library parameters from unsigned int to int.</li>
+	<li>Modified resource management: the resource path is no more part of the resource name and the name must solely be unique for the resource type.</li>
+	<li>Modified API functions queryUnloadedResource and loadResource to use handles instead of names.</li>
+	<li>Modified API function removeResource to return the number of references that the application is still holding.</li>
+	<li>Added API functions getResourceParami and getResourceParamf.</li>
+	<li>Removed API enum ResourceData and added GeometryResParams and AnimationResParams enums instead.</li>
+	<li>Implemented resource cloning mechanism exposed by the API function cloneResource. Currently cloning is only working for a few resource types.</li>
+	<li>Added API function getResourceName.</li>
+	<li>Added API function setShaderPreambles that can define a standard header for all shaders (e.g. for platform-specific defines).</li>
+	<li>Implemented a line encoding for shader errors.</li>
+	<li>Removed API function getMeshData since the data can be directly accessed at the Geometry resource now.</li>
+	<li>Extended MeshNodeParams enum and added ModelNodeParams and JointNodeParams enum.</li>
+	<li>Added API function setNodeParent to relocate a node in the scene graph.</li>
+	<li>Renamed scene graph resource node attributes px, py, pz to tx, ty, tz since they represent a translation rather than a position. Support for the previous format is still there but will be removed in the future.</li>
+	<li>Fixed a few bugs in material and pipeline system.</li>
+	<li>Implemented material link mechanism enabling a pipeline stage and material to include another material.</li>
+	<li>Modifed samples to use GLFW DLL instead of static library.</li>
+	<li>Updated samples to use ambient lighting and made shaders more suitable for other applications.</li>
+	<li>Improved parallax mapping shader of samples (using iterative parallax mapping).</li>
+	<li>Replaced NVTriStrip in ColladaConv by a custom algorithm that is smaller and delivers better results.</li>
+	<li>Removed ColladaConv option '-opt' and added '-noopt' instead. Geometry optimization is now enabled by default.</li>
+</ul>
+
+<h3>Version [0.14.0]</h3>
+<ul>
+	<li>Added support for loading Photoshop PSD files.</li>
+	<li>Slightly modified pipeline syntax to make binding of render buffers more generic and powerful.</li>
+	<li>Added four additional texture stages to be used by materials and pipeline.</li>
+	<li>Added pipeline command to set material uniforms.</li>
+	<li>Added optional attribute 'context' to pipeline lighting commands.</li>
+	<li>Added multiplicative blend mode for shaders.</li>
+	<li>Rewrote animation system to be smaller and faster.</li>
+	<li>Replaced animation mask string by a start node and improved additive mixing.</li>
+	<li>Added more texture resource flags and material options.</li>
+	<li>Renamed API flag ResourceFlags::NoCompression.</li>
+	<li>Added API function to read render target pixel data.</li>
+	<li>Added two new API functions to find scene nodes with specified attributes.</li>
+	<li>Changed the semantics of the getNodeChild API function to just return a direct child by a specified index.</li>
+	<li>Renamed some API parameters for consistency. This should not break any code.</li>
+	<li>Modification: API function clear also resets pipeline now.</li>
+	<li>Modification: All emitter attributes can be set now using API function setEmitterParam.</li>
+	<li>Critical modification: Parameters from node type specific set-functions are no longer forwarded to child nodes when applied to a node of an inappropriate type.</li> 
+	<li>Replaced SDL by GLFW for the samples. This should fix some OpenGL initialization problems on ATI cards.</li>
+	<li>Made a plenty of internal code improvements (e.g. use of smart pointers for resources).<li>
+	<li>Replaced TinyXML by a faster and smaller parser written by Frank Vanden Berghen.</li>
+	<li>Fixed several smaller bugs in engine core.</li>
+	<li>Improved ColladaConv to better handle arbitrary geometry/controller instances at scene nodes.</li>
+	<li>Improved ColladaConv to support generic animation names.</li>
+</ul>
+
+<h3>Version [0.13.0]</h3>
+<ul>
+	<li>Extended pipeline (access to depth texture, explicit size) config and changed syntax.</li>
+	<li>Replaced corona image loading library with Sean Barret's public domain stbi code.</li>
+	<li>Changed cubemap format from horizontal to vertical cross for better tool compatibility.</li>
+	<li>Added support for Radiance RGBE HDR textures.</li>
+	<li>Made geometry format stream based for more flexibility (still support for older format).</li>
+	<li>Made it possible to attach meshes to joints; also updated Collada Converter to support this.</li>
+	<li>Fixed compilation problems on some Linux systems.</li>
+	<li>Optimized morphing.</li>
+	<li>Made all pointers in API and utility functions safe for NULL arguments.</li>
+	<li>Added API function castRay for ray collision queries.</li>
+	<li>Added API function calcCameraProjectionMatrix which returns camera projection matrix.</li>
+	<li>Added API function setLightContexts for specifying light shader contexts.</li>
+	<li>Added shader uniform frameBufSize.</li>
+	<li>Modification: Particle texture coordinates now stored in shader attribute 'texCoord0'.</li>
+	<li>Modification: Renamed vertex shader attribute 'bones' to 'joints'.</li>
+	<li>Modification: Default shadow map size is 1024 now.</li>
+	<li>Began implementing a modular shader library.</li>
+	<li>Made many other smaller improvements to engine core.</li>
+	<li>Added utility function pickNode for picking of scene nodes with window coordinates.</li>
+	<li>Implemented HDR pipeline for Knight sample.</li>
+	<li>Fixed crash of samples on widescreen displays when switching to fullscreen mode.</li>
+	<li>Made several improvements to Collada Converter for more robustness.</li>
+	<li>Added parameter 'anim' to Collada Converter for exporting animations only.</li>
+	<li>Added output of morph target names to scene graph files in Collada Converter.</li>
+</ul>
+
+<h3>Version [0.12.0]</h3>
+<ul>
+	<li>Made basic Parallel Split Shadow Map implementation (still many opportunities for improvements).</li>
+	<li>Added shader uniforms shadowMapSize, shadowSplitDists and shadowMats.</li>
+	<li>Modification: Camera view matrix is also stored in gl_ModelViewMatrix for deferred shading.</li>
+	<li>Made engine platform independent and added precomiled libraries for Linux x86.</li>
+	<li>Modified resource system to allow reloading of resources.</li>
+	<li>Added API function unloadResource to unload (but not remove) a resource and prepare it for reloading.</li>
+	<li>Implemented queue based message system which replaces automatic output to EngineLog.html file.</li>
+	<li>Added API function getMessage to return an entry from the message queue.</li>
+	<li>Added utility function dumpMessages which writes all messages to the EngineLog.html file.</li>
+	<li>Changed camera node parameters to take plane coordinates which is necessary for asymmetric viewing frustums.</li>
+	<li>Replaced API function overwriteCameraPlanes by function setupCameraView.</li>
+	<li>Made all name and identifier string operations in the engine case-sensitive.</li>
+	<li>Reduced maximum number of joints to 75. This is necessary because of the additional PSSM uniforms.</li>
+	<li>Changed directory structure.</li>
+	<li>Changed samples over to using SDL.</li>
+	<li>Modified skybox from samples to use cubemap texture.</li>
+	<li>Improved sample deferred shading pipeline by adding ambient pass.</li>
+	<li>Switched default pipeline of Chicago sample to forward shading.</li>
+</ul>
+
+<h3>Version [0.11.1]</h3>
+<ul>
+	<li>Added API function getNodeAABB which returns the axis aligned bounding box of a scene node.</li>
+	<li>Added API function getNodeParent which returns the parent node of a scene node.</li>
+	<li>Added engine option DebugViewMode which renders geometry in wireframe mode.</li>
+	<li>Changed pointer in setNodeTransformMatrix to const.</li>
+	<li>Optimization: Changed vertex buffer layout to be 32 byte aligned.</li>
+	<li>Optimization: Vertex indices are converted to 16 bit if possible.</li>
+	<li>Optimization: Implemented scissor test for light sources to reduce fillrate consumption.</li>
+	<li>Optimization: Shadowmap is updated now only when light is visible.</li>
+	<li>Optimization: Improved culling for lighting passes.</li>
+	<li>Reduced number of available texture channels from four to two to get 32 byte aligned vertex layout.</li>
+	<li>Optimized sample shaders and fixed some issues.</li>
+	<li>Made several other bugfixes and smaller improvements in engine core.</li> 
+	<li>Improved compatibility of Knight sample for older hardware by modifying post processing shader.</li>
+	<li>Switched default pipeline of Chicago sample to deferred shading which is faster now than the forward path.</li>
+	<li>Improved compatibility of Collada converter regarding materials.</li>
+</ul>
+
+<h3>Version [0.11.0]</h3>
+<ul>
+	<li>Implemented Horde3D Integration Library which gives applications more control over scene graph and simplifies integration with other middleware.</li>
+	<li>Implemented particle systems. Particles are fully integrated into the pipeline making it easy to let them cast shadows or receive lighting.</li>
+	<li>Increased joint limit from 59 to 79 joints by changing shader skinning uniforms.</li>
+	<li>Introduced shader uniforms worldMat and worldNormalMat.</li>
+	<li>Added hierarchical class system for materials which is accessible from the pipeline configuration.</li>
+	<li>Made it possible to set the blend mode and depth mask for shader contexts. This enables the creation of translucent materials.</li>
+	<li>Added possibility to set engine options in pipeline configuration.</li>
+	<li>Made it possible to attach all node types to all other nodes with exception of Joints and Meshes.</li>
+	<li>Added API function loadPipelineConfig to load or reload a pipeline configuration.</li>
+	<li>Added API function getActiveCamera which returns the currently active camera node.</li>
+	<li>Added API function setNodeName to set the name of a scene node.</li>
+	<li>Added API function setMaterialUniform to overwrite material uniform values.</li>
+	<li>Added API function findResource to get the handle to a created resource using its name.</li>
+	<li>Removed pipelineConfig parameter from API function init.</li>
+	<li>Modified getMeshData function to take additional parameter.</li>
+	<li>Modified API function setMeshUniform to take additional parameter which makes it possible to apply uniform values to all children.</li>
+	<li>Added Material parameter to LightNodeParams enum which makes it possible to configure the light source material/shader.</li>
+	<li>Fixed a plenty of smaller bugs.</li>
+	<li>Fixed problems with lighting in sample skinning shader.</li>
+	<li>Dramatically improved performance of Collada Converter by avoiding  quadratic complexity.</li>
+</ul>
+
+
+<h3>Version [0.10.0]</h3>
+<ul>
+	<li>Added NoQuery flag for addResource to exclude resource from being listed with queryUnloadedResource.</li>
+	<li>Introduced new Code resource type for shader programs.</li>
+	<li>Added pipeline configuration filename to init function.</li>
+	<li>Introduced new Camera scene node type.</li>
+	<li>Added default camera node.</li>
+	<li>Removed old camera functions (getCamParams, setCamParams, setViewParams).</li>
+	<li>Removed utility function setupViewerParams.</li>
+	<li>Added function to set active camera.</li>
+	<li>Removed underlays and changed overlay layer param to uint. Video textures for AR can be done using other projective techniques.</li>
+	<li>Added API function to get scene node name.</li>
+	<li>Added API function to set scene node transformation matrix directly.</li>
+	<li>Added additive animations.</li>
+	<li>Modified light node: it now has a material instead of a texture which also replaces the projective texture attribute.</li>
+	<li>Added lighting and shadowmap context names to function addLightNode.</li>
+	<li>Modified geometry resource format; four mapping channels are available now.</li>
+	<li>Implemented flexible rendering pipeline.</li>
+	<li>Made it possible to define arbitrary shader context names.</li>
+	<li>Removed shader params from shader resources. The renderer now detects automatically which attributes are used.</li>
+	<li>Changed material format to support uniforms.</li>
+	<li>Added API function to set mesh uniform values.</li>
+	<li>Bugfix: getNodeTransform returns rotation in angles now instead of radians.</li>
+	<li>Fixed some problems with removeNode.</li>
+	<li>Made node parameters in scene graph resource consistent with API.</li>
+	<li>Made a plenty of optimizations, mainly for reducing CPU overhead.</li>
+	<li>Optimization: Collada converter sorts vertex buffers for linear memory layout.</li>
+</ul>
+
+
+<h3>Version [0.9.0]</h3>
+<ul>
+	<li>Modified API style to be more flexible for specific scene node functionality.</li>
+	<li>Changed API function for showing overlays to take 4 points instead of 2 extreme points.</li>
+	<li>Added function to set frustum parameters.</li>
+	<li>Added utility function to setup perspective frustum.</li>
+	<li>Removed parameter fov from setCamParams.</li>
+	<li>Modified resize function to take position of viewport.</li>
+	<li>Added function which returns resource type.</li>
+	<li>Added flags parameter to addResource.</li>
+	<li>Added resource flag for disabling texture compression.</li>
+	<li>Changed updateResource API function.</li>
+	<li>Added 'Unknown' value to ResourceTypes and SceneNodeTypes.</li>
+	<li>Optimized scene graph to make updates only when needed.</li>
+	<li>Made it possible to attach scene nodes to joints.</li>
+	<li>Modification: Root node has no more value 0 but is defined as constant with value 1.</li>
+	<li>Modification: Joints and meshes can be hierarchical now.</li>
+	<li>Modification: LOD is only available for Group nodes.</li>
+	<li>Added projective texture parameter for Light nodes.</li>
+	<li>Implemented getting and setting of joint transformation for procedural animation.</li>
+	<li>Added animation blending and mixing.</li>
+	<li>Implemented animation for objects without skin.</li>
+	<li>Implemented inter-frame interpolation for animations.</li>
+	<li>Modification: Collada tool stores vertices in local space and applies world transformation in scene graph.</li>
+	<li>Modification: Material references in scene graph include model name as subdirectory when converted.</li>
+	<li>Modification: Converter now uses geometry name (if available) instead of id as morph target name.</li>
+	<li>Modified animation format to use relative transformations and decomposed values.</li>
+</ul>
+
+
+<h3>Version [0.8.0]</h3>
+<ul>
+    <li>Added API getter-functions for most setter-functions.</li>
+    <li>Added API function to access resource data and node data. This makes it it possible to read out geometry data and use it for collision detection or physics.</li>
+    <li>Added API function to update resource data (implemented for 2D texture images).</li>
+    <li>Added API function to iterate over child nodes.</li>
+    <li>Added API function to get node type.</li>
+    <li>Added FOV for spot lights.</li>
+    <li>Changed coordinate systems to be right-handed for better compatibility with other libraries and tools.</li>
+    <li>Changed XML attributes for node position in SceneGraphResource from x, y, z to px, py, pz.</li>
+    <li>Added obligatory scene node attributes for Mesh containing the vertex range of the batch.</li>
+    <li>Modification: Layer of overlays can be negative meaning that they are drawn as underlays before scene objects are rendered.</li>
+    <li>Modification: Joints are part of the scene graph now.</li>
+    <li>Modification: Scene graph files don't need to have a Group as root any more, instead any scene node type can be used as root.</li>
+    <li>Modified shadow mapping implementation to make use of PCF. The blurring of the shadow term texture in a post-processing step has been removed resulting in much better performance.</li>
+    <li>Removed ShadowMapSoft option from scene node parameters.</li>
+    <li>Improved skinning implementation. Skinned vertices are in world space now instead of bone space.</li>
+    <li>Modified geometry resource format to be compatible with new skinning implementation and to use less memory.</li>
+    <li>Made many other smaller bugfixes and improvements in engine core.</li>
+    <li>Added utility function to create texture resource data from raw image data.</li>
+    <li>Added utility function to free memory allocated by the utility library.</li>
+    <li>Changed command line arguments of Collada tool.</li>
+    <li>Extended Collada tool to handle assets with several skin modifiers.</li>
+    <li>Made other smaller improvements to Collada tool.</li>
+</ul>
+
+<h3>Version [0.7.0]</h3>
+<ul>
+	<li>Added new API function for setting morph target weights.</li>
+	<li>Changed geometry resource format to include morph data.</li>
+	<li>Added loading, interpolation and rendering of morph targets to engine core.</li>
+	<li>Changed initial model node bounding box calculation to respect initial skinning pose.</li>
+	<li>Added parsing and export of morph targets to Collada tool.</li>
+    <li>Made other smaller improvements to Collada tool.</li>
+</ul>
+
+<h3>Version [0.6.1]</h3>
+<ul>
+	<li>Fixed problems with shadows on older ATI hardware by unrolling for-loops in the blur shaders.</li>
+	<li>Reduced joint maximum from 60 to 59 to avoid shader register overflows; this will have to be improved in upcoming versions.</li>
+	<li>Added cube map support for materials.</li>
+    <li>Updated normal calculation for Collada tool to be more robust.</li>
+    <li>Made other smaller improvements to Collada tool.</li>
+</ul>
+
+<h3>Version [0.6.0]</h3>
+<ul>
+    <li>Introduced shader context concept.</li>
+    <li>Integrated basic shadow mapping implementation with screen-space blurring.</li>
+    <li>Added blending for lighting pass so that more than one light source can be used now.</li>
+    <li>Added alpha blending for overlays.</li>
+    <li>Made smaller bug fixes and code improvements in the engine core.</li>
+    <li>Updated Chicago sample to demonstrate shadow mapping.</li>
+</ul>
+
+<h3>Version [0.5.1]</h3>
+<ul>
+    <li>* First source code release *</li>
+    <li>Added log message when G-Buffer creation fails.</li>
+</ul>
+
+<h3>Version [0.5.0]</h3>
+<ul>
+    <li>* First public release *</li>
+</ul>
+
+
+<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
+</div>
+
+<div id="logo">
+   <img src="images/doclogo.gif" />
+</div>
+
+</body>
+</html>

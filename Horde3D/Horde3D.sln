@@ -1,0 +1,92 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{484BA112-A066-4977-8246-677A3C663519}"
+	ProjectSection(SolutionItems) = preProject
+		readme.txt = readme.txt
+	EndProjectSection
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Horde3D Engine", "Source\Horde3DEngine\Horde3D Engine.vcproj", "{1D558D7D-DA57-4908-BCFC-902054FE6B63}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Collada Converter", "Source\ColladaConverter\Collada Converter.vcproj", "{17F40F35-7889-4373-AF53-EA87B9009556}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample Chicago", "Samples\Chicago\Sample Chicago.vcproj", "{CF13B766-1AF4-4D3F-A58D-BCFAC38BC92F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{2A423B83-D582-49BA-A45F-E27148099850} = {2A423B83-D582-49BA-A45F-E27148099850}
+		{1D558D7D-DA57-4908-BCFC-902054FE6B63} = {1D558D7D-DA57-4908-BCFC-902054FE6B63}
+		{AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D} = {AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D}
+	EndProjectSection
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample Knight", "Samples\Knight\Sample Knight.vcproj", "{DB8D0FC2-250F-4D18-850F-78FF9CBE74A7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D} = {AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D}
+		{1D558D7D-DA57-4908-BCFC-902054FE6B63} = {1D558D7D-DA57-4908-BCFC-902054FE6B63}
+		{2A423B83-D582-49BA-A45F-E27148099850} = {2A423B83-D582-49BA-A45F-E27148099850}
+	EndProjectSection
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Horde3D Utils", "Source\Horde3DUtils\Horde3D Utils.vcproj", "{AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{1D558D7D-DA57-4908-BCFC-902054FE6B63} = {1D558D7D-DA57-4908-BCFC-902054FE6B63}
+	EndProjectSection
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw", "Samples\glfw\glfw.vcproj", "{2A423B83-D582-49BA-A45F-E27148099850}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1D558D7D-DA57-4908-BCFC-902054FE6B63}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1D558D7D-DA57-4908-BCFC-902054FE6B63}.Debug|Win32.Build.0 = Debug|Win32
+		{1D558D7D-DA57-4908-BCFC-902054FE6B63}.Release|Win32.ActiveCfg = Release|Win32
+		{1D558D7D-DA57-4908-BCFC-902054FE6B63}.Release|Win32.Build.0 = Release|Win32
+		{17F40F35-7889-4373-AF53-EA87B9009556}.Debug|Win32.ActiveCfg = Debug|Win32
+		{17F40F35-7889-4373-AF53-EA87B9009556}.Debug|Win32.Build.0 = Debug|Win32
+		{17F40F35-7889-4373-AF53-EA87B9009556}.Release|Win32.ActiveCfg = Release|Win32
+		{17F40F35-7889-4373-AF53-EA87B9009556}.Release|Win32.Build.0 = Release|Win32
+		{CF13B766-1AF4-4D3F-A58D-BCFAC38BC92F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CF13B766-1AF4-4D3F-A58D-BCFAC38BC92F}.Debug|Win32.Build.0 = Debug|Win32
+		{CF13B766-1AF4-4D3F-A58D-BCFAC38BC92F}.Release|Win32.ActiveCfg = Release|Win32
+		{CF13B766-1AF4-4D3F-A58D-BCFAC38BC92F}.Release|Win32.Build.0 = Release|Win32
+		{DB8D0FC2-250F-4D18-850F-78FF9CBE74A7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DB8D0FC2-250F-4D18-850F-78FF9CBE74A7}.Debug|Win32.Build.0 = Debug|Win32
+		{DB8D0FC2-250F-4D18-850F-78FF9CBE74A7}.Release|Win32.ActiveCfg = Release|Win32
+		{DB8D0FC2-250F-4D18-850F-78FF9CBE74A7}.Release|Win32.Build.0 = Release|Win32
+		{AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D}.Debug|Win32.Build.0 = Debug|Win32
+		{AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D}.Release|Win32.ActiveCfg = Release|Win32
+		{AE8EB9B3-D2C2-4372-AB4B-FC980EE69D2D}.Release|Win32.Build.0 = Release|Win32
+		{2A423B83-D582-49BA-A45F-E27148099850}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2A423B83-D582-49BA-A45F-E27148099850}.Debug|Win32.Build.0 = Debug|Win32
+		{2A423B83-D582-49BA-A45F-E27148099850}.Release|Win32.ActiveCfg = Release|Win32
+		{2A423B83-D582-49BA-A45F-E27148099850}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

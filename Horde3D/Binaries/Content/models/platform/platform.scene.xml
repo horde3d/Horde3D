@@ -1,0 +1,4 @@
+<Model name="platform" geometry="models/platform/platform.geo">
+
+	<Mesh name="Cone01" material="models/platform/stones.material.xml" rx="-0" ry="0" rz="180" batchStart="0" batchCount="576" vertRStart="0" vertREnd="193" />
+</Model>

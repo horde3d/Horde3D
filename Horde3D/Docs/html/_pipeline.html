@@ -1,0 +1,796 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Horde3D Documentation</title>
+    <link rel="stylesheet" type="text/css" href="css/manual.css" title="ALL" media="screen,projection" />
+</head>
+
+<body>
+<div id="content">
+
+<h1>The Flexible Rendering Pipeline</h1>
+
+<h2>Introduction</h2>
+<p>
+The rendering pipeline defines the steps which are necessary to bring the abstract 3D data to a visible result on
+the screen. Horde3D has a configurable rendering pipeline which makes it possible to employ a plenty of different
+rendering techniques, including standard forward rendering and deferred shading. The system allows to define several
+render targets and to specify render commands to fill the targets with data. This gives much power and flexibility to
+the engine and enables the creation of most post processing effects like HDR, motion blur or depth of field as well as
+the usage of different rendering algorithms.
+</p>
+<br />
+
+<h2>System overview</h2>
+<p>
+Horde is heavily based on shaders which are small programs that are executed on the graphics card at different stages
+of the hardware pipeline. Horde uses vertex and fragment shaders. Vertex shaders influence directly the geometry
+which is rendered and determine e.g. the position and texture coordinates of the vertices. The fragment shaders
+are used for calculating the pixel colors in the rasterization process. Shader code in Horde is specified in the
+OpenGL Shading Language (GLSL). The engine has a XML based shader format which makes it possible to define different
+contexts. A context of a Horde shader is defined for a situation in the rendering process where the shader is executed.
+For example, a shader usually has a shadowmap context which is used when shadows are generated and a lighting context
+which is responsible for interactions of an object with light sources. For the rendering process shaders usually
+require some input data. This consists on the one hand of the geometric data of a model like the vertex positions,
+normals and texture coordinates. On the other hand there are textures used for rendering and arbitrary variables,
+so called uniforms, which can be defined by the user. For example a uniform could be used to define a force vector
+to do some wind physics for a tree model in the vertex shader. This mutable data is bound to the shader via the
+concept of materials. A material in Horde consists of a shader and a list of texture maps and uniforms which are
+assigned to that shader.
+</p>
+<br />
+
+<h2>Lighting and shadows</h2>
+<p>
+Horde supports basically two different approaches for lighting namely forward and deferred shading. Forward shading
+is the standard technique that is currently used in most applications. With this technique the geometry is rendered
+once for each light source using a special fragment shader that calculates the light contribution. The disadvantage here
+is of course that the geometry has to be drawn several times which can result in poor performance in scenes with 
+many polygons and light sources. Deferred shading in contrast does the lighting as a post processing step. The idea
+is to store some attributes for each pixel on the screen in a special buffer often called the G-Buffer. These attributes
+usually include the position of a fragment, the normal and its color. To do the actual lighting it is only necessary to
+draw a fullscreen quad since the required information can easily be read from the G-Buffer. The advantage is that the
+lighting performance is completely independent of the geometry complexity now since each light just requires drawing
+a screen-space quad. Unfortunately this approach has also its drawbacks as it is difficult to do anti-aliasing or
+handle translucent geometry. Discussing the two techniques in detail here would be out of the scope of this manual so
+please refer to one of the many online and book resources available for this topic.
+<br/><br/>
+Light sources in Horde are defined as scene nodes. Each light node has two special attributes called <b>lightingContext</b>
+and <b>shadowContext</b>. The values of these attributes correspond to shader context names defined in the shader resources.
+When Horde is instructed to perform forward lighting the engine first builds a list of the geometry that needs to be
+drawn. After that it draws each object from that list using the shader context that is specified for the light source.
+If the context cannot be found for a material, the object using this material is ignored and thus not rendered. This
+is basically working the same way for doing the lighting and building the shadow map.
+For deferred shading you also need to specify a material for the light source. The shader defined in that material is
+used to draw the screen-space quads where the light's lightingContext attribute specifies the shader context which is
+used. The calculation of the shadows is working the same way as for forward shading where all geometry is rendered to
+the shadow map using the shadowContext. When doing forward shading you could also specify a material for a light source.
+The shader is ignored in this case but it is possible to bind several textures which can for example be used to create
+some sort of slide-projector.
+<br/><br/>
+With the shader context system it is possible to define arbitrary light source types. The behavior of a light (e.g.
+directional or spot) and its interaction with a material are defined entirely in the shaders. If you want to create
+a new type of light source you just have to assign a name to the lightingContext attribute and define an appropriate
+shader context for all the materials (respectively shaders) that shall interact with that light source.
+</p>
+<br />
+
+<h2>Pipeline configuration</h2>
+<p>
+The flexible rendering pipeline allows to define render targets and commands which determine the steps taken
+to render the scene. The commands are specified within a XML file. Most rendering commands use the attributes
+<i>class</i> and <i>context</i>. The class is defined in the materials and determines what geometry should be
+rendered. It is possible to use the tilde operator <b>~</b> as a logical NOT meaning that all geometry except
+the one with the specified material class will be drawn. The context is finally available for specifying the
+rendering technique which should be used for the current draw call.
+</p>
+<h3>Pipeline syntax</h3>
+<p>
+The following XML elements and attributes are supported.
+</p>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>Pipeline</b></td>
+        <td>
+            root element of the document {1}
+        </td>
+    </tr>
+    <tr>
+        <td><b>Setup</b></td>
+        <td>
+            initialization section of pipeline {0,1}
+        </td>
+    </tr>
+    <tr>
+        <td><b>RenderTarget</b></td>
+        <td>
+            definition of a render target; child of <b>Setup</b> element {*}
+            <table>
+                <tr>
+                    <td><b>id</b></td>
+                    <td>unique name of the render target {required}</td>
+                </tr>
+                <tr>
+                    <td><b>depthBuf</b></td>
+                    <td>flag specifying whether depth buffer is used for target {required}; possible values: <i>true, false</i></td>
+                </tr>
+                <tr>
+                    <td><b>numColBufs</b></td>
+                    <td>number of color buffers {required}; possible values: <i>0, 1, 2, 3, 4</i></td>
+                </tr>
+                <tr>
+                    <td><b>format</b></td>
+                    <td>pixel format of render target {optional}; possible values: <i>RGBA8, RGBA16F, RGBA32F</i>; default: <i>RGBA8</i></td>
+                </tr>
+                <tr>
+                    <td><b>width</b></td>
+                    <td>width of render target in pixels where 0 means width of the main framebuffer {optional}; default: <i>0</i></td>
+                </tr>
+                <tr>
+                    <td><b>height</b></td>
+                    <td>height of render target in pixels where 0 means height of the main framebuffer {optional}; default: <i>0</i></td>
+                </tr>
+                <tr>
+                    <td><b>scale</b></td>
+                    <td>scale factor which is multiplied with the size of the render target {optional}; default: <i>1.0</i></td>
+                </tr>
+				<tr>
+                    <td><b>maxSamples</b></td>
+                    <td>the maximum number of samples used when anti-aliasing is enabled {optional}; default: <i>0</i></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>CommandQueue</b></td>
+        <td>
+            ordered list of commands {0, 1}
+        </td>
+    </tr>
+    <tr>
+        <td><b>Stage</b></td>
+        <td>
+            definition of a set of render commands; child of <b>CommandQueue</b> element {*}
+            <table>
+                <tr>
+                    <td><b>id</b></td>
+                    <td>unique name of the stage {required}</td>
+                </tr>
+				<tr>
+                    <td><b>enabled</b></td>
+                    <td>flag indicating whether stage is enabled by default {optional}; default: true</td>
+                </tr>
+				<tr>
+                    <td><b>link</b></td>
+                    <td>material resource used to bind stage-specific data {optional}; default: <i>empty string</i></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>SwitchTarget</b></td>
+        <td>
+            command for setting the currently active render target to which data is rendered; the command implicitely
+			calls the <i>UnbindBuffers</i> command before the desired render target is activated; child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>target</b></td>
+                    <td>name of the render target which was defined in the <b>Setup</b> section or empty string to bind the output buffer
+						assigned to the current camera {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>BindBuffer</b></td>
+        <td>
+            command for binding a color or depth buffer of a render target as texture map; child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>sampler</b></td>
+                    <td>name of texture sampler to which the buffer is bound {required}</td>
+                </tr>
+                <tr>
+                    <td><b>sourceRT</b></td>
+                    <td>name of render target {required}</td>
+                </tr>
+                <tr>
+                    <td><b>bufIndex</b></td>
+                    <td>index of color buffer or 32 as special value for binding the depth buffer {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+	<tr>
+        <td><b>UnbindBuffers</b></td>
+        <td>
+            command for unbinding all buffers that were bound to texture samplers before;
+			child of <b>Stage</b> element {*}
+        </td>
+    </tr>
+    <tr>
+        <td><b>ClearTarget</b></td>
+        <td>
+            command for clearing the currently bound render target; child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>depthBuf</b></td>
+                    <td>flag specifying whether depth buffer is cleared {optional}; possible values: <i>true, false</i>; default: <i>false</i></td>
+                </tr>
+                <tr>
+                    <td><b>colBuf0</b></td>
+                    <td>flag specifying whether first color buffer is cleared {optional}; possible values: <i>true, false</i>; default: <i>false</i></td>
+                </tr>
+                <tr>
+                    <td><b>colBuf1</b></td>
+                    <td>flag specifying whether second color buffer is cleared {optional}; possible values: <i>true, false</i>; default: <i>false</i></td>
+                </tr>
+                <tr>
+                    <td><b>colBuf2</b></td>
+                    <td>flag specifying whether third color buffer is cleared {optional}; possible values: <i>true, false</i>; default: <i>false</i></td>
+                </tr>
+                <tr>
+                    <td><b>colBuf3</b></td>
+                    <td>flag specifying whether fourth color buffer is cleared {optional}; possible values: <i>true, false</i>; default: <i>false</i></td>
+                </tr>
+                <tr>
+                    <td><b>col_R</b></td>
+                    <td>red component of clear color {optional}; default: <i>0.0</i></td>
+                </tr>
+                <tr>
+                    <td><b>col_G</b></td>
+                    <td>green component of clear color {optional}; default: <i>0.0</i></td>
+                </tr>
+                <tr>
+                    <td><b>col_B</b></td>
+                    <td>blue component of clear color {optional}; default: <i>0.0</i></td>
+                </tr>
+                <tr>
+                    <td><b>col_A</b></td>
+                    <td>alpha component of clear color {optional}; default: <i>0.0</i></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>DrawGeometry</b></td>
+        <td>
+            command for rendering the scene geometry; child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>context</b></td>
+                    <td>name of the shader context used for rendering {required}</td>
+                </tr>
+                <tr>
+                    <td><b>class</b></td>
+                    <td>material class used for including/excluding objects {optional}; default: <i>empty string</i>, meaning all classes</td>
+                </tr>
+                <tr>
+                    <td><b>order</b></td>
+                    <td>rendering order (sorting) of scene nodes {optional}; values: NONE, STATECHANGES, FRONT_TO_BACK, BACK_TO_FRONT; default: STATECHANGES</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>DrawOverlays</b></td>
+        <td>
+            command for rendering all overlays; child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>context</b></td>
+                    <td>name of the shader context used for rendering {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>DrawQuad</b></td>
+        <td>
+            command for drawing a fullscreen quad to the screen; child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>material</b></td>
+                    <td>material resource used for rendering {required}</td>
+                </tr>
+                <tr>
+                    <td><b>context</b></td>
+                    <td>name of the shader context used for rendering {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>DoForwardLightLoop</b></td>
+        <td>
+            command for performing forward lighting by rendering all affected geometry; the default shader context
+            used for rendering is the lighting context attribute of the corresponding light source;
+            child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>class</b></td>
+                    <td>material class used for including/excluding objects {optional}; default: <i>empty string</i>, meaning all classes</td>
+                </tr>
+                <tr>
+                    <td><b>context</b></td>
+                    <td>shader context used for doing lighting {optional}; default: <i>empty string</i>, meaning context assigned to light source</td>
+                </tr>
+                <tr>
+                    <td><b>order</b></td>
+                    <td>rendering order (sorting) of scene nodes {optional}; values: NONE, FRONT_TO_BACK, BACK_TO_FRONT, STATECHANGES; default: NONE</td>
+                </tr>
+                <tr>
+                    <td><b>noShadows</b></td>
+                    <td>flag for disabling shadowing {optional}; default: false</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>DoDeferredLightLoop</b></td>
+        <td>
+            command for performing deferred lighting by drawing screen-space quads; the default shader context used for rendering
+            is the one which is stored as attribute of the corresponding light source;
+            child of <b>Stage</b> element {*}
+            <table>
+				 <tr>
+                    <td><b>context</b></td>
+                    <td>shader context used for doing lighting {optional}; default: <i>empty string</i>, meaning context assigned to light source</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>SetUniform</b></td>
+        <td>
+            command for setting a material uniform to specified values; child of <b>Stage</b> element {*}
+            <table>
+                <tr>
+                    <td><b>material</b></td>
+                    <td>material resource which contains the uniform to be set {required}</td>
+                </tr>
+                <tr>
+                    <td><b>uniform</b></td>
+                    <td>name of the uniform {required}</td>
+                </tr>
+                <tr>
+                    <td><b>a</b></td>
+                    <td>value of the first component {optional}; default: <i>0.0</i></td>
+                </tr>
+                <tr>
+                    <td><b>b</b></td>
+                    <td>value of the second component {optional}; default: <i>0.0</i></td>
+                </tr>
+                <tr>
+                    <td><b>c</b></td>
+                    <td>value of the third component {optional}; default: <i>0.0</i></td>
+                </tr>
+                <tr>
+                    <td><b>d</b></td>
+                    <td>value of the fourth component {optional}; default: <i>0.0</i></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</div>
+<br /><br />
+<h3>Sample showing simple deferred shading pipeline</h3>
+<div class="memdoc">
+<pre>
+&lt;Pipeline&gt;
+
+    &lt;Setup&gt;
+        &lt;RenderTarget id="GBUFFER" depthBuf="true" numColBufs="3" format="RGBA16F" scale="1.0" /&gt;
+    &lt;/Setup&gt;
+        
+    &lt;CommandQueue&gt;
+        &lt;Stage id="Attribpass"&gt;
+            &lt;SwitchTarget target="GBUFFER" /&gt;
+            &lt;ClearTarget depthBuf="true" colBuf0="true" /&gt;
+            &lt;DrawGeometry context="ATTRIBPASS" class="~Translucent" /&gt;
+        &lt;/Stage&gt;
+		
+        &lt;Stage id="Lighting"&gt;
+            &lt;SwitchTarget target="" /&gt;
+            &lt;ClearTarget colBuf0="true" /&gt;
+            &lt;BindBuffer texUnit="8" target="GBUFFER" bufIndex="0" /&gt;
+            &lt;BindBuffer texUnit="9" target="GBUFFER" bufIndex="1" /&gt;
+            &lt;BindBuffer texUnit="10" target="GBUFFER" bufIndex="2" /&gt;
+			
+            &lt;DrawQuad material="light.material.xml" context="AMBIENT" /&gt;
+            &lt;DoDeferredLightLoop /&gt;
+        &lt;/Stage&gt;
+		
+        &lt;Stage id="Overlays"&gt;
+            &lt;DrawOverlays context="OVERLAY" /&gt;
+        &lt;/Stage&gt;
+    &lt;/CommandQueue&gt;
+    
+&lt;/Pipeline&gt;
+</pre>
+</div>
+<br /><br /><br />
+
+<h2>Shaders</h2>
+<p>
+Horde3D shaders are stored in text files with the extension <i>.shader</i>. A shader file consists of different
+sections: one FX section and an arbitrary number of named code sections. A section is introduced by the tag
+<b>[[<i>id</i>]]</b> where <i>id</i> is a unique identifier used as name of the section. A special identifier is
+<b>FX</b> which introduces an FX section.
+<br /><br />
+Horde3D supports übershaders using static branching (compiler defines) and can automatically compile different
+shader combinations based on a set of given shader flags. This approach helps to solve a common problem:
+imagine you have one shader that does skinning and one that does parallax mapping. Now you want a shader that does
+both. Usually you would have to create a new shader file which combines the code of the two other shaders. It
+is quite obvious that you can quickly get many permutations of features and that writing different shader
+files for them can become very tedious or even unmanagable. With the help of übershaders, the shader creation workflow can
+be greatly simplified. You just need one shader file where the features are exposed with compiler defines. A feature
+is enabled by setting the corresponding flag (e.g. in a material file). Horde3D can check automatically if a
+desired combination is not yet existing and will compile it on the fly. Please note, even though übershaders are
+a powerful feature, they need to be used with care since it is easy to generate a huge number of combinations which
+would take a long time to load.
+</p>
+
+<h3>FX section</h3>
+<p>
+The FX section defines and configures the shader contexts, custom texture samplers and custom (user-defined)
+uniforms used in hardware shaders. Please note that it is strictly required that all custom samplers and
+uniforms referenced in hardware shaders are declared in the FX section so that they can be used with the
+Horde3D material system.
+<br />
+The Horde3D FX syntax is similar to that of CgFX. Standard C++ block and single line comments are supported.
+All keywords and enums are case insensitive. However, identifiers like the name of a context are not case
+insensitive. Identifiers may only use alphanumeric characters and the underscore. Floating point numbers
+may not contain any whitespace.
+<br />
+Elements can optionally store meta information as annotations. This is useful for better tool support.
+For example, a uniform could store a minimum and maximum value range. It is suggested that annotations have
+the form required by CgFX, hence <i>datatype identifier = value;</i> However, this is not a requirement since
+annotations are just skipped by Horde's parser.
+<br /><br />
+
+The following syntax is supported. Optional elements are put in square brackets and default values are
+highlighted as bold. Alternative values are separated by a slash.
+</p>
+<div class="syntaxbox">
+<table>
+	<tr><td><b>sampler2D</b> / <b>samplerCube</b> [< annotation(s) >] <b>id</b></td></tr>
+	<tr><td>[ <b>=</b> sampler_state {</td></tr>
+	<tr><td>[ Texture <b>=</b> <b>"</b><i>TextureResName</i><b>"</b> <b>;</b> ]</td></tr>
+	<tr><td>[ TexUnit <b>=</b> <b>-1</b> / 0 / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 <b>;</b> ]</td></tr>
+	<tr><td>[ Address <b>=</b> <b>Wrap</b> / Clamp <b>;</b> ]</td></tr>
+	<tr><td>[ Filter <b>=</b> None / Bilinear / <b>Trilinear</b> <b>;</b> ]</td></tr>
+	<tr><td>[ MaxAnisotropy <b>=</b> 1 / 2 / 4 / <b>8</b> / 16 <b>;</b> ]</td></tr>
+	<tr><td>} ] <b>;</b></td></tr>
+</table>
+</div>
+<br />
+<b>Remarks:</b><br />
+<ul>
+<li>The specified sampler type (2d, cube) and the bound texture resource type have to match</li>
+<li><i>Texture</i> defines a default texture that is used if no texture map is specified in a material; the initial value for sampler2D is
+    <i>$Tex2D</i> (white default texture) and <i>$TexCube</i> (default cube map with black faces) for samplerCube</li>
+<li><i>TexUnit</i> defines the texture unit used by the sampler; use -1 for automatic assignment</li>
+<li>Aliasing for texture units is possible, meaning samplers can share the same texture unit if
+    they are not used in the same shader context</li>
+</ul>
+<br />
+
+<div class="syntaxbox">
+<table>
+	<tr><td><b>float</b> [< annotation(s) >] <b>id</b> [ <b>=</b> <i>a</i> ] <b>;</b></td></tr>
+	<tr><td><b>float4</b> [< annotation(s) >] <b>id</b> [ <b>=</b> { <i>a</i>, <i>b</i>, <i>c</i>, <i>d</i> } ] <b>;</b></td></tr>
+</table>
+</div>
+<br />
+<b>Remarks:</b><br />
+<ul>
+<li>Declares and optionally initializes a uniform</li>
+<li>The default value for each component is 0.0</li>
+</ul>
+<br />
+
+<div class="syntaxbox">
+<table>
+	<tr><td><b>context</b> [< annotation(s) >] <b>id</b></td></tr>
+	<tr><td>{</td></tr>
+	<tr><td>VertexShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
+	<tr><td>PixelShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
+	<tr><td>[ ZWriteEnable <b>=</b> false / <b>true</b> <b>;</b> ]</td></tr>
+	<tr><td>[ ZEnable <b>=</b> <b>true</b> / false <b>;</b> ]</td></tr>
+	<tr><td>[ ZFunc <b>=</b> Always / Equal / Less / <b>LessEqual</b> / Greater / GreaterEqual <b>;</b> ]</td></tr>
+	<tr><td>[ BlendMode <b>=</b> <b>Replace</b> / Blend / Add / AddBlended / Mult <b>;</b> ]</td></tr>
+	<tr><td>[ CullMode <b>=</b> <b>Back</b> / Front / None <b>;</b> ]</td></tr>
+	<tr><td>[ AlphaToCoverage <b>=</b> <b>false</b> / true <b>;</b> ]</td></tr>
+	<tr><td>}</td></tr>
+	</td>
+</table>
+</div>
+<br />
+<b>Remarks:</b><br />
+<ul>
+<li>Shaders reference a code section that must be defined in the same FX file</li>
+</ul>
+<br />
+
+
+<h3>Code section</h3>
+<p>
+A code section contains the GLSL code. Besides the usual GLSL keywords, Horde3D introduces an additional preprocessor
+command: <b>#include</b>. The include directive is used to insert the content of a code resource at the corresponding
+location. The name of the code file needs to be enclosed by a pair of quotation marks.
+<br /><br />
+The code section can also contain the shader flags used for the automatic combination generation. The shader flags
+have a special naming convention: <b>_F<i>&lt;digit&gt;&lt;digit&gt;</i>_<i>&lt;name&gt;</i></b>.
+The following would be a valid flag: _F06_MyFlag. The flag must have a number between 01 and 32 (note the
+leading zero). This number is exclusively used to identify the flag. The name is optional and just exists for
+convenience reasons in order to improve the code readability.
+</p>
+<br /><br />
+
+<h3>Sample</h3>
+<div class="memdoc">
+<pre>
+<b>[[FX]]</b>
+
+sampler albedoMap = sampler_state
+{
+    Filter = Bilinear;
+};
+
+float4 brightness = {0.5, 0, 0, 0};
+
+context OVERLAY
+{
+    VertexShader = compile GLSL VS_OVERLAY;
+    PixelShader = compile GLSL FS_OVERLAY;
+}  
+
+
+<b>[[VS_OVERLAY]]</b>
+<i>// ============================================================================</i>
+
+uniform mat4 projMat;
+attribute vec2 vertPos;
+attribute vec2 texCoords0;
+varying vec2 texCoords;
+
+void main( void )
+{
+    texCoords = vec2( texCoords0.s, -texCoords0.t ); 
+    gl_Position = projMat * vec4( vertPos.x, vertPos.y, 1, 1 );
+}
+
+
+<b>[[FS_OVERLAY]]</b>
+<i>// ============================================================================</i>
+
+uniform vec4 brightness;
+uniform sampler2D albedoMap;
+varying vec2 texCoords;
+
+void main( void )
+{
+    vec4 albedo = texture2D( albedoMap, texCoords );
+	
+<b>#ifdef _F07_BrightMult</b>
+    albedo *= brightness.a;
+<b>#endif</b>
+	
+    gl_FragColor = albedo;
+}
+</pre>
+</div>
+<br /><br /><br />
+
+<h2>Predefined GLSL uniforms and attributes</h2>
+<p>
+Horde defines some standard uniforms and attributes which can be used by shaders. The engine automatically detects
+which input data is required and binds it to the shader programs.
+<br /><br />
+<b>Note:</b> Not all uniforms and attributes are available for every pipeline step, e.g. light source
+parameters are only available when doing lighting calculations and particle specific data only when
+rendering emitters.
+</p>
+<h3>General vector/matrix uniforms</h3>
+<div class="syntaxbox">
+<table>
+     <tr>
+        <td><b>uniform vec2 frameBufSize</b></td>
+        <td>dimensions (width and height) of the currently active frame buffer</td>
+    </tr>
+	<tr>
+        <td><b>uniform mat4 viewMat</b></td>
+        <td>viewing matrix</td>
+    </tr>
+	<tr>
+        <td><b>uniform mat4 viewMatInv</b></td>
+        <td>inverse viewing matrix</td>
+    </tr>
+	<tr>
+        <td><b>uniform mat4 projMat</b></td>
+        <td>projection matrix</td>
+    </tr>
+	<tr>
+        <td><b>uniform mat4 viewProjMat</b></td>
+        <td>premultiplied view and projection matrix</td>
+    </tr>
+	<tr>
+        <td><b>uniform mat4 viewProjMatInv</b></td>
+        <td>inverse view-projection matrix</td>
+    </tr>
+	<tr>
+        <td><b>uniform vec3 viewerPos</b></td>
+        <td>position of the viewer (virtual camera)</td>
+    </tr>
+	<tr>
+        <td><b>uniform vec4 lightPos</b></td>
+        <td>position of the light source in xyz components and radius in w</td>
+    </tr>
+    <tr>
+        <td><b>uniform vec4 lightDir</b></td>
+        <td>direction vector of the light source in xyz components and cosine of light FOV in w (for spotlights)</td>
+    </tr>
+    <tr>
+        <td><b>uniform vec3 lightColor</b></td>
+        <td>(diffuse) color of the light source</td>
+    </tr>
+    <tr>
+        <td><b>uniform vec4 shadowSplitDists</b></td>
+        <td>split distances determining which of the four shadow maps has to be sampled</td>
+    </tr>
+    <tr>
+        <td><b>uniform mat4 shadowMats[4]</b></td>
+        <td>light transformation matrices for individual shadow maps</td>
+    </tr>
+    <tr>
+        <td><b>uniform float shadowMapSize</b></td>
+        <td>size of the shadow map texture in pixels</td>
+    </tr>
+    <tr>
+        <td><b>uniform float shadowBias</b></td>
+        <td>bias used for shadow mapping to reduce precision issues</td>
+    </tr>
+</table>
+</div>
+<br /><br/>
+
+<h3>General sampler uniforms</h3>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>uniform sampler2D shadowMap</b></td>
+        <td>shadow map texture</td>
+    </tr>
+</table>
+</div>
+<br/><br/>
+
+<h3>Per-instance vector/matrix uniforms</h3>
+<div class="syntaxbox">
+<table>
+	<tr>
+        <td><b>uniform mat4 worldMat</b></td>
+        <td>matrix used for transforming vertex positions of currently rendered mesh to world space</td>
+    </tr>
+    <tr>
+        <td><b>uniform mat3 worldNormalMat</b></td>
+        <td>matrix used for transforming tangent space basis of currently rendered mesh to world space</td>
+    </tr>
+	<tr>
+        <td><b>uniform float nodeId</b></td>
+        <td>identifier value of currently rendered node (default value is node handle)</td>
+    </tr>
+	<tr>
+        <td><b>uniform vec4 skinMatRows[75*3]</b></td>
+        <td>first three rows of skinning matrices for skeletal animation;
+			fourth row is always <i>(0, 0, 0, 1)</i>; only available for models</td>
+    </tr>
+</table>
+</div>
+<br /><br/>
+
+<h3>Overlay specific vector/matrix uniforms</h3>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>uniform vec4 olayColor</b></td>
+        <td>color of overlay</td>
+    </tr>
+</table>
+</div>
+<br /><br/>
+
+
+<h3>Particle specific vector/matrix uniforms</h3>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>uniform vec3 parPosArray[64]</b></td>
+        <td>position array of particle batch</td>
+    </tr>
+    <tr>
+        <td><b>uniform vec2 parSizeAndRotArray[64]</b></td>
+        <td>combined size and rotation array of particle batch</td>
+    </tr>
+    <tr>
+        <td><b>uniform vec4 parColorArray[64]</b></td>
+        <td>color array of particle batch</td>
+    </tr>
+</table>
+</div>
+<br /><br/>
+
+<h3>General vertex attributes</h3>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>attribute vec3 vertPos</b></td>
+        <td>vertex position</td>
+    </tr>
+	<tr>
+        <td><b>attribute vec2 texCoords0</b></td>
+        <td>first set of texture mapping coordinates</td>
+    </tr>
+</table>
+</div>
+<br/><br/>
+
+<h3>Model specific vertex attributes</h3>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>attribute vec2 texCoords1</b></td>
+        <td>second set of texture mapping coordinates</td>
+    </tr>
+    <tr>
+        <td><b>attribute vec3 normal</b></td>
+        <td>normal vector of vertex</td>
+    </tr>
+    <tr>
+        <td><b>attribute vec4 tangent</b></td>
+        <td>tangent vector of vertex in xyz; handedness multiplicator (1.0, -1.0) of bitangent in w</td>
+    </tr>
+    <tr>
+        <td><b>attribute vec4 joints</b></td>
+        <td>four joint indices referencing to skinning matrices</td>
+    </tr>
+    <tr>
+        <td><b>attribute vec4 weights</b></td>
+        <td>four vertex weights for the four joint indices</td>
+    </tr>
+</table>
+</div>
+<br/><br/>
+
+<h3>Particle specific vertex attributes</h3>
+<div class="syntaxbox">
+<table>
+	<tr>
+        <td><b>attribute float parIdx</b></td>
+        <td>index of current particle in position, size and color arrays</td>
+    </tr>
+</table>
+</div>
+<br/><br/>
+
+<h3>Remarks</h3>
+<ul>
+<li>The vertex position is usually available in the vec3 attribute <b>vertPos</b>. An exception are overlays
+    where the position has just 2 components (x and y).</li>
+<li>The camera transformation is stored in <b>viewMat</b>. It is also available when rendering a fullscreen
+    quad (useful for some post-processing effects).</li>
+</ul>
+<br /><br />
+
+<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
+</div>
+
+<div id="logo">
+    <img src="images/doclogo.gif" />
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1053 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Horde3D Documentation</title>
+    <link rel="stylesheet" type="text/css" href="css/manual.css" title="ALL" media="screen,projection" />
+</head>
+
+<body>
+<div id="content">
+
+<h1>Horde3D Data Format Reference</h1>
+
+<h2>Texture Maps</h2>
+<p>
+Horde3D supports two-dimensional textures and cube maps. 2D textures can be loaded from the Direct3D DDS format
+or from any other image format listed below. Cube maps need to be stored in the DDS format. In contrast to
+other image formats, DDS files can store mipmaps and DXT compressed data. Therefore, the texture-related resource
+flags for mipmap generation and compression are ignored for DDS textures.<br />
+In order to guarantee optimal loading performance for DDS textures, Horde3D uses the D3D texture coordinate system
+convention where the origin is at the top left corner of the image. This is different from the OpenGL coordinate
+system which defines the image origin as the lower left corner. For that reason, texture coordinates for 2D texture
+maps need to be flipped manually in the shaders.
+<br /><br />
+The engine can load the following image formats. Since Horde3D uses a pretty lightweight image loading library, there
+are some limitations concerning exotic formats like 1 bpp textures.
+</p>
+<ul>
+    <li>DDS (pixel formats: RGB8, RGBA8, RGBA16F, DXT1, DXT3, DXT5 and a few other)</li>
+	<li>JPEG (non-progressive)</li>
+    <li>PNG</li>
+    <li>TGA</li>
+	<li>BMP (non-RLE)</li>
+    <li>PSD (RGB format only)</li>
+    <li>HDR</li>
+</ul>
+<br />
+
+<h2>Materials</h2>
+<p><i>Filename-extension: .material.xml</i></p>
+<p>
+Materials are used to bind data to shaders. They can reference a shader and setup texture samplers
+with images. They can also define shader uniforms which are four-dimensional float vectors with arbitrary
+user defined data. Materials are also responsible for setting shader flags which are used to select a shader
+combination from an übershader.
+<br />
+A material can for example be used to define the appearance of a surface. Every material can have a class string which
+is useful for accessing geometry with specific properties, e.g. translucency. Since the material class system is
+hierarchical, names can contain subclasses which are separated from the parent class using a dot character.
+A further feature of the material system is that a single material can link to another material to use its
+texture samplers and uniforms. This is useful to define global data (e.g. ambient lighting settings) at a single
+location.
+<br />
+In Horde3D materials are specified with an XML syntax.
+<br />
+<br />
+The following XML node elements with the described attributes are supported:
+<br />
+</p>
+
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>Material</b></td>
+        <td>
+			root element of the document {1}
+			<table>
+                <tr>
+                    <td><b>class</b></td>
+                    <td>hierarchical class name (Default: <i>empty string</i>) {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>link</b></td>
+                    <td>link to other material (Default: <i>empty string</i>) {optional}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>Shader</b></td>
+        <td>
+            shader used for rendering {0, 1}
+            <table>
+                <tr>
+                    <td><b>source</b></td>
+                    <td>name of the shader resource {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+	<tr>
+        <td><b>ShaderFlag</b></td>
+        <td>
+            definition of a shader flag {*}
+            <table>
+                <tr>
+                    <td><b>name</b></td>
+                    <td>name of the shader flag to be set {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>Sampler</b></td>
+        <td>
+            configuration of a texture sampler {*}
+            <table>
+                <tr>
+                    <td><b>name</b></td>
+                    <td>name of the sampler as used in the hardware shader code {required}</td>
+                </tr>
+                <tr>
+                    <td><b>map</b></td>
+                    <td>name of the texture resource for the specified unit {required}</td>
+                </tr>
+                <tr>
+                    <td><b>allowCompression</b></td>
+                    <td>
+                    true if texture may be compressed, otherwise false; (Default: true) {optional}<br />
+                    <b>Note: </b> This flag is only respected if the texture isn't already loaded with an opposed flag setting
+                    </td>
+                </tr>
+                <tr>
+                    <td><b>mipmaps</b></td>
+                    <td>
+                    true if texture shall use mipmaps, otherwise false; (Default: true) {optional}<br />
+                    <b>Note: </b> This flag is only respected if the texture isn't already loaded with an opposed flag setting
+                    </td>
+                </tr>
+				<tr>
+                    <td><b>sRGB</b></td>
+                    <td>
+                    true if texture is in sRGB space and should be converted to linear space when sampled, otherwise false; (Default: false) {optional}<br />
+                    <b>Note: </b> This flag is only respected if the texture isn't already loaded with an opposed flag setting
+                    </td>
+                </tr>
+            </table>
+            
+        </td>
+    </tr>
+    <tr>
+        <td><b>Uniform</b></td>
+        <td>
+            definition of a four-dimensional vector shader uniform {*}
+            <table>
+                <tr>
+                    <td><b>name</b></td>
+                    <td>name of the uniform {required}</td>
+                </tr>
+				<tr>
+                    <td><b>a</b></td>
+                    <td>value of first component (Default: 0.0) {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>b</b></td>
+                    <td>value of second component (Default: 0.0) {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>c</b></td>
+                    <td>value of third component (Default: 0.0) {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>d</b></td>
+                    <td>value of fourth component (Default: 0.0) {optional}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</div>
+<br />
+
+<h4>Sample</h4>
+
+<div class="memdoc">
+<pre>
+&lt;Material class="Translucent.MyClass"&gt;
+    &lt;Shader source="myshader.shader.xml" /&gt;
+    &lt;Sampler name="albedoMap" map="mytex.jpg" /&gt;
+    &lt;Uniform name="myColor" a="1.0" b="1.0" c="0.5" /&gt;
+&lt;/Material&gt;
+</pre>
+</div>
+<br /><br /><br />
+
+
+<h2>Pipeline Files</h2>
+<p><i>Filename-extension: .pipeline.xml</i></p>
+<p>
+Pipeline files are used to configure the rendering pipeline. A detailed description can bed found in the
+<a href="_pipeline.html" >pipeline documentation</a>.
+</p>
+<br /><br /><br />
+
+
+<h2>Shader Files</h2>
+<p><i>Filename-extension: .shader</i></p>
+<p>
+Shader files define render states and hardware shader code. A detailed description can bed found in the
+<a href="_pipeline.html" >pipeline documentation</a>.
+</p>
+<br /><br /><br />
+
+
+<h2>Code Files</h2>
+<p><i>Filename-extension: arbitrary, usually .glsl</i></p>
+<p>
+Code files are pure text files that can be used to define shader code. These files can be referenced by shader resources.
+</p>
+<br /><br /><br />
+
+
+<h2>Scene Graph Files</h2>
+<p><i>Filename-extension: .scene.xml</i></p>
+<p>
+Scene graph files are XML documents that define a subtree of the scene graph.
+<br />
+<br />
+Each scene node defined as XML element can have the following XML attributes:
+<br />
+</p>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>name</b></td>
+        <td>name of the node {optional}</td>
+    </tr>
+    <tr>
+        <td><b>tx, ty, tz</b></td>
+        <td>translation of the node {optional}</td>
+    </tr>
+    <tr>
+        <td><b>rx, ry, rz</b></td>
+        <td>rotation of the node in Euler angles (degrees) {optional}</td>
+    </tr>
+    <tr>
+        <td><b>sx, sy, sz</b></td>
+        <td>scale of the node {optional}</td>
+    </tr>
+</table>
+</div>
+<br />
+<p>
+The following XML elements and attributes are supported for defining the scene nodes.
+</p>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>Group</b></td>
+        <td>
+            Group scene node {*}
+            <table>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>Reference</b></td>
+        <td>
+            reference to another scene graph resource that shall be included in the scene graph at the specified position in the tree hierarchy {*}<br />
+            name (if specified) and transformation of Reference node are taken over for root node of referenced scene structure
+            <table>
+                <tr>
+                    <td><b>sceneGraph</b></td>
+                    <td>(file-)name of the scene graph resource {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>Model</b></td>
+        <td>
+            Model scene node {*}
+            <table>
+                <tr>
+                    <td><b>geometry</b></td>
+                    <td>(file-)name of the geometry resource {required}</td>
+                </tr>
+                <tr>
+                    <td><b>softwareSkinning</b></td>
+					<td>see <a href="_api.html#H3DModel">ModelNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>lodDist1</b></td>
+					<td>see <a href="_api.html#H3DModel">ModelNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>lodDist2</b></td>
+					<td>see <a href="_api.html#H3DModel">ModelNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>lodDist3</b></td>
+					<td>see <a href="_api.html#H3DModel">ModelNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>lodDist4</b></td>
+					<td>see <a href="_api.html#H3DModel">ModelNodeParams</a> {optional}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>Mesh</b></td>
+        <td>
+            Mesh scene node {*}
+            <table>
+                <tr>
+                    <td><b>material</b></td>
+                    <td>(file-)name of the material resource {required}</td>
+                </tr>
+                <tr>
+                    <td><b>batchStart</b></td>
+                    <td>first vertex index in geometry resource of parent model {required}</td>
+                </tr>
+                <tr>
+                    <td><b>batchCount</b></td>
+                    <td>number of vertex indices in geometry resource of parent model {required}</td>
+                </tr>
+                <tr>
+                    <td><b>vertRStart</b></td>
+                    <td>minimum vertex array index contained in indices of geometry resource of parent model {required}</td>
+                </tr>
+                <tr>
+                    <td><b>vertREnd</b></td>
+                    <td>maximum vertex array index contained in indices of geometry resource of parent model {required}</td>
+                </tr>
+				<tr>
+                    <td><b>lodLevel</b></td>
+                    <td>see <a href="_api.html#H3DMesh">MeshNodeParams</a> {optional}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <td><b>Joint</b></td>
+        <td>
+            Joint scene node {*}
+            <table>
+                <tr>
+                    <td><b>jointIndex</b></td>
+                    <td>index of joint in geometry resource of parent model {required}</td>
+                </tr>
+           </table>
+       </td>
+    </tr>
+    <tr>
+        <td><b>Light</b></td>
+        <td>
+            Light scene node {*}
+            <table>
+                <tr>
+                    <td><b>material</b></td>
+                    <td>(file-)name of the light material resource {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>lightingContext</b></td>
+                    <td>name of the shader context used for lighting {required}</td>
+                </tr>
+                <tr>
+                    <td><b>shadowContext</b></td>
+                    <td>name of the shader context used for shadow map rendering {required}</td>
+                </tr>
+                <tr>
+                    <td><b>radius</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>fov</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>col_R</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>col_G</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>col_B</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>shadowMapCount</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>shadowSplitLambda</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>shadowMapBias</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+           </table>
+       </td>
+    </tr>
+    
+    <tr>
+        <td><b>Camera</b></td>
+        <td>
+            Camera scene node {*}
+            <table>
+                <tr>
+                    <td><b>pipeline</b></td>
+                    <td>(file-)name of pipeline resource used for rendering {required}</td>
+                </tr>
+                <tr>
+                    <td><b>outputTex</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>outputBufferIndex</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>leftPlane</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>rightPlane</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>bottomPlane</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>topPlane</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>nearPlane</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>farPlane</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>orthographic</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>occlusionCulling</b></td>
+                    <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
+                </tr>
+           </table>
+       </td>
+    </tr>
+    
+    <tr>
+        <td><b>Emitter</b></td>
+        <td>
+            Emitter scene node {*}
+            <table>
+                <tr>
+                    <td><b>material</b></td>
+                    <td>(file-)name of material resource {required}</td>
+                </tr>
+                <tr>
+                    <td><b>particleEffect</b></td>
+                    <td>(file-)name of particle effect resource {required}</td>
+                </tr>
+                <tr>
+                    <td><b>maxCount</b></td>
+                    <td>maximal number of particles {required}</td>
+                </tr>
+                <tr>
+                    <td><b>respawnCount</b></td>
+                    <td>number of times a particle is reborn (-1 for inifinite) {required}</td>
+                </tr>
+                
+                <tr>
+                    <td><b>delay</b></td>
+                    <td>see <a href="_api.html#H3DEmitter">EmitterNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>emissionRate</b></td>
+                    <td>see <a href="_api.html#H3DEmitter">EmitterNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>spreadAngle</b></td>
+                    <td>see <a href="_api.html#H3DEmitter">EmitterNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>forceX</b></td>
+                    <td>see <a href="_api.html#H3DEmitter">EmitterNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>forceY</b></td>
+                    <td>see <a href="_api.html#H3DEmitter">EmitterNodeParams</a> {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>forceZ</b></td>
+                    <td>see <a href="_api.html#H3DEmitter">EmitterNodeParams</a> {optional}</td>
+                </tr>
+           </table>
+       </td>
+    </tr>
+</table>
+</div>
+<br />
+<p>
+The XML document can have an arbitrary scene node as root element.
+</p>
+<br /><br />
+
+
+<h2>ParticleEffect Files</h2>
+<p><i>Filename-extension: .particle.xml</i></p>
+<p>
+ParticleEffect files are used to configure particles of a particle system. Each particle has a randomly selected
+life time which is assigned when the particle is created. This time is continually decreased and when
+it is equal to zero the particle has died and can possibly be reborn. The particle has several channels
+defining its properties over the life time. The following channels are available:
+<br /><br />
+
+<b>moveVel</b> - Velocity defining how many units per second particle is moving <br />
+<b>rotVel</b> - Velocity defining how many degrees per second particle is rotating <br />
+<b>drag</b> - Amount of velocity that particles inherit from emitter; if value is positive, particles move in same direction as the emitter <br />
+<b>size</b> - Size of the particle in generic units <br />
+<b>colR</b> - Color red intensity between 0.0 and 1.0 <br />
+<b>colG</b> - Color green intensity between 0.0 and 1.0 <br />
+<b>colB</b> - Color blue intensity between 0.0 and 1.0 <br />
+<b>colA</b> - Color alpha intensity between 0.0 and 1.0 <br />
+
+
+<br /><br />
+The following XML node elements with the described attributes are supported for a particle-effect file:
+</p>
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>ParticleEffect</b></td>
+        <td>
+			root element of the document {1}
+			<table>
+                <tr>
+                    <td><b>lifeMin</b></td>
+                    <td>minimum value for selecting random life time {required}</td>
+                </tr>
+                <tr>
+                    <td><b>lifeMax</b></td>
+                    <td>maximum value for selecting random life time {required}</td>
+                </tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+        <td><b>ChannelOverLife</b></td>
+        <td>
+            configuration of a channel
+            <table>
+                <tr>
+                    <td><b>channel</b></td>
+                    <td>id of the channel {required}</td>
+                </tr>
+                <tr>
+                    <td><b>startMin</b></td>
+                    <td>minimum value for selecting random initial value {required}</td>
+                </tr>
+                <tr>
+                    <td><b>startMax</b></td>
+                    <td>maximum value for selecting random initial value (Default: startMin) {optional}</td>
+                </tr>
+                <tr>
+                    <td><b>endRate</b></td>
+                    <td>percentage of the initial value when particle is dying (Default: 1.0) {optional}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</div>
+<br />
+<h4>Sample</h4>
+<div class="memdoc">
+<pre>
+&lt;ParticleConfig lifeMin="4.0" lifeMax="7.0"&gt;
+    &lt;ChannelOverLife channel="moveVel" startMin="3.0" startMax="3.0" endRate="0.0" /&gt;
+    &lt;ChannelOverLife channel="colR" startMin="0.4" startMax="0.4" endRate="0.5" /&gt;
+&lt;/ParticleConfig&gt;
+</pre>
+</div>
+<br /><br />
+
+
+<h2>Geometry</h2>
+<p><i>Filename-extensions: .geo</i></p>
+<p>The file format for geometry is a binary format and has to be created with a suitable tool
+like the Collada Converter described above.
+A geometry resource contains the raw vertex data with optional morph targets organized as streams. Furthermore
+it contains the triangle data as well as information about the skeleton of a model.
+<br /><br />
+<b>Important Note:</b> Currently the maximum number of joints for skeletal animation is limited to 75.
+</p>
+<br /><br />
+
+<h3>Version 5</h3>
+The file format is based on streams. The streams are written in that order:
+<ul>
+	<li>header</li>
+	<li>joints (number of joints: <b>#J</b>)</li>
+	<li>vertices (number of vertices: <b>#V</b>)</li>
+	<li>triangle indices (number of triangle indices: <b>#TI</b>)</li>
+	<li>morph targets</li>
+</ul>
+
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>Header</b></td>
+        <td>File header at beginning of the file
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td>4 <b>char</b>s</td>
+                    <td>byte sequence 'H3DG'</td>
+					</tr>
+				<tr>
+					<td><b>version</b></td>
+					<td><b>int</b></td>
+					<td>version number: 5</td>
+				</tr>
+
+            </table>
+		</td>
+	</tr>
+
+	<tr>
+        <td><b>Joints</b></td>
+        <td>Joint stream, just after the header
+			<table>
+				<tr>
+					<td><b>numJoints</b></td>
+					<td><b>int</b></td>
+					<td>
+						<b>#J</b>: Number of joints. It can make sense to have an additional default joint as first joint
+						that is used if a vertex has no explicit joint assignment (joint index 0 at vertex). This joint usually
+						has the identity matrix as inverse bind matrix.
+					</td>
+				</tr>
+				<tr>
+					<td>jointInverseBindMatrices</td>
+					<td><b>#J</b> * 16 <b>float</b>s</td>
+					<td>inverse bind matrices for every joint, if <b>#J</b> is zero nothing is written here</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+
+	<tr>
+        <td><b>Vertices</b></td>
+        <td>Vertex stream, just after the joint stream
+			<table>
+                <tr>
+					<tr>
+						<td><b>numVertexStreams</b></td>
+						<td><b>int</b></td>
+						<td>
+							number of parts of your vertex data. If you want to write only position and normals write 2 here.<br />
+							The default implementation uses 6 (no joints) or 8 (with joints) to write:
+							<ul>
+								<li>position</li>
+								<li>normals</li>
+								<li>tangents</li>
+								<li>bitangents</li>
+								<li>joint indices (only with joints)</li>
+								<li>joint weights (only with joints)</li>
+								<li>texture coordinates, set 0</li>
+								<li>texture coordinates, set 1</li>
+							</ul>
+						</td>
+					</tr>
+					<tr>
+						<td><b>numVertices</b></td>
+						<td><b>int</b></td>
+						<td>Number of vertices <b>#V</b></td>
+					</tr>
+            </table>
+		</td>
+    </tr>
+
+	<tr>
+        <td><b>Vertices - positions</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>position identifier, write 0</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 12</td>
+				</tr>
+				<tr>
+					<td><b>positions</b></td>
+					<td><b>#V</b> * 3 <b>float</b>s</td>
+					<td>Write position data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Vertices - normals</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>normal identifier, write 1</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 6</td>
+				</tr>
+				<tr>
+					<td><b>normals</b></td>
+					<td><b>#V</b> * 3 <b>short</b>s</td>
+					<td>
+						Write normal data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
+						To save space normals are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
+					</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Vertices - tangents</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>tangent identifier, write 2</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 6</td>
+				</tr>
+				<tr>
+					<td><b>tangents</b></td>
+					<td><b>#V</b> * 3 <b>short</b>s</td>
+					<td>
+						Write tangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
+						To save space tangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
+					</td>
+
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Vertices - bitangents</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>bitangents identifier, write 3</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 6</td>
+				</tr>
+				<tr>
+					<td><b>bitangents</b></td>
+					<td><b>#V</b> * 3 <b>short</b>s</td>
+					<td>
+						Write bitangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
+						To save space bitangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
+					</td>
+
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Vertices - joint indices</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>joint indices identifier, write 4</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 4</td>
+				</tr>
+				<tr>
+					<td><b>jointIndices</b></td>
+					<td>4 <b>unsigned char</b>s</td>
+					<td>joint indices of current vertex (up to 4); a 0 means unused</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Vertices - joint weights</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>joint weights identifier, write 5</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 4</td>
+				</tr>
+				<tr>
+					<td><b>jointWeights</b></td>
+					<td>4 <b>unsigned char</b>s</td>
+					<td>To save space joint weights are stored as <b>unsigned char</b>s. Before writing multiply your <b>float</b> with 255 and convert it then to <b>unsigned char</b></td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Vertices - texture coordinates set 0</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>texture coordinates set 0 identifier, write 6</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 8</td>
+				</tr>
+				<tr>
+					<td><b>textureCoordinates</b></td>
+					<td><b>#V</b> * 2 <b>float</b>s</td>
+					<td>Write texture coordinate data as contiguous array of U0,V0,U1,V1,,...</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Vertices - texture coordinates set 1</b></td>
+		<td>May be written at any position <i>inside</i> the vertex stream
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td><b>int</b></td>
+                    <td>texture coordinates set 1 identifier, write 7</td>
+                </tr>
+				<tr>
+					<td><b>streamElementSize</b></td>
+					<td><b>int</b></td>
+					<td>size of <i>one</i> element of the stream. Here 8</td>
+				</tr>
+				<tr>
+					<td><b>textureCoordinates</b></td>
+					<td><b>#V</b> * 2 <b>float</b>s</td>
+					<td>Write texture coordinate data as contiguous array of U0,V0,U1,V1,,...</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Triangle indices</b></td>
+		<td>Triangle index stream, just after the vertex stream
+			<table>
+                <tr>
+                    <td><b>numTriangleIndices</b></td>
+					<td><b>int</b></td>
+					<td>number of triangle indices</td>
+                </tr>
+				<tr>
+					<td><b>triangleIndices</b></td>
+					<td><b>#TI</b> <b>int</b>s</td>
+					<td></td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+	<tr>
+        <td><b>Morph targets</b></td>
+		<td>Morph target stream, just after the triangle index stream
+			<table>
+                <tr>
+                    <td><b>numMorphTargets</b></td>
+					<td><b>int</b></td>
+					<td>number of morph targets. <i>If numMorphTargets == 0 then this is the only entry of the morph target stream.</i></td>
+                </tr>
+			</table>
+			<table>
+				<tr><td><i>For each morph target:</i></td></tr>
+			</table>
+			<table>
+				<tr>
+					<td><b>morphTargetName</b></td>
+					<td>256 <b>char</b>s</td>
+					<td>morph target name, must be null terminated</td>
+				</tr>
+				<tr>
+					<td><b>numMorphVertices</b></td>
+					<td><b>int</b></td>
+					<td>number of vertices which differ between base vertices and morph target</td>
+				</tr>
+				<tr>
+					<td><b>morphVertexIndices</b></td>
+					<td>numMorphVertices <b>int</b>s</td>
+					<td>indices of the vertices which should be morphed</td>
+				</tr>
+ 				<tr>
+					<td><b>numMorphStreams</b></td>
+					<td><b>int</b></td>
+					<td>
+						number of parts in morph vertex data. The default implementation uses 4.<br />
+						<ul>
+							<li>positions</li>
+							<li>normals</li>
+							<li>tangents</li>
+							<li>bitangents</li>
+						</ul>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="3">The content of the morph streams stores difference vectors relative to the base data.</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+
+
+
+
+</table>
+</div>
+<br /><br />
+
+
+
+<h2>Animation</h2>
+<p><i>Filename-extensions: .anim</i></p>
+
+The animation resource consists of sampled animation data for the joints and meshes of a model.
+<br /><br />
+<h3>Version 3</h3>
+
+<div class="syntaxbox">
+<table>
+    <tr>
+        <td><b>Header</b></td>
+        <td>File header at beginning of the file
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td>4 <b>char</b>s</td>
+                    <td>byte sequence 'H3DA'</td>
+                </tr>
+				<tr>
+					<td><b>version</b></td>
+					<td><b>int</b></td>
+					<td>version number: 3</td>
+				</tr>
+				<tr>
+					<td><b>numAnimations</b></td>
+					<td><b>int</b></td>
+					<td>number of animated joints and meshes</td>
+				</tr>
+				<tr>
+					<td><b>numFrames</b></td>
+					<td><b>int</b></td>
+					<td>number of frames</td>
+				</tr>
+            </table>
+		</td>
+	</tr>
+
+	<tr>
+        <td><b>Animation data</b></td>
+		<td>Animation data, just after header repeated <b>numAnimations</b> times for all animated nodes. Nodes
+		that have no animation don't need to be stored in the animation file. Animation data is sampled,
+		meaning that all nodes must have the same number of frames, namely <b>numFrames</b>. The format supports a
+		simple compression scheme for nodes that have the same transformation for all frames. If the compression flag
+		is set to 1, only one single transformation is stored for the corresponding animated node.
+			<table>
+				<tr>
+					<td><b>nodeName</b></td>
+					<td>256 <b>char</b>s</td>
+					<td>node name, must be null terminated</td>
+				</tr>
+				<tr>
+					<td><b>compressed</b></td>
+					<td>1 <b>char</b></td>
+					<td>compression flag: 0 for no compression, 1 for compression</td>
+				</tr>
+				<tr>
+					<td><b>rotation</b></td>
+					<td>4 <b>float</b>s</td>
+					<td>rotation quaternion: x, y, z, w</td>
+				</tr>
+				<tr>
+					<td><b>translation</b></td>
+					<td>3 <b>float</b>s</td>
+					<td>translation vector: x, y z</td>
+				</tr>
+				<tr>
+					<td><b>scale</b></td>
+					<td>3 <b>float</b>s</td>
+					<td>scale vector: x, y, z</td>
+				</tr>
+            </table>
+		</td>
+    </tr>
+
+	
+</table>
+</div>
+<br /><br />
+
+
+
+<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
+</div>
+
+<div id="logo">
+    <img src="images/doclogo.gif" />
+</div>
+
+</body>
+</html>

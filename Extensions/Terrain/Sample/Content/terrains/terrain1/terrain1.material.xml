@@ -1,0 +1,8 @@
+<Material>
+	<Shader source="shaders/terrain.shader"/>
+	
+	<Sampler name="heightNormMap" map="terrains/terrain1/heightmap.tga" allowCompression="false" />
+	<Sampler name="detailMap" map="terrains/terrain1/detail.jpg" />
+	
+	<Uniform name="sunDir" a="1.0" b="-1.0" c="0.0" />
+</Material>

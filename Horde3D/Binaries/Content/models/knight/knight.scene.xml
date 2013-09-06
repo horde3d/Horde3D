@@ -1,0 +1,108 @@
+<Model name="knight" geometry="models/knight/knight.geo">
+	<Joint name="Bip01" tx="-0.000833" ty="35" tz="-0.93383" rx="-0" ry="40" rz="0" jointIndex="1">
+		<Joint name="Bip01_Footsteps" tx="3e-006" ty="-34.3606" tz="0" rx="-0" ry="-40" rz="0" jointIndex="2" />
+		<Joint name="Bip01_Pelvis" rx="-0" ry="-89.9999" rz="92.8207" jointIndex="3">
+			<Joint name="Bip01_Spine" tx="3.65947" ty="-0.180284" tz="0.352649" rx="-0.379301" ry="0.0363263" rz="1.80711" jointIndex="4">
+				<Joint name="Bip01_Spine1" tx="3.93936" ty="0.001203" tz="0.00304" rx="-21.459" ry="-6.97015" rz="2.49158" jointIndex="5">
+					<Joint name="Bip01_Spine2" tx="4.13445" ty="0.000777" tz="0.007217" rx="-6.10017" ry="6.98518" rz="-4.2919" jointIndex="6">
+						<Joint name="Bip01_Neck" tx="9.18408" ty="0" tz="0.003139" rx="-0" ry="22.0606" rz="5.72958e-005" jointIndex="7">
+							<Joint name="Bip01_Head" tx="4.25392" ty="0" tz="0" rx="6.26079" ry="-25.9025" rz="0.434895" jointIndex="8">
+								<Mesh name="helmet" material="models/knight/knight.material.xml" tx="-63.121" ty="-0.000834" tz="0.286122" rx="-0" ry="0" rz="-89.9999" batchStart="26844" batchCount="1776" vertRStart="6038" vertREnd="6434" />
+							</Joint>
+							<Joint name="Bip01_R_Clavicle" tx="0" ty="-1.19506" tz="-0.00339" rx="-1.84341" ry="157.894" rz="-73.4091" jointIndex="9">
+								<Joint name="Bip01_R_UpperArm" tx="6.37149" ty="-1e-006" tz="0" rx="41.0862" ry="53.2935" rz="57.4189" jointIndex="10">
+									<Joint name="Bip01_R_Forearm" tx="11.5125" ty="0" tz="-1e-006" rx="-0" ry="-62.0666" rz="0" jointIndex="11">
+										<Joint name="Bip01_R_Hand" tx="11.0316" ty="-1e-006" tz="1e-006" rx="68.3791" ry="-171.114" rz="175.524" jointIndex="12">
+											<Joint name="Bip01_R_Finger0" tx="1.89748" ty="1.82879" tz="-1.09748" rx="-54.6354" ry="-127.585" rz="154.515" jointIndex="13">
+												<Joint name="Bip01_R_Finger01" tx="0.943374" ty="0" tz="0" rx="-0" ry="25.0082" rz="0" jointIndex="14">
+													<Joint name="Bip01_R_Finger02" tx="1.01045" ty="0" tz="1e-006" rx="-0" ry="13.0428" rz="0" jointIndex="15" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_R_Finger1" tx="4.63708" ty="1.28877" tz="0.001624" rx="-0.803256" ry="53.3598" rz="1.77181" jointIndex="16">
+												<Joint name="Bip01_R_Finger11" tx="1.26352" ty="-1e-006" tz="0" rx="-0" ry="68.7886" rz="0" jointIndex="17">
+													<Joint name="Bip01_R_Finger12" tx="1.17058" ty="-2e-006" tz="1e-006" rx="-0" ry="72.9629" rz="0" jointIndex="18" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_R_Finger2" tx="4.64438" ty="0.377351" tz="0.0003" rx="0.0240069" ry="58.2118" rz="0.038732" jointIndex="19">
+												<Joint name="Bip01_R_Finger21" tx="1.50026" ty="-2e-006" tz="0" rx="-0" ry="69.6303" rz="0" jointIndex="20">
+													<Joint name="Bip01_R_Finger22" tx="1.1224" ty="6e-006" tz="0" rx="-0" ry="88.2464" rz="0" jointIndex="21" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_R_Finger3" tx="4.64438" ty="-0.377351" tz="-0.0003" rx="2.71231" ry="68.3237" rz="-5.80737" jointIndex="22">
+												<Joint name="Bip01_R_Finger31" tx="1.34174" ty="-2e-006" tz="0" rx="-0" ry="65.179" rz="0" jointIndex="23">
+													<Joint name="Bip01_R_Finger32" tx="0.958317" ty="0" tz="0" rx="-0" ry="89.9942" rz="0" jointIndex="24" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_R_Finger4" tx="4.4822" ty="-1.20996" tz="-0.407988" rx="1.3021" ry="65.1364" rz="-3.25809" jointIndex="25">
+												<Joint name="Bip01_R_Finger41" tx="0.996651" ty="-1e-006" tz="0" rx="-0" ry="66.8846" rz="0" jointIndex="26">
+													<Joint name="Bip01_R_Finger42" tx="0.677208" ty="3e-006" tz="0" rx="-0" ry="88.7213" rz="0" jointIndex="27" />
+												</Joint>
+											</Joint>
+											<Mesh name="default" material="models/knight/knight.material.xml" tx="16.5466" ty="3.4593" tz="-44.0244" batchStart="28620" batchCount="1464" vertRStart="6435" vertREnd="6827" />
+										</Joint>
+									</Joint>
+									<Joint name="Bip01_R_ForeTwist" tx="11.5125" ty="0" tz="-1e-006" rx="11.0613" ry="-62.0666" rz="0" jointIndex="28" />
+								</Joint>
+							</Joint>
+							<Joint name="Bip01_L_Clavicle" tx="2e-006" ty="1.19506" tz="-0.003383" rx="3.62667" ry="157.894" rz="77.1024" jointIndex="29">
+								<Joint name="Bip01_L_UpperArm" tx="6.37149" ty="-3e-006" tz="0" rx="-10.006" ry="-2.03216" rz="-17.196" jointIndex="30">
+									<Joint name="Bip01_L_Forearm" tx="11.5125" ty="-1e-006" tz="0" rx="-0" ry="-67.8298" rz="0" jointIndex="31">
+										<Joint name="Bip01_L_Hand" tx="11.0316" ty="1e-006" tz="0" rx="-80.5952" ry="25.1096" rz="-22.2625" jointIndex="32">
+											<Joint name="Bip01_L_Finger0" tx="1.89748" ty="-1.82879" tz="-1.09748" rx="54.6354" ry="-127.585" rz="-154.515" jointIndex="33">
+												<Joint name="Bip01_L_Finger01" tx="0.943374" ty="0" tz="0" rx="-0" ry="25.0082" rz="0" jointIndex="34">
+													<Joint name="Bip01_L_Finger02" tx="1.01045" ty="-1e-006" tz="0" rx="-0" ry="13.0428" rz="0" jointIndex="35" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_L_Finger1" tx="4.63708" ty="-1.28877" tz="0.001622" rx="0.803256" ry="53.3598" rz="-1.77181" jointIndex="36">
+												<Joint name="Bip01_L_Finger11" tx="1.26352" ty="0" tz="0" rx="-0" ry="68.7886" rz="0" jointIndex="37">
+													<Joint name="Bip01_L_Finger12" tx="1.17058" ty="1e-006" tz="2e-006" rx="-0" ry="72.9629" rz="0" jointIndex="38" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_L_Finger2" tx="4.64438" ty="-0.37735" tz="0.000297" rx="-0.0240069" ry="58.2118" rz="-0.038732" jointIndex="39">
+												<Joint name="Bip01_L_Finger21" tx="1.50025" ty="0" tz="0" rx="-0" ry="69.6303" rz="0" jointIndex="40">
+													<Joint name="Bip01_L_Finger22" tx="1.1224" ty="0" tz="0" rx="-0" ry="88.2464" rz="0" jointIndex="41" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_L_Finger3" tx="4.64438" ty="0.377349" tz="-0.000302" rx="-2.71236" ry="68.3237" rz="5.80738" jointIndex="42">
+												<Joint name="Bip01_L_Finger31" tx="1.34175" ty="0" tz="0" rx="-0" ry="65.179" rz="0" jointIndex="43">
+													<Joint name="Bip01_L_Finger32" tx="0.958314" ty="0" tz="-2e-006" rx="-0" ry="89.9942" rz="0" jointIndex="44" />
+												</Joint>
+											</Joint>
+											<Joint name="Bip01_L_Finger4" tx="4.4822" ty="1.20996" tz="-0.407989" rx="-1.3021" ry="65.1364" rz="3.25809" jointIndex="45">
+												<Joint name="Bip01_L_Finger41" tx="0.996653" ty="1e-006" tz="-1e-006" rx="-0" ry="66.8846" rz="0" jointIndex="46">
+													<Joint name="Bip01_L_Finger42" tx="0.677203" ty="-2e-006" tz="-2e-006" rx="-0" ry="88.7212" rz="0" jointIndex="47" />
+												</Joint>
+											</Joint>
+										</Joint>
+									</Joint>
+									<Joint name="Bip01_L_ForeTwist" tx="11.5125" ty="-1e-006" tz="0" rx="4.3534" ry="-67.8298" rz="0" jointIndex="48" />
+								</Joint>
+							</Joint>
+						</Joint>
+					</Joint>
+				</Joint>
+				<Joint name="Bip01_L_Thigh" tx="-3.53085" ty="4.1274" tz="-0.328411" rx="27.6049" ry="22.7917" rz="175.564" jointIndex="49">
+					<Joint name="Bip01_L_Calf" tx="18.0827" ty="0" tz="0" rx="-0" ry="-6.18811" rz="0" jointIndex="50">
+						<Joint name="Bip01_L_Foot" tx="15.9928" ty="0" tz="0" rx="-29.2744" ry="24.417" rz="11.1652" jointIndex="51">
+							<Joint name="Bip01_L_Toe0" tx="3.92661" ty="-0.231919" tz="-5.05339" rx="-0" ry="90" rz="0" jointIndex="52" />
+						</Joint>
+					</Joint>
+					<Joint name="Bip01_LCalfTwist" tx="18.0827" ty="0" tz="0" rx="-11.3159" ry="-6.18813" rz="0" jointIndex="53" />
+				</Joint>
+				<Joint name="Bip01_R_Thigh" tx="-3.77249" ty="-3.53153" tz="-0.37913" rx="-5.36183" ry="-33.7721" rz="-177.375" jointIndex="54">
+					<Joint name="Bip01_R_Calf" tx="18.0827" ty="0" tz="0" rx="-0" ry="-23.3021" rz="0" jointIndex="55">
+						<Joint name="Bip01_R_Foot" tx="15.9928" ty="0" tz="0" rx="6.64504" ry="-8.77886" rz="-4.17923" jointIndex="56">
+							<Joint name="Bip01_R_Toe0" tx="3.92661" ty="0.231919" tz="-5.05339" rx="-0" ry="90" rz="0" jointIndex="57" />
+						</Joint>
+					</Joint>
+					<Joint name="Bip01_RCalfTwist" tx="18.0827" ty="0" tz="0" rx="3.60095" ry="-23.3021" rz="0" jointIndex="58" />
+				</Joint>
+			</Joint>
+		</Joint>
+	</Joint>
+
+	<Mesh name="osh_body" material="models/knight/knight.material.xml" batchStart="0" batchCount="14952" vertRStart="0" vertREnd="3570" />
+	<Mesh name="osh_pauldrons" material="models/knight/knight.material.xml" batchStart="14952" batchCount="1746" vertRStart="3571" vertREnd="4026" />
+	<Mesh name="osh_scabroyal" material="models/knight/knight.material.xml" batchStart="16698" batchCount="1344" vertRStart="4027" vertREnd="4445" />
+	<Mesh name="head" material="models/knight/knight.material.xml" batchStart="18042" batchCount="8802" vertRStart="4446" vertREnd="6037" />
+</Model>

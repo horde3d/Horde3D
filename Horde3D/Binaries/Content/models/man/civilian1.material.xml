@@ -1,0 +1,6 @@
+<Material>
+	<Shader source="shaders/model.shader" />
+	<ShaderFlag name="_F01_Skinning" />
+
+	<Sampler name="albedoMap" map="models/man/civil01.jpg" />
+</Material>

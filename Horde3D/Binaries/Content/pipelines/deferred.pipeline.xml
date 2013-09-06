@@ -1,0 +1,37 @@
+<!-- Deferred Shading Pipeline -->
+<Pipeline>
+	<Setup>
+		<RenderTarget id="GBUFFER" depthBuf="true" numColBufs="3" format="RGBA16F" scale="1.0" />
+	</Setup>
+	
+	<CommandQueue>
+		<Stage id="Attribpass">
+			<SwitchTarget target="GBUFFER" />
+			<ClearTarget depthBuf="true" colBuf0="true" />
+			<DrawGeometry context="ATTRIBPASS" />
+		</Stage>
+		
+		<Stage id="Lighting" link="pipelines/globalSettings.material.xml">
+			<SwitchTarget target="" />
+			<ClearTarget colBuf0="true" />
+			
+			<!-- Copy depth buffer to allow occlusion culling of lights -->
+			<BindBuffer sampler="depthBuf" sourceRT="GBUFFER" bufIndex="32" />
+			<DrawQuad material="materials/light.material.xml" context="COPY_DEPTH" />
+			<UnbindBuffers />
+			
+			<BindBuffer sampler="buf0" sourceRT="GBUFFER" bufIndex="0" />
+			<BindBuffer sampler="buf1" sourceRT="GBUFFER" bufIndex="1" />
+			<BindBuffer sampler="buf2" sourceRT="GBUFFER" bufIndex="2" />
+			
+			<DrawQuad material="materials/light.material.xml" context="AMBIENT" />
+			<DoDeferredLightLoop />
+			
+			<UnbindBuffers />
+		</Stage>
+		
+		<Stage id="Overlays">
+			<DrawOverlays context="OVERLAY" />
+		</Stage>
+	</CommandQueue>
+</Pipeline>
