@@ -6,17 +6,22 @@ sampler2D depthBuf = sampler_state
 	Address = Clamp;
 };
 
-sampler2D buf0 = sampler_state
+sampler2D gbuf0 = sampler_state
 {
 	Address = Clamp;
 };
 
-sampler2D buf1 = sampler_state
+sampler2D gbuf1 = sampler_state
 {
 	Address = Clamp;
 };
 
-sampler2D buf2 = sampler_state
+sampler2D gbuf2 = sampler_state
+{
+	Address = Clamp;
+};
+
+sampler2D gbuf3 = sampler_state
 {
 	Address = Clamp;
 };
@@ -121,10 +126,11 @@ void main( void )
 	{
 		vec3 pos = getPos( fragCoord ) + viewerPos;
 		float vsPos = (viewMat * vec4( pos, 1.0 )).z;
+		vec4 specParams = getSpecParams( fragCoord );
 		
 		gl_FragColor.rgb =
 			calcPhongSpotLight( pos, getNormal( fragCoord ),
-								getAlbedo( fragCoord ), getSpecMask( fragCoord ), 16.0, -vsPos, 0.3 );
+								getAlbedo( fragCoord ), specParams.rgb, specParams.a, -vsPos, 0.3 );
 	}
 	else discard;
 }

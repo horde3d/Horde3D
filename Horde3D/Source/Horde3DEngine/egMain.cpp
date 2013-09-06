@@ -293,7 +293,7 @@ DLLEXP int h3dFindResElem( ResHandle res, int elem, int param, const char *value
 DLLEXP int h3dGetResParamI( ResHandle res, int elem, int elemIdx, int param )
 {
 	Resource *resObj = Modules::resMan().resolveResHandle( res );
-	APIFUNC_VALIDATE_RES( resObj, "h3dGetResParamI", Math::MinInt32 );
+	APIFUNC_VALIDATE_RES( resObj, "h3dGetResParamI", Horde3D::Math::MinInt32 );
 	
 	return resObj->getElemParamI( elem, elemIdx, param );
 }
@@ -311,7 +311,7 @@ DLLEXP void h3dSetResParamI( ResHandle res, int elem, int elemIdx, int param, in
 DLLEXP float h3dGetResParamF( ResHandle res, int elem, int elemIdx, int param, int compIdx )
 {
 	Resource *resObj = Modules::resMan().resolveResHandle( res );
-	APIFUNC_VALIDATE_RES( resObj, "h3dGetResParamF", Math::NaN );
+	APIFUNC_VALIDATE_RES( resObj, "h3dGetResParamF", Horde3D::Math::NaN );
 
 	return resObj->getElemParamF( elem, elemIdx, param, compIdx );
 }
@@ -460,7 +460,7 @@ DLLEXP bool h3dSetNodeParent( NodeHandle node, NodeHandle parent )
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
 	APIFUNC_VALIDATE_NODE( sn, "h3dSetNodeParent", false );
 	SceneNode *snp = Modules::sceneMan().resolveNodeHandle( parent );
-	APIFUNC_VALIDATE_NODE( sn, "h3dSetNodeParent", false );
+	APIFUNC_VALIDATE_NODE( snp, "h3dSetNodeParent", false );
 	
 	return Modules::sceneMan().relocateNode( *sn, *snp );
 }
@@ -570,7 +570,7 @@ DLLEXP void h3dSetNodeTransMat( NodeHandle node, const float *mat4x4 )
 DLLEXP int h3dGetNodeParamI( NodeHandle node, int param )
 {
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
-	APIFUNC_VALIDATE_NODE( sn, "h3dGetNodeParamI", Math::MinInt32 );
+	APIFUNC_VALIDATE_NODE( sn, "h3dGetNodeParamI", Horde3D::Math::MinInt32 );
 
 	return sn->getParamI( param );
 }
@@ -588,7 +588,7 @@ DLLEXP void h3dSetNodeParamI( NodeHandle node, int param, int value )
 DLLEXP float h3dGetNodeParamF( NodeHandle node, int param, int compIdx )
 {
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
-	APIFUNC_VALIDATE_NODE( sn, "h3dGetNodeParamF", Math::NaN );
+	APIFUNC_VALIDATE_NODE( sn, "h3dGetNodeParamF", Horde3D::Math::NaN );
 	
 	return sn->getParamF( param, compIdx );
 }
@@ -668,6 +668,14 @@ DLLEXP NodeHandle h3dGetNodeFindResult( int index )
 	SceneNode *sn = Modules::sceneMan().getFindResult( index );
 	
 	return sn != 0x0 ? sn->getHandle() : 0;
+}
+
+
+DLLEXP void h3dSetNodeUniforms( NodeHandle node, float *uniformData, int count )
+{
+	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
+	APIFUNC_VALIDATE_NODE( sn, "h3dSetNodeUniforms", APIFUNC_RET_VOID );
+	sn->setCustomInstData( uniformData, (uint32)count );
 }
 
 
@@ -774,6 +782,15 @@ DLLEXP bool h3dSetModelMorpher( NodeHandle modelNode, const char *target, float 
 }
 
 
+DLLEXP void h3dUpdateModel( NodeHandle modelNode, int flags )
+{
+	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( modelNode );
+	APIFUNC_VALIDATE_NODE_TYPE( sn, SceneNodeTypes::Model, "h3dUpdateModel", APIFUNC_RET_VOID );
+
+	((ModelNode *)sn)->update( flags );
+}
+
+
 DLLEXP NodeHandle h3dAddMeshNode( NodeHandle parent, const char *name, ResHandle materialRes,
                                   int batchStart, int batchCount, int vertRStart, int vertREnd )
 {
@@ -877,12 +894,12 @@ DLLEXP NodeHandle h3dAddEmitterNode( NodeHandle parent, const char *name, ResHan
 }
 
 
-DLLEXP void h3dAdvanceEmitterTime( NodeHandle emitterNode, float timeDelta )
+DLLEXP void h3dUpdateEmitter( NodeHandle emitterNode, float timeDelta )
 {
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( emitterNode );
-	APIFUNC_VALIDATE_NODE_TYPE( sn, SceneNodeTypes::Emitter, "h3dAdvanceEmitterTime", APIFUNC_RET_VOID );
+	APIFUNC_VALIDATE_NODE_TYPE( sn, SceneNodeTypes::Emitter, "h3dUpdateEmitter", APIFUNC_RET_VOID );
 	
-	((EmitterNode *)sn)->advanceTime( timeDelta );
+	((EmitterNode *)sn)->update( timeDelta );
 }
 
 

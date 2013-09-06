@@ -35,8 +35,8 @@ float PCF( const vec4 projShadow )
 }
 
 
-vec3 calcPhongSpotLight( const vec3 pos, const vec3 normal, const vec3 albedo, const float specMask,
-						 const float specExp, const float viewDist, const float ambientIntensity )
+vec3 calcPhongSpotLight( const vec3 pos, const vec3 normal, const vec3 albedo, const vec3 specColor,
+						 const float gloss, const float viewDist, const float ambientIntensity )
 {
 	vec3 light = lightPos.xyz - pos;
 	float lightLen = length( light );
@@ -57,8 +57,9 @@ vec3 calcPhongSpotLight( const vec3 pos, const vec3 normal, const vec3 albedo, c
 	// Blinn-Phong specular with energy conservation
 	vec3 view = normalize( viewerPos - pos );
 	vec3 halfVec = normalize( light + view );
-	float spec = pow( max( dot( halfVec, normal ), 0.0 ), specExp );
-	spec *= (specExp * 0.04 + 0.32) * specMask;  // Normalization factor (n+8)/8pi
+	float specExp = exp2( 10.0 * gloss + 1.0 );
+	vec3 specular = specColor * pow( max( dot( halfVec, normal ), 0.0 ), specExp );
+	specular *= (specExp * 0.125 + 0.25);  // Normalization factor (n+2)/8
 	
 	// Shadows
 	float shadowTerm = 1.0;
@@ -76,5 +77,5 @@ vec3 calcPhongSpotLight( const vec3 pos, const vec3 normal, const vec3 albedo, c
 	}
 	
 	// Final color
-	return albedo * lightColor * atten * shadowTerm * (1.0 + spec);
+	return (albedo + specular) * lightColor * atten * shadowTerm;
 }

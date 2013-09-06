@@ -22,7 +22,7 @@
 #	if !defined( PLATFORM_WIN_CE )
 #		define PLATFORM_WIN_CE
 #	endif
-#elif defined( WIN32 ) || defined( _WINDOWS )
+#elif defined( WIN32 ) || defined( _WINDOWS ) || defined( _WIN32 )
 #	if !defined( PLATFORM_WIN )
 #		define PLATFORM_WIN
 #	endif

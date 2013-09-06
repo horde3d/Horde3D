@@ -162,41 +162,45 @@ int main( int argc, char **argv )
 	// Check optional arguments
 	for( int i = 2; i < argc; ++i )
 	{
-		if( _stricmp( argv[i], "-type" ) == 0 && argc > i + 1 )
+		std::string arg = argv[i];
+		arg.erase(remove_if(arg.begin(), arg.end(), ::isspace), arg.end());
+
+
+		if( _stricmp( arg.c_str(), "-type" ) == 0 && argc > i + 1 )
 		{
 			if( _stricmp( argv[++i], "model" ) == 0 ) assetType = AssetTypes::Model;
 			else if( _stricmp( argv[i], "anim" ) == 0 ) assetType = AssetTypes::Animation;
 			else assetType = AssetTypes::Unknown;
 		}
-		else if( _stricmp( argv[i], "-base" ) == 0 && argc > i + 1 )
+		else if( _stricmp( arg.c_str(), "-base" ) == 0 && argc > i + 1 )
 		{
 			basePath = cleanPath( argv[++i] ) + "/";
 		}
-		else if( _stricmp( argv[i], "-dest" ) == 0 && argc > i + 1 )
+		else if( _stricmp( arg.c_str(), "-dest" ) == 0 && argc > i + 1 )
 		{
 			outPath = cleanPath( argv[++i] ) + "/";
 		}
-		else if( _stricmp( argv[i], "-noGeoOpt" ) == 0 )
+		else if( _stricmp( arg.c_str(), "-noGeoOpt" ) == 0 )
 		{
 			geoOpt = false;
 		}
-		else if( _stricmp( argv[i], "-overwriteMats" ) == 0 )
+		else if( _stricmp( arg.c_str(), "-overwriteMats" ) == 0 )
 		{
 			overwriteMats = true;
 		}
-		else if( (_stricmp( argv[i], "-lodDist1" ) == 0 || _stricmp( argv[i], "-lodDist2" ) == 0 ||
-		          _stricmp( argv[i], "-lodDist3" ) == 0 || _stricmp( argv[i], "-lodDist4" ) == 0) && argc > i + 1 )
+		else if( (_stricmp( arg.c_str(), "-lodDist1" ) == 0 || _stricmp( arg.c_str(), "-lodDist2" ) == 0 ||
+		          _stricmp( arg.c_str(), "-lodDist3" ) == 0 || _stricmp( arg.c_str(), "-lodDist4" ) == 0) && argc > i + 1 )
 		{
 			int index = 0;
-			if( _stricmp( argv[i], "-lodDist2" ) == 0 ) index = 1;
-			else if( _stricmp( argv[i], "-lodDist3" ) == 0 ) index = 2;
-			else if( _stricmp( argv[i], "-lodDist4" ) == 0 ) index = 3;
+			if( _stricmp( arg.c_str(), "-lodDist2" ) == 0 ) index = 1;
+			else if( _stricmp( arg.c_str(), "-lodDist3" ) == 0 ) index = 2;
+			else if( _stricmp( arg.c_str(), "-lodDist4" ) == 0 ) index = 3;
 			
 			lodDists[index] = (float)atof( argv[++i] );
 		}
 		else
 		{
-			log( "Invalid arguments" );
+			log( std::string( "Invalid arguments: '" ) + arg.c_str() + std::string( "'" ) );
 			printHelp();
 			return 1;
 		}
@@ -248,7 +252,7 @@ int main( int argc, char **argv )
 		{
 			string sourcePath = basePath + assetList[i];
 			string assetName = extractFileName( assetList[i], false );
-			string assetPath = extractFilePath( assetList[i] );
+			string assetPath = cleanPath( extractFilePath( assetList[i] ) );
 			if( !assetPath.empty() ) assetPath += "/";
 			
 			ColladaDocument *daeDoc = new ColladaDocument();

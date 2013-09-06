@@ -85,7 +85,7 @@ void main( void )
 	setPos( pos.xyz - viewerPos );
 	setNormal( normalize( normal ) );
 	setAlbedo( detailCol );
-	setSpecMask( 0.0 );
+	setSpecParams( vec3( 0.0, 0.0, 0.0 ), 0.0 );
 }
 				
 
@@ -142,7 +142,7 @@ void main( void )
 	vec3 normal = vec3( texel.b, ny, texel.a );
 	
 	gl_FragColor.rgb =
-		calcPhongSpotLight( pos.xyz, normalize( normal ), detailCol, 0.0, 16.0, -vsPos.z, 0.3 );
+		calcPhongSpotLight( pos.xyz, normalize( normal ), detailCol, vec3( 0.0, 0.0, 0.0 ), 16.0, -vsPos.z, 0.3 );
 }
 
 

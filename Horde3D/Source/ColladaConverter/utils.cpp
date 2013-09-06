@@ -13,6 +13,7 @@
 #include "utils.h"
 #include "utPlatform.h"
 #include <iostream>
+#include <algorithm>
 
 #ifdef PLATFORM_WIN
 #   define WIN32_LEAN_AND_MEAN 1
@@ -103,11 +104,13 @@ string cleanPath( const string &path )
 {
 	size_t len = path.length();
 	if( len == 0 ) return path;
-	
-	if( path[len - 1] == '/' || path[len - 1] == '\\' )
-		return path.substr( 0, len - 1 );
+
+	string cleanedPath = path;
+	replace( cleanedPath.begin(), cleanedPath.end(), '\\', '/');
+	if( cleanedPath[len - 1] == '/' )
+		return cleanedPath.substr( 0, len - 1 );
 	else
-		return path;
+		return cleanedPath;
 }
 
 

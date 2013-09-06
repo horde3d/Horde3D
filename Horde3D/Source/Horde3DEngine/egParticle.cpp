@@ -308,7 +308,6 @@ EmitterNode::EmitterNode( const EmitterNodeTpl &emitterTpl ) :
 	_spreadAngle = emitterTpl.spreadAngle;
 	_force = Vec3f( emitterTpl.fx, emitterTpl.fy, emitterTpl.fz );
 
-	_timeDelta = 0;
 	_emissionAccum = 0;
 	_prevAbsTrans = _absTrans;
 
@@ -530,33 +529,12 @@ float randomF( float min, float max )
 }
 
 
-void EmitterNode::advanceTime( float timeDelta )
+void EmitterNode::update( float timeDelta )
 {
-	_timeDelta += timeDelta;
-
-	markDirty();
-}
-
-
-bool EmitterNode::hasFinished()
-{
-	if( _respawnCount < 0 ) return false;
-
-	for( uint32 i = 0; i < _particleCount; ++i )
-	{	
-		if( _particles[i].life > 0 || (int)_particles[i].respawnCounter < _respawnCount )
-		{
-			return false;
-		}
-	}
+	if( timeDelta == 0 || _effectRes == 0x0 ) return;
 	
-	return true;
-}
-
-
-void EmitterNode::onPostUpdate()
-{	
-	if( _timeDelta == 0 || _effectRes == 0x0 ) return;
+	// Update absolute transformation
+	updateTree();
 	
 	Timer *timer = Modules::stats().getTimer( EngineStats::ParticleSimTime );
 	if( Modules::config().gatherTimeStats ) timer->setEnabled( true );
@@ -565,9 +543,9 @@ void EmitterNode::onPostUpdate()
 	Vec3f bBMax( -Math::MaxFloat, -Math::MaxFloat, -Math::MaxFloat );
 	
 	if( _delay <= 0 )
-		_emissionAccum += _emissionRate * _timeDelta;
+		_emissionAccum += _emissionRate * timeDelta;
 	else
-		_delay -= _timeDelta;
+		_delay -= timeDelta;
 
 	Vec3f motionVec = _absTrans.getTrans() - _prevAbsTrans.getTrans();
 
@@ -604,7 +582,7 @@ void EmitterNode::onPostUpdate()
 				m.c[3][0] = 0; m.c[3][1] = 0; m.c[3][2] = 0;
 				m.rotate( randomF( -angle, angle ), randomF( -angle, angle ), randomF( -angle, angle ) );
 				p.dir = (m * Vec3f( 0, 0, -1 )).normalized();
-				p.dragVec = motionVec / _timeDelta;
+				p.dragVec = motionVec / timeDelta;
 				++p.respawnCounter;
 
 				// Generate start values
@@ -653,13 +631,13 @@ void EmitterNode::onPostUpdate()
 			_parColors[i * 4 + 3] = p.a0 * (1.0f + (_effectRes->_colA.endRate - 1.0f) * fac);
 
 			// Update particle position and rotation
-			_parPositions[i * 3 + 0] += (p.dir.x * moveVel + p.dragVec.x * drag + _force.x) * _timeDelta;
-			_parPositions[i * 3 + 1] += (p.dir.y * moveVel + p.dragVec.y * drag + _force.y) * _timeDelta;
-			_parPositions[i * 3 + 2] += (p.dir.z * moveVel + p.dragVec.z * drag + _force.z) * _timeDelta;
-			_parSizesANDRotations[i * 2 + 1] += degToRad( rotVel ) * _timeDelta;
+			_parPositions[i * 3 + 0] += (p.dir.x * moveVel + p.dragVec.x * drag + _force.x) * timeDelta;
+			_parPositions[i * 3 + 1] += (p.dir.y * moveVel + p.dragVec.y * drag + _force.y) * timeDelta;
+			_parPositions[i * 3 + 2] += (p.dir.z * moveVel + p.dragVec.z * drag + _force.z) * timeDelta;
+			_parSizesANDRotations[i * 2 + 1] += degToRad( rotVel ) * timeDelta;
 
 			// Decrease lifetime
-			p.life -= _timeDelta;
+			p.life -= timeDelta;
 			
 			// Check if particle is dying
 			if( p.life <= 0 )
@@ -686,10 +664,25 @@ void EmitterNode::onPostUpdate()
 	_bBox.min = bBMin;
 	_bBox.max = bBMax;
 
-	_timeDelta = 0;
 	_prevAbsTrans = _absTrans;
 
 	timer->setEnabled( false );
+}
+
+
+bool EmitterNode::hasFinished()
+{
+	if( _respawnCount < 0 ) return false;
+
+	for( uint32 i = 0; i < _particleCount; ++i )
+	{	
+		if( _particles[i].life > 0 || (int)_particles[i].respawnCounter < _respawnCount )
+		{
+			return false;
+		}
+	}
+	
+	return true;
 }
 
 }  // namespace

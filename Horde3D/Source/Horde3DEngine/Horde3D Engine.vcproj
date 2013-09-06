@@ -99,8 +99,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(ProjectDir)../../Build\$(ProjectName)\$(ConfigurationName)"
-			IntermediateDirectory="$(ProjectDir)../../Build\$(ProjectName)\$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)../../Build/$(ProjectName)/$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)../../Build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			WholeProgramOptimization="1"

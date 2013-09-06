@@ -155,5 +155,6 @@ void CrowdSim::update( float fps )
 		// Update animation
 		p.animTime += vel * 35.0f;
 		h3dSetModelAnimParams( p.node, 0, p.animTime, 1.0f );
+		h3dUpdateModel( p.node, H3DModelUpdateFlags::Animation | H3DModelUpdateFlags::Geometry );
 	}
 }

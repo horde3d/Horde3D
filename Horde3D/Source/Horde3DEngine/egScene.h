@@ -117,8 +117,10 @@ public:
 
 	virtual bool canAttach( SceneNode &parent );
 	void markDirty();
-	void update();
+	void updateTree();
 	virtual bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
+
+	virtual void setCustomInstData( float *data, uint32 count ) {}
 
 	int getType() { return _type; };
 	NodeHandle getHandle() { return _handle; }
@@ -136,7 +138,6 @@ public:
 protected:
 	void markChildrenDirty();
 
-	virtual void onPreUpdate() {}  // Called before absolute transformation is updated
 	virtual void onPostUpdate() {}  // Called after absolute transformation has been updated
 	virtual void onFinishedUpdate() {}  // Called after children have been updated
 	virtual void onAttach( SceneNode &parentNode ) {}  // Called when node is attached to parent
@@ -198,15 +199,19 @@ protected:
 // Spatial Graph
 // =================================================================================================
 
-struct RendQueueItem
+struct RenderQueueItem
 {
 	SceneNode  *node;
 	int        type;  // Type is stored explicitly for better cache efficiency when iterating over list
 	float      sortKey;
 
-	RendQueueItem() {}
-	RendQueueItem( int type, float sortKey, SceneNode *node ) : node( node ), type( type ), sortKey( sortKey ) {}
+	RenderQueueItem() {}
+	RenderQueueItem( int type, float sortKey, SceneNode *node )
+		: node( node ), type( type ), sortKey( sortKey ) {}
 };
+
+typedef std::vector< RenderQueueItem > RenderQueue;
+
 
 class SpatialGraph
 {
@@ -221,13 +226,13 @@ public:
 	                   RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderQueue );
 
 	std::vector< SceneNode * > &getLightQueue() { return _lightQueue; }
-	std::vector< RendQueueItem > &getRenderableQueue() { return _renderableQueue; }
+	RenderQueue &getRenderQueue() { return _renderQueue; }
 
 protected:
 	std::vector< SceneNode * >     _nodes;		// Renderable nodes and lights
 	std::vector< uint32 >          _freeList;
 	std::vector< SceneNode * >     _lightQueue;
-	std::vector< RendQueueItem >   _renderableQueue;
+	RenderQueue                    _renderQueue;
 };
 
 
@@ -237,16 +242,12 @@ protected:
 
 typedef SceneNodeTpl *(*NodeTypeParsingFunc)( std::map< std::string, std::string > &attribs );
 typedef SceneNode *(*NodeTypeFactoryFunc)( const SceneNodeTpl &tpl );
-typedef void (*NodeTypeRenderFunc)( const std::string &shaderContext, const std::string &theClass, bool debugView,
-                                    const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
-                                    int occSet );
 
 struct NodeRegEntry
 {
 	std::string          typeString;
 	NodeTypeParsingFunc  parsingFunc;
 	NodeTypeFactoryFunc  factoryFunc;
-	NodeTypeRenderFunc   renderFunc;
 };
 
 struct CastRayResult
@@ -264,8 +265,8 @@ public:
 	SceneManager();
 	~SceneManager();
 
-	void registerType( int type, const std::string &typeString, NodeTypeParsingFunc pf,
-	                   NodeTypeFactoryFunc ff, NodeTypeRenderFunc rf );
+	void registerNodeType( int nodeType, const std::string &typeString, NodeTypeParsingFunc pf,
+	                       NodeTypeFactoryFunc ff );
 	NodeRegEntry *findType( int type );
 	NodeRegEntry *findType( const std::string &typeString );
 	
@@ -291,7 +292,7 @@ public:
 	SceneNode &getRootNode() { return *_nodes[0]; }
 	SceneNode &getDefCamNode() { return *_nodes[1]; }
 	std::vector< SceneNode * > &getLightQueue() { return _spatialGraph->getLightQueue(); }
-	std::vector< RendQueueItem > &getRenderableQueue() { return _spatialGraph->getRenderableQueue(); }
+	RenderQueue &getRenderQueue() { return _spatialGraph->getRenderQueue(); }
 	
 	SceneNode *resolveNodeHandle( NodeHandle handle )
 		{ return (handle != 0 && (unsigned)(handle - 1) < _nodes.size()) ? _nodes[handle - 1] : 0x0; }

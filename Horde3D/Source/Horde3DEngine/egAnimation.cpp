@@ -370,10 +370,6 @@ bool AnimationController::setAnimParams( int stage, float time, float weight )
 	curStage.animTime = time;
 	curStage.weight = weight;
 
-	// Reset ignore animation flag
-	for( size_t i = 0, s = _nodeList.size(); i < s; ++i )
-		_nodeList[i].node->getANIgnoreAnimRef() = false;
-
 	_dirty = true;
 	
 	return true;
@@ -393,13 +389,6 @@ bool AnimationController::animate()
 	// Animate
 	for( size_t i = 0, si = _nodeList.size(); i < si; ++i )
 	{
-		// Ignore animation if node transformation was set manually
-		if( _nodeList[i].node->getANIgnoreAnimRef() )
-		{
-			_nodeList[i].node->getANIgnoreAnimRef() = false;
-			continue;
-		}
-		
 		// Fast path
 		if( Modules::config().fastAnimation && _activeStages.size() == 1 )
 		{

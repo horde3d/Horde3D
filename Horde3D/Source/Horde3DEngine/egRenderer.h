@@ -32,14 +32,27 @@ const uint32 MaxNumOverlayVerts = 2048;
 const uint32 ParticlesPerBatch = 64;	// Warning: The GPU must have enough registers
 const uint32 QuadIndexBufCount = MaxNumOverlayVerts * 6;
 
-extern const char *vsDefColor;
-extern const char *fsDefColor;
+#define OCCPROXYLIST_RENDERABLES 0
+#define OCCPROXYLIST_LIGHTS 1
+
 extern const char *vsOccBox;
-extern const char *fsOccBox;	
+extern const char *fsOccBox;
 	
 
 // =================================================================================================
 // Renderer
+// =================================================================================================
+
+typedef void (*RenderFunc)( uint32 firstItem, uint32 lastItem, const std::string &shaderContext,
+                            const std::string &theClass, bool debugView, const Frustum *frust1,
+                            const Frustum *frust2, RenderingOrder::List order, int occSet );
+
+struct RenderFuncListItem
+{
+	int         nodeType;
+	RenderFunc  renderFunc;
+};
+
 // =================================================================================================
 
 struct OverlayBatch
@@ -105,6 +118,8 @@ class Renderer
 public:
 	Renderer();
 	~Renderer();
+
+	void registerRenderFunc( int nodeType, RenderFunc rf );
 	
 	unsigned char *useScratchBuf( uint32 minSize );
 	
@@ -134,10 +149,10 @@ public:
 	                   MaterialResource *matRes, int flags );
 	void clearOverlays();
 	
-	static void drawMeshes( const std::string &shaderContext, const std::string &theClass, bool debugView,
-		const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
-	static void drawParticles( const std::string &shaderContext, const std::string &theClass, bool debugView,
-		const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
+	static void drawMeshes( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
+	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 	void render( CameraNode *camNode );
 	void finalizeFrame();
@@ -177,6 +192,8 @@ protected:
 	void finishRendering();
 
 protected:
+	std::vector< RenderFuncListItem >  _renderFuncRegistry;
+	
 	unsigned char                      *_scratchBuf;
 	uint32                             _scratchBufSize;
 

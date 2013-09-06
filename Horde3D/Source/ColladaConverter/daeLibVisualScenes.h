@@ -49,13 +49,18 @@ struct DaeNode
 	std::vector< DaeTransformation >  transStack;
 	std::vector< DaeNode * >          children;
 	std::vector< DaeInstance >        instances;
-	
+
+	~DaeNode()
+	{
+		for( unsigned int i = 0; i < children.size(); ++i ) delete children[i];
+	}
 
 	bool parse( const XMLNode &nodeNode )
 	{
 		reference = false;	
 		id = nodeNode.getAttribute( "id", "" );
 		name = nodeNode.getAttribute( "name", "" );
+		if( name.empty() ) name = id;
 		sid = nodeNode.getAttribute( "sid", id.c_str() );
 		
 		if( strcmp( nodeNode.getAttribute( "type", "" ), "JOINT" ) == 0 ) joint = true;

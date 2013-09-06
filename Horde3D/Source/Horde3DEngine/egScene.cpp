@@ -63,11 +63,6 @@ void SceneNode::setTransform( Vec3f trans, Vec3f rot, Vec3f scale )
 	if( _type == SceneNodeTypes::Joint )
 	{
 		((JointNode *)this)->_parentModel->_skinningDirty = true;
-		((JointNode *)this)->_ignoreAnim = true;
-	}
-	else if( _type == SceneNodeTypes::Mesh )
-	{
-		((MeshNode *)this)->_ignoreAnim = true;
 	}
 	
 	_relTrans = Matrix4f::ScaleMat( scale.x, scale.y, scale.z );
@@ -84,12 +79,6 @@ void SceneNode::setTransform( const Matrix4f &mat )
 	if( _type == SceneNodeTypes::Joint )
 	{
 		((JointNode *)this)->_parentModel->_skinningDirty = true;
-		((JointNode *)this)->_ignoreAnim = true;
-	}
-	else if( _type == SceneNodeTypes::Mesh )
-	{
-		((MeshNode *)this)->_parentModel->_skinningDirty = true;
-		((MeshNode *)this)->_ignoreAnim = true;
 	}
 	
 	_relTrans = mat;
@@ -223,11 +212,9 @@ void SceneNode::markDirty()
 }
 
 
-void SceneNode::update()
+void SceneNode::updateTree()
 {
 	if( !_dirty ) return;
-	
-	onPreUpdate();
 	
 	// Calculate absolute matrix
 	if( _parent != 0x0 )
@@ -244,7 +231,7 @@ void SceneNode::update()
 	// Visit children
 	for( uint32 i = 0, s = (uint32)_children.size(); i < s; ++i )
 	{
-		_children[i]->update();
+		_children[i]->updateTree();
 	}	
 
 	onFinishedUpdate();
@@ -291,7 +278,7 @@ SceneNode *GroupNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 SpatialGraph::SpatialGraph()
 {
 	_lightQueue.reserve( 20 );
-	_renderableQueue.reserve( 500 );
+	_renderQueue.reserve( 500 );
 }
 
 
@@ -322,7 +309,7 @@ void SpatialGraph::removeNode( uint32 sgHandle )
 
 	// Reset queues
 	_lightQueue.resize( 0 );
-	_renderableQueue.resize( 0 );
+	_renderQueue.resize( 0 );
 	
 	_nodes[sgHandle - 1]->_sgHandle = 0;
 	_nodes[sgHandle - 1] = 0x0;
@@ -337,9 +324,9 @@ void SpatialGraph::updateNode( uint32 sgHandle )
 }
 
 
-struct RendQueueItemCompFunc
+struct RenderQueueItemCompFunc
 {
-	bool operator()( const RendQueueItem &a, const RendQueueItem &b ) const
+	bool operator()( const RenderQueueItem &a, const RenderQueueItem &b ) const
 		{ return a.sortKey < b.sortKey; }
 };
 
@@ -355,7 +342,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 	
 	// Clear without affecting capacity
 	if( lightQueue ) _lightQueue.resize( 0 );
-	if( renderQueue ) _renderableQueue.resize( 0 );
+	if( renderQueue ) _renderQueue.resize( 0 );
 
 	// Culling
 	for( size_t i = 0, s = _nodes.size(); i < s; ++i )
@@ -389,7 +376,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 					break;
 				}
 				
-				_renderableQueue.push_back( RendQueueItem( node->_type, sortKey, node ) );
+				_renderQueue.push_back( RenderQueueItem( node->_type, sortKey, node ) );
 			}
 		}
 		else if( lightQueue && node->_type == SceneNodeTypes::Light )
@@ -400,7 +387,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 
 	// Sort
 	if( order != RenderingOrder::None )
-		std::sort( _renderableQueue.begin(), _renderableQueue.end(), RendQueueItemCompFunc() );
+		std::sort( _renderQueue.begin(), _renderQueue.end(), RenderQueueItemCompFunc() );
 }
 
 
@@ -429,15 +416,14 @@ SceneManager::~SceneManager()
 }
 
 
-void SceneManager::registerType( int type, const string &typeString, NodeTypeParsingFunc pf,
-								 NodeTypeFactoryFunc ff, NodeTypeRenderFunc rf )
+void SceneManager::registerNodeType( int nodeType, const string &typeString, NodeTypeParsingFunc pf,
+                                     NodeTypeFactoryFunc ff )
 {
 	NodeRegEntry entry;
 	entry.typeString = typeString;
 	entry.parsingFunc = pf;
 	entry.factoryFunc = ff;
-	entry.renderFunc = rf;
-	_registry[type] = entry;
+	_registry[nodeType] = entry;
 }
 
 
@@ -467,7 +453,7 @@ NodeRegEntry *SceneManager::findType( const string &typeString )
 
 void SceneManager::updateNodes()
 {
-	getRootNode().update();
+	getRootNode().updateTree();
 }
 
 

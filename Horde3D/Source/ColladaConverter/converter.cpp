@@ -44,8 +44,7 @@ Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDis
 
 Converter::~Converter()
 {
-	for( unsigned int i = 0; i < _joints.size(); ++i ) delete _joints[i];
-	for( unsigned int i = 0; i < _meshes.size(); ++i ) delete _meshes[i];
+	for( unsigned int i = 0; i < _nodes.size(); ++i ) delete _nodes[i];	
 }
 
 
@@ -342,9 +341,9 @@ void Converter::calcTangentSpaceBasis( vector<Vertex> &verts )
 	{
 		for( unsigned int j = 0; j < _meshes[i]->triGroups.size(); ++j )
 		{
-			TriGroup &triGroup = _meshes[i]->triGroups[j];
+			TriGroup *triGroup = _meshes[i]->triGroups[j];
 			
-			for( unsigned int k = triGroup.first; k < triGroup.first + triGroup.count; k += 3 )
+			for( unsigned int k = triGroup->first; k < triGroup->first + triGroup->count; k += 3 )
 			{
 				// Compute basis vectors for triangle
 				Vec3f edge1uv = verts[_indices[k + 1]].texCoords[0] - verts[_indices[k]].texCoords[0];
@@ -366,7 +365,7 @@ void Converter::calcTangentSpaceBasis( vector<Vertex> &verts )
 
 					// Handle texture seams where vertices were split
 					vector< unsigned int > &vertList =
-						triGroup.posIndexToVertices[verts[_indices[k + l]].daePosIndex];
+						triGroup->posIndexToVertices[verts[_indices[k + l]].daePosIndex];
 					for( unsigned int m = 0; m < vertList.size(); ++m )
 					{
 						if( vertList[m] != _indices[k + l] &&
@@ -524,31 +523,31 @@ void Converter::processMeshes( bool optimize )
 		for( unsigned int j = 0; j < geo->triGroups.size(); ++j )
 		{
 			DaeTriGroup &iTriGroup = geo->triGroups[j];
-			TriGroup oTriGroup;
+			TriGroup* oTriGroup = new TriGroup();
 
 			DaeMaterial *mat = _daeDoc.libMaterials.findMaterial(
 				_meshes[i]->daeInstance->materialBindings[iTriGroup.matId] );
 			if( mat != 0x0 )
 			{
-				oTriGroup.matName = mat->name;
+				oTriGroup->matName = mat->name;
 				mat->used = true;
 			}
 			else
-				log( "Warning: Material '" + oTriGroup.matName + "' not found" );
+				log( "Warning: Material '" + oTriGroup->matName + "' not found" );
 
-			oTriGroup.first = (unsigned int)_indices.size();
-			oTriGroup.count = (unsigned int)iTriGroup.indices.size();
-			oTriGroup.vertRStart = (unsigned int)_vertices.size();
+			oTriGroup->first = (unsigned int)_indices.size();
+			oTriGroup->count = (unsigned int)iTriGroup.indices.size();
+			oTriGroup->vertRStart = (unsigned int)_vertices.size();
 
 			// Add indices and vertices
-			oTriGroup.numPosIndices = (unsigned int)iTriGroup.vSource->posSource->floatArray.size() /
+			oTriGroup->numPosIndices = (unsigned int)iTriGroup.vSource->posSource->floatArray.size() /
 			                          iTriGroup.vSource->posSource->paramsPerItem;
-			oTriGroup.posIndexToVertices = new vector< unsigned int >[oTriGroup.numPosIndices];
+			oTriGroup->posIndexToVertices = new vector< unsigned int >[oTriGroup->numPosIndices];
 			
 			for( unsigned int k = 0; k < iTriGroup.indices.size(); ++k )
 			{
 				// Try to find vertex
-				vector< unsigned int > &vertList = oTriGroup.posIndexToVertices[iTriGroup.indices[k].posIndex];
+				vector< unsigned int > &vertList = oTriGroup->posIndexToVertices[iTriGroup.indices[k].posIndex];
 				bool found = false;
 				unsigned int index = (unsigned int)_vertices.size();
 				
@@ -664,7 +663,7 @@ void Converter::processMeshes( bool optimize )
 				}
 			}
 
-			oTriGroup.vertREnd = (unsigned int)_vertices.size() - 1;
+			oTriGroup->vertREnd = (unsigned int)_vertices.size() - 1;
 			
 			// Remove degenerated triangles
 			unsigned int numDegTris = MeshOptimizer::removeDegeneratedTriangles( oTriGroup, _vertices, _indices );
@@ -675,7 +674,7 @@ void Converter::processMeshes( bool optimize )
 				log( "Removed " + ss.str() + " degenerated triangles from mesh " + _meshes[i]->daeNode->id );
 			}
 			
-			_meshes[i]->triGroups.push_back( oTriGroup );
+			_meshes[i]->triGroups.push_back( oTriGroup );			
 		}
 
 		unsigned int numGeoVerts = (unsigned int)_vertices.size() - firstGeoVert;
@@ -825,8 +824,8 @@ void Converter::processMeshes( bool optimize )
 			}
 			
 			// Clean up
-			delete[] _meshes[i]->triGroups[j].posIndexToVertices;
-			_meshes[i]->triGroups[j].posIndexToVertices = 0x0;
+			delete[] _meshes[i]->triGroups[j]->posIndexToVertices;
+			_meshes[i]->triGroups[j]->posIndexToVertices = 0x0;
 		}
 	}
 
@@ -857,7 +856,7 @@ bool Converter::convertModel( bool optimize )
 	// Process all nodes
 	for( unsigned int i = 0; i < _daeDoc.scene->nodes.size(); ++i )
 	{
-		processNode( *_daeDoc.scene->nodes[i], 0x0, Matrix4f(), animTransAccum );
+		_nodes.push_back( processNode( *_daeDoc.scene->nodes[i], 0x0, Matrix4f(), animTransAccum ) );
 	}
 
 	if( _animNotSampled )
@@ -1117,7 +1116,7 @@ void Converter::writeSGNode( const string &assetPath, SceneNode *node, unsigned 
 			outf << "name=\"" << (i > 0 ? "#" : "") << mesh->name << "\" ";
 			if( mesh->lodLevel > 0 ) outf << "lodLevel=\"" << mesh->lodLevel << "\" ";
 			outf << "material=\"";
-			outf << assetPath + mesh->triGroups[i].matName + ".material.xml\" ";
+			outf << assetPath + mesh->triGroups[i]->matName + ".material.xml\" ";
 			
 			if( i == 0 )
 			{
@@ -1130,13 +1129,13 @@ void Converter::writeSGNode( const string &assetPath, SceneNode *node, unsigned 
 			}
 
 			outf << "batchStart=\"";
-			outf << mesh->triGroups[i].first;
+			outf << mesh->triGroups[i]->first;
 			outf << "\" batchCount=\"";
-			outf << mesh->triGroups[i].count;
+			outf << mesh->triGroups[i]->count;
 			outf << "\" vertRStart=\"";
-			outf << mesh->triGroups[i].vertRStart;
+			outf << mesh->triGroups[i]->vertRStart;
 			outf << "\" vertREnd=\"";
-			outf << mesh->triGroups[i].vertREnd;
+			outf << mesh->triGroups[i]->vertREnd;
 			outf << "\"";
 			
 			if( i == 0 && mesh->triGroups.size() > 1 ) outf << ">\n";
@@ -1291,6 +1290,33 @@ bool Converter::writeMaterials( const string &assetPath, bool replace )
 				outf << assetPath << material.effect->diffuseMap->fileName;
 				outf << "\" />\n";
 			}
+			else if( !material.effect->diffuseColor.empty() )
+			{
+				outf << "\t<Uniform name=\"matDiffuseCol\" ";				
+				char value = 'a';
+				std::istringstream iss(material.effect->diffuseColor);
+				std::string token;
+				while(std::getline(iss, token, ' '))
+				{
+					outf << value++ << "=\"" << token << "\" ";
+				}				
+				outf << "/>\n";						
+			}
+
+			if( !material.effect->specularColor.empty() )
+			{
+				outf << "\t<Uniform name=\"matSpecParams\" ";				
+				char value = 'a';
+				std::istringstream iss(material.effect->specularColor);
+				std::string token;
+				while(std::getline(iss, token, ' ') && value < 'd' )
+				{
+					outf << value++ << "=\"" << token << "\" ";
+				}				
+				outf << "d=\"" << material.effect->shininess << "\" ";
+				outf << "/>\n";
+
+			}		
 		}
 		
 		outf << "</Material>\n";

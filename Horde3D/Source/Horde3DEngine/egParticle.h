@@ -164,18 +164,15 @@ public:
 	float getParamF( int param, int compIdx );
 	void setParamF( int param, int compIdx, float value );
 
-	void advanceTime( float timeDelta );
+	void update( float timeDelta );
 	bool hasFinished();
 
 protected:
 	EmitterNode( const EmitterNodeTpl &emitterTpl );
 	void setMaxParticleCount( uint32 maxParticleCount );
 
-	void onPostUpdate();
-
 protected:
 	// Emitter data
-	float                    _timeDelta;
 	float                    _emissionAccum;
 	Matrix4f                 _prevAbsTrans;
 	

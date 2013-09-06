@@ -177,6 +177,7 @@ namespace Horde3DNET.Samples.ChicagoNET
 		        // Update animation
 		        p.animTime += vel * 35.0f;
                 h3d.setModelAnimParams( p.node, 0, p.animTime, 1.0f );
+                h3d.updateModel(p.node, (int)(h3d.H3DModelUpdateFlags.Animation | h3d.H3DModelUpdateFlags.Geometry));
             }
         }
     }

@@ -9,12 +9,13 @@
 //
 // *************************************************************************************************
 
-uniform sampler2D buf0;
-uniform sampler2D buf1;
-uniform sampler2D buf2;
+uniform sampler2D gbuf0;
+uniform sampler2D gbuf1;
+uniform sampler2D gbuf2;
+uniform sampler2D gbuf3;
 
-float getMatID( const vec2 coord ) { return texture2D( buf0, coord ).a; }
-vec3 getPos( const vec2 coord ) { return texture2D( buf0, coord ).rgb; }
-vec3 getNormal( const vec2 coord ) { return texture2D( buf1, coord ).rgb; }
-vec3 getAlbedo( const vec2 coord ) { return texture2D( buf2, coord ).rgb; }
-float getSpecMask( const vec2 coord ) { return texture2D( buf2, coord ).a; }
+float getMatID( const vec2 coord ) { return texture2D( gbuf0, coord ).a; }
+vec3 getPos( const vec2 coord ) { return texture2D( gbuf0, coord ).rgb; }
+vec3 getNormal( const vec2 coord ) { return texture2D( gbuf1, coord ).rgb; }
+vec3 getAlbedo( const vec2 coord ) { return texture2D( gbuf2, coord ).rgb; }
+vec4 getSpecParams( const vec2 coord ) { return texture2D( gbuf3, coord ).rgba; }

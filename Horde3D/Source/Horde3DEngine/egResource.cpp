@@ -182,15 +182,15 @@ ResourceManager::~ResourceManager()
 }
 
 
-void ResourceManager::registerType( int type, const string &typeString, ResTypeInitializationFunc inf,
-									ResTypeReleaseFunc rf, ResTypeFactoryFunc ff )
+void ResourceManager::registerResType( int resType, const string &typeString, ResTypeInitializationFunc inf,
+									   ResTypeReleaseFunc rf, ResTypeFactoryFunc ff )
 {
 	ResourceRegEntry entry;
 	entry.typeString = typeString;
 	entry.initializationFunc = inf;
 	entry.releaseFunc = rf;
 	entry.factoryFunc = ff;
-	_registry[type] = entry;
+	_registry[resType] = entry;
 
 	// Initialize resource type
 	if( inf != 0 ) (*inf)();
@@ -316,6 +316,7 @@ ResHandle ResourceManager::cloneResource( Resource &sourceRes, const string &nam
 
 	newRes->_name = name != "" ? name : "|tmp|";
 	newRes->_userRefCount = 1;
+	newRes->_refCount = 0;
 	int handle = addResource( *newRes );
 	
 	if( name == "" )
