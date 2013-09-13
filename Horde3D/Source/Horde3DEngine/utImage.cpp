@@ -103,7 +103,7 @@
 
 namespace Horde3D {
 
-#ifndef _MSC_VER
+#if !defined( _MSC_VER ) && !defined( __forceinline )
   #ifdef __cplusplus
   #define __forceinline inline
   #else
