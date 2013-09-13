@@ -376,6 +376,40 @@ bool AnimationController::setAnimParams( int stage, float time, float weight )
 }
 
 
+void AnimationController::setAnimTime( int stage, float time )
+{
+    if( (unsigned)stage > _animStages.size() )
+    {
+        Modules::setError( "Invalid stage in h3dSetNodeParamF" );
+        return;
+    }
+
+    AnimStage &curStage = _animStages[stage];
+    if( curStage.anim == 0x0 ) return;
+
+    curStage.animTime = time;
+
+    _dirty = true;
+}
+
+
+void AnimationController::setAnimWeight( int stage, float weight )
+{
+    if( (unsigned)stage > _animStages.size() )
+    {
+        Modules::setError( "Invalid stage in h3dSetNodeParamF" );
+        return;
+    }
+
+    AnimStage &curStage = _animStages[stage];
+    if( curStage.anim == 0x0 ) return;
+
+    curStage.weight = weight;
+
+    _dirty = true;
+}
+
+
 bool AnimationController::animate()
 {
 	if( !_dirty || _activeStages.empty() ) return false;
@@ -517,6 +551,42 @@ bool AnimationController::animate()
 
 	_dirty = false;
 	return true;
+}
+
+
+int AnimationController::getAnimCount()
+{
+    return _activeStages.size();
+}
+
+
+float AnimationController::getAnimTime( int stage )
+{
+    if( (unsigned)stage > _animStages.size() )
+    {
+        Modules::setError( "Invalid stage in h3dGetNodeParamF" );
+        return -1;
+    }
+
+    AnimStage &curStage = _animStages[stage];
+    if( curStage.anim == 0x0 ) return -1;
+
+    return curStage.animTime;
+}
+
+
+float AnimationController::getAnimWeight( int stage )
+{
+    if( (unsigned)stage > _animStages.size() )
+    {
+        Modules::setError( "Invalid stage in h3dGetNodeParamF" );
+        return -1;
+    }
+
+    AnimStage &curStage = _animStages[stage];
+    if( curStage.anim == 0x0 ) return -1;
+
+    return curStage.weight;
 }
 
 }  // namespace
