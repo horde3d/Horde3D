@@ -39,7 +39,10 @@ struct ModelNodeParams
 		LodDist1F,
 		LodDist2F,
 		LodDist3F,
-		LodDist4F
+    LodDist4F,
+    AnimCountI,
+    AnimTimeF,
+    AnimWeightF
 	};
 };
 

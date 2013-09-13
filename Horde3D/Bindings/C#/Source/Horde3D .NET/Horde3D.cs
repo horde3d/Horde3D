@@ -413,16 +413,19 @@ namespace Horde3DNET
         /// Enum: H3DModel
         ///    The available Model node parameters
 
-        /// GeoResI      - Geometry resource used for the model
-        /// SWSkinningI  - Enables or disables software skinning (default: 0)
-        /// LodDist1F    - Distance to camera from which on LOD1 is used (default: infinite)
+        /// GeoResI     - Geometry resource used for the model
+        /// SWSkinningI - Enables or disables software skinning (default: 0)
+        /// LodDist1F   - Distance to camera from which on LOD1 is used (default: infinite)
         ///               (must be a positive value larger than 0.0)
-        /// LodDist2F    - Distance to camera from which on LOD2 is used
-        ///                (may not be smaller than LodDist1) (default: infinite)
-        /// LodDist3F    - Distance to camera from which on LOD3 is used
+        /// LodDist2F   - Distance to camera from which on LOD2 is used
+        ///               (may not be smaller than LodDist1) (default: infinite)
+        /// LodDist3F   - Distance to camera from which on LOD3 is used
         ///               (may not be smaller than LodDist2) (default: infinite)
-        /// LodDist4F    - Distance to camera from which on LOD4 is used
+        /// LodDist4F   - Distance to camera from which on LOD4 is used
         ///               (may not be smaller than LodDist3) (default: infinite)
+        /// AnimCountI  - Number of active animation stages [read-only]
+        /// AnimTimeF   - Elapsed time of the animation stage
+        /// AnimWeightF - Blending weight of the animation stage
         /// </summary>
         public enum H3DModel
         {
@@ -431,7 +434,10 @@ namespace Horde3DNET
             LodDist1F,
             LodDist2F,
             LodDist3F,
-            LodDist4F
+            LodDist4F,
+            AnimCountI,
+            AnimTimeF,
+            AnimWeightF
         }
 
         /// <summary>
