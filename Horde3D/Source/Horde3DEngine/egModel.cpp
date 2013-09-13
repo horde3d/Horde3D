@@ -261,6 +261,8 @@ int ModelNode::getParamI( int param )
 		return _geometryRes != 0x0 ? _geometryRes->_handle : 0;
 	case ModelNodeParams::SWSkinningI:
 		return _softwareSkinning ? 1 : 0;
+  case ModelNodeParams::AnimCountI:
+    return _animCtrl.getAnimCount();
 	}
 
 	return SceneNode::getParamI( param );
@@ -308,6 +310,10 @@ float ModelNode::getParamF( int param, int compIdx )
 		return _lodDist3;
 	case ModelNodeParams::LodDist4F:
 		return _lodDist4;
+  case ModelNodeParams::AnimTimeF:
+    return _animCtrl.getAnimTime(compIdx);
+  case ModelNodeParams::AnimWeightF:
+    return _animCtrl.getAnimWeight(compIdx);
 	}
 
 	return SceneNode::getParamF( param, compIdx );
@@ -330,6 +336,12 @@ void ModelNode::setParamF( int param, int compIdx, float value )
 	case ModelNodeParams::LodDist4F:
 		_lodDist4 = value;
 		return;
+  case ModelNodeParams::AnimTimeF:
+    _animCtrl.setAnimTime(compIdx, value);
+    return;
+  case ModelNodeParams::AnimWeightF:
+    _animCtrl.setAnimWeight(compIdx, value);
+    return;
 	}
 
 	SceneNode::setParamF( param, compIdx, value );
