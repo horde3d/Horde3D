@@ -5,6 +5,7 @@ Horde3D is a 3D rendering engine written in C++ with an effort being as lightwei
 Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of DirectX that means a card supporting at least Shader Model 2.0 or higher.
 
 ## Features
+
 - Modern, cross-platform, shader-based architecture (requires OpenGL 2.0+)
     - Lightweight, non-intrusive design with very few dependencies, avoiding complexity where possible
     - C-style API for easy usage from virtually any programming language
@@ -32,7 +33,7 @@ Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of Direct
     - Access to joint data for dynamic animations and ragdoll physics
 - Content Pipeline
     - Mixture of binary and XML formats for best tradeoff between performance and productivity
-        - Pipeline, material and scene descriptions are XML    
+        - Pipeline, material and scene descriptions are XML
         - Model and animation are binary for maximum performance
         - Textures are common image formats (DDS, PNG, JPEG, etc.)
     - COLLADA Converter for importing assets from many common DCC tools
