@@ -130,13 +130,10 @@ public:
 	bool setupAnimStage( int stage, AnimationResource *anim, int layer,
 	                     const std::string &startNode, bool additive );
 	bool setAnimParams( int stage, float time, float weight );
-    void setAnimTime( int stage, float time );
-    void setAnimWeight( int stage, float weight );
 	bool animate();
 
-    int     getAnimCount();
-    float   getAnimTime( int stage );
-    float   getAnimWeight( int stage );
+  int  getAnimCount();
+  void getAnimParams( int stage, float *time, float *weight );
 
 protected:
 	void mapAnimRes( uint32 node, uint32 stage );
