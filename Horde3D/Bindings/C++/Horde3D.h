@@ -496,8 +496,6 @@ struct H3DModel
     LodDist4F   - Distance to camera from which on LOD4 is used
                   (may not be smaller than LodDist3) (default: infinite)
     AnimCountI  - Number of active animation stages [read-only]
-    AnimTimeF   - Elapsed time of the animation stage
-    AnimWeightF - Blending weight of the animation stage
 	*/
 	enum List
 	{
@@ -507,9 +505,7 @@ struct H3DModel
 		LodDist2F,
 		LodDist3F,
     LodDist4F,
-    AnimCountI,
-    AnimTimeF,
-    AnimWeightF
+    AnimCountI
 	};
 };
 
@@ -1934,6 +1930,29 @@ DLL H3DNode h3dAddModelNode( H3DNode parent, const char *name, H3DRes geometryRe
 */
 DLL void h3dSetupModelAnimStage( H3DNode modelNode, int stage, H3DRes animationRes, int layer,
                                  const char *startNode, bool additive );
+
+/* Function: h3dGetModelAnimParams
+		Gets the animation stage parameters of a Model node.
+	
+	Details:
+		This function gets the current animation time and weight for a specified stage of the
+		specified model. The time corresponds to the frames of the animation and the animation is
+		looped if the time is higher than the maximum number of frames in the Animation resource.
+		The weight is used for animation blending and determines how much influence the stage has compared
+		to the other active stages.
+	
+	Parameters:
+		modelNode  - handle to the Model node to be accessed
+		stage      - index of the animation stage to be accessed
+		time       - pointer to variable where the time of the animation stage will be stored
+                 (can be NULL if not required)
+		weight     - pointer to variable where the blend weight of the animation stage will be stored
+                 (can be NULL if not required)
+		
+	Returns:
+		nothing
+*/
+DLL void h3dGetModelAnimParams( H3DNode modelNode, int stage, float *time, float *weight );
 
 /* Function: h3dSetModelAnimParams
 		Sets the animation stage parameters of a Model node.

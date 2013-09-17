@@ -40,9 +40,7 @@ struct ModelNodeParams
 		LodDist2F,
 		LodDist3F,
     LodDist4F,
-    AnimCountI,
-    AnimTimeF,
-    AnimWeightF
+    AnimCountI
 	};
 };
 
@@ -95,6 +93,7 @@ public:
 	void setupAnimStage( int stage, AnimationResource *anim, int layer,
 	                     const std::string &startNode, bool additive );
 	void setAnimParams( int stage, float time, float weight );
+	void getAnimParams( int stage, float *time, float *weight );
 	bool setMorphParam( const std::string &targetName, float weight );
 
 	int getParamI( int param );
