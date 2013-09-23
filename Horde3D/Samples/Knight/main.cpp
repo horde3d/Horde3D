@@ -20,7 +20,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include "glfw.h"
+#include "GLFW/glfw3.h"
 #include "app.h"
 
 // Configuration
@@ -34,6 +34,7 @@ static bool running;
 static double t0;
 static int mx0, my0;
 static Application *app;
+GLFWwindow* windowFromGLFW = NULL;
 
 
 std::string extractAppPath( char *fullPath )
@@ -55,14 +56,14 @@ std::string extractAppPath( char *fullPath )
 }
 
 
-int windowCloseListener()
+void windowCloseListener(GLFWwindow *windowFromGLFW)
 {
 	running = false;
-	return 0;
 }
 
 
-void keyPressListener( int key, int action )
+
+void keyPressListener(GLFWwindow* windowFromGLFW, int key, int scancode,int action,int modBits)
 {
 	if( !running ) return;
 
@@ -72,22 +73,22 @@ void keyPressListener( int key, int action )
 		
 		switch (key)
 		{
-		case GLFW_KEY_ESC:
+		case GLFW_KEY_ESCAPE:
 			running = false;
 			break;
 		case GLFW_KEY_F1:
 			app->release();
-			glfwCloseWindow();
+			glfwDestroyWindow(windowFromGLFW);
 			
 			// Toggle fullscreen mode
 			fullScreen = !fullScreen;
 
 			if( fullScreen )
 			{
-				GLFWvidmode mode;
-				glfwGetDesktopMode( &mode );
+				windowFromGLFW = glfwCreateWindow(640, 480, "Knight", glfwGetPrimaryMonitor(), NULL);
+                glfwMakeContextCurrent(windowFromGLFW);
 				
-				float aspect = mode.Width / (float)mode.Height;
+				float aspect = width / (float)height;
 				if( (int)(aspect * 100) == 133 || (int)(aspect * 100) == 125 )  // Standard
 				{
 					width = 1280; height = 1024;
@@ -99,11 +100,6 @@ void keyPressListener( int key, int action )
 				else if( (int)(aspect * 100) == 160 )                           // Widescreen 16:10
 				{
 					width = 1280; height = 800;
-				}
-				else                                                            // Unknown
-				{
-					// Use desktop resolution
-					width = mode.Width; height = mode.Height;
 				}
 			}
 			
@@ -122,7 +118,7 @@ void keyPressListener( int key, int action )
 }
 
 
-void mouseMoveListener( int x, int y )
+void mouseMoveListener(GLFWwindow* windowFromGLFW, double x, double y)
 {
 	if( !running )
 	{
@@ -138,19 +134,21 @@ void mouseMoveListener( int x, int y )
 bool setupWindow( int width, int height, bool fullscreen )
 {
 	// Create OpenGL window
-	if( !glfwOpenWindow( width, height, 8, 8, 8, 8, 24, 8, fullscreen ? GLFW_FULLSCREEN : GLFW_WINDOW ) )
+    windowFromGLFW = glfwCreateWindow(640, 480, "Knight", fullscreen ?glfwGetPrimaryMonitor():NULL, NULL);
+	if(windowFromGLFW == NULL)
 	{
 		glfwTerminate();
 		return false;
 	}
+    glfwMakeContextCurrent(windowFromGLFW);
 	
 	// Disable vertical synchronization
 	glfwSwapInterval( 0 );
 
 	// Set listeners
-	glfwSetWindowCloseCallback( windowCloseListener );
-	glfwSetKeyCallback( keyPressListener );
-	glfwSetMousePosCallback( mouseMoveListener );
+	glfwSetWindowCloseCallback(windowFromGLFW, windowCloseListener );
+	glfwSetKeyCallback(windowFromGLFW, keyPressListener );
+	glfwSetCursorPosCallback(windowFromGLFW, mouseMoveListener );
 	
 	return true;
 }
@@ -160,7 +158,10 @@ int main( int argc, char** argv )
 {
 	// Initialize GLFW
 	glfwInit();
-	glfwEnable( GLFW_STICKY_KEYS );
+    windowFromGLFW = glfwCreateWindow(640, 480, "inicial", NULL, NULL);
+    if(windowFromGLFW == NULL) return -1;
+    glfwMakeContextCurrent(windowFromGLFW);
+	glfwSetInputMode(windowFromGLFW, GLFW_STICKY_KEYS, true);
 	if( !setupWindow( appWidth, appHeight, fullScreen ) ) return -1;
 
 	// Check if benchmark mode is requested
@@ -168,19 +169,18 @@ int main( int argc, char** argv )
 	if( argc > 1 && strcmp( argv[1], "-bm" ) == 0 )
 	{	
 		benchmark = true;
-		glfwDisable( GLFW_AUTO_POLL_EVENTS );
+		//glfwSetInputMode(windowFromGLFW, GLFW_AUTO_POLL_EVENTS, false);
 	}
 	
 	// Initialize application and engine
 	app = new Application( extractAppPath( argv[0] ) );
-	if( !fullScreen ) glfwSetWindowTitle( app->getTitle() );
+	// if( !fullScreen ) glfwSetWindowTitle( app->getTitle() );
 	
 	if ( !app->init() )
 	{
 		// Fake message box
-		glfwCloseWindow();
-		glfwOpenWindow( 800, 16, 8, 8, 8, 8, 24, 8, GLFW_WINDOW );
-		glfwSetWindowTitle( "Unable to initalize engine - Make sure you have an OpenGL 2.0 compatible graphics card" );
+		glfwDestroyWindow(windowFromGLFW);
+		windowFromGLFW = glfwCreateWindow(640, 480, "Unable to initalize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL);
 		double startTime = glfwGetTime();
 		while( glfwGetTime() - startTime < 5.0 ) {}  // Sleep
 		
@@ -191,7 +191,7 @@ int main( int argc, char** argv )
 	}
 	app->resize( appWidth, appHeight );
 
-	glfwDisable( GLFW_MOUSE_CURSOR );
+	glfwSetInputMode(windowFromGLFW, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	int frames = 0;
 	float fps = 30.0f;
@@ -214,17 +214,18 @@ int main( int argc, char** argv )
 
 		// Update key states
 		for( int i = 0; i < 320; ++i )
-			app->setKeyState( i, glfwGetKey( i ) == GLFW_PRESS );
+			app->setKeyState( i, glfwGetKey(windowFromGLFW, i ) == GLFW_PRESS );
 		app->keyStateHandler();
 
 		// Render
 		app->mainLoop( benchmark ? 60 : fps );
-		glfwSwapBuffers();
+		glfwSwapBuffers(windowFromGLFW);
+        glfwPollEvents();
 
 		if( benchmark && frames == benchmarkLength ) break;
 	}
 
-	glfwEnable( GLFW_MOUSE_CURSOR );
+	glfwSetInputMode(windowFromGLFW, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
 	// Show benchmark results
 	if( benchmark )
@@ -232,9 +233,10 @@ int main( int argc, char** argv )
 		double avgFPS = benchmarkLength / (glfwGetTime() - t0);
 		char title[256];
 		sprintf( title, "Average FPS: %.2f", avgFPS );
-		glfwCloseWindow();
-		glfwOpenWindow( 800, 16, 8, 8, 8, 8, 24, 8, GLFW_WINDOW );
-		glfwSetWindowTitle( title );
+		glfwDestroyWindow(windowFromGLFW);
+		windowFromGLFW = glfwCreateWindow(640, 480, title, NULL, NULL);
+        glfwMakeContextCurrent(windowFromGLFW);
+		glfwSetWindowTitle(windowFromGLFW, title );
 		double startTime = glfwGetTime();
 		while( glfwGetTime() - startTime < 5.0 ) {}  // Sleep
 	}

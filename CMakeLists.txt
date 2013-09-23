@@ -13,6 +13,27 @@ set(HORDE3D_EXTENSION_INSTALLS)
 set(HORDE3D_EXTENSION_INCLUDE_DIRS)
 set(HORDE3D_EXTENSION_LIBS)
 
+include(ExternalProject)
+
+#find_package(Git)
+#if(GIT_FOUND)
+#     message("git found: ${GIT_EXECUTABLE}")
+#endif()
+
+message(STATUS "Preparing external GLFW project")
+ExternalProject_Add(project_glfw 
+	URL https://github.com/glfw/glfw/archive/3.0.3.zip
+	CONFIGURE_COMMAND ""
+	BUILD_COMMAND ""
+	INSTALL_COMMAND ""
+	LOG_DOWNLOAD 1
+  LOG_UPDATE 1
+  LOG_CONFIGURE 1
+  LOG_BUILD 1
+  LOG_TEST 1
+  LOG_INSTALL 1
+)
+message(STATUS "External GLFW project done")
 
 # terrain extension (check egExtensions.cpp if it's activated)
 option(HORDE3D_BUILD_TERRAIN "Build the terrain extension into Horde3D" ON)
