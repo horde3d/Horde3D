@@ -135,7 +135,7 @@ void mouseMoveListener(GLFWwindow* windowFromGLFW, double x, double y)
 bool setupWindow( int width, int height, bool fullscreen )
 {
 	// Create OpenGL window
-    windowFromGLFW = glfwCreateWindow(640, 480, "Chicago", fullscreen ?glfwGetPrimaryMonitor():NULL, NULL);
+    windowFromGLFW = glfwCreateWindow(640, 480, "Terrain", fullscreen ?glfwGetPrimaryMonitor():NULL, NULL);
 	if(windowFromGLFW == NULL)
 	{
 		glfwTerminate();

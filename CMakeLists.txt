@@ -23,10 +23,14 @@ include(ExternalProject)
 message(STATUS "Preparing external GLFW project")
 ExternalProject_Add(project_glfw 
 	URL https://github.com/glfw/glfw/archive/3.0.3.zip
-	CONFIGURE_COMMAND ""
-	BUILD_COMMAND ""
-	INSTALL_COMMAND ""
-	LOG_DOWNLOAD 1
+    DOWNLOAD_DIR downloaded_zip
+
+#    CONFIGURE_COMMAND ""
+#	BUILD_COMMAND ""
+#	INSTALL_COMMAND ""
+#    BUILD_IN_SOURCE 1
+
+  LOG_DOWNLOAD 1
   LOG_UPDATE 1
   LOG_CONFIGURE 1
   LOG_BUILD 1
