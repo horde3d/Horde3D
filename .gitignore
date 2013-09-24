@@ -213,3 +213,35 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+
+
+
+
+
+
+# More Mac crap?
+Horde3D/Samples/*/CMakeScripts
+Horde3D/Source/ColladaConverter/CMakeScripts
+Horde3D/Source/Horde3DEngine/CMakeScripts
+Horde3DUtils_postBuildPhase.makeMinSizeRel
+Extensions/Terrain/Sample/CMakeScripts
+Extensions/Terrain/Source/CMakeScripts
+CMakeFiles
+CMakeScripts
+cmake_install.cmake
+Horde3D/Samples/Knight/src/glfw-stamp
+CMakeCache.txt
+egExtensions_auto_include.h
+egExtensions_auto_install.h
+Horde3D/Samples/Chicago/src/glfw-stamp
+Extensions/Terrain/Sample/project_glfw-prefix/src/project_glfw-stamp
+Horde3D/Samples/Chicago/project_glfw-prefix/src/project_glfw-stamp
+Horde3D/Samples/Knight/project_glfw-prefix/src/project_glfw-stamp
+*~
+.DS_Store
+Horde3D.xcodeproj
+Horde3D/Samples/project_glfw-prefix
+project_glfw-prefix/src/project_glfw-stamp
+project_glfw-prefix
+downloaded_zip

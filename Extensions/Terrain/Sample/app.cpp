@@ -83,7 +83,7 @@ bool Application::init()
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", pipeRes );
 	// Add terrain
 	H3DNode terrain = h3dAddNodes( H3DRootNode, terrainRes );
-	
+	(void)terrain; // about not used variable warning
 	/*// Add light source
 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", 0, "LIGHTING", "SHADOWMAP" );
 	h3dSetNodeTransform( light, 512, 700, -256, -120, 0, 0, 1, 1, 1 );
