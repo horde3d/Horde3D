@@ -22,9 +22,6 @@
 #	endif
 #	include <windows.h>
 #endif
-#ifndef PLATFORM_MAC
-#	include <GL/gl.h>
-#endif
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -54,11 +51,6 @@ struct InfoBox
 
 ofstream            outf;
 map< int, string >  resourcePaths;
-
-#ifdef PLATFORM_WIN
-HDC    hDC = 0;
-HGLRC  hRC = 0;
-#endif
 
 
 string cleanPath( string path )
@@ -93,94 +85,6 @@ string cleanPath( string path )
 // =================================================================================================
 
 using namespace Horde3DUtils;
-
-// TODO: Make OpenGL functions platform independent
-
-DLLEXP bool h3dutInitOpenGL( int hdc )
-{
-#ifdef PLATFORM_WIN
-	hDC = (HDC)(__int64)hdc;
-	
-	// Init OpenGL rendering context
-	int pixelFormat;
-
-	static PIXELFORMATDESCRIPTOR pfd = 
-	{
-		sizeof( PIXELFORMATDESCRIPTOR ),            // Size of this pixel format descriptor
-		1,                                          // Version number
-		PFD_DRAW_TO_WINDOW |                        // Format must support window
-		PFD_SUPPORT_OPENGL |                        // Format must support OpenGL
-		PFD_DOUBLEBUFFER,                           // Must support double buffering
-		PFD_TYPE_RGBA,                              // Request a RGBA format
-		32,                                         // Select our color depth
-		0, 0, 0, 0, 0, 0,                           // Color bits ignored
-		8,                                          // 8Bit alpha buffer
-		0,                                          // Shift bit ignored
-		0,                                          // No accumulation buffer
-		0, 0, 0, 0,                                 // Accumulation bits ignored
-		32,                                         // 32Bit z-buffer (depth buffer)  
-		8,                                          // 8Bit stencil buffer
-		0,                                          // No auxiliary buffer
-		PFD_MAIN_PLANE,                             // Main drawing layer
-		0,                                          // Reserved
-		0, 0, 0                                     // Layer masks ignored
-	};
-
-	if( !(pixelFormat = ChoosePixelFormat( hDC, &pfd )) ) 
-	{
-		return false;
-	}
-
-	if( !SetPixelFormat( hDC, pixelFormat, &pfd ) ) 
-	{
-		return false;
-	}
-
-	if( !(hRC = wglCreateContext( hDC )) ) 
-	{
-		return false;
-	}
-
-	if( !wglMakeCurrent( hDC, hRC ) ) 
-	{
-		wglDeleteContext( hRC );
-		return false;
-	}
-
-	return true;
-	
-#else
-	return false;
-#endif
-}
-
-
-DLLEXP void h3dutReleaseOpenGL()
-{
-#ifdef PLATFORM_WIN
-	if( hDC == 0 || hRC == 0 ) return;
-
-	if( !wglMakeCurrent( 0x0, 0x0 ) ) 
-	{
-		return;
-	}
-	if( !wglDeleteContext( hRC ) ) 
-	{
-		return;
-	}
-	hRC = 0;
-#endif
-}
-
-
-DLLEXP void h3dutSwapBuffers()
-{
-#ifdef PLATFORM_WIN
-	if( hDC == 0 || hRC == 0 ) return;
-
-	SwapBuffers( hDC );
-#endif
-}
 
 
 DLLEXP const char *h3dutGetResourcePath( int type )
