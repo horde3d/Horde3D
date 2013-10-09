@@ -19,17 +19,18 @@ using System.Diagnostics;
 
 using Horde3DNET;
 using Horde3DNET.Utils;
+using System.Runtime.InteropServices;
+
 
 namespace Horde3DNET.Samples.ChicagoNET
 {
     internal partial class RenderForm : Form
     {
-        [System.Runtime.InteropServices.DllImport("user32.dll")]
-        static extern IntPtr GetDC( IntPtr hWnd);
-
+  
         // standard vars
         private bool appFullscreen = false;
         private float fps = 30.0f;
+        IntPtr dc = IntPtr.Zero, hglrc = IntPtr.Zero;
 
         // main application
         private Application app = new Application();
@@ -45,7 +46,7 @@ namespace Horde3DNET.Samples.ChicagoNET
         /// Constructor.
         /// </summary>
         public RenderForm()
-        {
+        {            
             InitializeComponent();
 
             // Fullscreen
@@ -71,14 +72,28 @@ namespace Horde3DNET.Samples.ChicagoNET
         /// <param name="e"></param>
         private void RenderForm_Load(object sender, EventArgs e)
         {
-            if (!Horde3DUtils.initOpenGL(GetDC( renderPanel.Handle ).ToInt32()))
-                throw new Exception("Failed to initialize OpenGL");
+            OpenGL.PIXELFORMATDESCRIPTOR pixelformatdescriptor = new OpenGL.PIXELFORMATDESCRIPTOR();
+            pixelformatdescriptor.Init();
+
+            dc = OpenGL.GetDC(renderPanel.Handle);
+            int pixelFormat = OpenGL.ChoosePixelFormat(dc, ref pixelformatdescriptor);
+            if (!OpenGL.SetPixelFormat(dc, pixelFormat, ref pixelformatdescriptor))
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+
+            if ((hglrc = OpenGL.wglCreateContext(dc)) == IntPtr.Zero)
+                throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+
+            if (!OpenGL.wglMakeCurrent(dc, hglrc))
+            {
+                OpenGL.wglDeleteContext(hglrc);
+                MessageBox.Show("Failed to init OpenGL context\nMake sure you have an OpenGL 2.0 compatible graphics card with the latest drivers installed!\nAlso verify if the pipeline config file exists.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);                
+                Environment.Exit(0);
+            }
 
             if (!app.init())
             {
                 MessageBox.Show("Failed to init application\nMake sure you have an OpenGL 2.0 compatible graphics card with the latest drivers installed!\nAlso verify if the pipeline config file exists.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                h3d.release();
-                Horde3DUtils.releaseOpenGL();
+                h3d.release();                
                 Environment.Exit(0);
             }
 
@@ -106,7 +121,9 @@ namespace Horde3DNET.Samples.ChicagoNET
 
             // render
             app.mainLoop(fps);
-            Horde3DUtils.swapBuffers();
+            
+            // Swap buffers
+            OpenGL.SwapBuffers(dc);
 
             // if mouse tracking is disabled call Invalidate() to redraw the scene
             Invalidate();
@@ -219,7 +236,9 @@ namespace Horde3DNET.Samples.ChicagoNET
 
             // release h3d
             app.release();
-            Horde3DUtils.releaseOpenGL();
+
+            OpenGL.wglDeleteContext(hglrc);
+            
             Environment.Exit(0);
         }
     }
