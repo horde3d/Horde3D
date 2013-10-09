@@ -31,16 +31,6 @@ namespace Horde3DNET.Utils
         [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
         internal static extern bool h3dutDumpMessages();
 
-        [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
-        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
-        internal static extern bool h3dutInitOpenGL(int hDC);
-
-        [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
-        internal static extern void h3dutReleaseOpenGL();
-
-        [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
-        internal static extern void h3dutSwapBuffers();
-
         // Utilities
         [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
         internal static extern IntPtr h3dutGetResourcePath(h3d.H3DResTypes type);

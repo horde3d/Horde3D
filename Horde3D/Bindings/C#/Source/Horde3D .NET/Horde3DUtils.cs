@@ -42,32 +42,6 @@ namespace Horde3DNET.Utils
         }
 
         /// <summary>
-        /// This utility function initializes an OpenGL rendering context in a specified window component.
-        /// </summary>
-        /// <param name="hDC">handle to device context for which OpenGL context shall be created</param>
-        /// <returns>true in case of success, otherwise false</returns>
-        public static bool initOpenGL(int hDC)
-        {
-            return NativeMethodsUtils.h3dutInitOpenGL(hDC);
-        }
-
-        /// <summary>
-        /// This utility function destroys the previously created OpenGL rendering context.
-        /// </summary>
-        public static void releaseOpenGL()
-        {
-            NativeMethodsUtils.h3dutReleaseOpenGL();
-        }
-
-        /// <summary>
-        /// This utility function displays the image rendered to the previously initialized OpenGL context on the screen by copying the OpenGL backbuffer to the window front buffer.
-        /// </summary>
-        public static void swapBuffers()
-        {
-            NativeMethodsUtils.h3dutSwapBuffers();
-        }
-
-        /// <summary>
         /// This function returns the search path of a specified resource type.
         /// </summary>
         /// <param name="type">type of resource</param>
