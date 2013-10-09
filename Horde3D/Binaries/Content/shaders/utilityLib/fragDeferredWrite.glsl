@@ -13,4 +13,4 @@ void setMatID( const float id ) { gl_FragData[0].a = id; }
 void setPos( const vec3 pos ) { gl_FragData[0].rgb = pos; }
 void setNormal( const vec3 normal ) { gl_FragData[1].rgb = normal; }
 void setAlbedo( const vec3 albedo ) { gl_FragData[2].rgb = albedo; }
-void setSpecMask( const float alpha ) { gl_FragData[2].a = alpha; }
+void setSpecParams( const vec3 specCol, const float gloss ) { gl_FragData[3].rgb = specCol; gl_FragData[3].a = gloss; }

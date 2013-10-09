@@ -26,6 +26,21 @@ namespace Horde3D {
 #	define CHECK_GL_ERROR
 #endif
 
+static const char *defaultShaderVS =
+	"uniform mat4 viewProjMat;\n"
+	"uniform mat4 worldMat;\n"
+	"attribute vec3 vertPos;\n"
+	"void main() {\n"
+	"	gl_Position = viewProjMat * worldMat * vec4( vertPos, 1.0 );\n"
+	"}\n";
+
+static const char *defaultShaderFS =
+	"uniform vec4 color;\n"
+	"void main() {\n"
+	"	gl_FragColor = color;\n"
+	"}\n";
+
+
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
@@ -132,8 +147,12 @@ RenderDevice::RenderDevice()
 	_prevShaderId = _curShaderId = 0;
 	_curRendBuf = 0; _outputBufferIndex = 0;
 	_textureMem = 0; _bufferMem = 0;
+	_curRasterState.hash = _newRasterState.hash = 0;
+	_curBlendState.hash = _newBlendState.hash = 0;
+	_curDepthStencilState.hash = _newDepthStencilState.hash = 0;
 	_curVertLayout = _newVertLayout = 0;
 	_curIndexBuf = _newIndexBuf = 0;
+	_defaultFBO = 0;
 	_indexFormat = (uint32)IDXFMT_16;
 	_pendingMask = 0;
 }
@@ -251,6 +270,13 @@ uint32 RenderDevice::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib
 // Buffers
 // =================================================================================================
 
+void RenderDevice::beginRendering()
+{	
+	//	Get the currently bound frame buffer object. 
+	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
+	resetStates();
+}
+
 uint32 RenderDevice::createVertexBuffer( uint32 size, const void *data )
 {
 	RDIBuffer buf;
@@ -343,6 +369,8 @@ uint32 RenderDevice::createTexture( TextureTypes::List type, int width, int heig
                                     TextureFormats::List format,
                                     bool hasMips, bool genMips, bool compress, bool sRGB )
 {
+	ASSERT( depth > 0 );
+
 	if( !_caps.texNPOT )
 	{
 		// Check if texture is NPOT
@@ -355,7 +383,7 @@ uint32 RenderDevice::createTexture( TextureTypes::List type, int width, int heig
 	tex.format = format;
 	tex.width = width;
 	tex.height = height;
-	tex.depth = (type == TextureTypes::Tex3D ? depth : 1);
+	tex.depth = depth;
 	tex.sRGB = sRGB && Modules::config().sRGBLinearization;
 	tex.genMips = genMips;
 	tex.hasMips = hasMips;
@@ -449,7 +477,7 @@ void RenderDevice::uploadTextureData( uint32 texObj, int slice, int mipLevel, co
 		
 		if( compressed )
 			glCompressedTexImage2D( target, mipLevel, tex.glFmt, width, height, 0,
-			                        calcTextureSize( format, width, height, 1 ), pixels );	
+			                        calcTextureSize( format, width, height, 1 ), pixels );
 		else
 			glTexImage2D( target, mipLevel, tex.glFmt, width, height, 0, inputFormat, inputType, pixels );
 	}
@@ -758,6 +786,18 @@ void RenderDevice::setShaderSampler( int loc, uint32 texUnit )
 }
 
 
+const char *RenderDevice::getDefaultVSCode()
+{
+	return defaultShaderVS;
+}
+
+
+const char *RenderDevice::getDefaultFSCode()
+{
+	return defaultShaderFS;
+}
+
+
 // =================================================================================================
 // Renderbuffers
 // =================================================================================================
@@ -880,14 +920,14 @@ uint32 RenderDevice::createRenderBuffer( uint32 width, uint32 height, TextureFor
 	bool valid = true;
 	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
 	uint32 status = glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT );
-	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 	if( status != GL_FRAMEBUFFER_COMPLETE_EXT ) valid = false;
 	
 	if( samples > 0 )
 	{
 		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fboMS );
 		status = glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT );
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 		if( status != GL_FRAMEBUFFER_COMPLETE_EXT ) valid = false;
 	}
 
@@ -905,7 +945,7 @@ void RenderDevice::destroyRenderBuffer( uint32 rbObj )
 {
 	RDIRenderBuffer &rb = _rendBufs.getRef( rbObj );
 	
-	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 	
 	if( rb.depthTex != 0 ) destroyTexture( rb.depthTex );
 	if( rb.depthBuf != 0 ) glDeleteRenderbuffersEXT( 1, &rb.depthBuf );
@@ -971,8 +1011,8 @@ void RenderDevice::resolveRenderBuffer( uint32 rbObj )
 							  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST );
 	}
 
-	glBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, 0 );
-	glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 );
+	glBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, _defaultFBO );
+	glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, _defaultFBO );
 }
 
 
@@ -986,8 +1026,8 @@ void RenderDevice::setRenderBuffer( uint32 rbObj )
 	
 	if( rbObj == 0 )
 	{
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
-		glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
+		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
 		glDisable( GL_MULTISAMPLE );
@@ -1017,7 +1057,7 @@ bool RenderDevice::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, 
 	int x, y, w, h;
 	int format = GL_RGBA;
 	int type = GL_FLOAT;
-
+	beginRendering();
 	glPixelStorei( GL_PACK_ALIGNMENT, 4 );
 	
 	if( rbObj == 0 )
@@ -1028,7 +1068,7 @@ bool RenderDevice::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, 
 		
 		x = _vpX; y = _vpY; w = _vpWidth; h = _vpHeight;
 
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 		if( bufIndex != 32 ) glReadBuffer( GL_BACK_LEFT );
 		//format = GL_BGRA;
 		//type = GL_UNSIGNED_BYTE;
@@ -1062,13 +1102,17 @@ bool RenderDevice::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, 
 	int comps = (bufIndex == 32 ? 1 : 4);
 	if( compCount != 0x0 ) *compCount = comps;
 	
-	if( dataBuffer == 0x0 ) return true;
-	if( bufferSize < w * h * comps * (type == GL_FLOAT ? 4 : 1) ) return false;
-	
-	glFinish();
-	glReadPixels( x, y, w, h, format, type, dataBuffer );
-	
-	return true;
+	bool retVal = false;
+	if( dataBuffer != 0x0 &&
+	    bufferSize >= w * h * comps * (type == GL_FLOAT ? 4 : 1) ) 
+	{
+		glFinish();
+		glReadPixels( x, y, w, h, format, type, dataBuffer );
+		retVal = true;
+	}
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
+
+	return retVal;
 }
 
 
@@ -1129,33 +1173,37 @@ void RenderDevice::checkGLError()
 
 bool RenderDevice::applyVertexLayout()
 {
-	if( _newVertLayout == 0 || _curShaderId == 0 ) return false;
-
-	RDIVertexLayout &vl = _vertexLayouts[_newVertLayout - 1];
-	RDIShader &shader = _shaders.getRef( _curShaderId );
-	RDIInputLayout &inputLayout = shader.inputLayouts[_newVertLayout - 1];
-	
-	if( !inputLayout.valid )
-		return false;
-
-	// Set vertex attrib pointers
 	uint32 newVertexAttribMask = 0;
-	for( uint32 i = 0; i < vl.numAttribs; ++i )
+	
+	if( _newVertLayout != 0 )
 	{
-		int8 attribIndex = inputLayout.attribIndices[i];
-		if( attribIndex >= 0 )
-		{
-			VertexLayoutAttrib &attrib = vl.attribs[i];
-			const RDIVertBufSlot &vbSlot = _vertBufSlots[attrib.vbSlot];
-			
-			ASSERT( _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj != 0 &&
-			        _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).type == GL_ARRAY_BUFFER );
-			
-			glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj );
-			glVertexAttribPointer( attribIndex, attrib.size, GL_FLOAT, GL_FALSE,
-			                       vbSlot.stride, (char *)0 + vbSlot.offset + attrib.offset );
+		if( _curShaderId == 0 ) return false;
+		
+		RDIVertexLayout &vl = _vertexLayouts[_newVertLayout - 1];
+		RDIShader &shader = _shaders.getRef( _curShaderId );
+		RDIInputLayout &inputLayout = shader.inputLayouts[_newVertLayout - 1];
+		
+		if( !inputLayout.valid )
+			return false;
 
-			newVertexAttribMask |= 1 << attribIndex;
+		// Set vertex attrib pointers
+		for( uint32 i = 0; i < vl.numAttribs; ++i )
+		{
+			int8 attribIndex = inputLayout.attribIndices[i];
+			if( attribIndex >= 0 )
+			{
+				VertexLayoutAttrib &attrib = vl.attribs[i];
+				const RDIVertBufSlot &vbSlot = _vertBufSlots[attrib.vbSlot];
+				
+				ASSERT( _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj != 0 &&
+						_buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).type == GL_ARRAY_BUFFER );
+				
+				glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj );
+				glVertexAttribPointer( attribIndex, attrib.size, GL_FLOAT, GL_FALSE,
+									   vbSlot.stride, (char *)0 + vbSlot.offset + attrib.offset );
+
+				newVertexAttribMask |= 1 << attribIndex;
+			}
 		}
 	}
 	
@@ -1207,6 +1255,82 @@ void RenderDevice::applySamplerState( RDITexture &tex )
 }
 
 
+void RenderDevice::applyRenderStates()
+{
+	// Rasterizer state
+	if( _newRasterState.hash != _curRasterState.hash )
+	{
+		if( _newRasterState.fillMode == RS_FILL_SOLID ) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		else glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+
+		if( _newRasterState.cullMode == RS_CULL_BACK )
+		{
+			glEnable( GL_CULL_FACE );
+			glCullFace( GL_BACK );
+		}
+		else if( _newRasterState.cullMode == RS_CULL_FRONT )
+		{
+			glEnable( GL_CULL_FACE );
+			glCullFace( GL_FRONT );
+		}
+		else
+		{
+			glDisable( GL_CULL_FACE );
+		}
+
+		if( !_newRasterState.scissorEnable ) glDisable( GL_SCISSOR_TEST );
+		else glEnable( GL_SCISSOR_TEST );
+
+		if( _newRasterState.renderTargetWriteMask ) glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+		else glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
+		
+		_curRasterState.hash = _newRasterState.hash;
+	}
+
+	// Blend state
+	if( _newBlendState.hash != _curBlendState.hash )
+	{
+		if( !_newBlendState.alphaToCoverageEnable ) glDisable( GL_SAMPLE_ALPHA_TO_COVERAGE );
+		else glEnable( GL_SAMPLE_ALPHA_TO_COVERAGE );
+
+		if( !_newBlendState.blendEnable )
+		{
+			glDisable( GL_BLEND );
+		}
+		else
+		{
+			uint32 oglBlendFuncs[8] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_COLOR, GL_ZERO, GL_ZERO };
+			
+			glEnable( GL_BLEND );
+			glBlendFunc( oglBlendFuncs[_newBlendState.srcBlendFunc], oglBlendFuncs[_newBlendState.destBlendFunc] );
+		}
+		
+		_curBlendState.hash = _newBlendState.hash;
+	}
+
+	// Depth-stencil state
+	if( _newDepthStencilState.hash != _curDepthStencilState.hash )
+	{
+		if( _newDepthStencilState.depthWriteMask ) glDepthMask( GL_TRUE );
+		else glDepthMask( GL_FALSE);
+
+		if( _newDepthStencilState.depthEnable )
+		{
+			uint32 oglDepthFuncs[8] = { GL_LEQUAL, GL_LESS, GL_EQUAL, GL_GREATER, GL_GEQUAL, GL_ALWAYS, GL_ALWAYS, GL_ALWAYS };
+			
+			glEnable( GL_DEPTH_TEST );
+			glDepthFunc( oglDepthFuncs[_newDepthStencilState.depthFunc] );
+		}
+		else
+		{
+			glDisable( GL_DEPTH_TEST );
+		}
+		
+		_curDepthStencilState.hash = _newDepthStencilState.hash;
+	}
+}
+
+
 bool RenderDevice::commitStates( uint32 filter )
 {
 	if( _pendingMask & filter )
@@ -1218,6 +1342,12 @@ bool RenderDevice::commitStates( uint32 filter )
 		{
 			glViewport( _vpX, _vpY, _vpWidth, _vpHeight );
 			_pendingMask &= ~PM_VIEWPORT;
+		}
+
+		if( mask & PM_RENDERSTATES )
+		{
+			applyRenderStates();
+			_pendingMask &= ~PM_RENDERSTATES;
 		}
 
 		// Set scissor rect
@@ -1239,19 +1369,6 @@ bool RenderDevice::commitStates( uint32 filter )
 				
 				_curIndexBuf = _newIndexBuf;
 				_pendingMask &= ~PM_INDEXBUF;
-			}
-		}
-		
-		// Bind vertex buffers
-		if( mask & PM_VERTLAYOUT )
-		{
-			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
-			{
-				if( !applyVertexLayout() )
-					return false;
-				_curVertLayout = _newVertLayout;
-				_prevShaderId = _curShaderId;
-				_pendingMask &= ~PM_VERTLAYOUT;
 			}
 		}
 
@@ -1285,6 +1402,19 @@ bool RenderDevice::commitStates( uint32 filter )
 			_pendingMask &= ~PM_TEXTURES;
 		}
 
+		// Bind vertex buffers
+		if( mask & PM_VERTLAYOUT )
+		{
+			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
+			{
+				if( !applyVertexLayout() )
+					return false;
+				_curVertLayout = _newVertLayout;
+				_prevShaderId = _curShaderId;
+				_pendingMask &= ~PM_VERTLAYOUT;
+			}
+		}
+
 		CHECK_GL_ERROR
 	}
 
@@ -1294,23 +1424,21 @@ bool RenderDevice::commitStates( uint32 filter )
 
 void RenderDevice::resetStates()
 {
-	static int maxVertexAttribs = 0;
-	if( maxVertexAttribs == 0 )
-		glGetIntegerv( GL_MAX_VERTEX_ATTRIBS, &maxVertexAttribs );
-	
 	_curIndexBuf = 1; _newIndexBuf = 0;
 	_curVertLayout = 1; _newVertLayout = 0;
+	_curRasterState.hash = 0xFFFFFFFF; _newRasterState.hash = 0;
+	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
+	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;
 
 	for( uint32 i = 0; i < 16; ++i )
 		setTexture( i, 0, 0 );
 
-	_activeVertexAttribsMask = 0;
-
-	for( uint32 i = 0; i < (uint32)maxVertexAttribs; ++i )
-		glDisableVertexAttribArray( i );
-
+	setColorWriteMask( true );
 	_pendingMask = 0xFFFFFFFF;
 	commitStates();
+
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 }
 
 
@@ -1320,25 +1448,54 @@ void RenderDevice::resetStates()
 
 void RenderDevice::clear( uint32 flags, float *colorRGBA, float depth )
 {
-	uint32 mask = 0;
+	uint32 prevBuffers[4] = { 0 };
+
+	if( _curRendBuf != 0x0 )
+	{
+		RDIRenderBuffer &rb = _rendBufs.getRef( _curRendBuf );
+		
+		if( (flags & CLR_DEPTH) && rb.depthTex == 0 ) flags &= ~CLR_DEPTH;
+		
+		// Store state of glDrawBuffers
+		for( uint32 i = 0; i < 4; ++i )
+			glGetIntegerv( GL_DRAW_BUFFER0 + i, (int *)&prevBuffers[i] );
+		
+		uint32 buffers[4], cnt = 0;
+		
+		if( (flags & CLR_COLOR_RT0) && rb.colTexs[0] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT0_EXT;
+		if( (flags & CLR_COLOR_RT1) && rb.colTexs[1] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT1_EXT;
+		if( (flags & CLR_COLOR_RT2) && rb.colTexs[2] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT2_EXT;
+		if( (flags & CLR_COLOR_RT3) && rb.colTexs[3] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT3_EXT;
+
+		if( cnt == 0 )
+			flags &= ~(CLR_COLOR_RT0 | CLR_COLOR_RT1 | CLR_COLOR_RT2 | CLR_COLOR_RT3);
+		else
+			glDrawBuffers( cnt, buffers );
+	}
+	
+	uint32 oglClearMask = 0;
 	
 	if( flags & CLR_DEPTH )
 	{
-		mask |= GL_DEPTH_BUFFER_BIT;
+		oglClearMask |= GL_DEPTH_BUFFER_BIT;
 		glClearDepth( depth );
 	}
-	if( flags & CLR_COLOR )
+	if( flags & (CLR_COLOR_RT0 | CLR_COLOR_RT1 | CLR_COLOR_RT2 | CLR_COLOR_RT3) )
 	{
-		mask |= GL_COLOR_BUFFER_BIT;
+		oglClearMask |= GL_COLOR_BUFFER_BIT;
 		if( colorRGBA ) glClearColor( colorRGBA[0], colorRGBA[1], colorRGBA[2], colorRGBA[3] );
 		else glClearColor( 0, 0, 0, 0 );
 	}
 	
-	if( mask )
+	if( oglClearMask )
 	{	
-		commitStates( PM_VIEWPORT | PM_SCISSOR );
-		glClear( mask );
+		commitStates( PM_VIEWPORT | PM_SCISSOR | PM_RENDERSTATES );
+		glClear( oglClearMask );
 	}
+
+	// Restore state of glDrawBuffers
+	if( _curRendBuf != 0x0 )
+		glDrawBuffers( 4, prevBuffers );
 
 	CHECK_GL_ERROR
 }

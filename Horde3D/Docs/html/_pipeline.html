@@ -19,9 +19,9 @@ render targets and to specify render commands to fill the targets with data. Thi
 the engine and enables the creation of most post processing effects like HDR, motion blur or depth of field as well as
 the usage of different rendering algorithms.
 </p>
-<br />
 
-<h2>System overview</h2>
+
+<h2>System Overview</h2>
 <p>
 Horde is heavily based on shaders which are small programs that are executed on the graphics card at different stages
 of the hardware pipeline. Horde uses vertex and fragment shaders. Vertex shaders influence directly the geometry
@@ -38,11 +38,11 @@ to do some wind physics for a tree model in the vertex shader. This mutable data
 concept of materials. A material in Horde consists of a shader and a list of texture maps and uniforms which are
 assigned to that shader.
 </p>
-<br />
 
-<h2>Lighting and shadows</h2>
-<p>
-Horde supports basically two different approaches for lighting namely forward and deferred shading. Forward shading
+
+<h2>Lighting and Shadows</h2>
+
+<p>Horde supports basically two different approaches for lighting namely forward and deferred shading. Forward shading
 is the standard technique that is currently used in most applications. With this technique the geometry is rendered
 once for each light source using a special fragment shader that calculates the light contribution. The disadvantage here
 is of course that the geometry has to be drawn several times which can result in poor performance in scenes with 
@@ -53,9 +53,9 @@ draw a fullscreen quad since the required information can easily be read from th
 lighting performance is completely independent of the geometry complexity now since each light just requires drawing
 a screen-space quad. Unfortunately this approach has also its drawbacks as it is difficult to do anti-aliasing or
 handle translucent geometry. Discussing the two techniques in detail here would be out of the scope of this manual so
-please refer to one of the many online and book resources available for this topic.
-<br/><br/>
-Light sources in Horde are defined as scene nodes. Each light node has two special attributes called <b>lightingContext</b>
+please refer to one of the many online and book resources available for this topic.</p>
+
+<p>Light sources in Horde are defined as scene nodes. Each light node has two special attributes called <b>lightingContext</b>
 and <b>shadowContext</b>. The values of these attributes correspond to shader context names defined in the shader resources.
 When Horde is instructed to perform forward lighting the engine first builds a list of the geometry that needs to be
 drawn. After that it draws each object from that list using the shader context that is specified for the light source.
@@ -66,29 +66,27 @@ used to draw the screen-space quads where the light's lightingContext attribute 
 used. The calculation of the shadows is working the same way as for forward shading where all geometry is rendered to
 the shadow map using the shadowContext. When doing forward shading you could also specify a material for a light source.
 The shader is ignored in this case but it is possible to bind several textures which can for example be used to create
-some sort of slide-projector.
-<br/><br/>
-With the shader context system it is possible to define arbitrary light source types. The behavior of a light (e.g.
+some sort of slide-projector.</p>
+
+<p>With the shader context system it is possible to define arbitrary light source types. The behavior of a light (e.g.
 directional or spot) and its interaction with a material are defined entirely in the shaders. If you want to create
 a new type of light source you just have to assign a name to the lightingContext attribute and define an appropriate
-shader context for all the materials (respectively shaders) that shall interact with that light source.
-</p>
-<br />
+shader context for all the materials (respectively shaders) that shall interact with that light source.</p>
 
-<h2>Pipeline configuration</h2>
-<p>
-The flexible rendering pipeline allows to define render targets and commands which determine the steps taken
+
+<h2>Pipeline Configuration</h2>
+
+<p>The flexible rendering pipeline allows to define render targets and commands which determine the steps taken
 to render the scene. The commands are specified within a XML file. Most rendering commands use the attributes
 <i>class</i> and <i>context</i>. The class is defined in the materials and determines what geometry should be
 rendered. It is possible to use the tilde operator <b>~</b> as a logical NOT meaning that all geometry except
 the one with the specified material class will be drawn. The context is finally available for specifying the
-rendering technique which should be used for the current draw call.
-</p>
-<h3>Pipeline syntax</h3>
-<p>
-The following XML elements and attributes are supported.
-</p>
-<div class="syntaxbox">
+rendering technique which should be used for the current draw call.</p>
+
+<h3>Pipeline Syntax</h3>
+<p>The following XML elements and attributes are supported.</p>
+
+<div class="descbox">
 <table>
     <tr>
         <td><b>Pipeline</b></td>
@@ -375,9 +373,9 @@ The following XML elements and attributes are supported.
     </tr>
 </table>
 </div>
-<br /><br />
-<h3>Sample showing simple deferred shading pipeline</h3>
-<div class="memdoc">
+
+<h4>Sample showing simple deferred shading pipeline</h4>
+<div class="codebox">
 <pre>
 &lt;Pipeline&gt;
 
@@ -411,16 +409,15 @@ The following XML elements and attributes are supported.
 &lt;/Pipeline&gt;
 </pre>
 </div>
-<br /><br /><br />
+
 
 <h2>Shaders</h2>
-<p>
-Horde3D shaders are stored in text files with the extension <i>.shader</i>. A shader file consists of different
+<p>Horde3D shaders are stored in text files with the extension <i>.shader</i>. A shader file consists of different
 sections: one FX section and an arbitrary number of named code sections. A section is introduced by the tag
 <b>[[<i>id</i>]]</b> where <i>id</i> is a unique identifier used as name of the section. A special identifier is
-<b>FX</b> which introduces an FX section.
-<br /><br />
-Horde3D supports übershaders using static branching (compiler defines) and can automatically compile different
+<b>FX</b> which introduces an FX section.</p>
+
+<p>Horde3D supports übershaders using static branching (compiler defines) and can automatically compile different
 shader combinations based on a set of given shader flags. This approach helps to solve a common problem:
 imagine you have one shader that does skinning and one that does parallax mapping. Now you want a shader that does
 both. Usually you would have to create a new shader file which combines the code of the two other shaders. It
@@ -430,12 +427,10 @@ be greatly simplified. You just need one shader file where the features are expo
 is enabled by setting the corresponding flag (e.g. in a material file). Horde3D can check automatically if a
 desired combination is not yet existing and will compile it on the fly. Please note, even though übershaders are
 a powerful feature, they need to be used with care since it is easy to generate a huge number of combinations which
-would take a long time to load.
-</p>
+would take a long time to load.</p>
 
-<h3>FX section</h3>
-<p>
-The FX section defines and configures the shader contexts, custom texture samplers and custom (user-defined)
+<h3>FX Section</h3>
+<p>The FX section defines and configures the shader contexts, custom texture samplers and custom (user-defined)
 uniforms used in hardware shaders. Please note that it is strictly required that all custom samplers and
 uniforms referenced in hardware shaders are declared in the FX section so that they can be used with the
 Horde3D material system.
@@ -448,13 +443,11 @@ may not contain any whitespace.
 Elements can optionally store meta information as annotations. This is useful for better tool support.
 For example, a uniform could store a minimum and maximum value range. It is suggested that annotations have
 the form required by CgFX, hence <i>datatype identifier = value;</i> However, this is not a requirement since
-annotations are just skipped by Horde's parser.
-<br /><br />
+annotations are just skipped by Horde's parser.</p>
 
-The following syntax is supported. Optional elements are put in square brackets and default values are
-highlighted as bold. Alternative values are separated by a slash.
-</p>
-<div class="syntaxbox">
+<p>The following syntax is supported. Optional elements are put in square brackets and default values are
+highlighted as bold. Alternative values are separated by a slash.</p>
+<div class="descbox">
 <table>
 	<tr><td><b>sampler2D</b> / <b>samplerCube</b> [< annotation(s) >] <b>id</b></td></tr>
 	<tr><td>[ <b>=</b> sampler_state {</td></tr>
@@ -466,8 +459,8 @@ highlighted as bold. Alternative values are separated by a slash.
 	<tr><td>} ] <b>;</b></td></tr>
 </table>
 </div>
-<br />
-<b>Remarks:</b><br />
+
+<p><b>Remarks:</b></p>
 <ul>
 <li>The specified sampler type (2d, cube) and the bound texture resource type have to match</li>
 <li><i>Texture</i> defines a default texture that is used if no texture map is specified in a material; the initial value for sampler2D is
@@ -476,23 +469,21 @@ highlighted as bold. Alternative values are separated by a slash.
 <li>Aliasing for texture units is possible, meaning samplers can share the same texture unit if
     they are not used in the same shader context</li>
 </ul>
-<br />
 
-<div class="syntaxbox">
+<div class="descbox">
 <table>
 	<tr><td><b>float</b> [< annotation(s) >] <b>id</b> [ <b>=</b> <i>a</i> ] <b>;</b></td></tr>
 	<tr><td><b>float4</b> [< annotation(s) >] <b>id</b> [ <b>=</b> { <i>a</i>, <i>b</i>, <i>c</i>, <i>d</i> } ] <b>;</b></td></tr>
 </table>
 </div>
-<br />
-<b>Remarks:</b><br />
+
+<p><b>Remarks:</b></p>
 <ul>
 <li>Declares and optionally initializes a uniform</li>
 <li>The default value for each component is 0.0</li>
 </ul>
-<br />
 
-<div class="syntaxbox">
+<div class="descbox">
 <table>
 	<tr><td><b>context</b> [< annotation(s) >] <b>id</b></td></tr>
 	<tr><td>{</td></tr>
@@ -508,30 +499,25 @@ highlighted as bold. Alternative values are separated by a slash.
 	</td>
 </table>
 </div>
-<br />
-<b>Remarks:</b><br />
+<p><b>Remarks:</b></p>
 <ul>
 <li>Shaders reference a code section that must be defined in the same FX file</li>
 </ul>
-<br />
 
 
-<h3>Code section</h3>
-<p>
-A code section contains the GLSL code. Besides the usual GLSL keywords, Horde3D introduces an additional preprocessor
+<h3>Code Section</h3>
+<p>A code section contains the GLSL code. Besides the usual GLSL keywords, Horde3D introduces an additional preprocessor
 command: <b>#include</b>. The include directive is used to insert the content of a code resource at the corresponding
-location. The name of the code file needs to be enclosed by a pair of quotation marks.
-<br /><br />
-The code section can also contain the shader flags used for the automatic combination generation. The shader flags
+location. The name of the code file needs to be enclosed by a pair of quotation marks.</p>
+
+<p>The code section can also contain the shader flags used for the automatic combination generation. The shader flags
 have a special naming convention: <b>_F<i>&lt;digit&gt;&lt;digit&gt;</i>_<i>&lt;name&gt;</i></b>.
 The following would be a valid flag: _F06_MyFlag. The flag must have a number between 01 and 32 (note the
 leading zero). This number is exclusively used to identify the flag. The name is optional and just exists for
-convenience reasons in order to improve the code readability.
-</p>
-<br /><br />
+convenience reasons in order to improve the code readability.</p>
 
-<h3>Sample</h3>
-<div class="memdoc">
+<h4>Sample</h4>
+<div class="codebox">
 <pre>
 <b>[[FX]]</b>
 
@@ -583,19 +569,19 @@ void main( void )
 }
 </pre>
 </div>
-<br /><br /><br />
 
-<h2>Predefined GLSL uniforms and attributes</h2>
+
+<h2>Predefined GLSL Uniforms and Attributes</h2>
 <p>
 Horde defines some standard uniforms and attributes which can be used by shaders. The engine automatically detects
-which input data is required and binds it to the shader programs.
-<br /><br />
-<b>Note:</b> Not all uniforms and attributes are available for every pipeline step, e.g. light source
+which input data is required and binds it to the shader programs.</p>
+
+<p><b>Note:</b> Not all uniforms and attributes are available for every pipeline step, e.g. light source
 parameters are only available when doing lighting calculations and particle specific data only when
-rendering emitters.
-</p>
-<h3>General vector/matrix uniforms</h3>
-<div class="syntaxbox">
+rendering emitters.</p>
+
+<h4>General vector/matrix uniforms</h4>
+<div class="descbox">
 <table>
      <tr>
         <td><b>uniform vec2 frameBufSize</b></td>
@@ -655,10 +641,9 @@ rendering emitters.
     </tr>
 </table>
 </div>
-<br /><br/>
 
-<h3>General sampler uniforms</h3>
-<div class="syntaxbox">
+<h4>General sampler uniforms</h4>
+<div class="descbox">
 <table>
     <tr>
         <td><b>uniform sampler2D shadowMap</b></td>
@@ -666,10 +651,9 @@ rendering emitters.
     </tr>
 </table>
 </div>
-<br/><br/>
 
-<h3>Per-instance vector/matrix uniforms</h3>
-<div class="syntaxbox">
+<h4>Per-instance vector/matrix uniforms</h4>
+<div class="descbox">
 <table>
 	<tr>
         <td><b>uniform mat4 worldMat</b></td>
@@ -684,16 +668,19 @@ rendering emitters.
         <td>identifier value of currently rendered node (default value is node handle)</td>
     </tr>
 	<tr>
+        <td><b>uniform vec4 customInstData[4]</b></td>
+        <td>custom per-instance node data; only available for models</td>
+    </tr>
+	<tr>
         <td><b>uniform vec4 skinMatRows[75*3]</b></td>
         <td>first three rows of skinning matrices for skeletal animation;
 			fourth row is always <i>(0, 0, 0, 1)</i>; only available for models</td>
     </tr>
 </table>
 </div>
-<br /><br/>
 
-<h3>Overlay specific vector/matrix uniforms</h3>
-<div class="syntaxbox">
+<h4>Overlay specific vector/matrix uniforms</h4>
+<div class="descbox">
 <table>
     <tr>
         <td><b>uniform vec4 olayColor</b></td>
@@ -701,11 +688,9 @@ rendering emitters.
     </tr>
 </table>
 </div>
-<br /><br/>
 
-
-<h3>Particle specific vector/matrix uniforms</h3>
-<div class="syntaxbox">
+<h4>Particle specific vector/matrix uniforms</h4>
+<div class="descbox">
 <table>
     <tr>
         <td><b>uniform vec3 parPosArray[64]</b></td>
@@ -721,10 +706,9 @@ rendering emitters.
     </tr>
 </table>
 </div>
-<br /><br/>
 
-<h3>General vertex attributes</h3>
-<div class="syntaxbox">
+<h4>General vertex attributes</h4>
+<div class="descbox">
 <table>
     <tr>
         <td><b>attribute vec3 vertPos</b></td>
@@ -736,10 +720,9 @@ rendering emitters.
     </tr>
 </table>
 </div>
-<br/><br/>
 
-<h3>Model specific vertex attributes</h3>
-<div class="syntaxbox">
+<h4>Model specific vertex attributes</h4>
+<div class="descbox">
 <table>
     <tr>
         <td><b>attribute vec2 texCoords1</b></td>
@@ -763,10 +746,9 @@ rendering emitters.
     </tr>
 </table>
 </div>
-<br/><br/>
 
-<h3>Particle specific vertex attributes</h3>
-<div class="syntaxbox">
+<h4>Particle specific vertex attributes</h4>
+<div class="descbox">
 <table>
 	<tr>
         <td><b>attribute float parIdx</b></td>
@@ -774,23 +756,14 @@ rendering emitters.
     </tr>
 </table>
 </div>
-<br/><br/>
 
-<h3>Remarks</h3>
+<p><b>Remarks:</b></p>
 <ul>
 <li>The vertex position is usually available in the vec3 attribute <b>vertPos</b>. An exception are overlays
     where the position has just 2 components (x and y).</li>
 <li>The camera transformation is stored in <b>viewMat</b>. It is also available when rendering a fullscreen
     quad (useful for some post-processing effects).</li>
 </ul>
-<br /><br />
-
-<div id="copy">Copyright &copy; 2006-2011 Nicolas Schulz</div>
-</div>
-
-<div id="logo">
-    <img src="images/doclogo.gif" />
-</div>
 
 </body>
 </html>

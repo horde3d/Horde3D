@@ -152,7 +152,7 @@ namespace Horde3DNET.Samples.KnightNET
         public void mainLoop(float fps)
         {
 	        _curFPS = fps;
-            _timer += 1 / fps;
+            _timer += 1f / fps;
 
             h3d.setOption( h3d.H3DOptions.DebugViewMode, _debugViewMode ? 1.0f : 0.0f );
 	        h3d.setOption( h3d.H3DOptions.WireframeMode, _wireframeMode ? 1.0f : 0.0f );
@@ -164,11 +164,12 @@ namespace Horde3DNET.Samples.KnightNET
 		        // Do animation blending
 		        h3d.setModelAnimParams( _knight, 0, _animTime * 24.0f, _weight );
 		        h3d.setModelAnimParams( _knight, 1, _animTime * 24.0f, 1.0f - _weight );
+                h3d.updateModel( _knight, (int)(h3d.H3DModelUpdateFlags.Animation | h3d.H3DModelUpdateFlags.Geometry ));
 
 		        // Animate particle system                                
                 int cnt = cnt = h3d.findNodes(_particleSys, "", (int)h3d.H3DNodeTypes.Emitter);
 		        for( int i = 0; i < cnt; ++i )
-			        h3d.advanceEmitterTime( h3d.getNodeFindResult( i ), 1.0f / _curFPS );
+                    h3d.updateEmitter(h3d.getNodeFindResult(i), 1.0f / _curFPS);
 	        }
 
             // Set camera parameters

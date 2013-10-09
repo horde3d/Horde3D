@@ -163,8 +163,8 @@ public:
 	ResourceManager();
 	~ResourceManager();
 
-	void registerType( int type, const std::string &typeString, ResTypeInitializationFunc inf,
-	                   ResTypeReleaseFunc rf, ResTypeFactoryFunc ff );
+	void registerResType( int resType, const std::string &typeString, ResTypeInitializationFunc inf,
+	                      ResTypeReleaseFunc rf, ResTypeFactoryFunc ff );
 	
 	Resource *getNextResource( int type, ResHandle start );
 	Resource *findResource( int type, const std::string &name );

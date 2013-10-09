@@ -22,7 +22,7 @@
 #	if !defined( PLATFORM_WIN_CE )
 #		define PLATFORM_WIN_CE
 #	endif
-#elif defined( WIN32 ) || defined( _WINDOWS )
+#elif defined( WIN32 ) || defined( _WINDOWS ) || defined( _WIN32 )
 #	if !defined( PLATFORM_WIN )
 #		define PLATFORM_WIN
 #	endif
@@ -74,7 +74,7 @@ typedef unsigned long long uint64;
 #undef max
 #endif
 
-#if !defined( _MSC_VER ) || (defined( _MSC_VER ) && (_MSC_VER < 1400))
+#if (!defined( _MSC_VER ) || (defined( _MSC_VER ) && (_MSC_VER < 1400))) && !defined( __MINGW32__ )
 #	define strncpy_s( dst, dstSize, src, count ) strncpy( dst, src, count < dstSize ? count : dstSize )
 #endif
 #if defined( _MSC_VER ) && (_MSC_VER < 1400)

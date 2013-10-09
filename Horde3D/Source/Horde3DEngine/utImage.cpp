@@ -103,7 +103,7 @@
 
 namespace Horde3D {
 
-#ifndef _MSC_VER
+#if !defined( _MSC_VER ) && !defined( __forceinline )
   #ifdef __cplusplus
   #define __forceinline inline
   #else
@@ -1518,11 +1518,11 @@ static uint8 *resample_row_hv_2(uint8 *out, uint8 *in_near, uint8 *in_far, int w
    return out;
 }
 
-static uint8 *resample_row_generic(uint8 *out, uint8 *in_near, uint8 *in_far, int w, int hs)
+static uint8 *resample_row_generic(uint8 *out, uint8 *in_near, uint8 * /*in_far*/, int w, int hs)
 {
    // resample with nearest-neighbor
    int i,j;
-   in_far = in_far;
+   //in_far = in_far;
    for (i=0; i < w; ++i)
       for (j=0; j < hs; ++j)
          out[i*hs+j] = in_near[i];

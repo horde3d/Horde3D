@@ -36,12 +36,12 @@ void OptVertex::updateScore( int cacheIndex )
 
 
 
-unsigned int MeshOptimizer::removeDegeneratedTriangles( TriGroup &triGroup, vector< Vertex > &vertices,
+unsigned int MeshOptimizer::removeDegeneratedTriangles( TriGroup *triGroup, vector< Vertex > &vertices,
                                                         vector< unsigned int > &indices )
 {
 	unsigned int numDegTris = 0;
 	
-	for( unsigned int k = triGroup.first; k < triGroup.first + triGroup.count; k += 3 )
+	for( unsigned int k = triGroup->first; k < triGroup->first + triGroup->count; k += 3 )
 	{
 		Vec3f &v0 = vertices[indices[k + 0]].pos;
 		Vec3f &v1 = vertices[indices[k + 1]].pos;
@@ -55,7 +55,7 @@ unsigned int MeshOptimizer::removeDegeneratedTriangles( TriGroup &triGroup, vect
 			indices.erase( indices.begin() + k + 1 );
 			indices.erase( indices.begin() + k + 0 );
 			k -= 3;
-			triGroup.count -= 3;
+			triGroup->count -= 3;
 		}
 	}
 
@@ -63,40 +63,40 @@ unsigned int MeshOptimizer::removeDegeneratedTriangles( TriGroup &triGroup, vect
 }
 
 
-void MeshOptimizer::optimizeIndexOrder( TriGroup &triGroup, vector< Vertex > &vertices,
+void MeshOptimizer::optimizeIndexOrder( TriGroup *triGroup, vector< Vertex > &vertices,
                                         vector< unsigned int > &indices,
 										map< unsigned int, unsigned int > &vertMap )
 {
 	// Implementation of Linear-Speed Vertex Cache Optimisation by Tom Forsyth
 	// (see http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html)
 	
-	if( triGroup.count == 0 ) return;
+	if( triGroup->count == 0 ) return;
 	
-	vector< OptVertex > verts( triGroup.vertREnd - triGroup.vertRStart + 1 );
+	vector< OptVertex > verts( triGroup->vertREnd - triGroup->vertRStart + 1 );
 	set< OptFace * > faces;
 	list< OptVertex * > cache;
 	
 	// Build vertex and triangle structures
-	for( unsigned int i = 0; i < triGroup.count; i += 3 )
+	for( unsigned int i = 0; i < triGroup->count; i += 3 )
 	{
 		set< OptFace * >::iterator itr1 = faces.insert( faces.begin(), new OptFace() );
 		OptFace *face = (*itr1);
 		
-		face->verts[0] = &verts[indices[triGroup.first + i] - triGroup.vertRStart];
-		face->verts[1] = &verts[indices[triGroup.first + i + 1] - triGroup.vertRStart];
-		face->verts[2] = &verts[indices[triGroup.first + i + 2] - triGroup.vertRStart];
+		face->verts[0] = &verts[indices[triGroup->first + i] - triGroup->vertRStart];
+		face->verts[1] = &verts[indices[triGroup->first + i + 1] - triGroup->vertRStart];
+		face->verts[2] = &verts[indices[triGroup->first + i + 2] - triGroup->vertRStart];
 		face->verts[0]->faces.insert( face );
 		face->verts[1]->faces.insert( face );
 		face->verts[2]->faces.insert( face );
 	}
 	for( unsigned int i = 0; i < verts.size(); ++i )
 	{
-		verts[i].index = triGroup.vertRStart + i;
+		verts[i].index = triGroup->vertRStart + i;
 		verts[i].updateScore( -1 );
 	}
 
 	// Main loop of algorithm
-	unsigned int curIndex = triGroup.first;
+	unsigned int curIndex = triGroup->first;
 	
 	while( !faces.empty() )
 	{
@@ -171,12 +171,12 @@ void MeshOptimizer::optimizeIndexOrder( TriGroup &triGroup, vector< Vertex > &ve
 
 
 	// Remap vertices to make access to them as linear as possible
-	vector< Vertex > oldVertices( vertices.begin() + triGroup.vertRStart,
-	                              vertices.begin() + triGroup.vertREnd + 1 );
+	vector< Vertex > oldVertices( vertices.begin() + triGroup->vertRStart,
+	                              vertices.begin() + triGroup->vertREnd + 1 );
 	vertMap.clear();
-	unsigned int curVertex = triGroup.vertRStart;
+	unsigned int curVertex = triGroup->vertRStart;
 	
-	for( unsigned int i = triGroup.first; i < triGroup.first + triGroup.count; ++i )
+	for( unsigned int i = triGroup->first; i < triGroup->first + triGroup->count; ++i )
 	{
 		map< unsigned int, unsigned int >::iterator itr1 = vertMap.find( indices[i] );
 		
@@ -194,21 +194,21 @@ void MeshOptimizer::optimizeIndexOrder( TriGroup &triGroup, vector< Vertex > &ve
 	for( map< unsigned int, unsigned int >::iterator itr1 = vertMap.begin();
 	     itr1 != vertMap.end(); ++itr1 )
 	{
-		vertices[itr1->second] = oldVertices[itr1->first - triGroup.vertRStart];
+		vertices[itr1->second] = oldVertices[itr1->first - triGroup->vertRStart];
 	}
 }
 
 
-float MeshOptimizer::calcCacheEfficiency( TriGroup &triGroup, vector< unsigned int > &indices,
+float MeshOptimizer::calcCacheEfficiency( TriGroup *triGroup, vector< unsigned int > &indices,
                                           const unsigned int cacheSize )
 {	
 	// Measure efficiency of index array regarding post-transform vertex cache
 
 	unsigned int misses = 0;
 	list< unsigned int > testCache;
-	for( unsigned int i = 0; i < triGroup.count; ++i )
+	for( unsigned int i = 0; i < triGroup->count; ++i )
 	{
-		unsigned int index = indices[triGroup.first + i];
+		unsigned int index = indices[triGroup->first + i];
 		if( find( testCache.begin(), testCache.end(), index ) == testCache.end() )
 		{
 			testCache.push_back( index );
@@ -219,6 +219,6 @@ float MeshOptimizer::calcCacheEfficiency( TriGroup &triGroup, vector< unsigned i
 	
 	// Average transform to vertex ratio (ATVR)
 	// 1.0 is theoretical optimum, meaning that each vertex is just transformed exactly one time
-	float atvr = (float)(triGroup.count + misses) / triGroup.count;
+	float atvr = (float)(triGroup->count + misses) / triGroup->count;
 	return atvr;
 }

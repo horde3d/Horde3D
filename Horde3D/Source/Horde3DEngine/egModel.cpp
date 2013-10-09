@@ -180,8 +180,9 @@ void ModelNode::updateLocalMeshAABBs()
 		
 		Vec3f &bBMin = mesh._localBBox.min;
 		Vec3f &bBMax = mesh._localBBox.max;
-		
-		if( mesh._vertRStart < _geometryRes->getVertCount() &&
+				
+		if( mesh._vertRStart <= mesh._vertREnd && 
+			mesh._vertRStart < _geometryRes->getVertCount() &&
 		    mesh._vertREnd < _geometryRes->getVertCount() )
 		{
 			bBMin = Vec3f( Math::MaxFloat, Math::MaxFloat, Math::MaxFloat );
@@ -335,6 +336,26 @@ void ModelNode::setParamF( int param, int compIdx, float value )
 }
 
 
+void ModelNode::update( int flags )
+{
+	if( flags & ModelUpdateFlags::Animation )
+	{
+		if( _animCtrl.animate() )
+		{	
+			_skinningDirty = true;
+			markDirty();
+			SceneNode::updateTree();
+		}
+	}
+	
+	if( flags & ModelUpdateFlags::Geometry )
+	{
+		// Update geometry for morphers or software skinning
+		updateGeometry();
+	}
+}
+
+
 bool ModelNode::updateGeometry()
 {
 	_skinningDirty |= _morpherDirty;
@@ -456,15 +477,15 @@ uint32 ModelNode::calcLodLevel( const Vec3f &viewPoint )
 }
 
 
+void ModelNode::setCustomInstData( float *data, uint32 count )
+{
+	memcpy( _customInstData, data, std::min( count, ModelCustomVecCount * 4 ) * sizeof( float ) );
+}
+
+
 void ModelNode::onPostUpdate()
 {
 	if( _nodeListDirty ) recreateNodeList();
-
-	if( _animCtrl.animate() )
-	{	
-		_skinningDirty = true;
-		markDirty();
-	}
 }
 
 
@@ -514,9 +535,6 @@ void ModelNode::onFinishedUpdate()
 	{
 		_bBox.makeUnion( _meshList[i]->_bBox ); 
 	}
-
-	// Update geometry for morphers or software skinning
-	updateGeometry();
 }
 
 }  // namespace

@@ -17,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(ProjectDir)../../../Build/$(ProjectName)/$(ConfigurationName)"
-			IntermediateDirectory="$(ProjectDir)../../../Build/$(ProjectName)/$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)../../Build/$(ProjectName)/$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)../../Build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="4"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
@@ -99,8 +99,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(ProjectDir)../../../Build/$(ProjectName)/$(ConfigurationName)"
-			IntermediateDirectory="$(ProjectDir)../../../Build/$(ProjectName)/$(ConfigurationName)"
+			OutputDirectory="$(ProjectDir)../../Build/$(ProjectName)/$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)../../Build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="4"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"

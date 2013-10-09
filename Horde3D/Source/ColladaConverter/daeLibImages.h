@@ -32,7 +32,8 @@ struct DaeImage
 		id = imageNode.getAttribute( "id", "" );
 		if( id == "" ) return false;
 		name = imageNode.getAttribute( "name", "" );
-		
+		if( name.empty() ) name = id;
+
 		if( !imageNode.getFirstChild( "init_from" ).isEmpty() &&
 		    imageNode.getFirstChild( "init_from" ).getText() != 0x0 )
 		{

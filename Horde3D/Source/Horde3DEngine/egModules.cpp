@@ -82,40 +82,44 @@ bool Modules::init()
 	if( !renderer().init() ) return false;
 
 	// Register resource types
-	resMan().registerType( ResourceTypes::SceneGraph, "SceneGraph", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::SceneGraph, "SceneGraph", 0x0, 0x0,
 		SceneGraphResource::factoryFunc );
-	resMan().registerType( ResourceTypes::Geometry, "Geometry", GeometryResource::initializationFunc,
+	resMan().registerResType( ResourceTypes::Geometry, "Geometry", GeometryResource::initializationFunc,
 		GeometryResource::releaseFunc, GeometryResource::factoryFunc );
-	resMan().registerType( ResourceTypes::Animation, "Animation", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::Animation, "Animation", 0x0, 0x0,
 		AnimationResource::factoryFunc );
-	resMan().registerType( ResourceTypes::Material, "Material", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::Material, "Material", 0x0, 0x0,
 		MaterialResource::factoryFunc );
-	resMan().registerType( ResourceTypes::Code, "Code", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::Code, "Code", 0x0, 0x0,
 		CodeResource::factoryFunc );
-	resMan().registerType( ResourceTypes::Shader, "Shader", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::Shader, "Shader", 0x0, 0x0,
 		ShaderResource::factoryFunc );
-	resMan().registerType( ResourceTypes::Texture, "Texture", TextureResource::initializationFunc,
+	resMan().registerResType( ResourceTypes::Texture, "Texture", TextureResource::initializationFunc,
 		TextureResource::releaseFunc, TextureResource::factoryFunc );
-	resMan().registerType( ResourceTypes::ParticleEffect, "ParticleEffect", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::ParticleEffect, "ParticleEffect", 0x0, 0x0,
 		ParticleEffectResource::factoryFunc );
-	resMan().registerType( ResourceTypes::Pipeline, "Pipeline", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::Pipeline, "Pipeline", 0x0, 0x0,
 		PipelineResource::factoryFunc );
 
 	// Register node types
-	sceneMan().registerType( SceneNodeTypes::Group, "Group",
-		GroupNode::parsingFunc, GroupNode::factoryFunc, 0x0 );
-	sceneMan().registerType( SceneNodeTypes::Model, "Model",
-		ModelNode::parsingFunc, ModelNode::factoryFunc, 0x0 );
-	sceneMan().registerType( SceneNodeTypes::Mesh, "Mesh",
-		MeshNode::parsingFunc, MeshNode::factoryFunc, Renderer::drawMeshes );
-	sceneMan().registerType( SceneNodeTypes::Joint, "Joint",
-		JointNode::parsingFunc, JointNode::factoryFunc, 0x0 );
-	sceneMan().registerType( SceneNodeTypes::Light, "Light",
-		LightNode::parsingFunc, LightNode::factoryFunc, 0x0 );
-	sceneMan().registerType( SceneNodeTypes::Camera, "Camera",
-		CameraNode::parsingFunc, CameraNode::factoryFunc, 0x0 );
-	sceneMan().registerType( SceneNodeTypes::Emitter, "Emitter",
-		EmitterNode::parsingFunc, EmitterNode::factoryFunc, Renderer::drawParticles );
+	sceneMan().registerNodeType( SceneNodeTypes::Group, "Group",
+		GroupNode::parsingFunc, GroupNode::factoryFunc );
+	sceneMan().registerNodeType( SceneNodeTypes::Model, "Model",
+		ModelNode::parsingFunc, ModelNode::factoryFunc);
+	sceneMan().registerNodeType( SceneNodeTypes::Mesh, "Mesh",
+		MeshNode::parsingFunc, MeshNode::factoryFunc );
+	sceneMan().registerNodeType( SceneNodeTypes::Joint, "Joint",
+		JointNode::parsingFunc, JointNode::factoryFunc );
+	sceneMan().registerNodeType( SceneNodeTypes::Light, "Light",
+		LightNode::parsingFunc, LightNode::factoryFunc );
+	sceneMan().registerNodeType( SceneNodeTypes::Camera, "Camera",
+		CameraNode::parsingFunc, CameraNode::factoryFunc );
+	sceneMan().registerNodeType( SceneNodeTypes::Emitter, "Emitter",
+		EmitterNode::parsingFunc, EmitterNode::factoryFunc );
+
+	// Register render functions
+	renderer().registerRenderFunc( SceneNodeTypes::Mesh, Renderer::drawMeshes );
+	renderer().registerRenderFunc( SceneNodeTypes::Emitter, Renderer::drawParticles );
 	
 	// Install extensions
 	installExtensions();

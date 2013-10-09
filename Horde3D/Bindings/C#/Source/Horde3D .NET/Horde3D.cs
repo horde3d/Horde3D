@@ -560,6 +560,20 @@ namespace Horde3DNET
             ForceF3
         }
 
+        /// <summary>
+        /// Enum: H3DModelUpdateFlags
+        ///       The available flags for h3dUpdateModel.
+        ///       
+        /// Animation  - Apply animation
+        /// Geometry   - Apply morphers and software skinning
+        /// </summary>
+        public enum H3DModelUpdateFlags
+        {
+                Animation = 1,
+                Geometry = 2
+        };
+
+
         // --- Basic funtions ---
         /// <summary>
         /// This function returns a string containing the current version of h3d.
@@ -1502,6 +1516,22 @@ namespace Horde3DNET
         {
             return NativeMethodsEngine.h3dGetNodeFindResult(index);
         }
+
+        /// <summary>
+        /// Sets per-instance uniform data for a node.
+        /// </summary>
+        /// <remarks>
+		/// This function sets the custom per-instance uniform data for a node that can be accessed
+		/// from within a shader. The specified number of floats is copied from the specified memory location.
+		/// Currently only Model nodes will store this data.</remarks>
+        /// <param name="node">node for which data will be set</param>
+        /// <param name="uniformData">pointer to float array</param>
+        /// <param name="count">number of floats to be copied</param>
+        /// <returns></returns>
+        public static void setNodeUniforms(int node, float[] uniformData, int count)
+        {
+            NativeMethodsEngine.h3dSetNodeUniforms(node, uniformData, count);
+        }
         
         /// <summary>
         /// This function checks recursively if the specified ray intersects the specified node or one of its children.
@@ -1650,6 +1680,24 @@ namespace Horde3DNET
 
             return NativeMethodsEngine.h3dSetModelMorpher(node, target, weight);
         }
+        
+
+        /// <summary>
+        /// Applies animation and/or geometry updates.
+        /// <remarks>
+		/// This function applies skeletal animation and geometry updates to the specified model, depending on
+		/// the specified update flags. Geometry updates include morph targets and software skinning if enabled.
+		/// If the animation or morpher parameters did not change, the function returns immediately. This function
+		/// has to be called so that changed animation or morpher parameters will take effect.
+        /// </remarks>
+        /// <param name="modelNode">handle to the Model node to be updated</param>
+        /// <param name="flags">combination of H3DModelUpdateFlags flags</param>
+        public static void updateModel(int modelNode, int flags)
+        {
+            NativeMethodsEngine.h3dUpdateModel(modelNode, flags);
+        }
+
+
 
         // Mesh specific
         /// <summary>
@@ -1771,9 +1819,9 @@ namespace Horde3DNET
         /// </summary>
         /// <param name="node">handle to the Emitter node which will be modified</param>
         /// <param name="timeDelta">time delta in seconds</param>        
-        public static void advanceEmitterTime(int node, float timeDelta)
+        public static void updateEmitter(int node, float timeDelta)
         {
-            NativeMethodsEngine.h3dAdvanceEmitterTime(node, timeDelta);
+            NativeMethodsEngine.h3dUpdateEmitter(node, timeDelta);
         }
 
         /// <summary>

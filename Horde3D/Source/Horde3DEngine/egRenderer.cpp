@@ -11,7 +11,6 @@
 // *************************************************************************************************
 
 #include "egRenderer.h"
-#include "utOpenGL.h"
 #include "egParticle.h"
 #include "egLight.h"
 #include "egCamera.h"
@@ -25,22 +24,6 @@
 namespace Horde3D {
 
 using namespace std;
-
-
-const char *vsDefColor =
-	"uniform mat4 viewProjMat;\n"
-	"uniform mat4 worldMat;\n"
-	"attribute vec3 vertPos;\n"
-	"void main() {\n"
-	"	gl_Position = viewProjMat * worldMat * vec4( vertPos, 1.0 );\n"
-	"}\n";
-
-const char *fsDefColor =
-	"uniform vec4 color;\n"
-	"void main() {\n"
-	"	gl_FragColor = color;\n"
-	"}\n";
-
 
 Renderer::Renderer()
 {
@@ -81,6 +64,15 @@ Renderer::~Renderer()
 // =================================================================================================
 // Basic Initialization and Setup
 // =================================================================================================
+
+void Renderer::registerRenderFunc( int nodeType, RenderFunc rf )
+{
+	RenderFuncListItem item;
+	item.nodeType = nodeType;
+	item.renderFunc = rf;
+	_renderFuncRegistry.push_back( item );
+}
+
 
 unsigned char *Renderer::useScratchBuf( uint32 minSize )
 {
@@ -138,7 +130,7 @@ bool Renderer::init()
 	_vlParticle = gRDI->registerVertexLayout( 2, attribsParticle );
 	
 	// Upload default shaders
-	if( !createShaderComb( vsDefColor, fsDefColor, _defColorShader ) )
+	if( !createShaderComb( gRDI->getDefaultVSCode(), gRDI->getDefaultFSCode(), _defColorShader ) )
 	{
 		Modules::log().writeError( "Failed to compile default shaders" );
 		return false;
@@ -382,6 +374,7 @@ bool Renderer::createShaderComb( const char *vertexShader, const char *fragmentS
 	sc.uni_worldMat = gRDI->getShaderConstLoc( shdObj, "worldMat" );
 	sc.uni_worldNormalMat = gRDI->getShaderConstLoc( shdObj, "worldNormalMat" );
 	sc.uni_nodeId = gRDI->getShaderConstLoc( shdObj, "nodeId" );
+	sc.uni_customInstData = gRDI->getShaderConstLoc( shdObj, "customInstData[0]" );
 	sc.uni_skinMatRows = gRDI->getShaderConstLoc( shdObj, "skinMatRows[0]" );
 	
 	// Lighting uniforms
@@ -523,89 +516,40 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		commitGeneralUniforms();
 
 		// Configure depth mask
-		if( context->writeDepth ) glDepthMask( GL_TRUE );
-		else glDepthMask( GL_FALSE );
+		gRDI->setDepthMask( context->writeDepth );
 
 		// Configure cull mode
 		if( !Modules::config().wireframeMode )
 		{
-			switch( context->cullMode )
-			{
-			case CullModes::Back:
-				glEnable( GL_CULL_FACE );
-				glCullFace( GL_BACK );
-				break;
-			case CullModes::Front:
-				glEnable( GL_CULL_FACE );
-				glCullFace( GL_FRONT );
-				break;
-			case CullModes::None:
-				glDisable( GL_CULL_FACE );
-				break;
-			}
+			gRDI->setCullMode( (RDICullMode)context->cullMode );
 		}
 		
 		// Configure blending
 		switch( context->blendMode )
 		{
 		case BlendModes::Replace:
-			glDisable( GL_BLEND );
+			gRDI->setBlendMode( false );
 			break;
 		case BlendModes::Blend:
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+			gRDI->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_INV_SRC_ALPHA );
 			break;
 		case BlendModes::Add:
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_ONE, GL_ONE );
+			gRDI->setBlendMode( true, BS_BLEND_ONE, BS_BLEND_ONE );
 			break;
 		case BlendModes::AddBlended:
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_SRC_ALPHA, GL_ONE );
+			gRDI->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_ONE );
 			break;
 		case BlendModes::Mult:
-			glEnable( GL_BLEND );
-			glBlendFunc( GL_DST_COLOR, GL_ZERO );
+			gRDI->setBlendMode( true, BS_BLEND_DEST_COLOR, BS_BLEND_ZERO );
 			break;
 		}
 
 		// Configure depth test
-		if( context->depthTest )
-		{
-			glEnable( GL_DEPTH_TEST );
-			
-			switch( context->depthFunc )
-			{
-			case TestModes::LessEqual:
-				glDepthFunc( GL_LEQUAL );
-				break;
-			case TestModes::Equal:
-				glDepthFunc( GL_EQUAL );
-				break;
-			case TestModes::Always:
-				glDepthFunc( GL_ALWAYS );
-				break;
-			case TestModes::Less:
-				glDepthFunc( GL_LESS );
-				break;
-			case TestModes::Greater:
-				glDepthFunc( GL_GREATER );
-				break;
-			case TestModes::GreaterEqual:
-				glDepthFunc( GL_GEQUAL );
-				break;
-			}
-		}
-		else
-		{
-			glDisable( GL_DEPTH_TEST );
-		}
+		gRDI->setDepthTest( context->depthTest );
+		gRDI->setDepthFunc( (RDIDepthFunc)context->depthFunc );
 
 		// Configure alpha-to-coverage
-		if( context->alphaToCoverage && Modules::config().sampleCount > 0 )
-			glEnable( GL_SAMPLE_ALPHA_TO_COVERAGE );
-		else
-			glDisable( GL_SAMPLE_ALPHA_TO_COVERAGE );
+		gRDI->setAlphaToCoverage( context->alphaToCoverage && Modules::config().sampleCount > 0 );
 	}
 
 	// Setup texture samplers
@@ -740,11 +684,11 @@ bool Renderer::setMaterial( MaterialResource *materialRes, const string &shaderC
 	if( materialRes == 0x0 )
 	{	
 		setShaderComb( 0x0 );
-		glDisable( GL_BLEND );
-		glDisable( GL_SAMPLE_ALPHA_TO_COVERAGE );
-		glEnable( GL_DEPTH_TEST );
-		glDepthFunc( GL_LEQUAL );
-		glDepthMask( GL_TRUE );
+		gRDI->setBlendMode( false );
+		gRDI->setAlphaToCoverage( false );
+		gRDI->setDepthTest( true );
+		gRDI->setDepthFunc( DSS_DEPTHFUNC_LESS_EQUAL );
+		gRDI->setDepthMask( true );
 		return false;
 	}
 
@@ -806,11 +750,11 @@ Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const Vec3f lightP
 	// Find post-projective space AABB of all objects in frustum
 	Modules::sceneMan().updateQueues( frustSlice, 0x0, RenderingOrder::None,
 		SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
-	std::vector< RendQueueItem > &rendQueue = Modules::sceneMan().getRenderableQueue();
+	RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	
-	for( size_t i = 0, s = rendQueue.size(); i < s; ++i )
+	for( size_t i = 0, s = renderQueue.size(); i < s; ++i )
 	{
-		const BoundingBox &aabb = rendQueue[i].node->getBBox();
+		const BoundingBox &aabb = renderQueue[i].node->getBBox();
 		
 		// Check if light is inside AABB
 		if( lightPos.x >= aabb.min.x && lightPos.y >= aabb.min.y && lightPos.z >= aabb.min.z &&
@@ -898,8 +842,8 @@ void Renderer::updateShadowMap()
 	gRDI->setViewport( 0, 0, shadowRT.width, shadowRT.height );
 	gRDI->setRenderBuffer( _shadowRB );
 	
-	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-	glDepthMask( GL_TRUE );
+	gRDI->setColorWriteMask( false );
+	gRDI->setDepthMask( true );
 	gRDI->clear( CLR_DEPTH, 0x0, 1.f );
 
 	// ********************************************************************************************
@@ -910,9 +854,9 @@ void Renderer::updateShadowMap()
 	BoundingBox aabb;
 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), &_curLight->getFrustum(),
 		RenderingOrder::None, SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
-	for( size_t j = 0, s = Modules::sceneMan().getRenderableQueue().size(); j < s; ++j )
+	for( size_t j = 0, s = Modules::sceneMan().getRenderQueue().size(); j < s; ++j )
 	{
-		aabb.makeUnion( Modules::sceneMan().getRenderableQueue()[j].node->getBBox() ); 
+		aabb.makeUnion( Modules::sceneMan().getRenderQueue()[j].node->getBBox() );
 	}
 
 	// Find depth range of lit geometry
@@ -947,8 +891,8 @@ void Renderer::updateShadowMap()
 	}
 	
 	// Prepare shadow map rendering
-	glEnable( GL_DEPTH_TEST );
-	//glCullFace( GL_FRONT );	// Front face culling reduces artefacts but produces more "peter-panning"
+	gRDI->setDepthTest( true );
+	//gRDI->setCullMode( RS_CULL_FRONT );	// Front face culling reduces artefacts but produces more "peter-panning"
 	
 	// Split viewing frustum into slices and render shadow maps
 	Frustum frustum;
@@ -993,7 +937,7 @@ void Renderer::updateShadowMap()
 			const int scissorXY[8] = { 0, 0,  hsm, 0,  hsm, hsm,  0, hsm };
 			const float transXY[8] = { -0.5f, -0.5f,  0.5f, -0.5f,  0.5f, 0.5f,  -0.5f, 0.5f };
 			
-			glEnable( GL_SCISSOR_TEST );
+			gRDI->setScissorTest( true );
 
 			// Select quadrant of shadow map
 			lightProjMat.scale( 0.5f, 0.5f, 1.0f );
@@ -1017,12 +961,12 @@ void Renderer::updateShadowMap()
 
 	// ********************************************************************************************
 
-	glCullFace( GL_BACK );
-	glDisable( GL_SCISSOR_TEST );
+	gRDI->setCullMode( RS_CULL_BACK );
+	gRDI->setScissorTest( false );
 		
 	gRDI->setViewport( prevVPX, prevVPY, prevVPWidth, prevVPHeight );
 	gRDI->setRenderBuffer( prevRendBuf );
-	glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
+	gRDI->setColorWriteMask( true );
 }
 
 
@@ -1056,14 +1000,14 @@ void Renderer::unregisterOccSet( int occSet )
 void Renderer::drawOccProxies( uint32 list )
 {
 	ASSERT( list < 2 );
-	
-	GLboolean colMask[4], depthMask;
-	glGetBooleanv( GL_COLOR_WRITEMASK, colMask );
-	glGetBooleanv( GL_DEPTH_WRITEMASK, &depthMask );
+
+	bool prevColorMask, prevDepthMask;
+	gRDI->getColorWriteMask( prevColorMask );
+	gRDI->getDepthMask( prevDepthMask );
 	
 	setMaterial( 0x0, "" );
-	glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-	glDepthMask( GL_FALSE );
+	gRDI->setColorWriteMask( false );
+	gRDI->setDepthMask( false );
 	
 	setShaderComb( &Modules::renderer()._defColorShader );
 	commitGeneralUniforms();
@@ -1089,8 +1033,8 @@ void Renderer::drawOccProxies( uint32 list )
 	}
 
 	setShaderComb( 0x0 );
-	glDepthMask( depthMask );
-	glColorMask( colMask[0], colMask[1], colMask[2], colMask[3] );
+	gRDI->setColorWriteMask( prevColorMask );
+	gRDI->setDepthMask( prevDepthMask );
 
 	_occProxies[list].resize( 0 );
 }
@@ -1160,7 +1104,12 @@ void Renderer::drawOverlays( const string &shaderContext )
 		
 		if( curMatRes != ob.materialRes )
 		{
-			if( !setMaterial( ob.materialRes, shaderContext ) ) continue;
+			if( !setMaterial( ob.materialRes, shaderContext ) )
+			{
+				// Unsuccessful material setting probably has destroyed the last setted material
+				curMatRes = 0x0;
+				continue;
+			}
 			gRDI->setVertexLayout( _vlOverlay );
 			curMatRes = ob.materialRes;
 		}
@@ -1212,48 +1161,26 @@ void Renderer::bindPipeBuffer( uint32 rbObj, const string &sampler, uint32 bufIn
 void Renderer::clear( bool depth, bool buf0, bool buf1, bool buf2, bool buf3,
                       float r, float g, float b, float a )
 {
-	uint32 mask = 0;
-	uint32 prevBuffers[4] = { 0 };
 	float clrColor[] = { r, g, b, a };
 
-	glDisable( GL_BLEND );	// Clearing floating point buffers causes problems when blending is enabled on Radeon 9600
-	glDepthMask( GL_TRUE );
+	gRDI->setBlendMode( false );  // Clearing floating point buffers causes problems when blending is enabled on Radeon 9600
+	gRDI->setDepthMask( true );
 
-	if( gRDI->_curRendBuf != 0x0 )
+	uint32 clearFlags = 0;
+	if( depth ) clearFlags |= CLR_DEPTH;
+	if( buf0 ) clearFlags |= CLR_COLOR_RT0;
+	if( buf1 ) clearFlags |= CLR_COLOR_RT1;
+	if( buf2 ) clearFlags |= CLR_COLOR_RT2;
+	if( buf3 ) clearFlags |= CLR_COLOR_RT3;
+	
+	if( gRDI->_curRendBuf == 0x0 )
 	{
-		// Store state of glDrawBuffers
-		for( uint32 i = 0; i < 4; ++i ) glGetIntegerv( GL_DRAW_BUFFER0 + i, (int *)&prevBuffers[i] );
-		
-		RDIRenderBuffer &rb = gRDI->_rendBufs.getRef( gRDI->_curRendBuf );
-		uint32 buffers[4], cnt = 0;
-
-		if( depth && rb.depthTex != 0 ) mask |= CLR_DEPTH;
-		
-		if( buf0 && rb.colTexs[0] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT0_EXT;
-		if( buf1 && rb.colTexs[1] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT1_EXT;
-		if( buf2 && rb.colTexs[2] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT2_EXT;
-		if( buf3 && rb.colTexs[3] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT3_EXT;
-
-		if( cnt > 0 )
-		{	
-			mask |= CLR_COLOR;
-			glDrawBuffers( cnt, buffers );
-		}
-	}
-	else
-	{
-		if( depth ) mask |= CLR_DEPTH;
-		if( buf0 ) mask |= CLR_COLOR;
 		gRDI->setScissorRect( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
-		glEnable( GL_SCISSOR_TEST );
+		gRDI->setScissorTest( true );
 	}
 	
-	gRDI->clear( mask, clrColor, 1.f );
-	glDisable( GL_SCISSOR_TEST );
-	
-	// Restore state of glDrawBuffers
-	if( gRDI->_curRendBuf != 0x0 )
-		glDrawBuffers( 4, prevBuffers );
+	gRDI->clear( clearFlags, clrColor, 1.f );
+	gRDI->setScissorTest( false );
 }
 
 
@@ -1365,7 +1292,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 		{
 			gRDI->setScissorRect( ftoi_r( bbx * gRDI->_fbWidth ), ftoi_r( bby * gRDI->_fbHeight ),
 			                      ftoi_r( bbw * gRDI->_fbWidth ), ftoi_r( bbh * gRDI->_fbHeight ) );
-			glEnable( GL_SCISSOR_TEST );
+			gRDI->setScissorTest( true );
 		}
 		
 		// Render
@@ -1378,7 +1305,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 		Modules().stats().incStat( EngineStats::LightPassCount, 1 );
 
 		// Reset
-		glDisable( GL_SCISSOR_TEST );
+		gRDI->setScissorTest( false );
 	}
 
 	_curLight = 0x0;
@@ -1389,7 +1316,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 	if( occSet >= 0 )
 	{
 		setupViewMatrices( _curCamera->getViewMat(), _curCamera->getProjMat() );
-		Modules::renderer().drawOccProxies( 1 );
+		Modules::renderer().drawOccProxies( OCCPROXYLIST_LIGHTS );
 	}
 }
 
@@ -1483,8 +1410,8 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 			commitGeneralUniforms();
 		}
 
-		glCullFace( GL_FRONT );
-		glDisable( GL_DEPTH_TEST );
+		gRDI->setCullMode( RS_CULL_FRONT );
+		gRDI->setDepthTest( false );
 
 		if( _curLight->_fov < 180 )
 		{
@@ -1499,8 +1426,8 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 		Modules().stats().incStat( EngineStats::LightPassCount, 1 );
 
 		// Reset
-		glEnable( GL_DEPTH_TEST );
-		glCullFace( GL_BACK );
+		gRDI->setCullMode( RS_CULL_BACK );
+		gRDI->setDepthTest( true );
 	}
 
 	_curLight = 0x0;
@@ -1511,7 +1438,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 	if( occSet >= 0 )
 	{
 		setupViewMatrices( _curCamera->getViewMat(), _curCamera->getProjMat() );
-		Modules::renderer().drawOccProxies( 1 );
+		Modules::renderer().drawOccProxies( OCCPROXYLIST_LIGHTS );
 	}
 }
 
@@ -1526,48 +1453,62 @@ void Renderer::drawRenderables( const string &shaderContext, const string &theCl
 {
 	ASSERT( _curCamera != 0x0 );
 	
+	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
+	uint32 queueSize = (uint32)renderQueue.size();
+	if( queueSize == 0 ) return;
+
+	// Set global render states
 	if( Modules::config().wireframeMode && !Modules::config().debugViewMode )
 	{
-		glDisable( GL_CULL_FACE );
-		glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		gRDI->setCullMode( RS_CULL_NONE );
+		gRDI->setFillMode( RS_FILL_WIREFRAME );
 	}
-	else
-	{
-		glEnable( GL_CULL_FACE );
-	}
-	
-	map< int, NodeRegEntry >::const_iterator itr = Modules::sceneMan()._registry.begin();
-	while( itr != Modules::sceneMan()._registry.end() )
-	{
-		if( itr->second.renderFunc != 0x0 )
-			(*itr->second.renderFunc)( shaderContext, theClass, debugView, frust1, frust2, order, occSet );
 
-		++itr;
-	}
+	// Process all render queue items
+	uint32 firstItem = 0, lastItem = 0;
+	do
+	{
+		lastItem = firstItem;
+		while( (lastItem + 1 < queueSize) && (renderQueue[firstItem].type == renderQueue[lastItem + 1].type) )
+		{
+			++lastItem;
+		}
+		
+		for( uint32 i = 0, si = (uint32)_renderFuncRegistry.size(); i < si; ++i )
+		{
+			if( _renderFuncRegistry[i].nodeType == renderQueue[firstItem].type )
+			{
+				_renderFuncRegistry[i].renderFunc(
+					firstItem, lastItem, shaderContext, theClass, debugView, frust1, frust2, order, occSet );
+				break;
+			}
+		}
+
+		firstItem = lastItem + 1;
+	} while( firstItem < queueSize );
 
 	// Reset states
 	if( Modules::config().wireframeMode && !Modules::config().debugViewMode )
 	{
-		glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		gRDI->setFillMode( RS_FILL_SOLID );
 	}
 }
 
 
-void Renderer::drawMeshes( const string &shaderContext, const string &theClass, bool debugView,
-                           const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
+void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
+                           bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
                            int occSet )
 {
 	if( frust1 == 0x0 ) return;
 	
+	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	GeometryResource *curGeoRes = 0x0;
 	MaterialResource *curMatRes = 0x0;
 
 	// Loop over mesh queue
-	for( size_t i = 0, si = Modules::sceneMan().getRenderableQueue().size(); i < si; ++i )
+	for( size_t i = firstItem; i <= lastItem; ++i )
 	{
-		if( Modules::sceneMan().getRenderableQueue()[i].type != SceneNodeTypes::Mesh ) continue;
-		
-		MeshNode *meshNode = (MeshNode *)Modules::sceneMan().getRenderableQueue()[i].node;
+		MeshNode *meshNode = (MeshNode *)renderQueue[i].node;
 		ModelNode *modelNode = meshNode->getParentModel();
 		
 		// Check that mesh is valid
@@ -1709,6 +1650,11 @@ void Renderer::drawMeshes( const string &shaderContext, const string &theClass, 
 			float id = (float)meshNode->getHandle();
 			gRDI->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
 		}
+		if( curShader->uni_customInstData >= 0 )
+		{
+			gRDI->setShaderConst( curShader->uni_customInstData, CONST_FLOAT4,
+			                      &modelNode->_customInstData[0].x, ModelCustomVecCount );
+		}
 
 		if( queryObj )
 			gRDI->beginQuery( queryObj );
@@ -1725,19 +1671,20 @@ void Renderer::drawMeshes( const string &shaderContext, const string &theClass, 
 
 	// Draw occlusion proxies
 	if( occSet >= 0 )
-		Modules::renderer().drawOccProxies( 0 );
+		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
 
 	gRDI->setVertexLayout( 0 );
 }
 
 
-void Renderer::drawParticles( const string &shaderContext, const string &theClass, bool debugView,
-                              const Frustum *frust1, const Frustum * /*frust2*/, RenderingOrder::List /*order*/,
+void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
+                              bool debugView, const Frustum *frust1, const Frustum * /*frust2*/, RenderingOrder::List /*order*/,
                               int occSet )
 {
 	if( frust1 == 0x0 || Modules::renderer().getCurCamera() == 0x0 ) return;
 	if( debugView ) return;  // Don't render particles in debug view
 
+	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	MaterialResource *curMatRes = 0x0;
 
 	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::ParticleGPUTime );
@@ -1749,11 +1696,9 @@ void Renderer::drawParticles( const string &shaderContext, const string &theClas
 	ASSERT( QuadIndexBufCount >= ParticlesPerBatch * 6 );
 
 	// Loop through emitter queue
-	for( uint32 i = 0; i < Modules::sceneMan().getRenderableQueue().size(); ++i )
+	for( uint32 i = firstItem; i <= lastItem; ++i )
 	{
-		if( Modules::sceneMan().getRenderableQueue()[i].type != SceneNodeTypes::Emitter ) continue; 
-		
-		EmitterNode *emitter = (EmitterNode *)Modules::sceneMan().getRenderableQueue()[i].node;
+		EmitterNode *emitter = (EmitterNode *)renderQueue[i].node;
 		
 		if( emitter->_particleCount == 0 ) continue;
 		if( !emitter->_materialRes->isOfClass( theClass ) ) continue;
@@ -1889,7 +1834,7 @@ void Renderer::drawParticles( const string &shaderContext, const string &theClas
 
 	// Draw occlusion proxies
 	if( occSet >= 0 )
-		Modules::renderer().drawOccProxies( 0 );
+		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
 	
 	gRDI->setVertexLayout( 0 );
 }
@@ -1911,7 +1856,7 @@ void Renderer::render( CameraNode *camNode )
 	else if( maxAniso <= 4 ) _maxAnisoMask = SS_ANISO4;
 	else if( maxAniso <= 8 ) _maxAnisoMask = SS_ANISO8;
 	else _maxAnisoMask = SS_ANISO16;
-
+	gRDI->beginRendering();
 	gRDI->setViewport( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
 	if( Modules::config().debugViewMode || _curCamera->_pipelineRes == 0x0 )
 	{
@@ -2037,9 +1982,9 @@ void Renderer::renderDebugView()
 	
 	gRDI->setRenderBuffer( 0 );
 	setMaterial( 0x0, "" );
-	glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+	gRDI->setFillMode( RS_FILL_WIREFRAME );
 
-	gRDI->clear( CLR_DEPTH | CLR_COLOR );
+	gRDI->clear( CLR_DEPTH | CLR_COLOR_RT0 );
 
 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
 	                                  SceneNodeFlags::NoDraw, true, true );
@@ -2049,62 +1994,25 @@ void Renderer::renderDebugView()
 	drawRenderables( "", "", true, &_curCamera->getFrustum(), 0x0, RenderingOrder::None, -1 );
 
 	// Draw bounding boxes
-	glDisable( GL_CULL_FACE );
+	gRDI->setCullMode( RS_CULL_NONE );
 	setMaterial( 0x0, "" );
 	setShaderComb( &_defColorShader );
 	commitGeneralUniforms();
 	gRDI->setShaderConst( _defColorShader.uni_worldMat, CONST_FLOAT44, &Matrix4f().x[0] );
 	color[0] = 0.4f; color[1] = 0.4f; color[2] = 0.4f; color[3] = 1;
 	gRDI->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
-	for( uint32 i = 0, s = (uint32)Modules::sceneMan().getRenderableQueue().size(); i < s; ++i )
+	for( uint32 i = 0, s = (uint32)Modules::sceneMan().getRenderQueue().size(); i < s; ++i )
 	{
-		SceneNode *sn = Modules::sceneMan().getRenderableQueue()[i].node;
+		SceneNode *sn = Modules::sceneMan().getRenderQueue()[i].node;
 		
 		drawAABB( sn->_bBox.min, sn->_bBox.max );
 	}
-	glEnable( GL_CULL_FACE );
-
-	/*// Draw skeleton
-	setShaderConst( _defColorShader.uni_worldMat, CONST_FLOAT44, &Matrix4f().x[0] );
-	color[0] = 1; color[1] = 0; color[2] = 0; color[3] = 1;
-	setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT, color );
-	glLineWidth( 2.0f );
-	glPointSize( 5.0f );
-	for( uint32 i = 0, si = (uint32)Modules::sceneMan().getRenderableQueue().size(); i < si; ++i )
-	{
-		SceneNode *sn = Modules::sceneMan().getRenderableQueue()[i].node;
-		
-		if( sn->getType() == SceneNodeTypes::Model )
-		{
-			ModelNode *model = (ModelNode *)sn;
-
-			for( uint32 j = 0, sj = (uint32)model->_jointList.size(); j < sj; ++j )
-			{
-				if( model->_jointList[j]->_parent->getType() != SceneNodeTypes::Model )
-				{
-					Vec3f pos1 = model->_jointList[j]->_absTrans * Vec3f( 0, 0, 0 );
-					Vec3f pos2 = model->_jointList[j]->_parent->_absTrans * Vec3f( 0, 0, 0 );
-
-					glBegin( GL_LINES );
-					glVertex3fv( (float *)&pos1.x );
-					glVertex3fv( (float *)&pos2.x );
-					glEnd();
-
-					glBegin( GL_POINTS );
-					glVertex3fv( (float *)&pos1.x );
-					glEnd();
-				}
-			}
-		}
-	}
-	glLineWidth( 1.0f );
-	glPointSize( 1.0f );*/
+	gRDI->setCullMode( RS_CULL_BACK );
 
 	// Draw light volumes
-	glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-	glEnable( GL_BLEND );
-	glBlendFunc( GL_SRC_ALPHA, GL_ONE );
-	glCullFace( GL_FRONT );
+	gRDI->setFillMode( RS_FILL_SOLID );
+	gRDI->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_ONE );
+	gRDI->setCullMode( RS_CULL_FRONT );
 	color[0] = 1; color[1] = 1; color[2] = 0; color[3] = 0.25f;
 	gRDI->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
 	for( size_t i = 0, s = Modules::sceneMan().getLightQueue().size(); i < s; ++i )
@@ -2121,8 +2029,8 @@ void Renderer::renderDebugView()
 			drawSphere( lightNode->_absPos, lightNode->_radius );
 		}
 	}
-	glCullFace( GL_BACK );
-	glDisable( GL_BLEND );
+	gRDI->setCullMode( RS_CULL_BACK );
+	gRDI->setBlendMode( false );
 }
 
 
@@ -2131,7 +2039,6 @@ void Renderer::finishRendering()
 	gRDI->setRenderBuffer( 0 );
 	setMaterial( 0x0, "" );
 	gRDI->resetStates();
-	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 }
 
 }  // namespace

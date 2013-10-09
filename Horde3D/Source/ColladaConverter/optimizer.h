@@ -44,11 +44,11 @@ class MeshOptimizer
 public:
 	static const int maxCacheSize = 16;
 	
-	static unsigned int removeDegeneratedTriangles( TriGroup &triGroup, std::vector< Vertex > &vertices,
+	static unsigned int removeDegeneratedTriangles( TriGroup *triGroup, std::vector< Vertex > &vertices,
 	                                                std::vector< unsigned int > &indices );
-	static float calcCacheEfficiency( TriGroup &triGroup, std::vector< unsigned int > &indices,
+	static float calcCacheEfficiency( TriGroup *triGroup, std::vector< unsigned int > &indices,
                                       const unsigned int cacheSize = maxCacheSize );
-	static void optimizeIndexOrder( TriGroup &triGroup, std::vector< Vertex > &vertices,
+	static void optimizeIndexOrder( TriGroup *triGroup, std::vector< Vertex > &vertices,
 	                                std::vector< unsigned int > &indices,
 									std::map< unsigned int, unsigned int > &vertMap );
 };

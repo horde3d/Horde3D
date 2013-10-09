@@ -139,11 +139,12 @@ void Application::mainLoop( float fps )
 		// Do animation blending
 		h3dSetModelAnimParams( _knight, 0, _animTime * 24.0f, _weight );
 		h3dSetModelAnimParams( _knight, 1, _animTime * 24.0f, 1.0f - _weight );
+		h3dUpdateModel( _knight, H3DModelUpdateFlags::Animation | H3DModelUpdateFlags::Geometry );
 
 		// Animate particle systems (several emitters in a group node)
 		unsigned int cnt = h3dFindNodes( _particleSys, "", H3DNodeTypes::Emitter );
 		for( unsigned int i = 0; i < cnt; ++i )
-			h3dAdvanceEmitterTime( h3dGetNodeFindResult( i ), 1.0f / _curFPS );
+			h3dUpdateEmitter( h3dGetNodeFindResult( i ), 1.0f / _curFPS );
 	}
 	
 	// Set camera parameters

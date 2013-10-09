@@ -1024,6 +1024,15 @@ int ShaderResource::getElemParamI( int elem, int elemIdx, int param )
 			}
 		}
 		break;
+	case ShaderResData::SamplerElem:
+		if( (unsigned)elemIdx < _samplers.size() )
+		{
+			switch( param )
+			{
+			case ShaderResData::SampDefTexResI:
+				return _samplers[elemIdx].defTex ? _samplers[elemIdx].defTex->getHandle() : 0;
+			}
+		}
 	}
 	
 	return Resource::getElemParamI( elem, elemIdx, param );
