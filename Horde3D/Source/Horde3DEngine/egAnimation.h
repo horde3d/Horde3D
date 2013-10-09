@@ -132,6 +132,9 @@ public:
 	bool setAnimParams( int stage, float time, float weight );
 	bool animate();
 
+    int  getAnimCount();
+    void getAnimParams( int stage, float *time, float *weight );
+
 protected:
 	void mapAnimRes( uint32 node, uint32 stage );
 	void updateActiveList();

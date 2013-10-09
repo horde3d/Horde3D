@@ -423,6 +423,7 @@ namespace Horde3DNET
         ///               (may not be smaller than LodDist2) (default: infinite)
         /// LodDist4F    - Distance to camera from which on LOD4 is used
         ///               (may not be smaller than LodDist3) (default: infinite)
+        /// AnimCountI  - Number of active animation stages [read-only]
         /// </summary>
         public enum H3DModel
         {
@@ -431,7 +432,8 @@ namespace Horde3DNET
             LodDist1F,
             LodDist2F,
             LodDist3F,
-            LodDist4F
+            LodDist4F,
+            AnimCountI
         }
 
         /// <summary>
@@ -1648,6 +1650,21 @@ namespace Horde3DNET
             if (startNode == null) throw new ArgumentNullException("startNode", Resources.StringNullExceptionString);
 
             NativeMethodsEngine.h3dSetupModelAnimStage(node, stage, animationRes, layer, startNode, additive);
+        }
+
+        /// <summary>
+        /// This function gets the current animation time and weight for a specified stage of the specified model.</summary>
+        /// <remarks>
+        /// The time corresponds to the frames of the animation and the animation is looped if the time is higher than the maximum number of frames in the Animation resource. 
+        /// The weight is used for animation blending and determines how much influence the stage has compared to the other active stages.
+        /// </remarks>
+        /// <param name="node">handle to the node to be accessed</param>
+        /// <param name="stage">index of the animation stage to be accessed</param>
+        /// <param name="time">variable where the time of the animation stage will be stored</param>
+        /// <param name="weight">variable where the blend weight of the animation stage will be stored</param>        
+        public static void getModelAnimParams(int node, int stage, out float time, out float weight)
+        {
+            NativeMethodsEngine.h3dGetModelAnimParams(node, stage, out time, out weight);
         }
 
         /// <summary>

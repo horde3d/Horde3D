@@ -264,6 +264,9 @@ namespace Horde3DNET
         internal static extern void h3dSetupModelAnimStage(int node, int stage, int animationRes,
                                       int layer, string startNode, [MarshalAs(UnmanagedType.U1)]bool additive);
 
+        [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dGetModelAnimParams(int node, int stage, out float time, out float weight);
+        
         [DllImport(ENGINE_DLL), SuppressUnmanagedCodeSecurity]        
         internal static extern void h3dSetModelAnimParams(int node, int stage, float time, float weight);
 

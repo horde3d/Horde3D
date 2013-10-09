@@ -39,7 +39,8 @@ struct ModelNodeParams
 		LodDist1F,
 		LodDist2F,
 		LodDist3F,
-		LodDist4F
+		LodDist4F,
+		AnimCountI
 	};
 };
 
@@ -91,6 +92,7 @@ public:
 	void recreateNodeList();
 	void setupAnimStage( int stage, AnimationResource *anim, int layer,
 	                     const std::string &startNode, bool additive );
+	void getAnimParams( int stage, float *time, float *weight );
 	void setAnimParams( int stage, float time, float weight );
 	bool setMorphParam( const std::string &targetName, float weight );
 

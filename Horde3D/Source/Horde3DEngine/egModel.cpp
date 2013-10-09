@@ -137,6 +137,12 @@ void ModelNode::setupAnimStage( int stage, AnimationResource *anim, int layer,
 }
 
 
+void ModelNode::getAnimParams( int stage, float *time, float *weight )
+{
+	_animCtrl.getAnimParams( stage, time, weight );
+}
+
+
 void ModelNode::setAnimParams( int stage, float time, float weight )
 {
 	if( _animCtrl.setAnimParams( stage, time, weight ) ) markDirty();

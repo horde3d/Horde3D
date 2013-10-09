@@ -764,6 +764,15 @@ DLLEXP void h3dSetupModelAnimStage( NodeHandle modelNode, int stage, ResHandle a
 }
 
 
+DLLEXP void h3dGetModelAnimParams( NodeHandle modelNode, int stage, float *time, float *weight )
+{
+	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( modelNode );
+	APIFUNC_VALIDATE_NODE_TYPE( sn, SceneNodeTypes::Model, "h3dGetModelAnimParams", APIFUNC_RET_VOID );
+	
+	((ModelNode *)sn)->getAnimParams( stage, time, weight );
+}
+
+
 DLLEXP void h3dSetModelAnimParams( NodeHandle modelNode, int stage, float time, float weight )
 {
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( modelNode );

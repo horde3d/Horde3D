@@ -77,58 +77,6 @@ DLL void h3dutFreeMem( char **ptr );
 */
 DLL bool h3dutDumpMessages();
 
-
-/*	Group: OpenGL-related functions */
-/* Function: h3dutInitOpenGL
-		Initializes OpenGL.
-	
-	Details:
-		This utility function initializes an OpenGL rendering context in a specified window component.
-		
-		*Currently this function is only available on Windows platforms.*
-	
-	Parameters:
-		hDC  - handle to device context for which OpenGL context shall be created
-		
-	Returns:
-		true in case of success, otherwise false
-*/
-DLL bool h3dutInitOpenGL( int hDC );
-
-/* Function: h3dutReleaseOpenGL
-		Releases OpenGL.
-	
-	Details:
-		This utility function destroys the previously created OpenGL rendering context.
-		
-		*Currently this function is only available on Windows platforms.*
-	
-	Parameters:
-		none
-		
-	Returns:
-		nothing
-*/
-DLL void h3dutReleaseOpenGL();
-
-/* Function: h3dutSwapBuffers
-		Displays the rendered image on the screen.
-	
-	Details:
-		This utility function displays the image rendered to the previously initialized OpenGL context
-		on the screen by copying it from the backbuffer to the frontbuffer.
-		
-		*Currently this function is only available on Windows platforms.*
-	
-	Parameters:
-		none
-		
-	Returns:
-		nothing
-*/
-DLL void h3dutSwapBuffers();
-
-
 /*	Group: Resource management */
 /* Function: h3dutGetResourcePath
 		*Deprecated*

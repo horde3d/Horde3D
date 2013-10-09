@@ -519,4 +519,29 @@ bool AnimationController::animate()
 	return true;
 }
 
+
+int AnimationController::getAnimCount()
+{
+    return _activeStages.size();
+}
+
+
+void AnimationController::getAnimParams( int stage, float *time, float *weight )
+{
+    if( (unsigned)stage > _animStages.size() )
+    {
+        Modules::setError( "Invalid stage in h3dGetModelAnimParams" );
+        return;
+    }
+
+    AnimStage &curStage = _animStages[stage];
+    if( curStage.anim == 0x0 ) return;
+
+    if (time)
+        *time = curStage.animTime;
+
+    if (weight)
+        *weight = curStage.weight;
+}
+
 }  // namespace
