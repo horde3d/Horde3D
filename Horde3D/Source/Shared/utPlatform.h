@@ -74,6 +74,9 @@ typedef unsigned long long uint64;
 #undef max
 #endif
 
+#if defined( _MSC_VER ) && (_MSC_VER >= 1400) && !defined(HAVE_STRNCPY_S)
+#	define HAVE_STRNCPY_S
+#endif
 #if !defined( HAVE_STRNCPY_S )
 #	define strncpy_s( dst, dstSize, src, count ) strncpy( dst, src, count < dstSize ? count : dstSize )
 #endif
