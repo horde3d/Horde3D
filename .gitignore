@@ -213,6 +213,16 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+
+#################
+## Windows
+#################
 *.exe
 *.dll
 *.lib
+
+
+#################
+## Linux
+#################
+Horde3D/Binaries/Linux/*
