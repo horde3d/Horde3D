@@ -41,7 +41,7 @@ bool ExtTerrain::init()
 		{"vertPos", 0, 3, 0},
 		{"terHeight", 1, 1, 0}
 	};
-	TerrainNode::vlTerrain = gRDI->registerVertexLayout( 2, attribs );
+	TerrainNode::vlTerrain = Modules::renderer().getRenderDevice()->registerVertexLayout( 2, attribs );
 
 	// Upload default shader used for debug view
 	Modules::renderer().createShaderComb(

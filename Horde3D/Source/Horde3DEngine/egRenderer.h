@@ -162,6 +162,8 @@ public:
 	CameraNode *getCurCamera() { return _curCamera; }
 	uint32 getQuadIdxBuf() { return _quadIdxBuf; }
 	uint32 getParticleVBO() { return _particleVBO; }
+	
+	RenderDevice *getRenderDevice() { return _renderDevice; }
 
 protected:
 	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
@@ -230,6 +232,8 @@ protected:
 	
 	uint32                             _vbCube, _ibCube, _vbSphere, _ibSphere;
 	uint32                             _vbCone, _ibCone, _vbFSPoly;
+	
+	RenderDevice                       *_renderDevice;
 };
 
 }

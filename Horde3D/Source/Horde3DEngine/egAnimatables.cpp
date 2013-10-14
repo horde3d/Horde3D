@@ -46,7 +46,7 @@ MeshNode::~MeshNode()
 	for( uint32 i = 0; i < _occQueries.size(); ++i )
 	{
 		if( _occQueries[i] != 0 )
-			gRDI->destroyQuery( _occQueries[i] );
+			Modules::renderer().getRenderDevice()->destroyQuery( _occQueries[i] );
 	}
 }
 

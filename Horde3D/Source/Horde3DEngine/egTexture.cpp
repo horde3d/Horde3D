@@ -87,33 +87,33 @@ void TextureResource::initializationFunc()
 		  128,192,255,255, 128,192,255,255, 128,192,255,255, 128,192,255,255 };
 
 	// Upload default textures
-	defTex2DObject = gRDI->createTexture( TextureTypes::Tex2D, 4, 4, 1,
+	defTex2DObject = Modules::renderer().getRenderDevice()->createTexture( TextureTypes::Tex2D, 4, 4, 1,
 	                                      TextureFormats::BGRA8, true, true, false, false );
-	gRDI->uploadTextureData( defTex2DObject, 0, 0, texData );
+	Modules::renderer().getRenderDevice()->uploadTextureData( defTex2DObject, 0, 0, texData );
 	
-	defTexCubeObject = gRDI->createTexture( TextureTypes::TexCube, 4, 4, 1,
+	defTexCubeObject = Modules::renderer().getRenderDevice()->createTexture( TextureTypes::TexCube, 4, 4, 1,
 	                                        TextureFormats::BGRA8, true, true, false, false );
 	for( uint32 i = 0; i < 6; ++i ) 
 	{
-		gRDI->uploadTextureData( defTexCubeObject, i, 0, texData );
+		Modules::renderer().getRenderDevice()->uploadTextureData( defTexCubeObject, i, 0, texData );
 	}
 
 	unsigned char *texData2 = new unsigned char[256];
 	memcpy( texData2, texData, 64 ); memcpy( texData2 + 64, texData, 64 );
 	memcpy( texData2 + 128, texData, 64 ); memcpy( texData2 + 192, texData, 64 );
 
-	defTex3DObject = gRDI->createTexture( TextureTypes::Tex3D, 4, 4, 4,
+	defTex3DObject = Modules::renderer().getRenderDevice()->createTexture( TextureTypes::Tex3D, 4, 4, 4,
 	                                      TextureFormats::BGRA8, true, true, false, false );
-	gRDI->uploadTextureData( defTex3DObject, 0, 0, texData2 );
+	Modules::renderer().getRenderDevice()->uploadTextureData( defTex3DObject, 0, 0, texData2 );
 	delete[] texData2;
 }
 
 
 void TextureResource::releaseFunc()
 {
-	gRDI->destroyTexture( defTex2DObject );
-	gRDI->destroyTexture( defTex3DObject );
-	gRDI->destroyTexture( defTexCubeObject );
+	Modules::renderer().getRenderDevice()->destroyTexture( defTex2DObject );
+	Modules::renderer().getRenderDevice()->destroyTexture( defTex3DObject );
+	Modules::renderer().getRenderDevice()->destroyTexture( defTexCubeObject );
 }
 
 
@@ -143,12 +143,12 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		_texType = TextureTypes::Tex2D;
 		_sRGB = false;
 		_hasMipMaps= false;
-		_rbObj = gRDI->createRenderBuffer( width, height, fmt, false, 1, 0 ); 
-		_texObject = gRDI->getRenderBufferTex( _rbObj, 0 );
+		_rbObj = Modules::renderer().getRenderDevice()->createRenderBuffer( width, height, fmt, false, 1, 0 ); 
+		_texObject = Modules::renderer().getRenderDevice()->getRenderBufferTex( _rbObj, 0 );
 	}
 	else
 	{
-		uint32 size = gRDI->calcTextureSize( _texFormat, width, height, depth );
+		uint32 size = Modules::renderer().getRenderDevice()->calcTextureSize( _texFormat, width, height, depth );
 		unsigned char *pixels = new unsigned char[size];
 		memset( pixels, 0, size );
 		
@@ -156,9 +156,9 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		if( depth > 1 ) _texType = TextureTypes::Tex3D;
 		_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
 		_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
-		_texObject = gRDI->createTexture( _texType, _width, _height, _depth, _texFormat,
+		_texObject = Modules::renderer().getRenderDevice()->createTexture( _texType, _width, _height, _depth, _texFormat,
 		                                  _hasMipMaps, _hasMipMaps, false, _sRGB );
-		gRDI->uploadTextureData( _texObject, 0, 0, pixels );
+		Modules::renderer().getRenderDevice()->uploadTextureData( _texObject, 0, 0, pixels );
 		
 		delete[] pixels;
 		if( _texObject == 0 ) initDefault();
@@ -194,11 +194,11 @@ void TextureResource::release()
 	if( _rbObj != 0 )
 	{
 		// In this case _texObject is just points to the render buffer
-		gRDI->destroyRenderBuffer( _rbObj );
+		Modules::renderer().getRenderDevice()->destroyRenderBuffer( _rbObj );
 	}
 	else if( _texObject != 0 && _texObject != defTex2DObject && _texObject != defTexCubeObject )
 	{
-		gRDI->destroyTexture( _texObject );
+		Modules::renderer().getRenderDevice()->destroyTexture( _texObject );
 	}
 
 	_texObject = 0;
@@ -336,7 +336,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 		return raiseError( "Unsupported DDS pixel format" );
 
 	// Create texture
-	_texObject = gRDI->createTexture( _texType, _width, _height, _depth, _texFormat,
+	_texObject = Modules::renderer().getRenderDevice()->createTexture( _texType, _width, _height, _depth, _texFormat,
 	                                  mipCount > 1, false, false, _sRGB );
 	
 	// Upload texture subresources
@@ -379,12 +379,12 @@ bool TextureResource::loadDDS( const char *data, int size )
 					for( uint32 k = 0; k < pixCount * 4; k += 4 )
 						*p++ = pixels[k+2] | pixels[k+1]<<8 | pixels[k+0]<<16 | pixels[k+3]<<24;
 				
-				gRDI->uploadTextureData( _texObject, i, j, dstBuf );
+				Modules::renderer().getRenderDevice()->uploadTextureData( _texObject, i, j, dstBuf );
 			}
 			else
 			{
 				// Upload DDS data directly
-				gRDI->uploadTextureData( _texObject, i, j, pixels );
+				Modules::renderer().getRenderDevice()->uploadTextureData( _texObject, i, j, pixels );
 			}
 
 			pixels += mipSize;
@@ -432,9 +432,9 @@ bool TextureResource::loadSTBI( const char *data, int size )
 	_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
 	
 	// Create and upload texture
-	_texObject = gRDI->createTexture( _texType, _width, _height, _depth, _texFormat,
+	_texObject = Modules::renderer().getRenderDevice()->createTexture( _texType, _width, _height, _depth, _texFormat,
 		_hasMipMaps, _hasMipMaps, !(_flags & ResourceFlags::NoTexCompression), _sRGB );
-	gRDI->uploadTextureData( _texObject, 0, 0, pixels );
+	Modules::renderer().getRenderDevice()->uploadTextureData( _texObject, 0, 0, pixels );
 
 	stbi_image_free( pixels );
 
@@ -522,13 +522,13 @@ void *TextureResource::mapStream( int elem, int elemIdx, int stream, bool read, 
 		    elemIdx < getElemCount( elem ) )
 		{
 			mappedData = Modules::renderer().useScratchBuf(
-				gRDI->calcTextureSize( _texFormat, _width, _height, _depth ) );
+				Modules::renderer().getRenderDevice()->calcTextureSize( _texFormat, _width, _height, _depth ) );
 			
 			if( read )
 			{	
 				int slice = elemIdx / (getMipCount() + 1);
 				int mipLevel = elemIdx % (getMipCount() + 1);
-				gRDI->getTextureData( _texObject, slice, mipLevel, mappedData );
+				Modules::renderer().getRenderDevice()->getTextureData( _texObject, slice, mipLevel, mappedData );
 			}
 
 			if( write )
@@ -552,7 +552,7 @@ void TextureResource::unmapStream()
 		{
 			int slice = mappedWriteImage / (getMipCount() + 1);
 			int mipLevel = mappedWriteImage % (getMipCount() + 1);
-			gRDI->updateTextureData( _texObject, slice, mipLevel, mappedData );
+			Modules::renderer().getRenderDevice()->updateTextureData( _texObject, slice, mipLevel, mappedData );
 			mappedWriteImage = -1;
 		}
 		

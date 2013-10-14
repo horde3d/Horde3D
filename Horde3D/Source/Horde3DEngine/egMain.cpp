@@ -428,7 +428,7 @@ DLLEXP bool h3dGetRenderTargetData( ResHandle pipelineRes, const char *targetNam
 	}
 	else
 	{
-		return gRDI->getRenderBufferData( 0, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+		return Modules::renderer().getRenderDevice()->getRenderBufferData( 0, bufIndex, width, height, compCount, dataBuffer, bufferSize );
 	}
 }
 

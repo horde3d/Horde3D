@@ -164,7 +164,7 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 		if( uni_terBlockParams >= 0 )
 		{
 			float values[4] = { minU, minV, scale, scale };
-			gRDI->setShaderConst( uni_terBlockParams, CONST_FLOAT4, values );  // Bias and scale
+			Modules::renderer().getRenderDevice()->setShaderConst( uni_terBlockParams, CONST_FLOAT4, values );  // Bias and scale
 		}
 	
 		const uint32 size = terrain->_blockSize + 2;
@@ -197,10 +197,10 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 			}
 		}
 		
-		gRDI->updateBufferData(
+		Modules::renderer().getRenderDevice()->updateBufferData(
 			terrain->_vertexBuffer, terrain->getVertexCount() * sizeof( float ) * 3,
 			terrain->getVertexCount() * sizeof( float ), terrain->_heightArray );
-		gRDI->drawIndexed( PRIM_TRISTRIP, 0, terrain->getIndexCount(), 0, terrain->getVertexCount() );
+		Modules::renderer().getRenderDevice()->drawIndexed( PRIM_TRISTRIP, 0, terrain->getIndexCount(), 0, terrain->getVertexCount() );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
 		Modules::stats().incStat( EngineStats::TriCount, (terrain->_blockSize + 1) * (terrain->_blockSize + 1) * 2.0f );
 	}
@@ -261,27 +261,27 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 		{
 			Modules::renderer().setShaderComb( &debugViewShader );
 			Modules::renderer().commitGeneralUniforms();
-			int loc = gRDI->getShaderConstLoc( debugViewShader.shaderObj, "color" );
+			int loc = Modules::renderer().getRenderDevice()->getShaderConstLoc( debugViewShader.shaderObj, "color" );
 			float color[4] = { 0.5f, 0.75f, 1, 1 };
-			gRDI->setShaderConst( loc, CONST_FLOAT4, color );
+			Modules::renderer().getRenderDevice()->setShaderConst( loc, CONST_FLOAT4, color );
 		}
 		
-		int uni_terBlockParams = gRDI->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
+		int uni_terBlockParams = Modules::renderer().getRenderDevice()->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
 
 		Vec3f localCamPos( curCam->getAbsTrans().x[12], curCam->getAbsTrans().x[13], curCam->getAbsTrans().x[14] );
 		localCamPos = terrain->_absTrans.inverted() * localCamPos;
 		
 		// Bind geometry and apply vertex layout
-		gRDI->setIndexBuffer( terrain->_indexBuffer, IDXFMT_16 );
-		gRDI->setVertexBuffer( 0, terrain->_vertexBuffer, 0, 12 );
-		gRDI->setVertexBuffer( 1, terrain->_vertexBuffer, terrain->getVertexCount() * 12, 4 );
-		gRDI->setVertexLayout( vlTerrain );
+		Modules::renderer().getRenderDevice()->setIndexBuffer( terrain->_indexBuffer, IDXFMT_16 );
+		Modules::renderer().getRenderDevice()->setVertexBuffer( 0, terrain->_vertexBuffer, 0, 12 );
+		Modules::renderer().getRenderDevice()->setVertexBuffer( 1, terrain->_vertexBuffer, terrain->getVertexCount() * 12, 4 );
+		Modules::renderer().getRenderDevice()->setVertexLayout( vlTerrain );
 	
 		// Set uniforms
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
 		if( curShader->uni_worldMat >= 0 )
 		{
-			gRDI->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &terrain->_absTrans.x[0] );
+			Modules::renderer().getRenderDevice()->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &terrain->_absTrans.x[0] );
 		}
 		if( curShader->uni_worldNormalMat >= 0 )
 		{
@@ -289,17 +289,17 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 			float normalMat[9] = { normalMat4.x[0], normalMat4.x[1], normalMat4.x[2],
 			                       normalMat4.x[4], normalMat4.x[5], normalMat4.x[6],
 			                       normalMat4.x[8], normalMat4.x[9], normalMat4.x[10] };
-			gRDI->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
+			Modules::renderer().getRenderDevice()->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
 		}
 		if( curShader->uni_nodeId >= 0 )
 		{
 			float id = (float)terrain->getHandle();
-			gRDI->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			Modules::renderer().getRenderDevice()->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
 		}
 
 		drawTerrainBlock( terrain, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, localCamPos, frust1, frust2, uni_terBlockParams );
 
-		gRDI->setVertexLayout( 0 );
+		Modules::renderer().getRenderDevice()->setVertexLayout( 0 );
 	}
 }
 
@@ -446,17 +446,17 @@ uint16 *TerrainNode::createIndices()
 
 void TerrainNode::recreateVertexBuffer()
 {
-	gRDI->destroyBuffer( _vertexBuffer );
-	gRDI->destroyBuffer( _indexBuffer );
+	Modules::renderer().getRenderDevice()->destroyBuffer( _vertexBuffer );
+	Modules::renderer().getRenderDevice()->destroyBuffer( _indexBuffer );
 	
 	delete[] _heightArray; _heightArray = 0x0;
 	_heightArray = new float[getVertexCount()];
 	float *posArray = createVertices();
-	_vertexBuffer = gRDI->createVertexBuffer( getVertexCount() * sizeof( float ) * 4, posArray );
+	_vertexBuffer = Modules::renderer().getRenderDevice()->createVertexBuffer( getVertexCount() * sizeof( float ) * 4, posArray );
 	delete[] posArray;
 
 	uint16 *indices = createIndices();
-	_indexBuffer = gRDI->createIndexBuffer( getIndexCount() * sizeof( short ), indices );
+	_indexBuffer = Modules::renderer().getRenderDevice()->createIndexBuffer( getIndexCount() * sizeof( short ), indices );
 	delete[] indices;
 }
 

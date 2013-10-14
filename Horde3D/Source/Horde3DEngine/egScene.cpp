@@ -745,17 +745,17 @@ int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool ch
 	{
 		if( node.getType() == SceneNodeTypes::Mesh && cam._occSet < (int)((MeshNode *)&node)->_occQueries.size() )
 		{
-			if( gRDI->getQueryResult( ((MeshNode *)&node)->_occQueries[cam._occSet] ) < 1 )
+			if( Modules::renderer().getRenderDevice()->getQueryResult( ((MeshNode *)&node)->_occQueries[cam._occSet] ) < 1 )
 				return -1;
 		}
 		else if( node.getType() == SceneNodeTypes::Emitter && cam._occSet < (int)((EmitterNode *)&node)->_occQueries.size() )
 		{
-			if( gRDI->getQueryResult( ((EmitterNode *)&node)->_occQueries[cam._occSet] ) < 1 )
+			if( Modules::renderer().getRenderDevice()->getQueryResult( ((EmitterNode *)&node)->_occQueries[cam._occSet] ) < 1 )
 				return -1;
 		}
 		else if( node.getType() == SceneNodeTypes::Light && cam._occSet < (int)((LightNode *)&node)->_occQueries.size() )
 		{
-			if( gRDI->getQueryResult( ((LightNode *)&node)->_occQueries[cam._occSet] ) < 1 )
+			if( Modules::renderer().getRenderDevice()->getQueryResult( ((LightNode *)&node)->_occQueries[cam._occSet] ) < 1 )
 				return -1;
 		}
 	}
