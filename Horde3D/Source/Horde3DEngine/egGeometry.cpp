@@ -302,7 +302,7 @@ bool GeometryResource::load( const char *data, int size )
 	memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 
 	_indexCount = count;
-	_16BitIndices = count <= 65535;
+    _16BitIndices = _vertCount <= 65536;
 	_indexData = new char[count * (_16BitIndices ? 2 : 4)];
 	if( _16BitIndices )
 	{
