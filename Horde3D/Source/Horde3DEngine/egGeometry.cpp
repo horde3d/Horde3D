@@ -209,11 +209,16 @@ bool GeometryResource::load( const char *data, int size )
 		uint32 streamID, streamElemSize;
 		memcpy( &streamID, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 		memcpy( &streamElemSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+		std::string errormsg;
 
 		switch( streamID )
 		{
 		case 0:		// Position
-			if( streamElemSize != 12 ) return raiseError( "Invalid position base stream" );
+			if( streamElemSize != 12 )
+			{
+				errormsg = "Invalid position base stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &_vertPosData[j].x, pData, sizeof( float ) ); pData += sizeof( float );
@@ -222,7 +227,11 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			break;
 		case 1:		// Normal
-			if( streamElemSize != 6 ) return raiseError( "Invalid normal base stream" );
+			if( streamElemSize != 6 )
+			{
+				errormsg = "Invalid normal base stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].normal.x = sh / 32767.0f;
@@ -231,7 +240,11 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			break;
 		case 2:		// Tangent
-			if( streamElemSize != 6 ) return raiseError( "Invalid tangent base stream" );
+			if( streamElemSize != 6 )
+			{
+				errormsg = "Invalid tangent base stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].tangent.x = sh / 32767.0f;
@@ -240,7 +253,11 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			break;
 		case 3:		// Bitangent
-			if( streamElemSize != 6 ) return raiseError( "Invalid bitangent base stream" );
+			if( streamElemSize != 6 )
+			{
+				errormsg = "Invalid bitangent base stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); bitangents[j].x = sh / 32767.0f;
@@ -249,7 +266,11 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			break;
 		case 4:		// Joint indices
-			if( streamElemSize != 4 ) return raiseError( "Invalid joint stream" );
+			if( streamElemSize != 4 )
+			{
+				errormsg = "Invalid joint stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &uc, pData, sizeof( char ) ); pData += sizeof( char ); _vertStaticData[j].jointVec[0] = (float)uc;
@@ -259,7 +280,11 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			break;
 		case 5:		// Weights
-			if( streamElemSize != 4 ) return raiseError( "Invalid weight stream" );
+			if( streamElemSize != 4 )
+			{
+				errormsg = "Invalid weight stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &uc, pData, sizeof( char ) ); pData += sizeof( char ); _vertStaticData[j].weightVec[0] = uc / 255.0f;
@@ -269,7 +294,11 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			break;
 		case 6:		// Texture Coord Set 1
-			if( streamElemSize != 8 ) return raiseError( "Invalid texCoord1 stream" );
+			if( streamElemSize != 8 )
+			{
+				errormsg = "Invalid texCoord1 stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &_vertStaticData[j].u0, pData, sizeof( float ) ); pData += sizeof( float );
@@ -277,7 +306,11 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			break;
 		case 7:		// Texture Coord Set 2
-			if( streamElemSize != 8 ) return raiseError( "Invalid texCoord2 stream" );
+			if( streamElemSize != 8 )
+			{
+				errormsg = "Invalid texCoord2 stream";
+				break;
+			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
 				memcpy( &_vertStaticData[j].u1, pData, sizeof( float ) ); pData += sizeof( float );
@@ -288,6 +321,11 @@ bool GeometryResource::load( const char *data, int size )
 			pData += streamElemSize * streamSize;
 			Modules::log().writeWarning( "Geometry resource '%s': Ignoring unsupported vertex base stream", _name.c_str() );
 			continue;
+		}
+		if (!errormsg.empty())
+		{
+			delete[] bitangents;
+			return raiseError(errormsg);
 		}
 	}
 
