@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1D558D7D-DA57-4908-BCFC-902054FE6B63}</ProjectGuid>
+    <RootNamespace>Horde3D</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.21005.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Binaries/Win32/</OutDir>
+    <IntDir>$(SolutionDir)temp/Win32/$(Configuration)/$(ProjectName)</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+    <TargetName>$(RootNamespace)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Binaries/Win32/</OutDir>
+    <IntDir>$(SolutionDir)temp/Win32/$(Configuration)/$(ProjectName)</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(RootNamespace)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>$(ProjectDir)../Shared;$(ProjectDir)../../Dependencies/Include;$(ProjectDir)../../Extensions;$(ProjectDir)../../../Extensions;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;HORDE3D_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <BrowseInformation>true</BrowseInformation>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib/Win32/$(Configuration);$(ProjectDir)../../Dependencies/Libs_VC8;$(ProjectDir)../../Build;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>libc.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <ImportLibrary>$(SolutionDir)lib/Win32/$(Configuration)/$(RootNamespace)_d.lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent />
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir)../Shared;$(ProjectDir)../../Dependencies/Include;$(ProjectDir)../../Extensions;$(ProjectDir)../../../Extensions;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;HORDE3D_EXPORTS;SECURE_SCL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <PrecompiledHeader />
+      <ProgramDataBaseFileName>$(IntDir)vc80.pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>$(OutDir)$(RootNamespace).dll</OutputFile>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib/Win32/$(Configuration);$(ProjectDir)../../Dependencies/Libs_VC8;$(ProjectDir)../../Build;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>libc.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ImportLibrary>$(SolutionDir)lib/Win32/$(Configuration)/$(RootNamespace).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="egAnimatables.cpp" />
+    <ClCompile Include="egAnimation.cpp" />
+    <ClCompile Include="egCamera.cpp" />
+    <ClCompile Include="egCom.cpp" />
+    <ClCompile Include="egExtensions.cpp" />
+    <ClCompile Include="egGeometry.cpp" />
+    <ClCompile Include="egLight.cpp" />
+    <ClCompile Include="egMain.cpp" />
+    <ClCompile Include="egMaterial.cpp" />
+    <ClCompile Include="egModel.cpp" />
+    <ClCompile Include="egModules.cpp" />
+    <ClCompile Include="egParticle.cpp" />
+    <ClCompile Include="egPipeline.cpp" />
+    <ClCompile Include="egPrimitives.cpp" />
+    <ClCompile Include="egRenderer.cpp" />
+    <ClCompile Include="egRendererBase.cpp" />
+    <ClCompile Include="egResource.cpp" />
+    <ClCompile Include="egScene.cpp" />
+    <ClCompile Include="egSceneGraphRes.cpp" />
+    <ClCompile Include="egShader.cpp" />
+    <ClCompile Include="egTexture.cpp" />
+    <ClCompile Include="utImage.cpp" />
+    <ClCompile Include="utOpenGL.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="config.h" />
+    <ClInclude Include="egAnimatables.h" />
+    <ClInclude Include="egAnimation.h" />
+    <ClInclude Include="egCamera.h" />
+    <ClInclude Include="egCom.h" />
+    <ClInclude Include="egExtensions.h" />
+    <ClInclude Include="egGeometry.h" />
+    <ClInclude Include="egLight.h" />
+    <ClInclude Include="egMaterial.h" />
+    <ClInclude Include="egModel.h" />
+    <ClInclude Include="egModules.h" />
+    <ClInclude Include="egParticle.h" />
+    <ClInclude Include="egPipeline.h" />
+    <ClInclude Include="egPrerequisites.h" />
+    <ClInclude Include="egPrimitives.h" />
+    <ClInclude Include="egRenderer.h" />
+    <ClInclude Include="egRendererBase.h" />
+    <ClInclude Include="egResource.h" />
+    <ClInclude Include="egScene.h" />
+    <ClInclude Include="egSceneGraphRes.h" />
+    <ClInclude Include="egShader.h" />
+    <ClInclude Include="egTexture.h" />
+    <ClInclude Include="..\Shared\utDebug.h" />
+    <ClInclude Include="utImage.h" />
+    <ClInclude Include="..\Shared\utMath.h" />
+    <ClInclude Include="utOpenGL.h" />
+    <ClInclude Include="..\Shared\utPlatform.h" />
+    <ClInclude Include="utTimer.h" />
+    <ClInclude Include="..\Shared\utXML.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
