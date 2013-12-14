@@ -53,7 +53,7 @@ struct TriGroup
 	{
 	}
 
-	~TriGroup() { delete posIndexToVertices; }
+	~TriGroup() { delete[] posIndexToVertices; }
 };
 
 
