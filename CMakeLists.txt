@@ -7,6 +7,16 @@ ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
 
 project(Horde3D)
 
+# Add local repository for FindXXX.cmake modules.
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
+
+# Find system-wide GLFW library.
+find_package(GLFW)
+
+IF(GLFW_FOUND)
+    include_directories(${GLFW_INCLUDE_DIRS})
+ENDIF(GLFW_FOUND)
+
 # accumulate list of sources of extension modules
 # this can not be done inside the Extensions folder since cmake can only pass variables to subdirectories, never upwards...
 set(HORDE3D_EXTENSION_INSTALLS)
@@ -70,6 +80,9 @@ ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
 # create egExtensions.cpp
 CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_include.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_include.h)
 CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_install.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_install.h)
+
+include(CheckFunctionExists)
+check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
 add_subdirectory(Horde3D)
 

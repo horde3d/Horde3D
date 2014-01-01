@@ -50,6 +50,8 @@ You need to have a C++ compiler and [CMake 2.4+](http://www.cmake.org/) installe
 - [Makefiles](http://www.gnu.org/software/make/): open up a terminal, navigate to the repository and run ``mkdir build-make && cd build-make && cmake -G "Unix Makefiles" .. && make`` (hint: use `export JOBS=MAX` to speed things up).
 - [Ninja](http://martine.github.io/ninja/): open up a terminal, navigate to the repository and run ``mkdir build-ninja && cd build-ninja && cmake -G "Ninja" .. && ninja``.
 
+**NOTE:** to build samples you also need to have [GLFW](http://www.glfw.org/download.html) *(>3.x)* installed.
+
 ## What's next
 
 Here are some quick links to help you get started:
