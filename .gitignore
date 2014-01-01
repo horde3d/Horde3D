@@ -220,6 +220,7 @@ pip-log.txt
 *.exe
 *.dll
 *.lib
+Horde3D/Binaries/Win32/*
 
 
 #################
