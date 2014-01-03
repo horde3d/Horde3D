@@ -227,3 +227,8 @@ Horde3D/Binaries/Win32/*
 ## Linux
 #################
 Horde3D/Binaries/Linux/*
+
+#################
+## Mac OS X
+#################
+Horde3D/Binaries/Darwin/*
