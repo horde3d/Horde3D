@@ -14,7 +14,7 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
 find_package(GLFW)
 
 IF(GLFW_FOUND)
-    include_directories(${GLFW_INCLUDE_DIRS})
+    include_directories(${GLFW_INCLUDE_DIR})
 ENDIF(GLFW_FOUND)
 
 # accumulate list of sources of extension modules

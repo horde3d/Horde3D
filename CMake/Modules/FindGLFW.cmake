@@ -1,7 +1,10 @@
 # Locate GLFW library (3.x)
-# This module defines
-# GLFW_LIBRARY, the name of the library to link against
+#
+# This module defines:
+#
 # GLFW_FOUND, if false, do not try to link to GLFW
+# GLFW_LIBRARY, the name of the library to link against
+# GLFW_LIBRARIES, the full list of libs to link against
 # GLFW_INCLUDE_DIR, where to find glfw3.h
 #=============================================================================
 
@@ -36,33 +39,51 @@ PATHS
 /opt
 )
 
-#MESSAGE("GLFW_LIBRARY is ${GLFW_LIBRARY}")
-
-# GLFW may require threads on your system.
-# The Apple build may not need an explicit flag because one of the
-# frameworks may already provide it.
-# But for non-OSX systems, I will use the CMake Threads package.
-IF(NOT APPLE)
-FIND_PACKAGE(Threads)
-ENDIF(NOT APPLE)
-
-# MinGW needs an additional library, mwindows
-# It's total link flags should look like -lmingw32 -lGLFW -lmwindows
-# (Actually on second look, I think it only needs one of the m* libraries.)
-IF(MINGW)
-SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
-ENDIF(MINGW)
-
 SET(GLFW_FOUND FALSE)
+
+IF(NOT GLFW_LIBRARY)
+    # If not found, try to build with local sources.
+    # It uses CMake's "ExternalProject_Add" target.
+    message(STATUS "Preparing external GLFW project")
+    include(ExternalProject)
+    ExternalProject_Add(project_glfw 
+	    URL ${CMAKE_CURRENT_SOURCE_DIR}/Requisities/glfw/3.0.4.zip
+	    INSTALL_COMMAND ""
+	    LOG_DOWNLOAD 1
+        LOG_UPDATE 1
+        LOG_CONFIGURE 1
+        LOG_BUILD 1
+        LOG_TEST 1
+        LOG_INSTALL 1
+    )
+    message(STATUS "External GLFW project done")
+
+    ExternalProject_Get_Property(project_glfw install_dir)
+    set(GLFW_INCLUDE_DIR
+        ${install_dir}/src/project_glfw/include
+    )
+    IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(GLFW_LIBRARY
+        ${install_dir}/src/project_glfw-build/src/libglfw3.a
+    )
+    ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    
+ENDIF(NOT GLFW_LIBRARY)
+
+#MESSAGE("GLFW_LIBRARY is ${GLFW_LIBRARY}")
 
 IF(GLFW_LIBRARY)
 
     SET(GLFW_LIBRARIES ${GLFW_LIBRARY} CACHE STRING "All the libs required to link GLFW")
 
-    # For threads, as mentioned Apple doesn't need this.
+    # GLFW may require threads on your system.
+    # The Apple build may not need an explicit flag because one of the
+    # frameworks may already provide it.
+    # But for non-OSX systems, I will use the CMake Threads package.
     # In fact, there seems to be a problem if I used the Threads package
     # and try using this line, so I'm just skipping it entirely for OS X.
     IF(NOT APPLE)
+    FIND_PACKAGE(Threads)
     SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
     ENDIF(NOT APPLE)
 
@@ -76,6 +97,10 @@ IF(GLFW_LIBRARY)
 
     # For MinGW library.
     IF(MINGW)
+    # MinGW needs an additional library, mwindows
+    # It's total link flags should look like -lmingw32 -lGLFW -lmwindows
+    # (Actually on second look, I think it only needs one of the m* libraries.)
+    SET(MINGW32_LIBRARY mingw32 CACHE STRING "mwindows for MinGW")
     SET(GLFW_LIBRARIES ${MINGW32_LIBRARY} ${GLFW_LIBRARIES})
     ENDIF(MINGW)
     
