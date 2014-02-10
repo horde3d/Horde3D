@@ -18,6 +18,7 @@
 #include "utils.h"
 #include <string>
 #include <vector>
+#include <algorithm>
 
 using namespace Horde3D;
 
