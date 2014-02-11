@@ -47,9 +47,9 @@ IF(NOT GLFW_LIBRARY)
     message(STATUS "Preparing external GLFW project")
     include(ExternalProject)
     ExternalProject_Add(project_glfw 
-	    URL ${CMAKE_CURRENT_SOURCE_DIR}/Requisities/glfw/3.0.4.zip
-	    INSTALL_COMMAND ""
-	    LOG_DOWNLOAD 1
+	URL ${CMAKE_CURRENT_SOURCE_DIR}/Requisities/glfw/3.0.4.zip
+	INSTALL_COMMAND ""
+	LOG_DOWNLOAD 1
         LOG_UPDATE 1
         LOG_CONFIGURE 1
         LOG_BUILD 1
@@ -62,15 +62,22 @@ IF(NOT GLFW_LIBRARY)
     set(GLFW_INCLUDE_DIR
         ${install_dir}/src/project_glfw/include
     )
+
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     set(GLFW_LIBRARY
         ${install_dir}/src/project_glfw-build/src/libglfw3.a
     )
     ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+    IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(GLFW_LIBRARY
+        ${install_dir}/src/project_glfw-build/src/${CMAKE_CFG_INTDIR}/glfw3.lib
+    )
+    ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     
 ENDIF(NOT GLFW_LIBRARY)
 
-#MESSAGE("GLFW_LIBRARY is ${GLFW_LIBRARY}")
+MESSAGE("GLFW_LIBRARY is ${GLFW_LIBRARY}")
 
 IF(GLFW_LIBRARY)
 
