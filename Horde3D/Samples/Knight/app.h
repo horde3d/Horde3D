@@ -40,7 +40,7 @@ public:
 	void mouseMoveEvent( float dX, float dY );
 
 private:
-	bool               _keys[320], _prevKeys[320];
+	bool               _keys[349], _prevKeys[349];
 	
 	float              _x, _y, _z, _rx, _ry;  // Viewer position and orientation
 	float              _velocity;  // Velocity for movement
