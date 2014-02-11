@@ -168,13 +168,13 @@ void Application::keyStateHandler()
 		if( ++_freezeMode == 3 ) _freezeMode = 0;
 	}
 	
-	if( _keys[264] && !_prevKeys[264] )  // F7
+	if( _keys[296] && !_prevKeys[296] )  // F7
 		_debugViewMode = !_debugViewMode;
 
-	if( _keys[265] && !_prevKeys[265] )  // F8
+	if( _keys[297] && !_prevKeys[297] )  // F8
 		_wireframeMode = !_wireframeMode;
 	
-	if( _keys[263] && !_prevKeys[263] )  // F6
+	if( _keys[295] && !_prevKeys[295] )  // F6
 	{
 		_statMode += 1;
 		if( _statMode > H3DUTMaxStatMode ) _statMode = 0;
@@ -187,7 +187,7 @@ void Application::keyStateHandler()
 	{
 		float curVel = _velocity / _curFPS;
 		
-		if( _keys[287] ) curVel *= 10;	// LShift
+		if( _keys[340] ) curVel *= 10;	// LShift
 		
 		if( _keys['W'] )
 		{
