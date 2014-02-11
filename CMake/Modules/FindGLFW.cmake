@@ -62,13 +62,13 @@ IF(NOT GLFW_LIBRARY)
     set(GLFW_INCLUDE_DIR
         ${install_dir}/src/project_glfw/include
     )
-
-    IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    
+    # Unix-style.
     set(GLFW_LIBRARY
         ${install_dir}/src/project_glfw-build/src/libglfw3.a
     )
-    ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
+    # Windows.
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(GLFW_LIBRARY
         ${install_dir}/src/project_glfw-build/src/${CMAKE_CFG_INTDIR}/glfw3.lib
