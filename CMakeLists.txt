@@ -1,9 +1,7 @@
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 2.8)
 
 # Avoid warning under CMake 2.6
-IF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
-  cmake_policy(SET CMP0003 NEW)
-ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
+cmake_policy(SET CMP0003 NEW)
 
 project(Horde3D)
 
