@@ -121,7 +121,7 @@ void mouseMoveListener( GLFWwindow* windowFromGLFW, double x, double y )
 bool setupWindow( int width, int height, bool fullscreen )
 {
 	// Create OpenGL window
-	windowFromGLFW = glfwCreateWindow( width, height, "Horde3D", fullscreen ? glfwGetPrimaryMonitor() : NULL, NULL );
+    windowFromGLFW = glfwCreateWindow( width, height, app->getTitle(), fullscreen ? glfwGetPrimaryMonitor() : NULL, NULL );
 	
 	if( windowFromGLFW == NULL )
 	{
