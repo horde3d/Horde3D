@@ -340,9 +340,8 @@ and calculate a 2D screen space coordinate. A vertex shader can also manipualate
 or texture coordinates and hand the results to the next stage but it cannot create or remove any vertices.</p>
 
 <p>Geometry shaders can create new primitives like triangles or lines and are executed after vertex shaders. They are
-especially useful to implement some algorithms like shadow volumes completely on the GPU. Geometry shaders are
-exclusively supported by DirectX 10 hardware. Since OpenGL does not yet have vendor-independent extensions, this type
-of shader is not supported by Horde3D.</p>
+especially useful to implement some algorithms like shadow volumes completely on the GPU. This type of shader is not yet
+supported by Horde3D.</p>
 
 <p>Finally, a fragment shader (also known as pixel shader) calculates the color and depth value of each single pixel in
 the output buffer. Since nowadays most lighting operations are done per-pixel and no more per-vertex, fragment shaders
