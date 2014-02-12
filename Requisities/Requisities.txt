@@ -1,0 +1,13 @@
+# Add local repository for FindXXX.cmake modules.
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
+
+# Check for strncpy_s function.
+include(CheckFunctionExists)
+check_function_exists(strncpy_s HAVE_STRNCPY_S)
+
+# Find system-wide GLFW library.
+find_package(GLFW)
+
+IF(GLFW_FOUND)
+    include_directories(${GLFW_INCLUDE_DIR})
+ENDIF(GLFW_FOUND)

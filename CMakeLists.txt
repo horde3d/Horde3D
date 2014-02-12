@@ -5,15 +5,8 @@ cmake_policy(SET CMP0003 NEW)
 
 project(Horde3D)
 
-# Add local repository for FindXXX.cmake modules.
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
-
-# Find system-wide GLFW library.
-find_package(GLFW)
-
-IF(GLFW_FOUND)
-    include_directories(${GLFW_INCLUDE_DIR})
-ENDIF(GLFW_FOUND)
+# Look for requisities.
+include(Requisities/Requisities.txt)
 
 # accumulate list of sources of extension modules
 # this can not be done inside the Extensions folder since cmake can only pass variables to subdirectories, never upwards...
@@ -78,9 +71,5 @@ ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
 # create egExtensions.cpp
 CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_include.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_include.h)
 CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_install.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_install.h)
-
-include(CheckFunctionExists)
-check_function_exists(strncpy_s HAVE_STRNCPY_S)
-
 add_subdirectory(Horde3D)
 
