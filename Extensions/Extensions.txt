@@ -1,0 +1,22 @@
+# WARNING: this file should be included by root CMakeLists.txt.
+
+# Accumulate list of sources of extension modules.
+set(HORDE3D_EXTENSION_INSTALLS)
+set(HORDE3D_EXTENSION_INCLUDE_DIRS)
+set(HORDE3D_EXTENSION_LIBS)
+
+# Common paths of engine headers.
+INCLUDE_DIRECTORIES(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Horde3D/Source/Horde3DEngine"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Horde3D/Source/Shared"
+)
+
+# Terrain extension.
+option(HORDE3D_BUILD_TERRAIN "Build the terrain extension into Horde3D" ON)
+if(HORDE3D_BUILD_TERRAIN)
+	add_subdirectory(Extensions/Terrain)
+endif(HORDE3D_BUILD_TERRAIN)
+
+# Create "egExtensions.cpp".
+CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_include.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_include.h)
+CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_install.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_install.h)
