@@ -9,34 +9,34 @@
 #=============================================================================
 
 FIND_PATH(GLFW_INCLUDE_DIR glfw3.h
-HINTS
-$ENV{GLFWDIR}
-PATH_SUFFIXES include/GL include
-PATHS
-~/Library/Frameworks
-/Library/Frameworks
-/usr/local/include/GLFW
-/usr/include/GLFW
-/sw # Fink
-/opt/local # DarwinPorts
-/opt/csw # Blastwave
-/opt
+	HINTS
+	$ENV{GLFWDIR}
+	PATH_SUFFIXES include/GL include
+	PATHS
+	~/Library/Frameworks
+	/Library/Frameworks
+	/usr/local/include/GLFW
+	/usr/include/GLFW
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
 )
 
 #MESSAGE("GLFW_INCLUDE_DIR is ${GLFW_INCLUDE_DIR}")
 
 FIND_LIBRARY(GLFW_LIBRARY
-NAMES glfw3 GLFW
-HINTS
-$ENV{GLFWDIR}
-PATH_SUFFIXES lib64 lib
-PATHS
-/sw
-/usr
-/usr/local
-/opt/local
-/opt/csw
-/opt
+	NAMES glfw3 GLFW
+	HINTS
+	$ENV{GLFWDIR}
+	PATH_SUFFIXES lib64 lib
+	PATHS
+	/sw
+	/usr
+	/usr/local
+	/opt/local
+	/opt/csw
+	/opt
 )
 
 SET(GLFW_FOUND FALSE)
@@ -44,36 +44,35 @@ SET(GLFW_FOUND FALSE)
 IF(NOT GLFW_LIBRARY)
     # If not found, try to build with local sources.
     # It uses CMake's "ExternalProject_Add" target.
-    message(STATUS "Preparing external GLFW project")
-    include(ExternalProject)
+    MESSAGE(STATUS "Preparing external GLFW project")
+    INCLUDE(ExternalProject)
     ExternalProject_Add(project_glfw 
-	URL ${CMAKE_CURRENT_SOURCE_DIR}/Requisities/glfw/3.0.4.zip
-	INSTALL_COMMAND ""
-	LOG_DOWNLOAD 1
+        URL http://sourceforge.net/projects/glfw/files/glfw/3.0.4/glfw-3.0.4.zip
+        URL_MD5 3949775a24ae921c8de8b948236f3c9a
+        CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_CONFIGURATION_TYPES:STRING=Release -DGLFW_BUILD_EXAMPLES:BOOL=NO
+        LOG_DOWNLOAD 1
         LOG_UPDATE 1
         LOG_CONFIGURE 1
         LOG_BUILD 1
         LOG_TEST 1
         LOG_INSTALL 1
     )
-    message(STATUS "External GLFW project done")
+    MESSAGE(STATUS "External GLFW project done")
 
     ExternalProject_Get_Property(project_glfw install_dir)
-    set(GLFW_INCLUDE_DIR
+    SET(GLFW_INCLUDE_DIR
         ${install_dir}/src/project_glfw/include
     )
     
-    # Unix-style.
-    set(GLFW_LIBRARY
-        ${install_dir}/src/project_glfw-build/src/libglfw3.a
-    )
-
-    # Windows.
-    IF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    set(GLFW_LIBRARY
-        ${install_dir}/src/project_glfw-build/src/${CMAKE_CFG_INTDIR}/glfw3.lib
-    )
-    ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    IF(WIN32)
+	    SET(GLFW_LIBRARY
+	        ${install_dir}/lib/glfw3.lib
+	    )
+	ELSE(WIN32)
+	    SET(GLFW_LIBRARY
+	        ${install_dir}/lib/libglfw3.a
+	    )
+	ENDIF(WIN32)
     
 ENDIF(NOT GLFW_LIBRARY)
 
