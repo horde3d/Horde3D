@@ -50,13 +50,11 @@ You need to have a C++ compiler and [CMake 2.4+](http://www.cmake.org/) installe
 - [Makefiles](http://www.gnu.org/software/make/): open up a terminal, navigate to the repository and run ``mkdir build-make && cd build-make && cmake -G "Unix Makefiles" .. && make`` (hint: use `export JOBS=MAX` to speed things up).
 - [Ninja](http://martine.github.io/ninja/): open up a terminal, navigate to the repository and run ``mkdir build-ninja && cd build-ninja && cmake -G "Ninja" .. && ninja``.
 
-> **NOTE:** to build samples you also need [GLFW](http://www.glfw.org/download.html) *(>3.x)*.
->
-> By default, if not present on the system, a default version will be automatically downloaded, built and linked for you.
->
-> You can also force this behavior using *HORDE3D_FORCE_LOCAL_GLFW* CMake's option:
->
->     cmake -DHORDE3D_FORCE_LOCAL_GLFW=ON .
+**NOTE:** to build samples you also need [GLFW](http://www.glfw.org/download.html) *(>3.x)*.
+
+By default, if not present on the system, a default version will be automatically downloaded, built and linked for you. You can also force this behavior using *HORDE3D_FORCE_DOWNLOAD_GLFW* CMake's option:
+
+     cmake -DHORDE3D_FORCE_DOWNLOAD_GLFW=ON .
 
 ## What's next
 
