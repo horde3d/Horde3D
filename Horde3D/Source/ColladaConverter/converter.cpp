@@ -24,7 +24,7 @@
 #include <iomanip>
 
 using namespace std;
-extern string modelName;
+
 
 Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDists ) :
 	_daeDoc( doc )
@@ -1094,7 +1094,7 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 }
 
 
-void Converter::writeSGNode( const string &assetPath, SceneNode *node, unsigned int depth, ofstream &outf )
+void Converter::writeSGNode( const string &assetPath, const string &modelName, SceneNode *node, unsigned int depth, ofstream &outf )
 {
 	Vec3f trans, rot, scale;
 	node->matRel.decompose( trans, rot, scale );
@@ -1174,7 +1174,7 @@ void Converter::writeSGNode( const string &assetPath, SceneNode *node, unsigned 
 	{
 		outf << ">\n";
 		for( unsigned int j = 0; j < node->children.size(); ++j )
-			writeSGNode( assetPath, node->children[j], depth + 1, outf );
+			writeSGNode( assetPath, modelName, node->children[j], depth + 1, outf );
 
 		// Closing tag
 		for( unsigned int j = 0; j < depth + 1; ++j ) outf << "\t";
@@ -1184,7 +1184,7 @@ void Converter::writeSGNode( const string &assetPath, SceneNode *node, unsigned 
 }
 
 
-bool Converter::writeSceneGraph( const string &assetPath, const string &assetName )
+bool Converter::writeSceneGraph( const string &assetPath, const string &assetName, const string &modelName )
 {
 	ofstream outf;
 	outf.open( (_outPath + assetPath + assetName + ".scene.xml").c_str(), ios::out );
@@ -1215,7 +1215,7 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 	// Joints
 	for( unsigned int i = 0; i < _joints.size(); ++i )
 	{
-		if( _joints[i]->parent == 0x0 ) writeSGNode( assetPath, _joints[i], 0, outf );
+		if( _joints[i]->parent == 0x0 ) writeSGNode( assetPath, modelName, _joints[i], 0, outf );
 	}
 
 	outf << "\n";
@@ -1223,7 +1223,7 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 	// Meshes
 	for( unsigned int i = 0; i < _meshes.size(); ++i )
 	{
-		if( _meshes[i]->parent == 0x0 ) writeSGNode( assetPath, _meshes[i], 0, outf );
+		if( _meshes[i]->parent == 0x0 ) writeSGNode( assetPath, modelName, _meshes[i], 0, outf );
 	}
 
 	outf << "</Model>\n";
@@ -1234,18 +1234,18 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 }
 
 
-bool Converter::writeModel( const std::string &assetPath, const std::string &assetName )
+bool Converter::writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName )
 {
 	bool result = true;
 	
 	if( !writeGeometry( assetPath, assetName ) ) result = false;
-	if( !writeSceneGraph( assetPath, assetName ) ) result = false;
+	if( !writeSceneGraph( assetPath, assetName, modelName ) ) result = false;
 
 	return result;
 }
 
 
-bool Converter::writeMaterials( const string &assetPath, bool replace )
+bool Converter::writeMaterials( const string &assetPath, const string &modelName, bool replace )
 {
 	for( unsigned int i = 0; i < _daeDoc.libMaterials.materials.size(); ++i )
 	{

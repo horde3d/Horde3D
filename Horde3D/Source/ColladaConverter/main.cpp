@@ -30,7 +30,7 @@
 #endif
 
 using namespace std;
-string modelName = "";
+
 
 struct AssetTypes
 {
@@ -152,7 +152,8 @@ int main( int argc, char **argv )
 	AssetTypes::List assetType = AssetTypes::Model;
 	bool geoOpt = true, overwriteMats = false, addModelName = false;
 	float lodDists[4] = { 10, 20, 40, 80 };
-	
+	string modelName = "";	
+
 	// Make sure that first argument ist not an option
 	if( argv[1][0] == '-' )
 	{
@@ -275,8 +276,8 @@ int main( int argc, char **argv )
 				converter->convertModel( geoOpt );
 				
 				createDirectories( outPath, assetPath );
-				converter->writeModel( assetPath, assetName );
-				converter->writeMaterials( assetPath, overwriteMats );
+				converter->writeModel( assetPath, assetName, modelName );
+				converter->writeMaterials( assetPath, modelName, overwriteMats );
 
 				delete converter; converter = 0x0;
 			}
