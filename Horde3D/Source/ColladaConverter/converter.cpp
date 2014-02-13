@@ -848,7 +848,7 @@ bool Converter::convertModel( bool optimize )
 	_frameCount = _daeDoc.libAnimations.maxFrameCount;
 
 	// Output default pose if no animation is available
-	//if( _frameCount == 0 ) _frameCount = 1;
+	if( _frameCount == 0 ) _frameCount = 1;
 
 	vector< Matrix4f > animTransAccum;
 	animTransAccum.resize( _frameCount );
