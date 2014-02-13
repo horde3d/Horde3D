@@ -42,7 +42,7 @@ ELSE("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
 ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
 
 # Requisities and targets.
-include(Requisities/Requisities.txt)
+include(Requisities.txt)
 include(Extensions/Extensions.txt)
 
 add_subdirectory(Horde3D)
