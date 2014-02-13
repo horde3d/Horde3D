@@ -5,6 +5,20 @@ cmake_policy(SET CMP0003 NEW)
 
 project(Horde3D)
 
+# Add local repository for FindXXX.cmake modules.
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
+
+# Check for strncpy_s function.
+include(CheckFunctionExists)
+check_function_exists(strncpy_s HAVE_STRNCPY_S)
+
+# Look for required GLFW library.
+option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
+find_package(GLFW)
+IF(GLFW_FOUND)
+    include_directories(${GLFW_INCLUDE_DIR})
+ENDIF(GLFW_FOUND)
+
 # Set binaries output folder.
 IF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
   IF(WIN32)
@@ -41,9 +55,9 @@ ELSE("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
   ENDIF(WIN32) 
 ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
 
-# Requisities and targets.
-include(Requisities.txt)
+# Manage extensions.
 include(Extensions/Extensions.txt)
 
+# Add engine target.
 add_subdirectory(Horde3D)
 
