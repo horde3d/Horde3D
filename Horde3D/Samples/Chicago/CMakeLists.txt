@@ -14,3 +14,5 @@ add_executable(Chicago WIN32 MACOSX_BUNDLE
 	)
 
 target_link_libraries(Chicago Horde3D Horde3DUtils ${GLFW_LIBRARIES})
+
+add_dependencies(Chicago project_glfw)
