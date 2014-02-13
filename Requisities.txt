@@ -8,6 +8,7 @@ include(CheckFunctionExists)
 check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
 # Find system-wide GLFW library.
+option(HORDE3D_FORCE_LOCAL_GLFW "Force linking Horde3D to local version of GLFW" OFF)
 find_package(GLFW)
 IF(GLFW_FOUND)
     include_directories(${GLFW_INCLUDE_DIR})
