@@ -24,7 +24,7 @@
 #include <iomanip>
 
 using namespace std;
-
+extern string modelName;
 
 Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDists ) :
 	_daeDoc( doc )
@@ -848,7 +848,7 @@ bool Converter::convertModel( bool optimize )
 	_frameCount = _daeDoc.libAnimations.maxFrameCount;
 
 	// Output default pose if no animation is available
-	if( _frameCount == 0 ) _frameCount = 1;
+	//if( _frameCount == 0 ) _frameCount = 1;
 
 	vector< Matrix4f > animTransAccum;
 	animTransAccum.resize( _frameCount );
@@ -1116,7 +1116,7 @@ void Converter::writeSGNode( const string &assetPath, SceneNode *node, unsigned 
 			outf << "name=\"" << (i > 0 ? "#" : "") << mesh->name << "\" ";
 			if( mesh->lodLevel > 0 ) outf << "lodLevel=\"" << mesh->lodLevel << "\" ";
 			outf << "material=\"";
-			outf << assetPath + mesh->triGroups[i]->matName + ".material.xml\" ";
+			outf << assetPath + modelName + mesh->triGroups[i]->matName + ".material.xml\" ";
 			
 			if( i == 0 )
 			{
@@ -1253,7 +1253,7 @@ bool Converter::writeMaterials( const string &assetPath, bool replace )
 		
 		if( !material.used ) continue;
 		
-		string fileName = _outPath + assetPath + material.name + ".material.xml";
+		string fileName = _outPath + assetPath + modelName + material.name + ".material.xml";
 		
 		if( !replace )
 		{
@@ -1261,7 +1261,7 @@ bool Converter::writeMaterials( const string &assetPath, bool replace )
 			ifstream inf( fileName.c_str() );
 			if( inf.good() )
 			{	
-				log( "Skipping material '" + assetPath + material.name + ".material.xml'" );
+				log( "Skipping material '" + assetPath + modelName + material.name + ".material.xml'" );
 				continue;
 			}
 		}
