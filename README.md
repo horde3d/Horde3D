@@ -55,6 +55,10 @@ You need to have a C++ compiler and [CMake 2.8+](http://www.cmake.org/) installe
 By default, if not present on the system, a default version will be automatically downloaded, built and linked for you. You can also force this behavior using *HORDE3D_FORCE_DOWNLOAD_GLFW* CMake's option:
 
      cmake -DHORDE3D_FORCE_DOWNLOAD_GLFW=ON .
+     
+On **Debian/Ubuntu** platforms, you also need to install the following packages:
+
+     sudo apt-get install xorg-dev
 
 ## What's next
 
