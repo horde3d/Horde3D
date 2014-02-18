@@ -3,7 +3,12 @@ cmake_minimum_required(VERSION 2.8)
 # Avoid warning under CMake 2.6.
 cmake_policy(SET CMP0003 NEW)
 
+# Project details.
 project(Horde3D)
+
+SET(${PROJECT_NAME}_MAJOR_VERSION 1)
+SET(${PROJECT_NAME}_MINOR_VERSION 0)
+SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # Add local repository for FindXXX.cmake modules.
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
