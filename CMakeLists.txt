@@ -1,37 +1,25 @@
-cmake_minimum_required(VERSION 2.4)
+cmake_minimum_required(VERSION 2.8)
 
-# Avoid warning under CMake 2.6
-IF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
-  cmake_policy(SET CMP0003 NEW)
-ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
+# Avoid warning under CMake 2.6.
+cmake_policy(SET CMP0003 NEW)
 
 project(Horde3D)
 
-# accumulate list of sources of extension modules
-# this can not be done inside the Extensions folder since cmake can only pass variables to subdirectories, never upwards...
-set(HORDE3D_EXTENSION_INSTALLS)
-set(HORDE3D_EXTENSION_INCLUDE_DIRS)
-set(HORDE3D_EXTENSION_LIBS)
+# Add local repository for FindXXX.cmake modules.
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
 
+# Check for strncpy_s function.
+include(CheckFunctionExists)
+check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
-# terrain extension (check egExtensions.cpp if it's activated)
-option(HORDE3D_BUILD_TERRAIN "Build the terrain extension into Horde3D" ON)
-if(HORDE3D_BUILD_TERRAIN)
-	add_subdirectory(Extensions/Terrain)
-	set(HORDE3D_EXTENSION_INSTALLS
-		${HORDE3D_EXTENSION_INSTALLS}
-		"extMan().installExtension( new Horde3DTerrain::ExtTerrain() );\n"		
-	)
-	set(HORDE3D_EXTENSION_INCLUDES
-		${HORDE3D_EXTENSION_INCLUDES}
-		"\n#include \"Extensions/Terrain/Source/extension.h\"\n"
-	)
-	set(HORDE3D_EXTENSION_LIBS
-		${HORDE3D_EXTENSION_LIBS}
-		Horde3DTerrain		
-	)
-endif(HORDE3D_BUILD_TERRAIN)
+# Look for required GLFW library.
+option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
+find_package(GLFW)
+IF(GLFW_FOUND)
+    include_directories(${GLFW_INCLUDE_DIR})
+ENDIF(GLFW_FOUND)
 
+# Set binaries output folder.
 IF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
   IF(WIN32)
 	IF(MSVC)
@@ -67,9 +55,9 @@ ELSE("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
   ENDIF(WIN32) 
 ENDIF("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.4)
 
-# create egExtensions.cpp
-CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_include.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_include.h)
-CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_install.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_install.h)
+# Manage extensions.
+include(Extensions/Extensions.txt)
 
+# Add engine target.
 add_subdirectory(Horde3D)
 

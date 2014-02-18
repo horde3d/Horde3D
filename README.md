@@ -1,4 +1,4 @@
-# Horde3D
+﻿# Horde3D
 
 Horde3D is a 3D rendering engine written in C++ with an effort being as lightweight and conceptually clean as possible.
 
@@ -43,12 +43,22 @@ Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of Direct
 
 ## Building
 
-You need to have a C++ compiler and [CMake 2.4+](http://www.cmake.org/) installed. CMake is a meta-build system, e.g. it creates Makefiles or Visual Studio files using Generators. The main ways to use CMake are `cmake-gui` (Qt Interface), `ccmake` (Curses Interface) and `cmake` (Commandline Interface). Instructions for commonly used generators:
+You need to have a C++ compiler and [CMake 2.8+](http://www.cmake.org/) installed. CMake is a meta-build system, e.g. it creates Makefiles or Visual Studio files using Generators. The main ways to use CMake are `cmake-gui` (Qt Interface), `ccmake` (Curses Interface) and `cmake` (Commandline Interface). Instructions for commonly used generators:
 
 - [Qt Creator](http://qt-project.org/downloads#qt-creator): open `CMakeLists.txt` as new project, follow the instructions, hit build and you're done.
 - [Visual Studio](http://www.microsoft.com/visualstudio/eng/products/visual-studio-express-products): start `cmake-gui`, choose OGDF as source path, `build-vs` as build path, press generate, open `build-vs\Horde3D.sln` and start compiling.
 - [Makefiles](http://www.gnu.org/software/make/): open up a terminal, navigate to the repository and run ``mkdir build-make && cd build-make && cmake -G "Unix Makefiles" .. && make`` (hint: use `export JOBS=MAX` to speed things up).
 - [Ninja](http://martine.github.io/ninja/): open up a terminal, navigate to the repository and run ``mkdir build-ninja && cd build-ninja && cmake -G "Ninja" .. && ninja``.
+
+**NOTE:** to build samples you also need [GLFW](http://www.glfw.org/download.html) *(>3.x)*.
+
+By default, if not present on the system, a default version will be automatically downloaded, built and linked for you. You can also force this behavior using *HORDE3D_FORCE_DOWNLOAD_GLFW* CMake's option:
+
+     cmake -DHORDE3D_FORCE_DOWNLOAD_GLFW=ON .
+     
+On **Debian/Ubuntu** platforms, you also need to install the following packages:
+
+     sudo apt-get install xorg-dev
 
 ## What's next
 
