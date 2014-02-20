@@ -201,8 +201,8 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 			terrain->_vertexBuffer, terrain->getVertexCount() * sizeof( float ) * 3,
 			terrain->getVertexCount() * sizeof( float ), terrain->_heightArray );
 		gRDI->drawIndexed( PRIM_TRISTRIP, 0, terrain->getIndexCount(), 0, terrain->getVertexCount() );
-		Modules::stats().incStat( EngineStats::BatchCount, 1 );
-		Modules::stats().incStat( EngineStats::TriCount, (terrain->_blockSize + 1) * (terrain->_blockSize + 1) * 2.0f );
+		Modules::stats().incStat( H3DStats::BatchCount, 1 );
+		Modules::stats().incStat( H3DStats::TriCount, (terrain->_blockSize + 1) * (terrain->_blockSize + 1) * 2.0f );
 	}
 	else 
 	{

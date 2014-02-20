@@ -36,7 +36,9 @@
 #	endif
 #endif
 
-
+#ifdef STATIC_H3D
+#	define DLLEXP extern "C"
+#else
 #ifndef DLLEXP
 #	ifdef PLATFORM_WIN
 #		define DLLEXP extern "C" __declspec( dllexport )
@@ -48,7 +50,7 @@
 #   	endif
 #	endif
 #endif
-
+#endif
 
 // Shortcuts for common types
 typedef signed char int8;

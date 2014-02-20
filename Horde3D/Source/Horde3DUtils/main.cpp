@@ -146,7 +146,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 		{
 			// Find size of resource file
 			inf.seekg( 0, ios::end );
-			int fileSize = inf.tellg();
+			int fileSize = (int)inf.tellg();
 			if( bufSize < fileSize  )
 			{
 				delete[] dataBuf;				
@@ -815,6 +815,7 @@ DLLEXP bool h3dutScreenshot( const char *filename )
 // DLL entry point
 // =================================================================================================
 
+#ifndef STATIC_H3D
 #ifdef PLATFORM_WIN
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
 {
@@ -835,4 +836,5 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	
 	return TRUE;
 }
+#endif
 #endif

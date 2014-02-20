@@ -13,6 +13,7 @@
 #ifndef _egCom_H_
 #define _egCom_H_
 
+#include "../../Bindings/C++/Horde3D.h"
 #include "egPrerequisites.h"
 #include <string>
 #include <queue>
@@ -28,36 +29,13 @@ class GPUTimer;
 // Engine Config
 // =================================================================================================
 
-struct EngineOptions
-{
-	enum List
-	{
-		MaxLogLevel = 1,
-		MaxNumMessages,
-		TrilinearFiltering,
-		MaxAnisotropy,
-		TexCompression,
-		SRGBLinearization,
-		LoadTextures,
-		FastAnimation,
-		ShadowMapSize,
-		SampleCount,
-		WireframeMode,
-		DebugViewMode,
-		DumpFailedShaders,
-		GatherTimeStats
-	};
-};
-
-// =================================================================================================
-
 class EngineConfig
 {
 public:
 	EngineConfig();
 
-	float getOption( EngineOptions::List param );
-	bool setOption( EngineOptions::List param, float value );
+	float getOption( H3DOptions::List param );
+	bool setOption( H3DOptions::List param, float value );
 
 public:
 	int   maxLogLevel;
@@ -122,31 +100,6 @@ protected:
 	char                      _textBuf[2048];
 	uint32                    _maxNumMessages;
 	std::queue< LogMessage >  _messages;
-};
-
-
-// =================================================================================================
-// Engine Stats
-// =================================================================================================
-
-struct EngineStats
-{
-	enum List
-	{
-		TriCount = 100,
-		BatchCount,
-		LightPassCount,
-		FrameTime,
-		AnimationTime,
-		GeoUpdateTime,
-		ParticleSimTime,
-		FwdLightsGPUTime,
-		DefLightsGPUTime,
-		ShadowsGPUTime,
-		ParticleGPUTime,
-		TextureVMem,
-		GeometryVMem
-	};
 };
 
 // =================================================================================================
