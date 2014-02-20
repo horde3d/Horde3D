@@ -192,7 +192,7 @@ bool Renderer::init()
 	finishRendering();
 
 	// Start frame timer
-	Timer *timer = Modules::stats().getTimer( EngineStats::FrameTime );
+	Timer *timer = Modules::stats().getTimer( H3DStats::FrameTime );
 	ASSERT( timer != 0x0 );
 	timer->setEnabled( true );
 	
@@ -1217,7 +1217,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
 	                                  SceneNodeFlags::NoDraw, true, false );
 	
-	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::FwdLightsGPUTime );
+	GPUTimer *timer = Modules::stats().getGPUTimer( H3DStats::FwdLightsGPUTime );
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( _frameID );
 	
 	for( size_t i = 0, s = Modules::sceneMan().getLightQueue().size(); i < s; ++i )
@@ -1268,7 +1268,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 		if( !noShadows && _curLight->_shadowMapCount > 0 )
 		{
 			timer->endQuery();
-			GPUTimer *timerShadows = Modules::stats().getGPUTimer( EngineStats::ShadowsGPUTime );
+			GPUTimer *timerShadows = Modules::stats().getGPUTimer( H3DStats::ShadowsGPUTime );
 			if( Modules::config().gatherTimeStats ) timerShadows->beginQuery( _frameID );
 
 			updateShadowMap();
@@ -1302,7 +1302,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 		drawRenderables( shaderContext.empty() ? _curLight->_lightingContext : shaderContext,
 		                 theClass, false, &_curCamera->getFrustum(),
 		                 &_curLight->getFrustum(), order, occSet );
-		Modules().stats().incStat( EngineStats::LightPassCount, 1 );
+		Modules().stats().incStat( H3DStats::LightPassCount, 1 );
 
 		// Reset
 		gRDI->setScissorTest( false );
@@ -1328,7 +1328,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
 	                                  SceneNodeFlags::NoDraw, true, false );
 	
-	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::DefLightsGPUTime );
+	GPUTimer *timer = Modules::stats().getGPUTimer( H3DStats::DefLightsGPUTime );
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( _frameID );
 	
 	for( size_t i = 0, s = Modules::sceneMan().getLightQueue().size(); i < s; ++i )
@@ -1379,7 +1379,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 		if( !noShadows && _curLight->_shadowMapCount > 0 )
 		{	
 			timer->endQuery();
-			GPUTimer *timerShadows = Modules::stats().getGPUTimer( EngineStats::ShadowsGPUTime );
+			GPUTimer *timerShadows = Modules::stats().getGPUTimer( H3DStats::ShadowsGPUTime );
 			if( Modules::config().gatherTimeStats ) timerShadows->beginQuery( _frameID );
 			
 			updateShadowMap();
@@ -1423,7 +1423,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 			drawSphere( _curLight->_absPos, _curLight->_radius );
 		}
 
-		Modules().stats().incStat( EngineStats::LightPassCount, 1 );
+		Modules().stats().incStat( H3DStats::LightPassCount, 1 );
 
 		// Reset
 		gRDI->setCullMode( RS_CULL_BACK );
@@ -1662,8 +1662,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 		// Render
 		gRDI->drawIndexed( PRIM_TRILIST, meshNode->getBatchStart(), meshNode->getBatchCount(),
 		                   meshNode->getVertRStart(), meshNode->getVertREnd() - meshNode->getVertRStart() + 1 );
-		Modules::stats().incStat( EngineStats::BatchCount, 1 );
-		Modules::stats().incStat( EngineStats::TriCount, meshNode->getBatchCount() / 3.0f );
+		Modules::stats().incStat( H3DStats::BatchCount, 1 );
+		Modules::stats().incStat( H3DStats::TriCount, meshNode->getBatchCount() / 3.0f );
 
 		if( queryObj )
 			gRDI->endQuery( queryObj );
@@ -1687,7 +1687,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	MaterialResource *curMatRes = 0x0;
 
-	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::ParticleGPUTime );
+	GPUTimer *timer = Modules::stats().getGPUTimer( H3DStats::ParticleGPUTime );
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
 
 	// Bind particle geometry
@@ -1787,8 +1787,8 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 				                      (float *)emitter->_parColors + j*ParticlesPerBatch*4, ParticlesPerBatch );
 
 			gRDI->drawIndexed( PRIM_TRILIST, 0, ParticlesPerBatch * 6, 0, ParticlesPerBatch * 4 );
-			Modules::stats().incStat( EngineStats::BatchCount, 1 );
-			Modules::stats().incStat( EngineStats::TriCount, ParticlesPerBatch * 2.0f );
+			Modules::stats().incStat( H3DStats::BatchCount, 1 );
+			Modules::stats().incStat( H3DStats::TriCount, ParticlesPerBatch * 2.0f );
 		}
 
 		uint32 count = emitter->_particleCount % ParticlesPerBatch;
@@ -1821,8 +1821,8 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 					                      (float *)emitter->_parColors + offset*4, count );
 				
 				gRDI->drawIndexed( PRIM_TRILIST, 0, count * 6, 0, count * 4 );
-				Modules::stats().incStat( EngineStats::BatchCount, 1 );
-				Modules::stats().incStat( EngineStats::TriCount, count * 2.0f );
+				Modules::stats().incStat( H3DStats::BatchCount, 1 );
+				Modules::stats().incStat( H3DStats::TriCount, count * 2.0f );
 			}
 		}
 
@@ -1968,10 +1968,10 @@ void Renderer::finalizeFrame()
 	++_frameID;
 	
 	// Reset frame timer
-	Timer *timer = Modules::stats().getTimer( EngineStats::FrameTime );
+	Timer *timer = Modules::stats().getTimer( H3DStats::FrameTime );
 	ASSERT( timer != 0x0 );
-	Modules::stats().getStat( EngineStats::FrameTime, true );  // Reset
-	Modules::stats().incStat( EngineStats::FrameTime, timer->getElapsedTimeMS() );
+	Modules::stats().getStat( H3DStats::FrameTime, true );  // Reset
+	Modules::stats().incStat( H3DStats::FrameTime, timer->getElapsedTimeMS() );
 	timer->reset();
 }
 

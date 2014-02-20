@@ -44,37 +44,37 @@ EngineConfig::EngineConfig()
 }
 
 
-float EngineConfig::getOption( EngineOptions::List param )
+float EngineConfig::getOption( H3DOptions::List param )
 {
 	switch( param )
 	{
-	case EngineOptions::MaxLogLevel:
+	case H3DOptions::MaxLogLevel:
 		return (float)maxLogLevel;
-	case EngineOptions::MaxNumMessages:
+	case H3DOptions::MaxNumMessages:
 		return (float)Modules::log().getMaxNumMessages();
-	case EngineOptions::TrilinearFiltering:
+	case H3DOptions::TrilinearFiltering:
 		return trilinearFiltering ? 1.0f : 0.0f;
-	case EngineOptions::MaxAnisotropy:
+	case H3DOptions::MaxAnisotropy:
 		return (float)maxAnisotropy;
-	case EngineOptions::TexCompression:
+	case H3DOptions::TexCompression:
 		return texCompression ? 1.0f : 0.0f;
-	case EngineOptions::SRGBLinearization:
+	case H3DOptions::SRGBLinearization:
 		return sRGBLinearization ? 1.0f : 0.0f;
-	case EngineOptions::LoadTextures:
+	case H3DOptions::LoadTextures:
 		return loadTextures ? 1.0f : 0.0f;
-	case EngineOptions::FastAnimation:
+	case H3DOptions::FastAnimation:
 		return fastAnimation ? 1.0f : 0.0f;
-	case EngineOptions::ShadowMapSize:
+	case H3DOptions::ShadowMapSize:
 		return (float)shadowMapSize;
-	case EngineOptions::SampleCount:
+	case H3DOptions::SampleCount:
 		return (float)sampleCount;
-	case EngineOptions::WireframeMode:
+	case H3DOptions::WireframeMode:
 		return wireframeMode ? 1.0f : 0.0f;
-	case EngineOptions::DebugViewMode:
+	case H3DOptions::DebugViewMode:
 		return debugViewMode ? 1.0f : 0.0f;
-	case EngineOptions::DumpFailedShaders:
+	case H3DOptions::DumpFailedShaders:
 		return dumpFailedShaders ? 1.0f : 0.0f;
-	case EngineOptions::GatherTimeStats:
+	case H3DOptions::GatherTimeStats:
 		return gatherTimeStats ? 1.0f : 0.0f;
 	default:
 		Modules::setError( "Invalid param for h3dGetOption" );
@@ -83,37 +83,37 @@ float EngineConfig::getOption( EngineOptions::List param )
 }
 
 
-bool EngineConfig::setOption( EngineOptions::List param, float value )
+bool EngineConfig::setOption( H3DOptions::List param, float value )
 {
 	int size;
 	
 	switch( param )
 	{
-	case EngineOptions::MaxLogLevel:
+	case H3DOptions::MaxLogLevel:
 		maxLogLevel = ftoi_r( value );
 		return true;
-	case EngineOptions::MaxNumMessages:
+	case H3DOptions::MaxNumMessages:
 		Modules::log().setMaxNumMessages( (uint32)ftoi_r( value ) );
 		return true;
-	case EngineOptions::TrilinearFiltering:
+	case H3DOptions::TrilinearFiltering:
 		trilinearFiltering = (value != 0);
 		return true;
-	case EngineOptions::MaxAnisotropy:
+	case H3DOptions::MaxAnisotropy:
 		maxAnisotropy = ftoi_r( value );
 		return true;
-	case EngineOptions::TexCompression:
+	case H3DOptions::TexCompression:
 		texCompression = (value != 0);
 		return true;
-	case EngineOptions::SRGBLinearization:
+	case H3DOptions::SRGBLinearization:
 		sRGBLinearization = (value != 0);
 		return true;
-	case EngineOptions::LoadTextures:
+	case H3DOptions::LoadTextures:
 		loadTextures = (value != 0);
 		return true;
-	case EngineOptions::FastAnimation:
+	case H3DOptions::FastAnimation:
 		fastAnimation = (value != 0);
 		return true;
-	case EngineOptions::ShadowMapSize:
+	case H3DOptions::ShadowMapSize:
 		size = ftoi_r( value );
 
 		if( size == shadowMapSize ) return true;
@@ -134,19 +134,19 @@ bool EngineConfig::setOption( EngineOptions::List param, float value )
 			shadowMapSize = size;
 			return true;
 		}
-	case EngineOptions::SampleCount:
+	case H3DOptions::SampleCount:
 		sampleCount = ftoi_r( value );
 		return true;
-	case EngineOptions::WireframeMode:
+	case H3DOptions::WireframeMode:
 		wireframeMode = (value != 0);
 		return true;
-	case EngineOptions::DebugViewMode:
+	case H3DOptions::DebugViewMode:
 		debugViewMode = (value != 0);
 		return true;
-	case EngineOptions::DumpFailedShaders:
+	case H3DOptions::DumpFailedShaders:
 		dumpFailedShaders = (value != 0);
 		return true;
-	case EngineOptions::GatherTimeStats:
+	case H3DOptions::GatherTimeStats:
 		gatherTimeStats = (value != 0);
 		return true;
 	default:
@@ -290,53 +290,53 @@ float StatManager::getStat( int param, bool reset )
 	
 	switch( param )
 	{
-	case EngineStats::TriCount:
+	case H3DStats::TriCount:
 		value = (float)_statTriCount;
 		if( reset ) _statTriCount = 0;
 		return value;
-	case EngineStats::BatchCount:
+	case H3DStats::BatchCount:
 		value = (float)_statBatchCount;
 		if( reset ) _statBatchCount = 0;
 		return value;
-	case EngineStats::LightPassCount:
+	case H3DStats::LightPassCount:
 		value = (float)_statLightPassCount;
 		if( reset ) _statLightPassCount = 0;
 		return value;
-	case EngineStats::FrameTime:
+	case H3DStats::FrameTime:
 		value = _frameTime;
 		if( reset ) _frameTime = 0;
 		return value;
-	case EngineStats::AnimationTime:
+	case H3DStats::AnimationTime:
 		value = _animTimer.getElapsedTimeMS();
 		if( reset ) _animTimer.reset();
 		return value;
-	case EngineStats::GeoUpdateTime:
+	case H3DStats::GeoUpdateTime:
 		value = _geoUpdateTimer.getElapsedTimeMS();
 		if( reset ) _geoUpdateTimer.reset();
 		return value;
-	case EngineStats::ParticleSimTime:
+	case H3DStats::ParticleSimTime:
 		value = _particleSimTimer.getElapsedTimeMS();
 		if( reset ) _particleSimTimer.reset();
 		return value;
-	case EngineStats::FwdLightsGPUTime:
+	case H3DStats::FwdLightsGPUTime:
 		value = _fwdLightsGPUTimer->getTimeMS();
 		if( reset ) _fwdLightsGPUTimer->reset();
 		return value;
-	case EngineStats::DefLightsGPUTime:
+	case H3DStats::DefLightsGPUTime:
 		value = _defLightsGPUTimer->getTimeMS();
 		if( reset ) _defLightsGPUTimer->reset();
 		return value;
-	case EngineStats::ParticleGPUTime:
+	case H3DStats::ParticleGPUTime:
 		value = _particleGPUTimer->getTimeMS();
 		if( reset ) _particleGPUTimer->reset();
 		return value;
-	case EngineStats::ShadowsGPUTime:
+	case H3DStats::ShadowsGPUTime:
 		value = _shadowsGPUTimer->getTimeMS();
 		if( reset ) _shadowsGPUTimer->reset();
 		return value;
-	case EngineStats::TextureVMem:
+	case H3DStats::TextureVMem:
 		return (gRDI->getTextureMem() / 1024) / 1024.0f;
-	case EngineStats::GeometryVMem:
+	case H3DStats::GeometryVMem:
 		return (gRDI->getBufferMem() / 1024) / 1024.0f;
 	default:
 		Modules::setError( "Invalid param for h3dGetStat" );
@@ -349,16 +349,16 @@ void StatManager::incStat( int param, float value )
 {
 	switch( param )
 	{
-	case EngineStats::TriCount:
+	case H3DStats::TriCount:
 		_statTriCount += ftoi_r( value );
 		break;
-	case EngineStats::BatchCount:
+	case H3DStats::BatchCount:
 		_statBatchCount += ftoi_r( value );
 		break;
-	case EngineStats::LightPassCount:
+	case H3DStats::LightPassCount:
 		_statLightPassCount += ftoi_r( value );
 		break;
-	case EngineStats::FrameTime:
+	case H3DStats::FrameTime:
 		_frameTime += value;
 		break;
 	}
@@ -369,13 +369,13 @@ Timer *StatManager::getTimer( int param )
 {
 	switch( param )
 	{
-	case EngineStats::FrameTime:
+	case H3DStats::FrameTime:
 		return &_frameTimer;
-	case EngineStats::AnimationTime:
+	case H3DStats::AnimationTime:
 		return &_animTimer;
-	case EngineStats::GeoUpdateTime:
+	case H3DStats::GeoUpdateTime:
 		return &_geoUpdateTimer;
-	case EngineStats::ParticleSimTime:
+	case H3DStats::ParticleSimTime:
 		return &_particleSimTimer;
 	default:
 		return 0x0;
@@ -387,13 +387,13 @@ GPUTimer *StatManager::getGPUTimer( int param )
 {
 	switch( param )
 	{
-	case EngineStats::FwdLightsGPUTime:
+	case H3DStats::FwdLightsGPUTime:
 		return _fwdLightsGPUTimer;
-	case EngineStats::DefLightsGPUTime:
+	case H3DStats::DefLightsGPUTime:
 		return _defLightsGPUTimer;
-	case EngineStats::ShadowsGPUTime:
+	case H3DStats::ShadowsGPUTime:
 		return _shadowsGPUTimer;
-	case EngineStats::ParticleGPUTime:
+	case H3DStats::ParticleGPUTime:
 		return _particleGPUTimer;
 	default:
 		return 0x0;

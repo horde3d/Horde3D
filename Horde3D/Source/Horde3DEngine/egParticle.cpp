@@ -536,7 +536,7 @@ void EmitterNode::update( float timeDelta )
 	// Update absolute transformation
 	updateTree();
 	
-	Timer *timer = Modules::stats().getTimer( EngineStats::ParticleSimTime );
+	Timer *timer = Modules::stats().getTimer( H3DStats::ParticleSimTime );
 	if( Modules::config().gatherTimeStats ) timer->setEnabled( true );
 	
 	Vec3f bBMin( Math::MaxFloat, Math::MaxFloat, Math::MaxFloat );

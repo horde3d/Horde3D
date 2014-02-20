@@ -383,7 +383,7 @@ bool AnimationController::animate()
 	Quaternion nodeRotQuat;
 	Vec3f nodeTransVec, nodeScaleVec;
 	
-	Timer *timer = Modules::stats().getTimer( EngineStats::AnimationTime );
+	Timer *timer = Modules::stats().getTimer( H3DStats::AnimationTime );
 	if( Modules::config().gatherTimeStats ) timer->setEnabled( true );
 	
 	// Animate

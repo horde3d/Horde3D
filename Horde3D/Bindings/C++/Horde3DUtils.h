@@ -16,19 +16,6 @@
 
 #include "Horde3D.h"
 
-#ifndef DLL
-#	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
-#	else
-#  if defined( __GNUC__ ) && __GNUC__ >= 4
-#   define DLL extern "C" __attribute__ ((visibility("default")))
-#  else
-#		define DLL extern "C"
-#  endif
-#	endif
-#endif
-
-
 /*	Topic: Introduction
 		Some words about the Utility Library.
 	

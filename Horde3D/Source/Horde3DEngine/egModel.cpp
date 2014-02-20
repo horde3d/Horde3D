@@ -376,7 +376,7 @@ bool ModelNode::updateGeometry()
 	if( _geometryRes == 0x0 || _geometryRes->getVertPosData() == 0x0 ||
 		_geometryRes->getVertTanData() == 0x0 || _geometryRes->getVertStaticData() == 0x0 ) return false;
 	
-	Timer *timer = Modules::stats().getTimer( EngineStats::GeoUpdateTime );
+	Timer *timer = Modules::stats().getTimer( H3DStats::GeoUpdateTime );
 	if( Modules::config().gatherTimeStats ) timer->setEnabled( true );
 	
 	// Reset vertices to base data
