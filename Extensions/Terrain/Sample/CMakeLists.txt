@@ -15,3 +15,5 @@ add_executable(Terrain WIN32 MACOSX_BUNDLE
 target_link_libraries(Terrain Horde3D Horde3DUtils ${GLFW_LIBRARIES})
 
 add_dependencies(Terrain project_glfw)
+
+file(COPY Content DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX})

@@ -45,7 +45,7 @@ Application::Application( const std::string &appPath )
 	_animTime = 0; _weight = 1.0f;
 	_cam = 0;
 
-	_contentDir = appPath + "../Content";
+	_contentDir = appPath + "Content";
 }
 
 

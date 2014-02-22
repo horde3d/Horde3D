@@ -44,7 +44,7 @@ Application::Application( const string &appDir )
 	_freezeMode = 0; _debugViewMode = false; _wireframeMode = false;
 	_cam = 0;
 
-	_contentDir = appDir + "../Content" + "|" + appDir + "../../../Extensions/Terrain/Sample/Content";
+	_contentDir = appDir + "Content";
 }
 
 

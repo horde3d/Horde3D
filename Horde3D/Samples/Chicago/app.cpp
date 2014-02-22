@@ -44,7 +44,7 @@ Application::Application( const std::string &appPath )
 	_freezeMode = 0; _debugViewMode = false; _wireframeMode = false;
 	_cam = 0;
 
-	_contentDir = appPath + "../Content";
+	_contentDir = appPath + "Content";
 }
 
 
