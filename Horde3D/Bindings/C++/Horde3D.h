@@ -14,16 +14,24 @@
 
 #pragma once
 
+#ifdef STATIC_H3D
+#	define DLL extern "C"
+#else
 #ifndef DLL
 #	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
-#	else
-#  if defined( __GNUC__ ) && __GNUC__ >= 4
-#   define DLL extern "C" __attribute__ ((visibility("default")))
-#  else
+#		ifdef Horde3D_EXPORTS
+#			define DLL extern "C" __declspec( dllexport )
+#		else
+#			define DLL extern "C" __declspec( dllimport )
+#	    endif
+#   else
+#   if defined( __GNUC__ ) && __GNUC__ >= 4
+#       define DLL extern "C" __attribute__ ((visibility("default")))
+#   else
 #		define DLL extern "C"
-#  endif
-#	endif
+#   endif
+#   endif
+#endif
 #endif
 
 

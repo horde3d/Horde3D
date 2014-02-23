@@ -37,6 +37,9 @@
 #endif
 
 
+#ifdef STATIC_H3D
+#	define DLLEXP extern "C"
+#else
 #ifndef DLLEXP
 #	ifdef PLATFORM_WIN
 #		define DLLEXP extern "C" __declspec( dllexport )
@@ -47,6 +50,7 @@
 #		  define DLLEXP extern "C"
 #   	endif
 #	endif
+#endif
 #endif
 
 
