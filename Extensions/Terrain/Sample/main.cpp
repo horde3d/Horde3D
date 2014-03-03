@@ -38,17 +38,36 @@ static Application *app;
 GLFWwindow* windowFromGLFW = NULL;
 
 
-std::string extractAppPath( char *fullPath )
+// Extracts an absolute path to the resources directory given the executable path.
+// It assumes that the ressources can be found in "[app path]/../../Content".
+// This function implements the platform specific differences.
+std::string extractResourcePath( char *fullPath )
 {
-	const std::string s( fullPath );
-	
-	if( s.find( "/" ) != std::string::npos )
-		return s.substr( 0, s.rfind( "/" ) );
-		
-	else if( s.find( "\\" ) != std::string::npos )
-		return s.substr( 0, s.rfind( "\\" ) );
-	
-	return "";
+	std::string s( fullPath );
+    
+#ifdef WIN32
+    const char delim = '\\';
+    const unsigned int nbRfind = 3;
+#else
+    const char delim = '/';
+#ifdef __APPLE__
+    // On MacOSX the application is in a 'bundle' and the path has the form:
+    //     "Terrain.app/Contents/MacOS/Terrain"
+    const unsigned int nbRfind = 6;
+#else
+    const unsigned int nbRfind = 3;
+#endif
+#endif
+    
+    // Remove the elements of th path until the parent folder with the ressources is reached
+	for( unsigned int i = 0; i < nbRfind; ++i )
+		s = s.substr( 0, s.rfind( delim ) );
+    
+    // Add the 'Content' folder
+    s += delim;
+    s += "Content";
+    
+    return s;
 }
 
 
@@ -154,7 +173,7 @@ int main( int argc, char** argv )
 	}
 	
 	// Initialize application and engine
-	app = new Application( extractAppPath( argv[0] ) + "/../../" );
+	app = new Application( extractResourcePath( argv[0] ) );
 	if( !fullScreen ) glfwSetWindowTitle( windowFromGLFW, app->getTitle() );
 	
 	if ( !app->init() )

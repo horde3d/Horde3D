@@ -29,7 +29,8 @@ inline float degToRad( float f )
 }
 
 
-Application::Application( const string &appDir )
+Application::Application( const string &resourcePath ) :
+    _resourcePath(resourcePath)
 {
 	for( unsigned int i = 0; i < 320; ++i )
 	{	
@@ -43,8 +44,6 @@ Application::Application( const string &appDir )
 	_statMode = 0;
 	_freezeMode = 0; _debugViewMode = false; _wireframeMode = false;
 	_cam = 0;
-
-	_contentDir = appDir + "Content";
 }
 
 
@@ -76,8 +75,11 @@ bool Application::init()
 	
 	
 	// Load resources
-	h3dutLoadResourcesFromDisk( _contentDir.c_str() );
-
+	if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) ) {
+		h3dutDumpMessages();
+        return false;
+    }
+    
 	// Add scene nodes
 	// Add camera
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", pipeRes );
