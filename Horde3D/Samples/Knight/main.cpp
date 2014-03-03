@@ -38,6 +38,20 @@ static Application *app;
 GLFWwindow* windowFromGLFW = NULL;
 
 
+std::string extractAppPath( char *fullPath )
+{
+	const std::string s( fullPath );
+	
+	if( s.find( "/" ) != std::string::npos )
+		return s.substr( 0, s.rfind( "/" ) );
+		
+	else if( s.find( "\\" ) != std::string::npos )
+		return s.substr( 0, s.rfind( "\\" ) );
+	
+	return "";
+}
+
+
 void windowCloseListener(  GLFWwindow *windowFromGLFW )
 {
 	running = false;
@@ -139,8 +153,8 @@ int main( int argc, char** argv )
 		benchmark = true;
 	}
 	
-	// Initialize application and engine
-	app = new Application( "../../" );
+	// Initialize application and engine	
+	app = new Application( extractAppPath( argv[0] ) + "/../../" );
 	if( !fullScreen ) glfwSetWindowTitle( windowFromGLFW, app->getTitle() );
 	
 	if ( !app->init() )
