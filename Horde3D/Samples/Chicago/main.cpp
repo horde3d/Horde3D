@@ -44,30 +44,27 @@ GLFWwindow* windowFromGLFW = NULL;
 std::string extractResourcePath( char *fullPath )
 {
 	std::string s( fullPath );
-    
+
 #ifdef WIN32
     const char delim = '\\';
-    const unsigned int nbRfind = 3;
 #else
     const char delim = '/';
+#endif
+
 #ifdef __APPLE__
     // On MacOSX the application is in a 'bundle' and the path has the form:
-    //     "Chicago.app/Contents/MacOS/Chicago"
-    const unsigned int nbRfind = 6;
+    //     "Knight.app/Contents/MacOS/Knight"
+    const unsigned int nbRfind = 4;
 #else
-    const unsigned int nbRfind = 3;
+    const unsigned int nbRfind = 1;
 #endif
-#endif
-    
-    // Remove the elements of th path until the parent folder with the ressources is reached
+   
+    // Remove the th token of path until the executable parent folder is reached
 	for( unsigned int i = 0; i < nbRfind; ++i )
 		s = s.substr( 0, s.rfind( delim ) );
     
     // Add the 'Content' folder
-    s += delim;
-    s += "Content";
-    
-    return s;
+    return s + delim + ".." + delim + ".." + delim + "Content";
 }
 
 
