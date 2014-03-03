@@ -1,7 +1,7 @@
 
 include_directories(../Bindings/C++)
 include_directories(../../../Horde3D/Bindings/C++)
-include_directories(../../../Horde3D/Samples/glfw)
+include_directories(../../../Horde3D/Samples/glfw3/include)
 
 IF(MSVC)
 SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup ")

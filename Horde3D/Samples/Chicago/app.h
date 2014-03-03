@@ -42,7 +42,7 @@ private:
 	void keyHandler();
 
 private:
-	bool         _keys[320], _prevKeys[320];
+	bool         _keys[348], _prevKeys[348];
 
 	float        _x, _y, _z, _rx, _ry;  // Viewer position and orientation
 	float        _velocity;  // Velocity for movement
