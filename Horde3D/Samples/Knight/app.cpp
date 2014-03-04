@@ -29,7 +29,8 @@ inline float degToRad( float f )
 }
 
 
-Application::Application( const std::string &appPath )
+Application::Application( const std::string &resourcePath ) :
+    _resourcePath(resourcePath)
 {
 	for( unsigned int i = 0; i < 320; ++i )
 	{	
@@ -44,8 +45,6 @@ Application::Application( const std::string &appPath )
 	_freezeMode = 0; _debugViewMode = false; _wireframeMode = false;
 	_animTime = 0; _weight = 1.0f;
 	_cam = 0;
-
-	_contentDir = appPath + "../Content";
 }
 
 
@@ -83,7 +82,10 @@ bool Application::init()
 	H3DRes particleSysRes = h3dAddResource( H3DResTypes::SceneGraph, "particles/particleSys1/particleSys1.scene.xml", 0 );
 	
 	// Load resources
-	h3dutLoadResourcesFromDisk( _contentDir.c_str() );
+	if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) ) {
+		h3dutDumpMessages();
+        return false;
+    }
 
 	// Add scene nodes
 	// Add camera

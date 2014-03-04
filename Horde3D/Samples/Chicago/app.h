@@ -59,7 +59,7 @@ private:
 	H3DRes       _logoMatRes, _forwardPipeRes, _deferredPipeRes;
 	H3DNode      _cam;
 
-	std::string  _contentDir;
+	std::string  _resourcePath;
 };
 
 #endif // _app_H_

@@ -222,15 +222,22 @@ pip-log.txt
 *.exe
 *.dll
 *.lib
-Horde3D/Binaries/Win32/*
 
 
 #################
-## Linux
+## Unix
 #################
-Horde3D/Binaries/Linux/*
+*.so
+*.a
 
 #################
-## Mac OS X
+# Build paths
 #################
-Horde3D/Binaries/Darwin/*
+[Bb]uild*
+Horde3D-[Bb]uild*
+
+#################
+# Binaries path
+################
+Binaries/*
+

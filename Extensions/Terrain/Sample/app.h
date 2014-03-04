@@ -56,7 +56,7 @@ private:
 	H3DRes       _fontMatRes, _panelMatRes, _logoMatRes;
 	H3DNode      _cam;
 
-	std::string  _contentDir;
+	std::string  _resourcePath;
 };
 
 #endif // _app_H_

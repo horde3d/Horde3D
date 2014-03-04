@@ -29,7 +29,8 @@ inline float degToRad( float f )
 }
 
 
-Application::Application( const std::string &appPath )
+Application::Application( const std::string &resourcePath ) :
+    _resourcePath(resourcePath)
 {
 	for( unsigned int i = 0; i < 320; ++i )
 	{	
@@ -43,8 +44,6 @@ Application::Application( const std::string &appPath )
 	_statMode = 0;
 	_freezeMode = 0; _debugViewMode = false; _wireframeMode = false;
 	_cam = 0;
-
-	_contentDir = appPath + "../Content";
 }
 
 
@@ -80,8 +79,11 @@ bool Application::init()
 	H3DRes skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skybox.scene.xml", 0 );
 	
 	// Load resources
-	h3dutLoadResourcesFromDisk( _contentDir.c_str() );
-
+	if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) ) {
+		h3dutDumpMessages();
+        return false;
+    }
+    
 	// Add scene nodes
 	// Add camera
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", _forwardPipeRes );
@@ -105,7 +107,7 @@ bool Application::init()
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
 
-	_crowdSim = new CrowdSim( _contentDir );
+	_crowdSim = new CrowdSim( _resourcePath );
 	_crowdSim->init();
 
 	return true;
