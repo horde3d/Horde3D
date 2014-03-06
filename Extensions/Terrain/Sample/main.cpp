@@ -59,7 +59,7 @@ std::string extractResourcePath( char *fullPath )
     const unsigned int nbRfind = 1;
 #endif
    
-    // Remove the th token of path until the executable parent folder is reached
+    // Remove the token of path until the executable parent folder is reached
 	for( unsigned int i = 0; i < nbRfind; ++i )
 		s = s.substr( 0, s.rfind( delim ) );
     
