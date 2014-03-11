@@ -62,8 +62,7 @@ protected:
 
 private:
 	bool init();
-	void release();
-	void mainLoop( float fps );
+    void release();
 	
 	// GLFW listeners.
     static void windowCloseListener(  GLFWwindow* win );
