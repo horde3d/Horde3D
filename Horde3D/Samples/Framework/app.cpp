@@ -148,15 +148,18 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
     if( _benchmark )
     {
         double avgFPS = _benchmarkLength / (glfwGetTime() - _t0);
-        char title[256];
-        sprintf( title, "Average FPS: %.2f", avgFPS );
+        const char* fpsLabel = "Average FPS:";
+        char* fpsValue = new char[10];
+        sprintf( fpsValue, "%.2f", avgFPS );
 
-        std::cout << title << std::endl;
+        std::cout << fpsLabel << " " << fpsValue << std::endl;
 
         double startTime = glfwGetTime();
         while( glfwGetTime() - startTime < 5.0 )
         {
-            h3dutShowText(title, 0.4f, 0.4f, 0.1f, 1, 1, 1, _fontMatRes );
+            const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
+                             (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
+            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.04f, 0.32f, "Benchmark", 1, &fpsLabel, (const char**)&fpsValue, _fontMatRes, _panelMatRes );
 
             this->render();
             this->finalize();
@@ -313,24 +316,25 @@ void SampleApplication::render()
 	const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
 	                 (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
 	const float ovLogo[] = { ww-0.4f, 0.8f, 0, 1,  ww-0.4f, 1, 0, 0,  ww, 1, 1, 0,  ww, 0.8f, 1, 1 };
-	h3dShowOverlays( ovLogo, 4, 1.f, 1.f, 1.f, 1.f, _logoMatRes, 0 );
+    h3dShowOverlays( ovLogo, 4, 1.f, 1.f, 1.f, 1.f, _logoMatRes, 0 );
 	
 	// Render scene
-	h3dRender( _cam );
-
-	// Finish rendering of frame
-	h3dFinalizeFrame();
-
-	// Remove all overlays
-	h3dClearOverlays();
-
-	// Write all messages to log file
-	h3dutDumpMessages();
+    h3dRender( _cam );
 }
 
 
 void SampleApplication::finalize()
-{		
+{
+    // Finish rendering of frame
+    h3dFinalizeFrame();
+
+    // Remove all overlays
+    h3dClearOverlays();
+
+    // Write all messages to log file
+    h3dutDumpMessages();
+
+    // Swap buffers and poll window events
     glfwSwapBuffers( _winHandle );
     glfwPollEvents();
 }
@@ -466,7 +470,7 @@ bool SampleApplication::init()
 		while( glfwGetTime() - startTime < 5.0 ) {}  // Sleep
 		
 		std::cout << "Unable to initalize window" << std::endl;
-		std::cout << "Make sure you have an OpenGL 2.0 compatible graphics card";
+        std::cout << "Make sure you have an OpenGL 2.0 compatible graphics card" << std::endl;
 		
 		return false;
 	}
@@ -484,7 +488,7 @@ bool SampleApplication::init()
 	glfwSetCursorPosCallback( _winHandle, mouseMoveListener );
     
     // Init cursor
-    this->showCursor(_winShowCursor);
+    this->showCursor( _winShowCursor );
     
 	// Initialize engine
 	if( !h3dInit() )
@@ -514,6 +518,7 @@ bool SampleApplication::init()
     // Resize window
     this->resize( _winWidth, _winHeight );
 
+    h3dutDumpMessages();
 	return true;
 }
 

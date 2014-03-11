@@ -267,6 +267,29 @@ DLL H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
 DLL void h3dutShowText( const char *text, float x, float y, float size,
                         float colR, float colG, float colB, H3DRes fontMaterialRes );
 
+/* Function: h3dutShowInfoBox
+		Shows a customizable info box on the screen.
+	
+	Details:
+		This utility function displays an info box with custom text for the current frame on the screen.
+	
+	Parameters:
+	    x, y              - position of the top left corner of the box;
+		                    for more details on coordinate system see overlay documentation
+		width             - maximum width of info box
+		title             - title string of info box
+		numRows           - Number of info rows
+		column1           - list of strings to print in first column (=numRows)
+		column2           - list of strings to print in second column (=numRows)
+		panelMaterialRes  - material resource used for drawing info box
+		
+	Returns:
+		nothing
+*/
+DLL void h3dutShowInfoBox( float x, float y, float width, const char *title,
+                           int numRows, const char **column1, const char **column2,
+                           H3DRes fontMaterialRes, H3DRes panelMaterialRes );
+
 /* Function: h3dutShowFrameStats
 		Shows frame statistics on the screen.
 	

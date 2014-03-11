@@ -338,7 +338,7 @@ void beginInfoBox( float x, float y, float width, int numRows, const char *title
 	// Title bar
 	float ovTitleVerts[] = { x, y, 0, 1, x, y + barHeight, 0, 0,
 	                         x + width, y + barHeight, 1, 0, x + width, y, 1, 1 };
-	h3dShowOverlays( ovTitleVerts, 4,  0.15f, 0.23f, 0.31f, 0.8f, boxMaterialRes, 0 );
+    h3dShowOverlays( ovTitleVerts, 4,  0.15f, 0.23f, 0.31f, 0.8f, boxMaterialRes, 0 );
 
 	// Title text
 	h3dutShowText( title, x + 0.005f, y + 0.005f, fontSize, 0.7f, 0.85f, 0.95f, fontMaterialRes );
@@ -359,15 +359,31 @@ void addInfoBoxRow( const char *column1, const char *column2 )
 	float y = infoBox.y_row0 + infoBox.row++ * 0.035f;
 
 	// First column
-	h3dutShowText( column1, x + 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    if( column1 )
+    {
+        h3dutShowText( column1, x + 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    }
 
 	// Second column
-	x = infoBox.x + infoBox.width - ((strlen( column2 ) - 1) * fontWidth + fontSize);
-	h3dutShowText( column2, x - 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    if( column2 )
+    {
+        x = infoBox.x + infoBox.width - ((strlen( column2 ) - 1) * fontWidth + fontSize);
+        h3dutShowText( column2, x - 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    }
 }
 
 
-DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, int mode )
+DLLEXP void h3dutShowInfoBox( float x, float y, float width, const char *title,
+                              int numRows, const char **column1, const char **column2,
+                              H3DRes fontMaterialRes, H3DRes panelMaterialRes )
+{
+    beginInfoBox( x, y, width, numRows, title, fontMaterialRes, panelMaterialRes );
+    for( int i=0; i<numRows; ++i )
+        addInfoBoxRow( column1[i], column2[i] );
+}
+
+
+DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes, int mode )
 {
 	static stringstream text;
 	static float curFPS = 30;
@@ -411,7 +427,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 	if( mode > 0 )
 	{
 		// InfoBox
-		beginInfoBox( 0.03f, 0.03f, 0.32f, 4, "Frame Stats", fontMaterialRes, boxMaterialRes );
+		beginInfoBox( 0.03f, 0.03f, 0.32f, 4, "Frame Stats", fontMaterialRes, panelMaterialRes );
 		
 		// FPS
 		text.str( "" );
@@ -437,7 +453,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 	if( mode > 1 )
 	{
 		// Video memory
-		beginInfoBox( 0.03f, 0.30f, 0.32f, 2, "VMem", fontMaterialRes, boxMaterialRes );
+		beginInfoBox( 0.03f, 0.30f, 0.32f, 2, "VMem", fontMaterialRes, panelMaterialRes );
 		
 		// Textures
 		text.str( "" );
@@ -450,7 +466,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 		addInfoBoxRow( "Geometry", text.str().c_str() );
 		
 		// CPU time
-		beginInfoBox( 0.03f, 0.44f, 0.32f, 4, "CPU Time", fontMaterialRes, boxMaterialRes );
+		beginInfoBox( 0.03f, 0.44f, 0.32f, 4, "CPU Time", fontMaterialRes, panelMaterialRes );
 		
 		// Frame time
 		text.str( "" );
@@ -473,7 +489,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 		addInfoBoxRow( "Particles", text.str().c_str() );
 
 		// GPU time
-		beginInfoBox( 0.03f, 0.65f, 0.32f, 3, "GPU Time", fontMaterialRes, boxMaterialRes );
+        beginInfoBox( 0.03f, 0.65f, 0.32f, 3, "GPU Time", fontMaterialRes, panelMaterialRes );
 
 		// Forward and deferred lights
 		text.str( "" );
