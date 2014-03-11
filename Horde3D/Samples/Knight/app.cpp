@@ -32,6 +32,7 @@ KnightSample::KnightSample( int argc, char** argv ) :
     _winTitle = "Knight - Horde3D Sample";
     _x = 5; _y = 3; _z = 19;
     _rx = 7; _ry = 15;
+    _helpRows = 11;
 }
 
 
@@ -44,14 +45,20 @@ bool KnightSample::initResources()
 	
 	// Environment
     H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/sphere/sphere.scene.xml", 0 );
-	// Knight
+
+    // Knight
 	H3DRes knightRes = h3dAddResource( H3DResTypes::SceneGraph, "models/knight/knight.scene.xml", 0 );
 	H3DRes knightAnim1Res = h3dAddResource( H3DResTypes::Animation, "animations/knight_order.anim", 0 );
 	H3DRes knightAnim2Res = h3dAddResource( H3DResTypes::Animation, "animations/knight_attack.anim", 0 );
+
     // Shader for deferred shading
     H3DRes lightMatRes = h3dAddResource( H3DResTypes::Material, "materials/light.material.xml", 0 );
-	// Particle system
+
+    // Particle system
 	H3DRes particleSysRes = h3dAddResource( H3DResTypes::SceneGraph, "particles/particleSys1/particleSys1.scene.xml", 0 );
+
+    // Help info
+    _helpLabels[10] = "1/2:"; _helpValues[10] = "Animation blending";
 
 	// 2. Load resources
 
@@ -66,15 +73,18 @@ bool KnightSample::initResources()
 	// Add camera
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", _hdrPipeRes );
 	//h3dSetNodeParamI( _cam, H3DCamera::OccCullingI, 1 );
-	// Add environment
+
+    // Add environment
 	H3DNode env = h3dAddNodes( H3DRootNode, envRes );
 	h3dSetNodeTransform( env, 0, -20, 0, 0, 0, 0, 20, 20, 20 );
-	// Add knight
+
+    // Add knight
 	_knight = h3dAddNodes( H3DRootNode, knightRes );
 	h3dSetNodeTransform( _knight, 0, 0, 0, 0, 180, 0, 0.1f, 0.1f, 0.1f );
 	h3dSetupModelAnimStage( _knight, 0, knightAnim1Res, 0, "", false );
 	h3dSetupModelAnimStage( _knight, 1, knightAnim2Res, 0, "", false );
-	// Attach particle system to hand joint
+
+    // Attach particle system to hand joint
 	h3dFindNodes( _knight, "Bip01_R_Hand", H3DNodeTypes::Joint );
 	H3DNode hand = h3dGetNodeFindResult( 0 );
 	_particleSys = h3dAddNodes( hand, particleSysRes );

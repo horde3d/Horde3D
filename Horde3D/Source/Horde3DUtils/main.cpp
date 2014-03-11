@@ -379,7 +379,7 @@ DLLEXP void h3dutShowInfoBox( float x, float y, float width, const char *title,
 {
     beginInfoBox( x, y, width, numRows, title, fontMaterialRes, panelMaterialRes );
     for( int i=0; i<numRows; ++i )
-        addInfoBoxRow( column1[i], column2[i] );
+        addInfoBoxRow( column1 ? column1[i] : 0, column2 ? column2[i] : 0 );
 }
 
 

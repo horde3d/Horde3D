@@ -85,6 +85,7 @@ SampleApplication::SampleApplication( int argc, char** argv, int benchmark_lengt
     _curFPS(30),
     _statMode(0), _freezeMode(0),
     _debugViewMode(false), _wireframeMode(false),
+    _showHelpPanel(false), _helpRows(10), _helpLabels(0), _helpValues(0),
     _cam(0)
 {
     // Initialize GLFW
@@ -159,7 +160,7 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
-            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.04f, 0.32f, "Benchmark", 1, &fpsLabel, (const char**)&fpsValue, _fontMatRes, _panelMatRes );
+            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, (const char**)&fpsValue, _fontMatRes, _panelMatRes );
 
             this->render();
             this->finalize();
@@ -263,6 +264,21 @@ bool SampleApplication::initResources()
 	_fontMatRes = h3dAddResource( H3DResTypes::Material, "overlays/font.material.xml", 0 );
 	_panelMatRes = h3dAddResource( H3DResTypes::Material, "overlays/panel.material.xml", 0 );
 	_logoMatRes = h3dAddResource( H3DResTypes::Material, "overlays/logo.material.xml", 0 );
+
+    // Help info
+    _helpLabels = (const char**)malloc(_helpRows * sizeof(char*));
+    _helpValues = (const char**)malloc(_helpRows * sizeof(char*));
+
+    if ( _helpRows > 0 ) { _helpLabels[0] = "F1:"; _helpValues[0] = "Help (ON/OFF)"; }
+    if ( _helpRows > 1 ) { _helpLabels[1] = "F2:"; _helpValues[1] = "Stats (...)"; }
+    if ( _helpRows > 2 ) { _helpLabels[2] = "F3:"; _helpValues[2] = "Pipeline (...)"; }
+    if ( _helpRows > 3 ) { _helpLabels[3] = "F4:"; _helpValues[3] = "Debug (ON/OFF)"; }
+    if ( _helpRows > 4 ) { _helpLabels[4] = "F5:"; _helpValues[4] = "Wireframe (ON/OFF)"; }
+    if ( _helpRows > 5 ) { _helpLabels[5] = "F11:"; _helpValues[5] = "Fullscreen (ON/OFF)"; }
+    if ( _helpRows > 6 ) { _helpLabels[6] = "Esc:"; _helpValues[6] = "Exit"; }
+    if ( _helpRows > 7 ) { _helpLabels[7] = "Space:"; _helpValues[7] = "Freeze (...)"; }
+    if ( _helpRows > 8 ) { _helpLabels[8] = "W/A/S/D:"; _helpValues[8] = "Movement"; }
+    if ( _helpRows > 9 ) { _helpLabels[9] = "LShift:"; _helpValues[9] = "Turbo"; }
 	
 	// 2. Load resources
 
@@ -280,6 +296,11 @@ bool SampleApplication::initResources()
 
 void SampleApplication::releaseResources()
 {
+    delete[] _helpLabels;
+    _helpLabels = 0;
+
+    delete[] _helpValues;
+    _helpValues = 0;
 }
 
 
@@ -312,10 +333,22 @@ void SampleApplication::render()
         h3dutShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 
-	// Show logo
-	const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
-	                 (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
-	const float ovLogo[] = { ww-0.4f, 0.8f, 0, 1,  ww-0.4f, 1, 0, 0,  ww, 1, 1, 0,  ww, 0.8f, 1, 1 };
+    const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
+                     (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
+
+    // Show help
+    if( _showHelpPanel )
+    {
+        h3dutShowInfoBox( ww-0.48f, 0.03f, 0.45f, "(?)", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
+    }
+
+    // Show logo
+    const float ovLogo[] = {
+        ww-0.29f, 0.87f, 0, 1,
+        ww-0.29f, 0.97f, 0, 0,
+        ww-0.03, 0.97f, 1, 0,
+        ww-0.03, 0.87f, 1, 1
+    };
     h3dShowOverlays( ovLogo, 4, 1.f, 1.f, 1.f, 1.f, _logoMatRes, 0 );
 	
 	// Render scene
@@ -354,11 +387,12 @@ void SampleApplication::keyStateHandler()
 	{
         _freezeMode = (_freezeMode + 1) % 3;
 	}
-	
+
     if( this->isKeyPressed(GLFW_KEY_F1) )  // F1
-	{
-        this->toggleFullScreen();
-	}
+        _showHelpPanel = !_showHelpPanel;
+
+    if( this->isKeyPressed(GLFW_KEY_F2) )  // F2
+        _statMode = (_statMode + 1) % (H3DUTMaxStatMode+1);
 	
     if( this->isKeyPressed(GLFW_KEY_F3) )  // F3
 	{
@@ -372,16 +406,18 @@ void SampleApplication::keyStateHandler()
 
 		else
 			h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _forwardPipeRes );
-	}
+    }
 
-    if( this->isKeyPressed(GLFW_KEY_F6) )  // F6
-        _statMode = (_statMode + 1) % (H3DUTMaxStatMode+1);
-	
-    if( this->isKeyPressed(GLFW_KEY_F7) )  // F7
-		_debugViewMode = !_debugViewMode;
+    if( this->isKeyPressed(GLFW_KEY_F4) )  // F4
+        _debugViewMode = !_debugViewMode;
 
-    if( this->isKeyPressed(GLFW_KEY_F8) )  // F8
+    if( this->isKeyPressed(GLFW_KEY_F5) )  // F5
         _wireframeMode = !_wireframeMode;
+
+    if( this->isKeyPressed(GLFW_KEY_F11) )  // F11
+    {
+        this->toggleFullScreen();
+    }
 
 	// --------------
 	// Key-down state

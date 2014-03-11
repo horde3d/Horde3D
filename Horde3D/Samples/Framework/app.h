@@ -92,6 +92,10 @@ protected:
 	int          _statMode;
 	int          _freezeMode;
 	bool         _debugViewMode, _wireframeMode;
+    bool         _showHelpPanel;
+    int          _helpRows;
+    const char** _helpLabels;
+    const char** _helpValues;
 	
 	// Engine objects
 	H3DRes       _fontMatRes, _panelMatRes;

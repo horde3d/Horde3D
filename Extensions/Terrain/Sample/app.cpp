@@ -52,7 +52,8 @@ bool TerrainSample::initResources()
 
 	// Add camera
     _cam = h3dAddCameraNode( H3DRootNode, "Camera", _forwardPipeRes );
-	// Add terrain
+
+    // Add terrain
     H3DNode terrain = h3dAddNodes( H3DRootNode, terrainRes );
 
 	// Set sun direction for ambient pass

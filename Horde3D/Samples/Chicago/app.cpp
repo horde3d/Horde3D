@@ -43,9 +43,11 @@ bool ChicagoSample::initResources()
 
 	// Shader for deferred shading
 	H3DRes lightMatRes = h3dAddResource( H3DResTypes::Material, "materials/light.material.xml", 0 );
-	// Environment
+
+    // Environment
 	H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/platform/platform.scene.xml", 0 );
-	// Skybox
+
+    // Skybox
 	H3DRes skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skybox.scene.xml", 0 );
 
     // 2. Load resources
@@ -61,14 +63,17 @@ bool ChicagoSample::initResources()
 	// Add camera
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", _forwardPipeRes );
 	//h3dSetNodeParamI( _cam, H3DCamera::OccCullingI, 1 );
-	// Add environment
+
+    // Add environment
 	H3DNode env = h3dAddNodes( H3DRootNode, envRes );
 	h3dSetNodeTransform( env, 0, 0, 0, 0, 0, 0, 0.23f, 0.23f, 0.23f );
-	// Add skybox
+
+    // Add skybox
 	H3DNode sky = h3dAddNodes( H3DRootNode, skyBoxRes );
 	h3dSetNodeTransform( sky, 0, 0, 0, 0, 0, 0, 210, 50, 210 );
 	h3dSetNodeFlags( sky, H3DNodeFlags::NoCastShadow, true );
-	// Add light source
+
+    // Add light source
 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
 	h3dSetNodeTransform( light, 0, 20, 50, -30, 0, 0, 1, 1, 1 );
 	h3dSetNodeParamF( light, H3DLight::RadiusF, 0, 200 );
@@ -89,10 +94,10 @@ bool ChicagoSample::initResources()
 
 void ChicagoSample::releaseResources()
 {
-    SampleApplication::releaseResources();
-
     delete _crowdSim;
     _crowdSim = 0x0;
+
+    SampleApplication::releaseResources();
 }
 
 
