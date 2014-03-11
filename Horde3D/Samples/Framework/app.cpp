@@ -371,7 +371,7 @@ void SampleApplication::keyStateHandler()
 	}
 
     if( this->isKeyPressed(GLFW_KEY_F6) )  // F6
-        _statMode = (_statMode + 1) % H3DUTMaxStatMode;
+        _statMode = (_statMode + 1) % (H3DUTMaxStatMode+1);
 	
     if( this->isKeyPressed(GLFW_KEY_F7) )  // F7
 		_debugViewMode = !_debugViewMode;
