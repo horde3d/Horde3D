@@ -30,7 +30,6 @@ protected:
     bool initResources();
 
     void update();
-    void keyStateHandler();
 
 private:
 	std::stringstream  _text;

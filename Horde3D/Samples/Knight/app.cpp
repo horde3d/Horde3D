@@ -25,11 +25,10 @@ using namespace std;
 
 
 KnightSample::KnightSample( int argc, char** argv ) :
-    SampleApplication( argc, argv ),
+    SampleApplication( argc, argv, "Knight - Horde3D Sample" ),
     _animTime(0),
     _weight(1.0f)
 {
-    _winTitle = "Knight - Horde3D Sample";
     _x = 5; _y = 3; _z = 19;
     _rx = 7; _ry = 15;
     _helpRows = 11;
@@ -62,7 +61,7 @@ bool KnightSample::initResources()
 
 	// 2. Load resources
 
-	if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) )
+    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
 	{
 		h3dutDumpMessages();
         return false;
@@ -114,10 +113,35 @@ bool KnightSample::initResources()
 void KnightSample::update()
 {
     SampleApplication::update();
+
+    int freeze_mode = checkFlag( SampleApplication::FreezeMode );
+    float frame_time = 1.0f / getFPS();
+
+    // --------------
+    // Key-down state
+    // --------------
+    if( freeze_mode != 2 )
+    {
+        if( isKeyDown(GLFW_KEY_1) )
+        {
+            // Change blend weight
+            _weight += frame_time;
+            if( _weight > 1 ) _weight = 1;
+        }
+        if( isKeyDown(GLFW_KEY_2) )
+        {
+            // Change blend weight
+            _weight -= frame_time;
+            if( _weight < 0 ) _weight = 0;
+        }
+    }
 	
-	if( !_freezeMode )
-	{
-        _animTime += 1.0f / _curFPS;
+    // ----------------
+    // Update animation
+    // ----------------
+    if( freeze_mode == 0 )
+    {
+        _animTime += frame_time;
 
 		// Do animation blending
         h3dSetModelAnimParams( _knight, 0, _animTime * 24.0f, _weight );
@@ -127,39 +151,14 @@ void KnightSample::update()
 		// Animate particle systems (several emitters in a group node)
 		unsigned int cnt = h3dFindNodes( _particleSys, "", H3DNodeTypes::Emitter );
 		for( unsigned int i = 0; i < cnt; ++i )
-			h3dUpdateEmitter( h3dGetNodeFindResult( i ), 1.0f / _curFPS );
+            h3dUpdateEmitter( h3dGetNodeFindResult( i ), frame_time );
 	}
 	
-	if( _statMode > 0 )
+    if( checkFlag( SampleApplication::StatMode ) > 0 )
 	{	
 		// Display weight
 		_text.str( "" );
 		_text << fixed << setprecision( 2 ) << "Weight: " << _weight;
         h3dutShowText( _text.str().c_str(), 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
-	}
-}
-
-
-void KnightSample::keyStateHandler()
-{
-    SampleApplication::keyStateHandler();
-	
-	// --------------
-	// Key-down state
-	// --------------
-	if( _freezeMode != 2 )
-    {
-		if( _keys['1'] )
-		{
-			// Change blend weight
-			_weight += 2 / _curFPS;
-			if( _weight > 1 ) _weight = 1;
-		}
-		if( _keys['2'] )
-		{
-			// Change blend weight
-			_weight -= 2 / _curFPS;
-			if( _weight < 0 ) _weight = 0;
-		}
 	}
 }

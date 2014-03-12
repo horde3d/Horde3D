@@ -25,10 +25,9 @@ using namespace std;
 
 
 ChicagoSample::ChicagoSample( int argc, char** argv ) :
-    SampleApplication( argc, argv ),
+    SampleApplication( argc, argv, "Chicago - Horde3D Sample" ),
     _crowdSim(0)
 {
-    _winTitle = "Chicago - Horde3D Sample";
     _x = 15; _y = 3; _z = 20;
     _rx = -10; _ry = 60;
 }
@@ -52,7 +51,7 @@ bool ChicagoSample::initResources()
 
     // 2. Load resources
 
-    if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) )
+    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
     {
 		h3dutDumpMessages();
         return false;
@@ -85,7 +84,7 @@ bool ChicagoSample::initResources()
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
 
-	_crowdSim = new CrowdSim( _resourcePath );
+    _crowdSim = new CrowdSim( getResourcePath() );
 	_crowdSim->init();
 
 	return true;
@@ -103,8 +102,10 @@ void ChicagoSample::releaseResources()
 
 void ChicagoSample::update()
 {
-	if( !_freezeMode )
+    SampleApplication::update();
+
+    if( !checkFlag( SampleApplication::FreezeMode ) )
 	{
-		_crowdSim->update( _curFPS );
+        _crowdSim->update( getFPS() );
     }
 }

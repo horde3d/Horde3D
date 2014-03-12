@@ -28,26 +28,87 @@
 class SampleApplication
 {
 public:
-    SampleApplication( int argc, char** argv, int benchmark_length = H3D_DEFAULT_SAMPLE_BENCHMARK_LENGTH );
+    enum ApplicationFlag
+    {
+        Running,
+        FullScreen,
+        CursorVisible,
+        CursorInside,
+        StatMode,
+        FreezeMode,
+        DebugViewMode,
+        WireframeMode,
+        BenchmarkMode,
+        BenchmarkLength,
+    };
+
+public:
+    SampleApplication(
+            int argc, char** argv,
+            const char* title = "Horde3D Sample",
+            float fov = 45.0f, float near_plane = 0.1f, float far_plane = 1000.0f,
+            int width = 1024, int height = 576,
+            bool fullscreen = false, bool show_cursor = false,
+            int benchmark_length = H3D_DEFAULT_SAMPLE_BENCHMARK_LENGTH );
 	virtual ~SampleApplication();
 
-	const char *getTitle() const { return _winTitle.c_str(); }
+    const char *getResourcePath() const { return _resourcePath.c_str(); }
+    const char *getTitle() const { return _winTitle.c_str(); }
 	int getWidth() const { return _winWidth; }
-	int getHeight() const { return _winHeight; }
-	bool isFullScreen() const { return _winFullScreen; }
-	bool isCursorVisible() const { return _winShowCursor; }
-	
-    int run( int width = 1024, int height = 576, bool fullscreen = false, bool show_cursor = false );
-	void requestClosing();
-	
+    int getHeight() const { return _winHeight; }
+    float getFOV() const { return _fov; }
+    float getNearPlane() const { return _nearPlane; }
+    float getFarPlane() const { return _farPlane; }
+    float getStartTime() const { return _t0; }
+    float getFPS() const { return _curFPS; }
+
+    int checkFlag(ApplicationFlag flag) const {
+
+        switch (flag)
+        {
+        case Running:
+            return _running;
+        case FullScreen:
+            return _winFullScreen;
+        case CursorVisible:
+            return _winShowCursor;
+        case CursorInside:
+            return _winHasCursor;
+        case StatMode:
+            return _statMode;
+        case FreezeMode:
+            return _freezeMode;
+        case DebugViewMode:
+            return _debugViewMode;
+        case WireframeMode:
+            return _wireframeMode;
+        case BenchmarkMode:
+            return _benchmark;
+        case BenchmarkLength:
+            return _benchmarkLength;
+        }
+
+        return 0;
+    }
+
+    bool isKeyDown( int key ) const { return glfwGetKey( _winHandle, key ) == GLFW_PRESS; }
+
     void setTitle( const char* title );
+    void setHelpPanel( int num_rows, char** column1, char** column2 = 0);
 	void toggleFullScreen();
-	void showCursor( bool show );
+    void enableDebugViewMode( bool enabled );
+    void enableWireframeMode( bool enabled );
+    void showCursor( bool visible );
+    void showHelpPanel( bool visible );
+    void showStatPanel( int mode );
+    void setFreezeMode( int mode );
+
+    int run();
+    void requestClosing();
 	
 protected:
-    bool isKeyDown(int key) const { return (key < GLFW_KEY_LAST) ? _keys[key] : false; }
-    bool isKeyPressed(int key) const { return (key < GLFW_KEY_LAST) ? _keys[key] && !_prevKeys[key] : false; }
-    
+    GLFWwindow* getWindowHandle() const { return _winHandle; }
+
     virtual bool initResources();
     virtual void releaseResources();
     
@@ -55,12 +116,10 @@ protected:
     virtual void render();
     virtual void finalize();
     
-    virtual void keyStateHandler();
-    virtual void mouseMoveHandler();
+    virtual void keyEventHandler( int key, int scancode, int action, int mods );
+    virtual void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 
     void resizeViewport( int width, int height );
-
-    static float degToRad( float f ) { return f * H3D_DEG2RAD; }
 
 private:
 	bool init();
@@ -71,40 +130,46 @@ private:
     static void windowResizeListener(  GLFWwindow* win, int width, int height );
     static void keyPressListener( GLFWwindow* win, int key, int scancode, int action, int mods );
     static void mouseMoveListener( GLFWwindow* win, double x, double y );
+    static void mouseEnterListener( GLFWwindow* win, int entered );
 
 protected:
-	bool         _running;
-    GLFWwindow*  _winHandle;
-	std::string  _winTitle;
-    int          _prev_winWidth, _winWidth;
-    int          _prev_winHeight, _winHeight;
-    bool         _winFullScreen;
-    bool         _winShowCursor;
-	std::string  _resourcePath;
-	bool         _benchmark;
-	int          _benchmarkLength;
-    
-    bool         _keys[GLFW_KEY_LAST], _prevKeys[GLFW_KEY_LAST];
-    float        _mx, _my, _prev_mx, _prev_my;
+    // Camera movement
+    float        _x, _y, _z, _rx, _ry;  // Viewer position and orientation
+    float        _velocity;  // Velocity for movement
 
-    float        _fov, _nearPlane, _farPlane;
-	float        _x, _y, _z, _rx, _ry;  // Viewer position and orientation
-	float        _velocity;  // Velocity for movement
-	float        _curFPS;
-	double       _t0;
-
-	int          _statMode;
-	int          _freezeMode;
-	bool         _debugViewMode, _wireframeMode;
-    bool         _showHelpPanel;
+    // Help panel
     int          _helpRows;
     const char** _helpLabels;
     const char** _helpValues;
-	
-	// Engine objects
-	H3DRes       _fontMatRes, _panelMatRes;
-	H3DRes       _logoMatRes, _forwardPipeRes, _deferredPipeRes, _hdrPipeRes;
-	H3DNode      _cam;
+
+    // Engine objects
+    H3DRes       _fontMatRes, _panelMatRes;
+    H3DRes       _logoMatRes, _forwardPipeRes, _deferredPipeRes, _hdrPipeRes;
+    H3DNode      _cam;
+
+private:
+	bool         _running;
+    std::string  _resourcePath;
+    bool         _benchmark;
+    int          _benchmarkLength;
+    float        _curFPS;
+    double       _t0;
+
+    GLFWwindow*  _winHandle;
+	std::string  _winTitle;
+    int          _prevWinWidth, _winWidth;
+    int          _prevWinHeight, _winHeight;
+    bool         _winFullScreen;
+    float        _prevMx, _prevMy;
+    bool         _winShowCursor;
+    bool         _winHasCursor;
+
+    float        _fov, _nearPlane, _farPlane;
+
+	int          _statMode;
+    int          _freezeMode;
+    bool         _debugViewMode, _wireframeMode;
+    bool         _showHelpPanel;
 };
 
 #endif // _framework_app_H_

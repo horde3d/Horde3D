@@ -71,20 +71,25 @@ bool checkForBenchmarkOption( int argc, char** argv )
 }
 
 
-SampleApplication::SampleApplication( int argc, char** argv, int benchmark_length ) :
+SampleApplication::SampleApplication(int argc, char** argv,
+        const char* title,
+        float fov, float near_plane, float far_plane,
+        int width, int height,
+        bool fullscreen, bool show_cursor,
+        int benchmark_length ) :
     _running(false),
     _winHandle(0),
-    _winTitle("Horde3D Sample"),
-    _prev_winWidth(0), _winWidth(0), _prev_winHeight(0), _winHeight(0),
-    _winFullScreen(false), _winShowCursor(false),
+    _winTitle(title),
+    _prevWinWidth(0), _prevWinHeight(0), _winWidth(width), _winHeight(height),
+    _winFullScreen(fullscreen), _winShowCursor(show_cursor), _winHasCursor(false),
     _resourcePath( extractResourcePath( argv[0] ) ),
     _benchmark( checkForBenchmarkOption( argc, argv ) ),
     _benchmarkLength(benchmark_length),
-    _mx(0), _my(0),
-    _fov(45.0f), _nearPlane(0.1f), _farPlane(1000.0f),
+    _prevMx(0), _prevMy(0),
+    _fov(fov), _nearPlane(near_plane), _farPlane(far_plane),
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
-    _velocity(0.5f),
+    _velocity(0.1f),
     _curFPS(H3D_FPS_REFERENCE),
     _statMode(0), _freezeMode(0),
     _debugViewMode(false), _wireframeMode(false),
@@ -98,21 +103,105 @@ SampleApplication::SampleApplication( int argc, char** argv, int benchmark_lengt
 
 SampleApplication::~SampleApplication()
 {
-    this->release();
+    release();
 
     // Terminate GLFW
     glfwTerminate();
 }
 
 
-int SampleApplication::run( int width, int height, bool fullscreen, bool show_cursor )
+void SampleApplication::setTitle( const char* title )
 {
-    _winWidth = width;
-    _winHeight = height;
-    _winFullScreen = fullscreen;
-    _winShowCursor = show_cursor;
-    
-    if( !this->init() )
+    glfwSetWindowTitle( _winHandle, title );
+
+    _winTitle = title;
+}
+
+
+void SampleApplication::toggleFullScreen()
+{
+    release();
+
+    // Toggle fullscreen mode
+    _winFullScreen = !_winFullScreen;
+
+    if( _winFullScreen )
+    {
+        const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
+        _prevWinWidth = _winWidth;
+        _prevWinHeight = _winHeight;
+        _winWidth = mode->width;
+        _winHeight = mode->height;
+    }
+    else
+    {
+        int width = _winWidth;
+        int height = _winHeight;
+        _winWidth = _prevWinWidth;
+        _winHeight = _prevWinHeight;
+        _prevWinWidth = width;
+        _prevWinHeight = height;
+    }
+
+    if( !init() )
+    {
+        release();
+        exit( -1 );
+    }
+
+    _t0 = glfwGetTime();
+}
+
+
+void SampleApplication::enableDebugViewMode( bool enabled )
+{
+    if ( enabled ) enableWireframeMode(false);
+
+    h3dSetOption( H3DOptions::DebugViewMode, enabled ? 1.0f : 0.0f );
+
+    _debugViewMode = enabled;
+}
+
+
+void SampleApplication::enableWireframeMode( bool enabled )
+{
+    if ( enabled ) enableDebugViewMode(false);
+
+    h3dSetOption( H3DOptions::WireframeMode, enabled ? 1.0f : 0.0f );
+
+    _wireframeMode = enabled;
+}
+
+
+void SampleApplication::showCursor( bool visible )
+{
+    glfwSetInputMode( _winHandle, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED );
+
+    _winShowCursor = visible;
+}
+
+
+void SampleApplication::showHelpPanel( bool visible )
+{
+    _showHelpPanel = visible;
+}
+
+
+void SampleApplication::showStatPanel( int mode )
+{
+    _statMode = mode % (H3DUTMaxStatMode+1);
+}
+
+
+void SampleApplication::setFreezeMode( int mode )
+{
+    _freezeMode = mode % 3;
+}
+
+
+int SampleApplication::run()
+{
+    if( !init() )
 	{
 		glfwTerminate();	
 		return -1;
@@ -127,9 +216,8 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
 	// Game loop
 	while( _running )
 	{	
-		// Calc FPS
+        // 1. Calc FPS
 		++frames;
-
         if( !_benchmark && frames >= 3 )
 		{
 			double t = glfwGetTime();
@@ -141,9 +229,15 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
 
         _curFPS = _benchmark ? H3D_FPS_REFERENCE : fps;
 
-		this->update();
-		this->render();
-		this->finalize();
+        // 2. Poll window events...
+        glfwPollEvents();
+
+        // 3. ...update logic...
+        update();
+
+        // 4. ...render and finalize frame.
+        render();
+        finalize();
 
 		if( _benchmark && frames == _benchmarkLength ) break;
 	}
@@ -165,12 +259,12 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
             h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, (const char**)&fpsValue, _fontMatRes, _panelMatRes );
 
-            this->render();
-            this->finalize();
+            render();
+            finalize();
         }
 	}
 	
-	this->release();
+    release();
 	
 	return 0;
 }
@@ -179,57 +273,6 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
 void SampleApplication::requestClosing()
 {
 	_running = false;
-}
-
-
-void SampleApplication::setTitle( const char* title )
-{
-    glfwSetWindowTitle( _winHandle, title );
-    
-    _winTitle = title;
-}
-
-
-void SampleApplication::toggleFullScreen()
-{
-    this->release();
-
-    // Toggle fullscreen mode
-    _winFullScreen = !_winFullScreen;
-
-    if( _winFullScreen )
-    {
-        const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
-        _prev_winWidth = _winWidth;
-        _prev_winHeight = _winHeight;
-	    _winWidth = mode->width;
-        _winHeight = mode->height;
-    }
-    else
-    {
-        int width = _winWidth;
-        int height = _winHeight;
-        _winWidth = _prev_winWidth;
-        _winHeight = _prev_winHeight;
-        _prev_winWidth = width;
-        _prev_winHeight = height;
-    }
-
-    if( !this->init() )
-    {
-        this->release();
-        exit( -1 );
-    }
-    
-    _t0 = glfwGetTime();
-}
-
-
-void SampleApplication::showCursor( bool show )
-{
-    glfwSetInputMode( _winHandle, GLFW_CURSOR, show ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED );
-	
-    _winShowCursor = show;
 }
 
 
@@ -288,13 +331,49 @@ void SampleApplication::releaseResources()
 
 void SampleApplication::update()
 {
+    if( _freezeMode != 2 || _benchmark )
+    {
+        float curVel = _velocity / _curFPS * H3D_FPS_REFERENCE;
+
+        if( isKeyDown(GLFW_KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
+
+        if( isKeyDown(GLFW_KEY_W) )
+        {
+            // Move forward
+            _x -= sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _y -= sinf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _z -= cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+        }
+
+        if( isKeyDown(GLFW_KEY_S) )
+        {
+            // Move backward
+            _x += sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _y += sinf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _z += cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+        }
+
+        if( isKeyDown(GLFW_KEY_A) )
+        {
+            // Strafe left
+            _x += sinf( H3D_DEG2RAD * ( _ry - 90) ) * curVel;
+            _z += cosf( H3D_DEG2RAD * ( _ry - 90 ) ) * curVel;
+        }
+
+        if( isKeyDown(GLFW_KEY_D) )
+        {
+            // Strafe right
+            _x += sinf( H3D_DEG2RAD * ( _ry + 90 ) ) * curVel;
+            _z += cosf( H3D_DEG2RAD * ( _ry + 90 ) ) * curVel;
+        }
+    }
 }
 
 
 void SampleApplication::render()
 {
-	h3dSetOption( H3DOptions::DebugViewMode, _debugViewMode ? 1.0f : 0.0f );
-	h3dSetOption( H3DOptions::WireframeMode, _wireframeMode ? 1.0f : 0.0f );
+    if ( !_cam )
+        return;
 	
 	// Set camera parameters
 	h3dSetNodeTransform( _cam, _x, _y, _z, _rx ,_ry, 0, 1, 1, 1 );
@@ -349,109 +428,90 @@ void SampleApplication::finalize()
     // Write all messages to log file
     h3dutDumpMessages();
 
-    // Swap buffers and poll window events
+    // Swap buffers
     glfwSwapBuffers( _winHandle );
-    glfwPollEvents();
 }
 
 
-void SampleApplication::keyStateHandler()
-{    
-	// ----------------
-	// Key-press events
-	// ----------------
-	if( this->isKeyPressed(GLFW_KEY_ESCAPE) ) // Esc
-	{
-	    this->requestClosing();
-	}
-	
-    if( this->isKeyPressed(GLFW_KEY_SPACE) )  // Space
-	{
-        _freezeMode = (_freezeMode + 1) % 3;
-	}
+void SampleApplication::keyEventHandler( int key, int scancode, int action, int mods )
+{
+    if (action != GLFW_PRESS)
+        return;
 
-    if( this->isKeyPressed(GLFW_KEY_F1) )  // F1
-        _showHelpPanel = !_showHelpPanel;
+    switch ( key )
+    {
+    case GLFW_KEY_ESCAPE:
+    {
+        requestClosing();
+    }
+    break;
 
-    if( this->isKeyPressed(GLFW_KEY_F2) )  // F2
-        _statMode = (_statMode + 1) % (H3DUTMaxStatMode+1);
-	
-    if( this->isKeyPressed(GLFW_KEY_F3) )  // F3
-	{
+    case GLFW_KEY_SPACE:
+    {
+        setFreezeMode( _freezeMode + 1 );
+    }
+    break;
+
+    case GLFW_KEY_F1:
+    {
+        showHelpPanel( !_showHelpPanel );
+    }
+    break;
+
+    case GLFW_KEY_F2:
+    {
+        showStatPanel( _statMode + 1 );
+    }
+    break;
+
+    case GLFW_KEY_F3:
+    {
         int current_piperes = h3dGetNodeParamI( _cam, H3DCamera::PipeResI );
 
         if( current_piperes == _forwardPipeRes )
-			h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _deferredPipeRes );
+            h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _deferredPipeRes );
 
         else if( current_piperes == _deferredPipeRes )
             h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _hdrPipeRes );
 
-		else
-			h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _forwardPipeRes );
+        else
+            h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _forwardPipeRes );
     }
+    break;
 
-    if( this->isKeyPressed(GLFW_KEY_F4) )  // F4
-        _debugViewMode = !_debugViewMode;
-
-    if( this->isKeyPressed(GLFW_KEY_F5) )  // F5
-        _wireframeMode = !_wireframeMode;
-
-    if( this->isKeyPressed(GLFW_KEY_F11) )  // F11
+    case GLFW_KEY_F4:
     {
-        this->toggleFullScreen();
+        enableDebugViewMode( !_debugViewMode );
     }
+    break;
 
-	// --------------
-	// Key-down state
-	// --------------
-    if( _freezeMode != 2 || _benchmark )
-	{
-        float curVel = _velocity / _curFPS * H3D_FPS_REFERENCE;
-		
-        if( this->isKeyDown(GLFW_KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
-		
-        if( this->isKeyDown(GLFW_KEY_W) )
-		{
-			// Move forward
-            _x -= sinf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
-            _y -= sinf( -degToRad( _rx ) ) * curVel;
-            _z -= cosf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
-		}
-        if( this->isKeyDown(GLFW_KEY_S) )
-		{
-			// Move backward
-            _x += sinf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
-            _y += sinf( -degToRad( _rx ) ) * curVel;
-            _z += cosf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
-		}
-        if( this->isKeyDown(GLFW_KEY_A) )
-		{
-			// Strafe left
-			_x += sinf( degToRad( _ry - 90) ) * curVel;
-			_z += cosf( degToRad( _ry - 90 ) ) * curVel;
-		}
-        if( this->isKeyDown(GLFW_KEY_D) )
-		{
-			// Strafe right
-			_x += sinf( degToRad( _ry + 90 ) ) * curVel;
-			_z += cosf( degToRad( _ry + 90 ) ) * curVel;
-		}
-	}
+    case GLFW_KEY_F5:
+    {
+        enableWireframeMode( !_wireframeMode );
+    }
+    break;
+
+    case GLFW_KEY_F11:
+    {
+        toggleFullScreen();
+    }
+    break;
+    }
 }
 
 
-void SampleApplication::mouseMoveHandler()
+void SampleApplication::mouseMoveHandler( float x, float y, float prev_x, float prev_y )
 {
     if( _freezeMode == 2 || _benchmark ) return;
 
-    float dX = ( _mx - _prev_mx );
-    float dY = ( _prev_my - _my );
-	
+    float dx = x - prev_x;
+    float dy = prev_y - y;
+
 	// Look left/right
-    _ry -= dX * 0.3f;
+    _ry -= dx * 0.3f;
 	
 	// Loop up/down but only in a limited range
-    _rx += dY * 0.3f;
+    _rx += dy * 0.3f;
 	if( _rx > 90 ) _rx = 90; 
 	if( _rx < -90 ) _rx = -90;
 }
@@ -475,15 +535,8 @@ void SampleApplication::resizeViewport( int width, int height )
 
 bool SampleApplication::init()
 {
-    this->release();
-
-    // Init key states
-    for( unsigned int i = 0; i < GLFW_KEY_LAST; ++i )
-    {
-        _keys[i] = false;
-        _prevKeys[i] = false;
-    }
-
+    release();
+    
     // Create OpenGL window
     glfwWindowHint(GLFW_RED_BITS, 8);
     glfwWindowHint(GLFW_GREEN_BITS, 8);
@@ -521,9 +574,10 @@ bool SampleApplication::init()
     glfwSetWindowSizeCallback( _winHandle, windowResizeListener );
 	glfwSetKeyCallback( _winHandle, keyPressListener );
 	glfwSetCursorPosCallback( _winHandle, mouseMoveListener );
-    
+    glfwSetCursorEnterCallback( _winHandle, mouseEnterListener );
+
     // Init cursor
-    this->showCursor( _winShowCursor );
+    showCursor( _winShowCursor );
     
 	// Initialize engine
 	if( !h3dInit() )
@@ -542,7 +596,7 @@ bool SampleApplication::init()
     h3dSetOption( H3DOptions::FastAnimation, 1 );
 
 	// Init resources
-    if( !this->initResources() )
+    if( !initResources() )
 	{
 		std::cout << "Unable to initalize resources" << std::endl;
 		
@@ -551,7 +605,7 @@ bool SampleApplication::init()
     }
 
     // Resize viewport
-    this->resizeViewport( _winWidth, _winHeight );
+    resizeViewport( _winWidth, _winHeight );
 
     h3dutDumpMessages();
 	return true;
@@ -563,7 +617,7 @@ void SampleApplication::release()
     if( _winHandle )
     {
         // Release loaded resources
-        this->releaseResources();
+        releaseResources();
 
         // Release engine
         h3dRelease();
@@ -595,8 +649,8 @@ void SampleApplication::windowResizeListener(  GLFWwindow* win, int width, int h
         // fullscreen mode.
         if (!app->_winFullScreen)
         {
-            app->_prev_winWidth = app->_winWidth;
-            app->_prev_winHeight = app->_winHeight;
+            app->_prevWinWidth = app->_winWidth;
+            app->_prevWinHeight = app->_winHeight;
             app->_winWidth = width;
             app->_winHeight = height;
         }
@@ -612,10 +666,7 @@ void SampleApplication::keyPressListener( GLFWwindow* win, int key, int scancode
     
     if ( app && app->_running )
     {
-        app->_prevKeys[key] = app->_keys[key];
-        app->_keys[key] = ( action == GLFW_PRESS || action == GLFW_REPEAT );
-
-        app->keyStateHandler();
+        app->keyEventHandler(key, scancode, action, mods);
     }
 }
 
@@ -626,12 +677,20 @@ void SampleApplication::mouseMoveListener( GLFWwindow* win, double x, double y )
     
     if ( app && app->_running )
     {
-        app->_prev_mx = app->_mx;
-        app->_prev_my = app->_my;
-        
-		app->_mx = x;
-        app->_my = y;
+        app->mouseMoveHandler( x, y, app->_prevMx, app->_prevMy );
 
-        app->mouseMoveHandler();
+        app->_prevMx = x;
+        app->_prevMy = y;
 	}
+}
+
+
+void SampleApplication::mouseEnterListener( GLFWwindow* win, int entered )
+{
+    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
+
+    if ( app && app->_running )
+    {
+        app->_winHasCursor = entered;
+    }
 }
