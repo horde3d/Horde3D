@@ -46,7 +46,8 @@ public:
 	void showCursor( bool show );
 	
 protected:
-    bool isKeyPressed(int key) const;
+    bool isKeyDown(int key) const { return (key < GLFW_KEY_LAST) ? _keys[key] : false; }
+    bool isKeyPressed(int key) const { return (key < GLFW_KEY_LAST) ? _keys[key] && !_prevKeys[key] : false; }
     
     virtual bool initResources();
     virtual void releaseResources();

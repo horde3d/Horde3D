@@ -246,11 +246,6 @@ void SampleApplication::showCursor( bool show )
 }
 
 
-bool SampleApplication::isKeyPressed( int key ) const
-{
-    return _keys[key] && !_prevKeys[key];
-}
-
 bool SampleApplication::initResources()
 {
     // 1. Add resources
@@ -339,7 +334,7 @@ void SampleApplication::render()
     // Show help
     if( _showHelpPanel )
     {
-        h3dutShowInfoBox( ww-0.48f, 0.03f, 0.45f, "(?)", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
+        h3dutShowInfoBox( ww-0.48f, 0.03f, 0.45f, "Help", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
     }
 
     // Show logo
@@ -424,31 +419,31 @@ void SampleApplication::keyStateHandler()
 	// --------------
     if( _freezeMode != 2 || _benchmark )
 	{
-		float curVel = _velocity / _curFPS;
+        float curVel = _velocity / _curFPS;
 		
-        if( _keys[GLFW_KEY_LEFT_SHIFT] ) curVel *= 5;	// LShift
+        if( this->isKeyDown(GLFW_KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
 		
-		if( _keys['W'] )
+        if( this->isKeyDown(GLFW_KEY_W) )
 		{
 			// Move forward
-			_x -= sinf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
-			_y -= sinf( -degToRad( _rx ) ) * curVel;
-			_z -= cosf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
+            _x -= sinf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
+            _y -= sinf( -degToRad( _rx ) ) * curVel;
+            _z -= cosf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
 		}
-		if( _keys['S'] )
+        if( this->isKeyDown(GLFW_KEY_S) )
 		{
 			// Move backward
-			_x += sinf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
-			_y += sinf( -degToRad( _rx ) ) * curVel;
-			_z += cosf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
+            _x += sinf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
+            _y += sinf( -degToRad( _rx ) ) * curVel;
+            _z += cosf( degToRad( _ry ) ) * cosf( -degToRad( _rx ) ) * curVel;
 		}
-		if( _keys['A'] )
+        if( this->isKeyDown(GLFW_KEY_A) )
 		{
 			// Strafe left
 			_x += sinf( degToRad( _ry - 90) ) * curVel;
 			_z += cosf( degToRad( _ry - 90 ) ) * curVel;
 		}
-		if( _keys['D'] )
+        if( this->isKeyDown(GLFW_KEY_D) )
 		{
 			// Strafe right
 			_x += sinf( degToRad( _ry + 90 ) ) * curVel;
@@ -496,14 +491,14 @@ bool SampleApplication::init()
 
     _winHandle = glfwCreateWindow( _winWidth, _winHeight, _winTitle.c_str(), _winFullScreen ? glfwGetPrimaryMonitor() : NULL, NULL );
 	
-	if( _winHandle == NULL )
+    if( _winHandle == NULL )
 	{
 		// Fake message box
         glfwDestroyWindow(_winHandle);
 		
-        _winHandle = glfwCreateWindow( 800, 16, "Unable to initalize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
+        _winHandle = glfwCreateWindow( 800, 50, "Unable to initalize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
 		double startTime = glfwGetTime();
-		while( glfwGetTime() - startTime < 5.0 ) {}  // Sleep
+        while( glfwGetTime() - startTime < 5.0 ) { /* Sleep */ }
 		
 		std::cout << "Unable to initalize window" << std::endl;
         std::cout << "Make sure you have an OpenGL 2.0 compatible graphics card" << std::endl;
