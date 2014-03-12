@@ -25,6 +25,8 @@
 #include <math.h>
 #include <iomanip>
 
+#define H3D_FPS_REFERENCE 60.0f
+
 using namespace std;
 
 
@@ -81,8 +83,8 @@ SampleApplication::SampleApplication( int argc, char** argv, int benchmark_lengt
     _mx(0), _my(0),
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
-    _velocity(10.0f),
-    _curFPS(30),
+    _velocity(0.05f),
+    _curFPS(H3D_FPS_REFERENCE),
     _statMode(0), _freezeMode(0),
     _debugViewMode(false), _wireframeMode(false),
     _showHelpPanel(false), _helpRows(10), _helpLabels(0), _helpValues(0),
@@ -116,7 +118,7 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
 	}
 	
 	int frames = 0;
-	float fps = 30.0f;
+    float fps = H3D_FPS_REFERENCE;
 	_t0 = glfwGetTime();
 	
 	_running = true;
@@ -127,16 +129,16 @@ int SampleApplication::run( int width, int height, bool fullscreen, bool show_cu
 		// Calc FPS
 		++frames;
 
-		if( !_benchmark && frames >= 3 )
+        if( !_benchmark && frames >= 3 )
 		{
 			double t = glfwGetTime();
             fps = frames / (float)(t - _t0);
-			if( fps < 5 ) fps = 30;  // Handle breakpoints
+            if( fps < 5 ) fps = H3D_FPS_REFERENCE;  // Handle breakpoints
 			frames = 0;
             _t0 = t;
-		}
+        }
 
-        _curFPS = _benchmark ? 60 : fps;
+        _curFPS = _benchmark ? H3D_FPS_REFERENCE : fps;
 
 		this->update();
 		this->render();
@@ -196,7 +198,7 @@ void SampleApplication::resize( int width, int height )
 	h3dSetNodeParamI( _cam, H3DCamera::ViewportHeightI, height );
 	
 	// Set virtual camera parameters
-	h3dSetupCameraView( _cam, 45.0f, (float)width / height, 0.1f, 1000.0f );
+    h3dSetupCameraView( _cam, 45.0f, (float)width / height, 0.1f, 1000.0f );
 	h3dResizePipelineBuffers( _deferredPipeRes, width, height );
 	h3dResizePipelineBuffers( _forwardPipeRes, width, height );
     h3dResizePipelineBuffers( _hdrPipeRes, width, height );
@@ -419,7 +421,7 @@ void SampleApplication::keyStateHandler()
 	// --------------
     if( _freezeMode != 2 || _benchmark )
 	{
-        float curVel = _velocity / _curFPS;
+        float curVel = _velocity / H3D_FPS_REFERENCE * _curFPS;
 		
         if( this->isKeyDown(GLFW_KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
 		
