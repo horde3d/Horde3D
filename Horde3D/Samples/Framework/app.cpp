@@ -45,7 +45,7 @@ std::string extractResourcePath( char *fullPath )
 
 #ifdef __APPLE__
     // On MacOSX the application is in a 'bundle' and the path has the form:
-    //     "Knight.app/Contents/MacOS/Knight"
+    //     "SampleApplication.app/Contents/MacOS/SampleApplication"
     const unsigned int nbRfind = 4;
 #else
     const unsigned int nbRfind = 1;
