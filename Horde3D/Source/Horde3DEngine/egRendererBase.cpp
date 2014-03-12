@@ -153,6 +153,7 @@ RenderDevice::RenderDevice()
 	_curVertLayout = _newVertLayout = 0;
 	_curIndexBuf = _newIndexBuf = 0;
 	_defaultFBO = 0;
+    _defaultFBOMultisampled = false;
 	_indexFormat = (uint32)IDXFMT_16;
 	_pendingMask = 0;
 }
@@ -166,6 +167,9 @@ RenderDevice::~RenderDevice()
 void RenderDevice::initStates()
 {
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+    GLint value;
+    glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
+    _defaultFBOMultisampled = value > 0;
 }
 
 
@@ -1030,7 +1034,8 @@ void RenderDevice::setRenderBuffer( uint32 rbObj )
 		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
-		glDisable( GL_MULTISAMPLE );
+        if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
+		else glDisable( GL_MULTISAMPLE );
 	}
 	else
 	{
