@@ -81,6 +81,7 @@ SampleApplication::SampleApplication( int argc, char** argv, int benchmark_lengt
     _benchmark( checkForBenchmarkOption( argc, argv ) ),
     _benchmarkLength(benchmark_length),
     _mx(0), _my(0),
+    _fov(45.0f), _nearPlane(0.1f), _farPlane(1000.0f),
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
     _velocity(0.05f),
@@ -189,22 +190,6 @@ void SampleApplication::setTitle( const char* title )
 }
 
 
-void SampleApplication::resize( int width, int height )
-{
-	// Resize viewport
-	h3dSetNodeParamI( _cam, H3DCamera::ViewportXI, 0 );
-	h3dSetNodeParamI( _cam, H3DCamera::ViewportYI, 0 );
-	h3dSetNodeParamI( _cam, H3DCamera::ViewportWidthI, width );
-	h3dSetNodeParamI( _cam, H3DCamera::ViewportHeightI, height );
-	
-	// Set virtual camera parameters
-    h3dSetupCameraView( _cam, 45.0f, (float)width / height, 0.1f, 1000.0f );
-	h3dResizePipelineBuffers( _deferredPipeRes, width, height );
-	h3dResizePipelineBuffers( _forwardPipeRes, width, height );
-    h3dResizePipelineBuffers( _hdrPipeRes, width, height );
-}
-
-
 void SampleApplication::toggleFullScreen()
 {
     this->release();
@@ -218,7 +203,7 @@ void SampleApplication::toggleFullScreen()
         _prev_winWidth = _winWidth;
         _prev_winHeight = _winHeight;
 	    _winWidth = mode->width;
-	    _winHeight = mode->height;
+        _winHeight = mode->height;
     }
     else
     {
@@ -472,6 +457,22 @@ void SampleApplication::mouseMoveHandler()
 }
 
 
+void SampleApplication::resizeViewport( int width, int height )
+{
+    // Resize viewport
+    h3dSetNodeParamI( _cam, H3DCamera::ViewportXI, 0 );
+    h3dSetNodeParamI( _cam, H3DCamera::ViewportYI, 0 );
+    h3dSetNodeParamI( _cam, H3DCamera::ViewportWidthI, width );
+    h3dSetNodeParamI( _cam, H3DCamera::ViewportHeightI, height );
+
+    // Set virtual camera parameters
+    h3dSetupCameraView( _cam, _fov, (float)width / height, _nearPlane, _farPlane );
+    h3dResizePipelineBuffers( _deferredPipeRes, width, height );
+    h3dResizePipelineBuffers( _forwardPipeRes, width, height );
+    h3dResizePipelineBuffers( _hdrPipeRes, width, height );
+}
+
+
 bool SampleApplication::init()
 {
     this->release();
@@ -517,6 +518,7 @@ bool SampleApplication::init()
 
 	// Set listeners
     glfwSetWindowCloseCallback( _winHandle, windowCloseListener );
+    glfwSetWindowSizeCallback( _winHandle, windowResizeListener );
 	glfwSetKeyCallback( _winHandle, keyPressListener );
 	glfwSetCursorPosCallback( _winHandle, mouseMoveListener );
     
@@ -548,8 +550,8 @@ bool SampleApplication::init()
 	    return false;
     }
 
-    // Resize window
-    this->resize( _winWidth, _winHeight );
+    // Resize viewport
+    this->resizeViewport( _winWidth, _winHeight );
 
     h3dutDumpMessages();
 	return true;
@@ -579,6 +581,28 @@ void SampleApplication::windowCloseListener(  GLFWwindow* win )
     
     if( app )
         app->_running = false;
+}
+
+
+void SampleApplication::windowResizeListener(  GLFWwindow* win, int width, int height )
+{
+    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
+
+    if( app )
+    {
+        // Avoid registering resize due to
+        // window decoration adjustment in
+        // fullscreen mode.
+        if (!app->_winFullScreen)
+        {
+            app->_prev_winWidth = app->_winWidth;
+            app->_prev_winHeight = app->_winHeight;
+            app->_winWidth = width;
+            app->_winHeight = height;
+        }
+
+        app->resizeViewport( width, height );
+    }
 }
 
 

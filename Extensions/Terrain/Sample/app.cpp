@@ -25,6 +25,7 @@ TerrainSample::TerrainSample( int argc, char** argv ) :
     SampleApplication( argc, argv )
 {
     _winTitle = "Terrain - Horde3D Sample";
+    _farPlane = 2000.0f;
     _x = 512; _y = 120; _z = 512;
     _rx = 0; _ry = 225;
 }
@@ -58,7 +59,7 @@ bool TerrainSample::initResources()
 
 	// Set sun direction for ambient pass
 	H3DRes matRes = h3dFindResource( H3DResTypes::Material, "terrains/terrain1/terrain1.material.xml" );
-	h3dSetMaterialUniform( matRes, "sunDir", 1, -1, 0, 0 );
+    h3dSetMaterialUniform( matRes, "sunDir", 1, -1, 0, 0 );
 
 	return true;
 }

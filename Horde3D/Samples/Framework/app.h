@@ -40,8 +40,7 @@ public:
     int run( int width = 1024, int height = 576, bool fullscreen = false, bool show_cursor = false );
 	void requestClosing();
 	
-	void setTitle( const char* title );
-	void resize( int width, int height );
+    void setTitle( const char* title );
 	void toggleFullScreen();
 	void showCursor( bool show );
 	
@@ -59,6 +58,8 @@ protected:
     virtual void keyStateHandler();
     virtual void mouseMoveHandler();
 
+    void resizeViewport( int width, int height );
+
     static float degToRad( float f ) { return f * H3D_DEG2RAD; }
 
 private:
@@ -67,6 +68,7 @@ private:
 	
 	// GLFW listeners.
     static void windowCloseListener(  GLFWwindow* win );
+    static void windowResizeListener(  GLFWwindow* win, int width, int height );
     static void keyPressListener( GLFWwindow* win, int key, int scancode, int action, int mods );
     static void mouseMoveListener( GLFWwindow* win, double x, double y );
 
@@ -85,6 +87,7 @@ protected:
     bool         _keys[GLFW_KEY_LAST], _prevKeys[GLFW_KEY_LAST];
     float        _mx, _my, _prev_mx, _prev_my;
 
+    float        _fov, _nearPlane, _farPlane;
 	float        _x, _y, _z, _rx, _ry;  // Viewer position and orientation
 	float        _velocity;  // Velocity for movement
 	float        _curFPS;
