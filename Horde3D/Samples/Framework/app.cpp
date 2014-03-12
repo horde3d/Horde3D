@@ -84,7 +84,7 @@ SampleApplication::SampleApplication( int argc, char** argv, int benchmark_lengt
     _fov(45.0f), _nearPlane(0.1f), _farPlane(1000.0f),
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
-    _velocity(0.05f),
+    _velocity(0.5f),
     _curFPS(H3D_FPS_REFERENCE),
     _statMode(0), _freezeMode(0),
     _debugViewMode(false), _wireframeMode(false),
@@ -406,7 +406,7 @@ void SampleApplication::keyStateHandler()
 	// --------------
     if( _freezeMode != 2 || _benchmark )
 	{
-        float curVel = _velocity / H3D_FPS_REFERENCE * _curFPS;
+        float curVel = _velocity / _curFPS * H3D_FPS_REFERENCE;
 		
         if( this->isKeyDown(GLFW_KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
 		
