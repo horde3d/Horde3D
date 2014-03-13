@@ -21,8 +21,10 @@
 #include <GLFW/glfw3.h>
 #include <string>
 
+#define H3D_RAD2DEG 57.324840764f
+#define H3D_DEG2RAD  0.017453292f
+#define H3D_FPS_REFERENCE 60.0f
 #define H3D_DEFAULT_SAMPLE_BENCHMARK_LENGTH 600
-#define H3D_DEG2RAD 0.017453292f
 
 
 class SampleApplication

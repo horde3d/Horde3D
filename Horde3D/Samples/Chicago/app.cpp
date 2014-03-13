@@ -65,7 +65,7 @@ bool ChicagoSample::initResources()
 
     // Add environment
 	H3DNode env = h3dAddNodes( H3DRootNode, envRes );
-	h3dSetNodeTransform( env, 0, 0, 0, 0, 0, 0, 0.23f, 0.23f, 0.23f );
+    h3dSetNodeTransform( env, 0, 0, 0, 0, 0, 0, 0.23f, 0.23f, 0.23f );
 
     // Add skybox
 	H3DNode sky = h3dAddNodes( H3DRootNode, skyBoxRes );

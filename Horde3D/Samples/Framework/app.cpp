@@ -25,8 +25,6 @@
 #include <math.h>
 #include <iomanip>
 
-#define H3D_FPS_REFERENCE 60.0f
-
 using namespace std;
 
 
