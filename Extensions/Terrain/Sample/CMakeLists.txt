@@ -2,7 +2,7 @@ include_directories(../Bindings/C++)
 include_directories(../../../Horde3D/Bindings/C++)
 
 add_executable(Terrain WIN32 MACOSX_BUNDLE
-    ../../../Horde3D/Samples/Framework/app.cpp
+    ../../../Horde3D/Samples/Framework/sampleapp.cpp
 	app.cpp
 	main.cpp
 )

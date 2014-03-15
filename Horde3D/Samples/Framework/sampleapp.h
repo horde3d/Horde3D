@@ -14,8 +14,8 @@
 //
 // *************************************************************************************************
 
-#ifndef _framework_app_H_
-#define _framework_app_H_
+#ifndef _sample_app_H_
+#define _sample_app_H_
 
 #include "Horde3D.h"
 #include <GLFW/glfw3.h>
@@ -174,7 +174,7 @@ private:
     bool         _showHelpPanel;
 };
 
-#endif // _framework_app_H_
+#endif // _sample_app_H_
 
 
 

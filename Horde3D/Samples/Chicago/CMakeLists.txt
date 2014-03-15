@@ -1,5 +1,5 @@
 add_executable(Chicago WIN32 MACOSX_BUNDLE
-    ../Framework/app.cpp
+    ../Framework/sampleapp.cpp
 	app.cpp
 	crowd.cpp
 	main.cpp

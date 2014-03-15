@@ -17,7 +17,7 @@
 #ifndef _app_H_
 #define _app_H_
 
-#include "../../../Horde3D/Samples/Framework/app.h"
+#include "../../../Horde3D/Samples/Framework/sampleapp.h"
 
 
 class TerrainSample : public SampleApplication

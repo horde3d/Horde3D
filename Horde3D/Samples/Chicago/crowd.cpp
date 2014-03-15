@@ -15,7 +15,7 @@
 // *************************************************************************************************
 
 #include "crowd.h"
-#include "../Framework/app.h"
+#include "../Framework/sampleapp.h"
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>

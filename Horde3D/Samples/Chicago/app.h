@@ -17,7 +17,7 @@
 #ifndef _app_H_
 #define _app_H_
 
-#include "../Framework/app.h"
+#include "../Framework/sampleapp.h"
 
 class CrowdSim;
 

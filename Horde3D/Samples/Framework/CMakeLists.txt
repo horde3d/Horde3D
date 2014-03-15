@@ -1,1 +1,1 @@
-add_library(SampleFramework OBJECT app.cpp)
+add_library(SampleFramework OBJECT sampleapp.cpp)

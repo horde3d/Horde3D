@@ -1,5 +1,5 @@
 add_executable(Knight WIN32 MACOSX_BUNDLE
-    ../Framework/app.cpp
+    ../Framework/sampleapp.cpp
     app.cpp
     main.cpp
 )
