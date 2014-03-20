@@ -31,7 +31,10 @@ KnightSample::KnightSample( int argc, char** argv ) :
 {
     _x = 5; _y = 3; _z = 19;
     _rx = 7; _ry = 15;
-    _helpRows = 11;
+    _helpRows += 1;
+    
+    // Default to HDR pipeline
+    _curPipeline = 2;
 }
 
 
@@ -57,7 +60,7 @@ bool KnightSample::initResources()
 	H3DRes particleSysRes = h3dAddResource( H3DResTypes::SceneGraph, "particles/particleSys1/particleSys1.scene.xml", 0 );
 
     // Help info
-    _helpLabels[10] = "1/2:"; _helpValues[10] = "Animation blending";
+    _helpLabels[_helpRows-1] = "1/2:"; _helpValues[_helpRows-1] = "Animation blending";
 
 	// 2. Load resources
 
@@ -70,7 +73,7 @@ bool KnightSample::initResources()
 	// 3. Add scene nodes
 	
 	// Add camera
-	_cam = h3dAddCameraNode( H3DRootNode, "Camera", _hdrPipeRes );
+	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 	//h3dSetNodeParamI( _cam, H3DCamera::OccCullingI, 1 );
 
     // Add environment
@@ -159,6 +162,6 @@ void KnightSample::update()
 		// Display weight
 		_text.str( "" );
 		_text << fixed << setprecision( 2 ) << "Weight: " << _weight;
-        h3dutShowText( _text.str().c_str(), 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dutShowText( _text.str().c_str(), 0.175f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 }

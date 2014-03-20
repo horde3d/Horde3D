@@ -57,6 +57,7 @@ public:
     const char *getResourcePath() const { return _resourcePath.c_str(); }
     const char *getTitle() const { return _winTitle.c_str(); }
     void getSize( int &width, int &height ) const;
+    H3DRes getPipelineRes() { return _pipelineRes[_curPipeline]; }
     float getFOV() const { return _fov; }
     float getNearPlane() const { return _nearPlane; }
     float getFarPlane() const { return _farPlane; }
@@ -97,6 +98,8 @@ public:
     void setTitle( const char* title );
     void setHelpPanel( int num_rows, char** column1, char** column2 = 0);
 	void toggleFullScreen();
+    void setPipeline( int pipline );
+    void setSampleCount( int sampleCount );
     void enableDebugViewMode( bool enabled );
     void enableWireframeMode( bool enabled );
     void showCursor( bool visible );
@@ -144,8 +147,9 @@ protected:
     const char** _helpValues;
 
     // Engine objects
-    H3DRes       _fontMatRes, _panelMatRes;
-    H3DRes       _logoMatRes, _forwardPipeRes, _deferredPipeRes, _hdrPipeRes;
+    int          _curPipeline;
+    H3DRes       _pipelineRes[3];
+    H3DRes       _fontMatRes, _panelMatRes, _logoMatRes;
     H3DNode      _cam;
 
 private:
@@ -160,6 +164,7 @@ private:
     GLFWwindow*  _winHandle;
 	std::string  _winTitle;
     int          _initWinWidth, _initWinHeight;
+    int          _winSampleCount, _sampleCount;
     bool         _winFullScreen;
     float        _prevMx, _prevMy;
     bool         _winShowCursor;

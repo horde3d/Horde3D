@@ -60,7 +60,7 @@ bool ChicagoSample::initResources()
     // 3. Add scene nodes
 
 	// Add camera
-	_cam = h3dAddCameraNode( H3DRootNode, "Camera", _forwardPipeRes );
+	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 	//h3dSetNodeParamI( _cam, H3DCamera::OccCullingI, 1 );
 
     // Add environment
