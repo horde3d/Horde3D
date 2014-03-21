@@ -56,8 +56,7 @@ public:
 
     const char *getResourcePath() const { return _resourcePath.c_str(); }
     const char *getTitle() const { return _winTitle.c_str(); }
-	int getWidth() const { return _winWidth; }
-    int getHeight() const { return _winHeight; }
+    void getSize( int &width, int &height ) const;
     float getFOV() const { return _fov; }
     float getNearPlane() const { return _nearPlane; }
     float getFarPlane() const { return _farPlane; }
@@ -121,7 +120,7 @@ protected:
     virtual void keyEventHandler( int key, int scancode, int action, int mods );
     virtual void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 
-    void resizeViewport( int width, int height );
+    void resizeViewport();
 
 private:
 	bool init();
@@ -150,6 +149,7 @@ protected:
     H3DNode      _cam;
 
 private:
+	bool         _initialized;
 	bool         _running;
     std::string  _resourcePath;
     bool         _benchmark;
@@ -159,8 +159,7 @@ private:
 
     GLFWwindow*  _winHandle;
 	std::string  _winTitle;
-    int          _prevWinWidth, _winWidth;
-    int          _prevWinHeight, _winHeight;
+    int          _initWinWidth, _initWinHeight;
     bool         _winFullScreen;
     float        _prevMx, _prevMy;
     bool         _winShowCursor;
