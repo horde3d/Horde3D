@@ -80,6 +80,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _velocity(0.1f),
 	_helpRows(10), _helpLabels(0), _helpValues(0),
     _cam(0),
+    _initialized(false),
     _running(false),
     _resourcePath( extractResourcePath( argv[0] ) ),
     _benchmark( checkForBenchmarkOption( argc, argv ) ),
@@ -87,8 +88,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _curFPS(H3D_FPS_REFERENCE),
     _winHandle(0),
     _winTitle(title),
-    _prevWinWidth(0), _winWidth(width),
-    _prevWinHeight(0), _winHeight(height),
+    _initWinWidth(width), _initWinHeight(height),
     _winFullScreen(fullscreen),
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
@@ -110,6 +110,16 @@ SampleApplication::~SampleApplication()
 }
 
 
+void SampleApplication::getSize( int &width, int &height ) const
+{
+    if ( _winHandle ) {
+        glfwGetWindowSize( _winHandle, &width, &height );
+    } else {
+        width = -1; height = -1;
+    }
+}
+
+
 void SampleApplication::setTitle( const char* title )
 {
     glfwSetWindowTitle( _winHandle, title );
@@ -120,36 +130,15 @@ void SampleApplication::setTitle( const char* title )
 
 void SampleApplication::toggleFullScreen()
 {
-    release();
+    if( !_winFullScreen )
+        getSize( _initWinWidth, _initWinHeight );
 
     // Toggle fullscreen mode
     _winFullScreen = !_winFullScreen;
-
-    if( _winFullScreen )
-    {
-        const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
-        _prevWinWidth = _winWidth;
-        _prevWinHeight = _winHeight;
-        _winWidth = mode->width;
-        _winHeight = mode->height;
-    }
-    else
-    {
-        int width = _winWidth;
-        int height = _winHeight;
-        _winWidth = _prevWinWidth;
-        _winHeight = _prevWinHeight;
-        _prevWinWidth = width;
-        _prevWinHeight = height;
-    }
-
-    if( !init() )
-    {
-        release();
-        exit( -1 );
-    }
-
-    _t0 = glfwGetTime();
+    
+    // Force to recreate window on the next frame
+    // (this cannot be done in the event handler)
+    _initialized = false;
 }
 
 
@@ -201,21 +190,26 @@ void SampleApplication::setFreezeMode( int mode )
 
 int SampleApplication::run()
 {
-    if( !init() )
-	{
-		glfwTerminate();	
-		return -1;
-	}
 	
 	int frames = 0;
     float fps = H3D_FPS_REFERENCE;
-	_t0 = glfwGetTime();
 	
 	_running = true;
 
 	// Game loop
 	while( _running )
-	{	
+	{
+        if ( !_initialized )
+        {
+            if( !init() )
+            {
+                glfwTerminate();
+                return -1;
+            }
+            _initialized = true;
+            _t0 = glfwGetTime();
+        }
+        
         // 1. Calc FPS
 		++frames;
         if( !_benchmark && frames >= 3 )
@@ -517,8 +511,11 @@ void SampleApplication::mouseMoveHandler( float x, float y, float prev_x, float 
 }
 
 
-void SampleApplication::resizeViewport( int width, int height )
+void SampleApplication::resizeViewport()
 {
+    int width, height;
+    getSize( width, height );
+
     // Resize viewport
     h3dSetNodeParamI( _cam, H3DCamera::ViewportXI, 0 );
     h3dSetNodeParamI( _cam, H3DCamera::ViewportYI, 0 );
@@ -545,7 +542,12 @@ bool SampleApplication::init()
     glfwWindowHint(GLFW_DEPTH_BITS, 24);
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
 
-    _winHandle = glfwCreateWindow( _winWidth, _winHeight, _winTitle.c_str(), _winFullScreen ? glfwGetPrimaryMonitor() : NULL, NULL );
+    if ( _winFullScreen ) {
+        const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
+        _winHandle = glfwCreateWindow( mode->width, mode->height, _winTitle.c_str(), glfwGetPrimaryMonitor(), NULL );
+    } else {
+        _winHandle = glfwCreateWindow( _initWinWidth, _initWinHeight, _winTitle.c_str(), NULL, NULL );
+    }
 	
     if( _winHandle == NULL )
 	{
@@ -604,8 +606,8 @@ bool SampleApplication::init()
 	    return false;
     }
 
-    // Resize viewport
-    resizeViewport( _winWidth, _winHeight );
+    // Setup camera and resize buffers
+    resizeViewport();
 
     h3dutDumpMessages();
 	return true;
@@ -643,20 +645,7 @@ void SampleApplication::windowResizeListener(  GLFWwindow* win, int width, int h
     SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
 
     if( app )
-    {
-        // Avoid registering resize due to
-        // window decoration adjustment in
-        // fullscreen mode.
-        if (!app->_winFullScreen)
-        {
-            app->_prevWinWidth = app->_winWidth;
-            app->_prevWinHeight = app->_winHeight;
-            app->_winWidth = width;
-            app->_winHeight = height;
-        }
-
-        app->resizeViewport( width, height );
-    }
+        app->resizeViewport();
 }
 
 
