@@ -79,6 +79,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _rx(-10), _ry(60),
     _velocity(0.1f),
 	_helpRows(10), _helpLabels(0), _helpValues(0),
+    _curPipeline(0),
     _cam(0),
     _initialized(false),
     _running(false),
@@ -89,6 +90,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _winHandle(0),
     _winTitle(title),
     _initWinWidth(width), _initWinHeight(height),
+    _winSampleCount(0), _sampleCount(0),
     _winFullScreen(fullscreen),
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
@@ -138,6 +140,38 @@ void SampleApplication::toggleFullScreen()
     
     // Force to recreate window on the next frame
     // (this cannot be done in the event handler)
+    _initialized = false;
+}
+
+
+void SampleApplication::setPipeline( int pipline )
+{
+    _curPipeline = pipline;
+
+    int newWinSampleCount = _curPipeline == 0 ? _sampleCount : 0;
+    if ( _winSampleCount == newWinSampleCount )
+    {
+        // Sample count of the default FBO doesn't change, just adjust the pipeline
+        h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _pipelineRes[_curPipeline] );
+    }
+    else
+    {
+        // Otherwise, re-create the window
+        _winSampleCount = newWinSampleCount;
+        _initialized = false;
+    }
+}
+
+void SampleApplication::setSampleCount( int sampleCount )
+{
+    if ( sampleCount < 0 || sampleCount > 32 || sampleCount == _sampleCount )
+        return;
+
+    // Only forward pipeline requires default framebuffer with multisampling
+    _winSampleCount = _curPipeline == 0 ? sampleCount : 0;
+    _sampleCount = sampleCount;
+    
+    // Force to recreate window on the next frame
     _initialized = false;
 }
 
@@ -275,9 +309,9 @@ bool SampleApplication::initResources()
     // 1. Add resources
 	
 	// Pipelines
-	_forwardPipeRes = h3dAddResource( H3DResTypes::Pipeline, "pipelines/forward.pipeline.xml", 0 );
-	_deferredPipeRes = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.xml", 0 );
-    _hdrPipeRes = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
+	_pipelineRes[0] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/forward.pipeline.xml", 0 );
+	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.xml", 0 );
+    _pipelineRes[2] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
 	
 	// Overlays
 	_fontMatRes = h3dAddResource( H3DResTypes::Material, "overlays/font.material.xml", 0 );
@@ -293,11 +327,13 @@ bool SampleApplication::initResources()
     if ( _helpRows > 2 ) { _helpLabels[2] = "F3:"; _helpValues[2] = "Pipeline (...)"; }
     if ( _helpRows > 3 ) { _helpLabels[3] = "F4:"; _helpValues[3] = "Debug (ON/OFF)"; }
     if ( _helpRows > 4 ) { _helpLabels[4] = "F5:"; _helpValues[4] = "Wireframe (ON/OFF)"; }
-    if ( _helpRows > 5 ) { _helpLabels[5] = "F11:"; _helpValues[5] = "Fullscreen (ON/OFF)"; }
-    if ( _helpRows > 6 ) { _helpLabels[6] = "Esc:"; _helpValues[6] = "Exit"; }
-    if ( _helpRows > 7 ) { _helpLabels[7] = "Space:"; _helpValues[7] = "Freeze (...)"; }
-    if ( _helpRows > 8 ) { _helpLabels[8] = "W/A/S/D:"; _helpValues[8] = "Movement"; }
-    if ( _helpRows > 9 ) { _helpLabels[9] = "LShift:"; _helpValues[9] = "Turbo"; }
+    if ( _helpRows > 5 ) { _helpLabels[5] = "F6:"; _helpValues[5] = "MSAA: decrease samples"; }
+    if ( _helpRows > 6 ) { _helpLabels[6] = "F7:"; _helpValues[6] = "MSAA: increase samples"; }
+    if ( _helpRows > 7 ) { _helpLabels[7] = "F11:"; _helpValues[7] = "Fullscreen (ON/OFF)"; }
+    if ( _helpRows > 8 ) { _helpLabels[8] = "Esc:"; _helpValues[8] = "Exit"; }
+    if ( _helpRows > 9 ) { _helpLabels[9] = "Space:"; _helpValues[9] = "Freeze (...)"; }
+    if ( _helpRows > 10 ) { _helpLabels[10] = "W/A/S/D:"; _helpValues[10] = "Movement"; }
+    if ( _helpRows > 11 ) { _helpLabels[11] = "LShift:"; _helpValues[11] = "Turbo"; }
 	
 	// 2. Load resources
 
@@ -377,15 +413,22 @@ void SampleApplication::render()
 	if( _statMode > 0 )
     {
         std::string piperes_name = "Pipeline: forward";
-        int current_piperes = h3dGetNodeParamI( _cam, H3DCamera::PipeResI );
 
-        if( current_piperes == _deferredPipeRes )
+        if( _curPipeline == 1 )
             piperes_name = "Pipeline: deferred";
 
-        else if( current_piperes == _hdrPipeRes )
+        else if( _curPipeline == 2 )
             piperes_name = "Pipeline: HDR";
 
         h3dutShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
+        
+        char* buf = new char[64];
+        if ( _sampleCount == 0 ) {
+            strcpy(buf, "MSAA: off");
+        } else {
+            sprintf( buf, "MSAA: %d", _sampleCount );
+        }
+        h3dutShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 
     const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
@@ -460,16 +503,7 @@ void SampleApplication::keyEventHandler( int key, int scancode, int action, int 
 
     case GLFW_KEY_F3:
     {
-        int current_piperes = h3dGetNodeParamI( _cam, H3DCamera::PipeResI );
-
-        if( current_piperes == _forwardPipeRes )
-            h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _deferredPipeRes );
-
-        else if( current_piperes == _deferredPipeRes )
-            h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _hdrPipeRes );
-
-        else
-            h3dSetNodeParamI( _cam, H3DCamera::PipeResI, _forwardPipeRes );
+        setPipeline( (_curPipeline + 1) % 3 );
     }
     break;
 
@@ -482,6 +516,18 @@ void SampleApplication::keyEventHandler( int key, int scancode, int action, int 
     case GLFW_KEY_F5:
     {
         enableWireframeMode( !_wireframeMode );
+    }
+    break;
+            
+    case GLFW_KEY_F6:
+    {
+        setSampleCount( _sampleCount > 2 ? _sampleCount / 2 : 0 );
+    }
+    break;
+
+    case GLFW_KEY_F7:
+    {
+        setSampleCount( _sampleCount ? _sampleCount * 2 : 2 );
     }
     break;
 
@@ -524,9 +570,9 @@ void SampleApplication::resizeViewport()
 
     // Set virtual camera parameters
     h3dSetupCameraView( _cam, _fov, (float)width / height, _nearPlane, _farPlane );
-    h3dResizePipelineBuffers( _deferredPipeRes, width, height );
-    h3dResizePipelineBuffers( _forwardPipeRes, width, height );
-    h3dResizePipelineBuffers( _hdrPipeRes, width, height );
+    h3dResizePipelineBuffers( _pipelineRes[0], width, height );
+    h3dResizePipelineBuffers( _pipelineRes[1], width, height );
+    h3dResizePipelineBuffers( _pipelineRes[2], width, height );
 }
 
 
@@ -535,12 +581,12 @@ bool SampleApplication::init()
     release();
     
     // Create OpenGL window
-    glfwWindowHint(GLFW_RED_BITS, 8);
-    glfwWindowHint(GLFW_GREEN_BITS, 8);
-    glfwWindowHint(GLFW_BLUE_BITS, 8);
-    glfwWindowHint(GLFW_ALPHA_BITS, 8);
-    glfwWindowHint(GLFW_DEPTH_BITS, 24);
-    glfwWindowHint(GLFW_STENCIL_BITS, 8);
+    glfwWindowHint( GLFW_RED_BITS, 8 );
+    glfwWindowHint( GLFW_GREEN_BITS, 8 );
+    glfwWindowHint( GLFW_BLUE_BITS, 8 );
+    glfwWindowHint( GLFW_ALPHA_BITS, 8 );
+    glfwWindowHint( GLFW_DEPTH_BITS, 24 );
+    glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
 
     if ( _winFullScreen ) {
         const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
@@ -596,6 +642,7 @@ bool SampleApplication::init()
 	h3dSetOption( H3DOptions::MaxAnisotropy, 4 );
 	h3dSetOption( H3DOptions::ShadowMapSize, 2048 );
     h3dSetOption( H3DOptions::FastAnimation, 1 );
+    h3dSetOption( H3DOptions::SampleCount, _sampleCount );
 
 	// Init resources
     if( !initResources() )

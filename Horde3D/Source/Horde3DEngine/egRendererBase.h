@@ -588,6 +588,7 @@ protected:
 	uint32        _textureMem, _bufferMem;
 
 	int                            _defaultFBO;
+    bool                           _defaultFBOMultisampled;
 	uint32                         _numVertexLayouts;
 	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
 	RDIObjects< RDIBuffer >        _buffers;

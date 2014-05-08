@@ -50,7 +50,7 @@ bool TerrainSample::initResources()
     // 3. Add scene nodes
 
 	// Add camera
-    _cam = h3dAddCameraNode( H3DRootNode, "Camera", _forwardPipeRes );
+    _cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 
     // Add terrain
     H3DNode terrain = h3dAddNodes( H3DRootNode, terrainRes );
