@@ -586,7 +586,6 @@ bool SampleApplication::init()
     glfwWindowHint( GLFW_BLUE_BITS, 8 );
     glfwWindowHint( GLFW_ALPHA_BITS, 8 );
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
-    glfwWindowHint( GLFW_STENCIL_BITS, 8 );
     glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
 
     if ( _winFullScreen ) {
