@@ -61,9 +61,9 @@ In order to build the samples you need [GLFW](http://www.glfw.org/download.html)
 
 By default, if not present on the system, a default version will be automatically downloaded, built and linked for you.
 
-You could force this behavior using `HORDE3D_FORCE_DOWNLOAD_GLFW` flag with CMake:
+You could force this behavior using `HORDE3D_FORCE_DOWNLOAD_GLFW` flag with CMake (from your build directory):
 
-     cmake -DHORDE3D_FORCE_DOWNLOAD_GLFW=ON .
+     cmake -DHORDE3D_FORCE_DOWNLOAD_GLFW=ON ..
      
 On **Debian/Ubuntu** platforms, you also need to install the following packages:
 
