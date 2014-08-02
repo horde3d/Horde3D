@@ -167,6 +167,7 @@ UpgradeLog*.htm
 App_Data/*.mdf
 App_Data/*.ldf
 
+
 #############
 ## Windows detritus
 #############
@@ -216,6 +217,7 @@ pip-log.txt
 #Mr Developer
 .mr.developer.cfg
 
+
 #################
 ## Windows
 #################
@@ -236,8 +238,8 @@ pip-log.txt
 [Bb]uild*
 Horde3D-[Bb]uild*
 
+
 #################
 # Binaries path
 ################
 Binaries/*
-
