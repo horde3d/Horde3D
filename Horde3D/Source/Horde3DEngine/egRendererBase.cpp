@@ -153,10 +153,7 @@ RenderDevice::RenderDevice()
 	_curVertLayout = _newVertLayout = 0;
 	_curIndexBuf = _newIndexBuf = 0;
 	_defaultFBO = 0;
-<<<<<<< HEAD
     _defaultFBOMultisampled = false;
-=======
->>>>>>> master
 	_indexFormat = (uint32)IDXFMT_16;
 	_pendingMask = 0;
 }
