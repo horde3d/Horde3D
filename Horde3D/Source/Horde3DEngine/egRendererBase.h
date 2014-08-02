@@ -589,6 +589,7 @@ protected:
 
 	int                            _defaultFBO;
     bool                           _defaultFBOMultisampled;
+
 	uint32                         _numVertexLayouts;
 	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
 	RDIObjects< RDIBuffer >        _buffers;

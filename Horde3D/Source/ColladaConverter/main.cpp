@@ -124,6 +124,7 @@ void printHelp()
 	log( "-dest path        existing destination path where output is written" );
 	log( "-noGeoOpt         disable geometry optimization" );
 	log( "-overwriteMats    force update of existing materials" );
+	log( "-addModelName     adds model name before material name" );
 	log( "-lodDist1 dist    distance for LOD1" );
 	log( "-lodDist2 dist    distance for LOD2" );
 	log( "-lodDist3 dist    distance for LOD3" );
@@ -149,9 +150,10 @@ int main( int argc, char **argv )
 	vector< string > assetList;
 	string input = argv[1], basePath = "./", outPath = "./";
 	AssetTypes::List assetType = AssetTypes::Model;
-	bool geoOpt = true, overwriteMats = false;
+	bool geoOpt = true, overwriteMats = false, addModelName = false;
 	float lodDists[4] = { 10, 20, 40, 80 };
-	
+	string modelName = "";	
+
 	// Make sure that first argument ist not an option
 	if( argv[1][0] == '-' )
 	{
@@ -197,6 +199,10 @@ int main( int argc, char **argv )
 			else if( _stricmp( arg.c_str(), "-lodDist4" ) == 0 ) index = 3;
 			
 			lodDists[index] = (float)atof( argv[++i] );
+		}
+		else if( _stricmp( arg.c_str(), "-addModelName" ) == 0 )
+		{
+			addModelName = true;
 		}
 		else
 		{
@@ -252,6 +258,10 @@ int main( int argc, char **argv )
 		{
 			string sourcePath = basePath + assetList[i];
 			string assetName = extractFileName( assetList[i], false );
+
+			if( addModelName )	
+				modelName = assetName + "_";
+
 			string assetPath = cleanPath( extractFilePath( assetList[i] ) );
 			if( !assetPath.empty() ) assetPath += "/";
 			
@@ -268,8 +278,8 @@ int main( int argc, char **argv )
 				converter->convertModel( geoOpt );
 				
 				createDirectories( outPath, assetPath );
-				converter->writeModel( assetPath, assetName );
-				converter->writeMaterials( assetPath, overwriteMats );
+				converter->writeModel( assetPath, assetName, modelName );
+				converter->writeMaterials( assetPath, modelName, overwriteMats );
 
 				delete converter; converter = 0x0;
 			}

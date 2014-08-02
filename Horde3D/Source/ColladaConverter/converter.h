@@ -147,8 +147,8 @@ public:
 	
 	bool convertModel( bool optimize );
 	
-	bool writeModel( const std::string &assetPath, const std::string &assetName );
-	bool writeMaterials( const std::string &assetPath, bool replace );
+	bool writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName );
+	bool writeMaterials( const std::string &assetPath, const std::string &modelName, bool replace );
 	bool hasAnimation();
 	bool writeAnimation( const std::string &assetPath, const std::string &assetName );
 
@@ -163,8 +163,8 @@ private:
 	void processJoints();
 	void processMeshes( bool optimize );
 	bool writeGeometry( const std::string &assetPath, const std::string &assetName );
-	void writeSGNode( const std::string &assetPath, SceneNode *node, unsigned int depth, std::ofstream &outf );
-	bool writeSceneGraph( const std::string &assetPath, const std::string &assetName );
+	void writeSGNode( const std::string &assetPath, const std::string &modelName, SceneNode *node, unsigned int depth, std::ofstream &outf );
+	bool writeSceneGraph( const std::string &assetPath, const std::string &assetName, const std::string &modelName );
 	void writeAnimFrames( SceneNode &node, FILE *f );
 
 private:
