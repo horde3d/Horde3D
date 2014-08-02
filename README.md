@@ -1,5 +1,4 @@
 # Horde3D
-=======
 
 Horde3D is a 3D rendering engine written in C++ with an effort being as lightweight and conceptually clean as possible.
 
