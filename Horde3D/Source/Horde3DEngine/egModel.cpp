@@ -149,12 +149,6 @@ void ModelNode::setAnimParams( int stage, float time, float weight )
 }
 
 
-void ModelNode::getAnimParams( int stage, float *time, float *weight )
-{
-	_animCtrl.getAnimParams( stage, time, weight );
-}
-
-
 bool ModelNode::setMorphParam( const string &targetName, float weight )
 {
 	if( _geometryRes == 0x0 || _morphers.empty() ) return false;
