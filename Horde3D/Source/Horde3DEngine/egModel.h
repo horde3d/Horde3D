@@ -94,7 +94,6 @@ public:
 	                     const std::string &startNode, bool additive );
 	void getAnimParams( int stage, float *time, float *weight );
 	void setAnimParams( int stage, float time, float weight );
-	void getAnimParams( int stage, float *time, float *weight );
 	bool setMorphParam( const std::string &targetName, float weight );
 
 	int getParamI( int param );
