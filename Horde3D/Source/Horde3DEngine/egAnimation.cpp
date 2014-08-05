@@ -13,7 +13,6 @@
 #include "egAnimation.h"
 #include "egModules.h"
 #include "egCom.h"
-#include <cstring>
 #include <algorithm>
 
 #include "utDebug.h"
@@ -98,14 +97,14 @@ bool AnimationResource::load( const char *data, int size )
 		return raiseError( "Invalid animation resource" );
 	
 	uint32 version;
-	memcpy( &version, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	endianless_memcpy( &version, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 	if( version != 2 && version != 3 )
 		return raiseError( "Unsupported version of animation resource" );
 	
 	// Load animation data
 	uint32 numEntities;
-	memcpy( &numEntities, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
-	memcpy( &_numFrames, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	endianless_memcpy( &numEntities, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	endianless_memcpy( &_numFrames, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 
 	_entities.resize( numEntities );
 
@@ -128,18 +127,18 @@ bool AnimationResource::load( const char *data, int size )
 		{
 			Frame &frame = entity.frames[j];
 
-			memcpy( &frame.rotQuat.x, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.rotQuat.y, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.rotQuat.z, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.rotQuat.w, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.rotQuat.x, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.rotQuat.y, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.rotQuat.z, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.rotQuat.w, pData, sizeof( float ) ); pData += sizeof( float );
 
-			memcpy( &frame.transVec.x, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.transVec.y, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.transVec.z, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.transVec.x, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.transVec.y, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.transVec.z, pData, sizeof( float ) ); pData += sizeof( float );
 
-			memcpy( &frame.scaleVec.x, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.scaleVec.y, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.scaleVec.z, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.scaleVec.x, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.scaleVec.y, pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &frame.scaleVec.z, pData, sizeof( float ) ); pData += sizeof( float );
 
 			// Prebake transformation matrix for fast animation path
 			frame.bakedTransMat.scale( frame.scaleVec.x, frame.scaleVec.y, frame.scaleVec.z );
