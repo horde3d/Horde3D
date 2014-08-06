@@ -484,7 +484,7 @@ bool GeometryResource::load( const char *data, int size )
 }
 
 
-int GeometryResource::getElemCount( int elem )
+int GeometryResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -496,7 +496,7 @@ int GeometryResource::getElemCount( int elem )
 }
 
 
-int GeometryResource::getElemParamI( int elem, int elemIdx, int param )
+int GeometryResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{

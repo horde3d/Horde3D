@@ -147,25 +147,25 @@ public:
 	
 	bool convertModel( bool optimize );
 	
-	bool writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName );
-	bool writeMaterials( const std::string &assetPath, const std::string &modelName, bool replace );
-	bool hasAnimation();
-	bool writeAnimation( const std::string &assetPath, const std::string &assetName );
+	bool writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName ) const;
+	bool writeMaterials( const std::string &assetPath, const std::string &modelName, bool replace ) const;
+	bool hasAnimation() const;
+	bool writeAnimation( const std::string &assetPath, const std::string &assetName ) const;
 
 private:
 	Matrix4f getNodeTransform( DaeNode &node, unsigned int frame );
 	SceneNode *findNode( const char *name, SceneNode *ignoredNode );
 	void checkNodeName( SceneNode *node );
-	bool validateInstance( const std::string &instanceId );
+	bool validateInstance( const std::string &instanceId ) const;
 	SceneNode *processNode( DaeNode &node, SceneNode *parentNode,
 	                        Matrix4f transAccum, std::vector< Matrix4f > animTransAccum );
-	void calcTangentSpaceBasis( std::vector< Vertex > &vertices );
+	void calcTangentSpaceBasis( std::vector< Vertex > &vertices ) const;
 	void processJoints();
 	void processMeshes( bool optimize );
-	bool writeGeometry( const std::string &assetPath, const std::string &assetName );
-	void writeSGNode( const std::string &assetPath, const std::string &modelName, SceneNode *node, unsigned int depth, std::ofstream &outf );
-	bool writeSceneGraph( const std::string &assetPath, const std::string &assetName, const std::string &modelName );
-	void writeAnimFrames( SceneNode &node, FILE *f );
+	bool writeGeometry( const std::string &assetPath, const std::string &assetName ) const;
+	void writeSGNode( const std::string &assetPath, const std::string &modelName, SceneNode *node, unsigned int depth, std::ofstream &outf ) const;
+	bool writeSceneGraph( const std::string &assetPath, const std::string &assetName, const std::string &modelName ) const;
+	void writeAnimFrames( SceneNode &node, FILE *f ) const;
 
 private:
 	ColladaDocument              &_daeDoc;

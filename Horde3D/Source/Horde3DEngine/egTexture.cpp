@@ -217,7 +217,7 @@ bool TextureResource::raiseError( const string &msg )
 }
 
 
-bool TextureResource::checkDDS( const char *data, int size )
+bool TextureResource::checkDDS( const char *data, int size ) const
 {
 	return size > 128 && *((uint32 *)data) == FOURCC( 'D', 'D', 'S', ' ' );
 }
@@ -453,7 +453,7 @@ bool TextureResource::load( const char *data, int size )
 }
 
 
-int TextureResource::getMipCount()
+int TextureResource::getMipCount() const
 {
 	if( _hasMipMaps )
 		return ftoi_t( log( (float)std::max( _width, _height ) ) / log( 2.0f ) );
@@ -462,7 +462,7 @@ int TextureResource::getMipCount()
 }
 
 
-int TextureResource::getElemCount( int elem )
+int TextureResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -476,7 +476,7 @@ int TextureResource::getElemCount( int elem )
 }
 
 
-int TextureResource::getElemParamI( int elem, int elemIdx, int param )
+int TextureResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{

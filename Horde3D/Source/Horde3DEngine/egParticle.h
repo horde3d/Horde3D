@@ -76,8 +76,8 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	int getElemCount( int elem );
-	float getElemParamF( int elem, int elemIdx, int param, int compIdx );
+	int getElemCount( int elem ) const;
+	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
 
 private:
@@ -159,13 +159,13 @@ public:
 
 	~EmitterNode();
 
-	int getParamI( int param );
+	int getParamI( int param ) const;
 	void setParamI( int param, int value );
-	float getParamF( int param, int compIdx );
+	float getParamF( int param, int compIdx ) const;
 	void setParamF( int param, int compIdx, float value );
 
 	void update( float timeDelta );
-	bool hasFinished();
+	bool hasFinished() const;
 
 protected:
 	EmitterNode( const EmitterNodeTpl &emitterTpl );

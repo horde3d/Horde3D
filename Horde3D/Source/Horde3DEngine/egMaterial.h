@@ -82,14 +82,14 @@ public:
 	void release();
 	bool load( const char *data, int size );
 	bool setUniform( const std::string &name, float a, float b, float c, float d );
-	bool isOfClass( const std::string &theClass );
+	bool isOfClass( const std::string &theClass ) const;
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void setElemParamI( int elem, int elemIdx, int param, int value );
-	float getElemParamF( int elem, int elemIdx, int param, int compIdx );
+	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
-	const char *getElemParamStr( int elem, int elemIdx, int param );
+	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 	void setElemParamStr( int elem, int elemIdx, int param, const char *value );
 
 private:

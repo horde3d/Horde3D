@@ -33,7 +33,7 @@ struct DaeLibNodes
 	}
 
 
-	DaeNode *findNode( const std::string &id )
+	DaeNode *findNode( const std::string &id ) const
 	{
 		if( id == "" ) return 0x0;
 		

@@ -207,7 +207,7 @@ struct DaeNode
 	}
 
 	
-	Matrix4f assembleMatrix()
+	Matrix4f assembleMatrix() const
 	{
 		Matrix4f mat;
 		
@@ -237,7 +237,7 @@ struct DaeNode
 	}
 
 
-	Matrix4f assembleAnimMatrix()
+	Matrix4f assembleAnimMatrix() const
 	{
 		Matrix4f mat;
 		
@@ -311,7 +311,7 @@ struct DaeLibVisScenes
 	}
 	
 
-	DaeVisualScene *findVisualScene( const std::string &id )
+	DaeVisualScene *findVisualScene( const std::string &id ) const
 	{
 		if( id == "" ) return 0x0;
 		
