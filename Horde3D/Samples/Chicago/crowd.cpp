@@ -26,7 +26,7 @@ void CrowdSim::chooseDestination( Particle &p )
 {
 	// Choose random destination within a circle
     float ang = (rand() % 360) * H3D_DEG2RAD;
-    float rad = (rand() % 20);
+    float rad = (float) (rand() % 20);
 
 	p.dx = sinf( ang ) * rad;
 	p.dz = cosf( ang ) * rad;

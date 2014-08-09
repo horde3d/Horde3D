@@ -444,8 +444,8 @@ void SampleApplication::render()
     const float ovLogo[] = {
         ww-0.29f, 0.87f, 0, 1,
         ww-0.29f, 0.97f, 0, 0,
-        ww-0.03, 0.97f, 1, 0,
-        ww-0.03, 0.87f, 1, 1
+        ww-0.03f, 0.97f, 1, 0,
+        ww-0.03f, 0.87f, 1, 1
     };
     h3dShowOverlays( ovLogo, 4, 1.f, 1.f, 1.f, 1.f, _logoMatRes, 0 );
 	
@@ -642,7 +642,7 @@ bool SampleApplication::init()
 	h3dSetOption( H3DOptions::MaxAnisotropy, 4 );
 	h3dSetOption( H3DOptions::ShadowMapSize, 2048 );
     h3dSetOption( H3DOptions::FastAnimation, 1 );
-    h3dSetOption( H3DOptions::SampleCount, _sampleCount );
+    h3dSetOption( H3DOptions::SampleCount, (float) _sampleCount );
 
 	// Init resources
     if( !initResources() )
@@ -713,10 +713,10 @@ void SampleApplication::mouseMoveListener( GLFWwindow* win, double x, double y )
     
     if ( app && app->_running )
     {
-        app->mouseMoveHandler( x, y, app->_prevMx, app->_prevMy );
+        app->mouseMoveHandler( (float) x, (float) y, app->_prevMx, app->_prevMy );
 
-        app->_prevMx = x;
-        app->_prevMy = y;
+        app->_prevMx = (float) x;
+        app->_prevMy = (float) y;
 	}
 }
 
@@ -727,6 +727,6 @@ void SampleApplication::mouseEnterListener( GLFWwindow* win, int entered )
 
     if ( app && app->_running )
     {
-        app->_winHasCursor = entered;
+        app->_winHasCursor = entered != 0;
     }
 }

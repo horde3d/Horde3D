@@ -61,7 +61,7 @@ public:
     float getFOV() const { return _fov; }
     float getNearPlane() const { return _nearPlane; }
     float getFarPlane() const { return _farPlane; }
-    float getStartTime() const { return _t0; }
+    float getStartTime() const { return (float) _t0; }
     float getFPS() const { return _curFPS; }
 
     int checkFlag(ApplicationFlag flag) const {
