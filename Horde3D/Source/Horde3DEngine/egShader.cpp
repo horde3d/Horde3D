@@ -181,7 +181,7 @@ bool CodeResource::load( const char *data, int size )
 }
 
 
-bool CodeResource::hasDependency( CodeResource *codeRes )
+bool CodeResource::hasDependency( CodeResource *codeRes ) const
 {
 	// Note: There is no check for cycles
 	
@@ -210,7 +210,7 @@ bool CodeResource::tryLinking( uint32 *flagMask )
 }
 
 
-std::string CodeResource::assembleCode()
+std::string CodeResource::assembleCode() const
 {
 	if( !_loaded ) return "";
 
@@ -267,9 +267,9 @@ public:
 	
 	Tokenizer( const char *data ) : _p( data ), _line( 1 ) { getNextToken(); }
 
-	int getLine() { return _line; }
+	int getLine() const { return _line; }
 
-	bool hasToken() { return _token[0] != '\0'; }
+	bool hasToken() const { return _token[0] != '\0'; }
 	
 	bool checkToken( const char *token, bool peekOnly = false )
 	{
@@ -994,7 +994,7 @@ uint32 ShaderResource::calcCombMask( const std::vector< std::string > &flags )
 }
 
 
-int ShaderResource::getElemCount( int elem )
+int ShaderResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -1010,7 +1010,7 @@ int ShaderResource::getElemCount( int elem )
 }
 
 
-int ShaderResource::getElemParamI( int elem, int elemIdx, int param )
+int ShaderResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -1039,7 +1039,7 @@ int ShaderResource::getElemParamI( int elem, int elemIdx, int param )
 }
 
 
-float ShaderResource::getElemParamF( int elem, int elemIdx, int param, int compIdx )
+float ShaderResource::getElemParamF( int elem, int elemIdx, int param, int compIdx ) const
 {
 	switch( elem )
 	{
@@ -1085,7 +1085,7 @@ void ShaderResource::setElemParamF( int elem, int elemIdx, int param, int compId
 }
 
 
-const char *ShaderResource::getElemParamStr( int elem, int elemIdx, int param )
+const char *ShaderResource::getElemParamStr( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{

@@ -276,7 +276,7 @@ void PipelineResource::addRenderTarget( const string &id, bool depthBuf, uint32 
 }
 
 
-RenderTarget *PipelineResource::findRenderTarget( const string &id )
+RenderTarget *PipelineResource::findRenderTarget( const string &id ) const
 {
 	if( id == "" ) return 0x0;
 	
@@ -284,7 +284,7 @@ RenderTarget *PipelineResource::findRenderTarget( const string &id )
 	{
 		if( _renderTargets[i].id == id )
 		{
-			return &_renderTargets[i];
+			return (RenderTarget*)&_renderTargets[i];
 		}
 	}
 	
@@ -415,7 +415,7 @@ void PipelineResource::resize( uint32 width, uint32 height )
 }
 
 
-int PipelineResource::getElemCount( int elem )
+int PipelineResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -427,7 +427,7 @@ int PipelineResource::getElemCount( int elem )
 }
 
 
-int PipelineResource::getElemParamI( int elem, int elemIdx, int param )
+int PipelineResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -468,7 +468,7 @@ void PipelineResource::setElemParamI( int elem, int elemIdx, int param, int valu
 }
 
 
-const char *PipelineResource::getElemParamStr( int elem, int elemIdx, int param )
+const char *PipelineResource::getElemParamStr( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -489,7 +489,7 @@ const char *PipelineResource::getElemParamStr( int elem, int elemIdx, int param 
 
 
 bool PipelineResource::getRenderTargetData( const string &target, int bufIndex, int *width, int *height,
-                                            int *compCount, void *dataBuffer, int bufferSize )
+                                            int *compCount, void *dataBuffer, int bufferSize ) const
 {
 	uint32 rbObj = 0;
 	if( target != "" )

@@ -56,7 +56,7 @@ class EngineConfig
 public:
 	EngineConfig();
 
-	float getOption( EngineOptions::List param );
+	float getOption( EngineOptions::List param ) const;
 	bool setOption( EngineOptions::List param, float value );
 
 public:
@@ -110,7 +110,7 @@ public:
 
 	bool getMessage( LogMessage &msg );
 
-	uint32 getMaxNumMessages() { return _maxNumMessages; }
+	uint32 getMaxNumMessages() const { return _maxNumMessages; }
 	void setMaxNumMessages( uint32 maxNumMessages ) { _maxNumMessages = maxNumMessages; }
 	
 protected:
@@ -160,7 +160,7 @@ public:
 	float getStat( int param, bool reset );
 	void incStat( int param, float value );
 	Timer *getTimer( int param );
-	GPUTimer *getGPUTimer( int param );
+	GPUTimer *getGPUTimer( int param ) const;
 
 protected:
 	uint32    _statTriCount;

@@ -347,7 +347,7 @@ void RenderDevice::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, 
 // Textures
 // =================================================================================================
 
-uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, int height, int depth )
+uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const
 {
 	switch( format )
 	{
@@ -790,13 +790,13 @@ void RenderDevice::setShaderSampler( int loc, uint32 texUnit )
 }
 
 
-const char *RenderDevice::getDefaultVSCode()
+const char *RenderDevice::getDefaultVSCode() const
 {
 	return defaultShaderVS;
 }
 
 
-const char *RenderDevice::getDefaultFSCode()
+const char *RenderDevice::getDefaultFSCode() const
 {
 	return defaultShaderFS;
 }
@@ -1153,7 +1153,7 @@ void RenderDevice::endQuery( uint32 /*queryObj*/ )
 }
 
 
-uint32 RenderDevice::getQueryResult( uint32 queryObj )
+uint32 RenderDevice::getQueryResult( uint32 queryObj ) const
 {
 	uint32 samples = 0;
 	glGetQueryObjectuiv( queryObj, GL_QUERY_RESULT, &samples );

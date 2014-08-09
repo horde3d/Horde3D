@@ -24,12 +24,6 @@ namespace Horde3DTerrain {
 
 using namespace Horde3D;
 
-
-const char *ExtTerrain::getName()
-{
-	return "Terrain";
-}
-
 bool ExtTerrain::init()
 {
 	Modules::sceneMan().registerNodeType( SNT_TerrainNode, "Terrain",

@@ -93,7 +93,7 @@ void Resource::unload()
 }
 
 
-int Resource::findElem( int elem, int param, const char *value )
+int Resource::findElem( int elem, int param, const char *value ) const
 {
 	for( int i = 0, s = getElemCount( elem ); i < s; ++i )
 	{
@@ -105,13 +105,13 @@ int Resource::findElem( int elem, int param, const char *value )
 }
 
 
-int Resource::getElemCount( int elem )
+int Resource::getElemCount( int elem ) const
 {
 	Modules::setError( "Invalid elem in h3dGetResElemCount" );
 	return 0;
 }
 
-int Resource::getElemParamI( int elem, int elemIdx, int param )
+int Resource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	Modules::setError( "Invalid elem or param in h3dGetResParamI" );
 	return Math::MinInt32;
@@ -122,7 +122,7 @@ void Resource::setElemParamI( int elem, int elemIdx, int param, int value )
 	Modules::setError( "Invalid elem or param in h3dSetResParamI" );
 }
 
-float Resource::getElemParamF( int elem, int elemIdx, int param, int compIdx )
+float Resource::getElemParamF( int elem, int elemIdx, int param, int compIdx ) const
 {
 	Modules::setError( "Invalid elem, param or component in h3dGetResParamF" );
 	return Math::NaN;
@@ -133,7 +133,7 @@ void Resource::setElemParamF( int elem, int elemIdx, int param, int compIdx, flo
 	Modules::setError( "Invalid elem, param or component in h3dSetResParamF" );
 }
 
-const char *Resource::getElemParamStr( int elem, int elemIdx, int param )
+const char *Resource::getElemParamStr( int elem, int elemIdx, int param ) const
 {
 	Modules::setError( "Invalid elem or param in h3dGetResParamStr" );
 	return "";
@@ -197,7 +197,7 @@ void ResourceManager::registerResType( int resType, const string &typeString, Re
 }
 
 
-Resource *ResourceManager::findResource( int type, const string &name )
+Resource *ResourceManager::findResource( int type, const string &name ) const
 {
 	for( size_t i = 0, s = _resources.size(); i < s; ++i )
 	{
@@ -211,7 +211,7 @@ Resource *ResourceManager::findResource( int type, const string &name )
 }
 
 
-Resource *ResourceManager::getNextResource( int type, ResHandle start )
+Resource *ResourceManager::getNextResource( int type, ResHandle start ) const
 {
 	for( size_t i = start, s = _resources.size(); i < s; ++i )
 	{
@@ -358,7 +358,7 @@ void ResourceManager::clear()
 }
 
 
-ResHandle ResourceManager::queryUnloadedResource( int index )
+ResHandle ResourceManager::queryUnloadedResource( int index ) const
 {
 	int j = 0;
 

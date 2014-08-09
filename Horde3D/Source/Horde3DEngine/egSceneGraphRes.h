@@ -41,7 +41,7 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	SceneNodeTpl *getRootNode() { return _rootNode; }
+	SceneNodeTpl *getRootNode() const { return _rootNode; }
 
 private:
 	void parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &nodeTpl );

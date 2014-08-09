@@ -44,7 +44,7 @@ EngineConfig::EngineConfig()
 }
 
 
-float EngineConfig::getOption( EngineOptions::List param )
+float EngineConfig::getOption( EngineOptions::List param ) const
 {
 	switch( param )
 	{
@@ -388,7 +388,7 @@ Timer *StatManager::getTimer( int param )
 }
 
 
-GPUTimer *StatManager::getGPUTimer( int param )
+GPUTimer *StatManager::getGPUTimer( int param ) const
 {
 	switch( param )
 	{

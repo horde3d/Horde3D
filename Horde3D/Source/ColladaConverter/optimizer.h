@@ -36,7 +36,7 @@ struct OptFace
 {
 	OptVertex  *verts[3];
 	
-	float getScore()  { return verts[0]->score + verts[1]->score + verts[2]->score; }
+	float getScore() const { return verts[0]->score + verts[1]->score + verts[2]->score; }
 };
 
 class MeshOptimizer

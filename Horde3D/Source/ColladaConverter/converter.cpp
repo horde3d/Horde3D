@@ -48,6 +48,35 @@ Converter::~Converter()
 }
 
 
+bool Converter::convertModel( bool optimize )
+{
+	if( _daeDoc.scene == 0x0 ) return true;		// Nothing to convert
+	
+	_frameCount = _daeDoc.libAnimations.maxFrameCount;
+
+	// Output default pose if no animation is available
+	if( _frameCount == 0 ) _frameCount = 1;
+
+	vector< Matrix4f > animTransAccum;
+	animTransAccum.resize( _frameCount );
+	
+	// Process all nodes
+	for( unsigned int i = 0; i < _daeDoc.scene->nodes.size(); ++i )
+	{
+		_nodes.push_back( processNode( *_daeDoc.scene->nodes[i], 0x0, Matrix4f(), animTransAccum ) );
+	}
+
+	if( _animNotSampled )
+		log( "Warning: Animation is not sampled and will probably be wrong" );
+
+	// Process joints and meshes
+	processJoints();
+	processMeshes( optimize );
+	
+	return true;
+}
+
+
 Matrix4f Converter::getNodeTransform( DaeNode &node, unsigned int frame )
 {
 	// Note: Function assumes sampled animation data
@@ -149,7 +178,7 @@ void Converter::checkNodeName( SceneNode *node )
 }
 
 
-bool Converter::validateInstance( const std::string &instanceId )
+bool Converter::validateInstance( const std::string &instanceId ) const
 {
 	string id = instanceId;
 	
@@ -327,7 +356,7 @@ SceneNode *Converter::processNode( DaeNode &node, SceneNode *parentNode,
 }
 
 
-void Converter::calcTangentSpaceBasis( vector<Vertex> &verts )
+void Converter::calcTangentSpaceBasis( vector<Vertex> &verts ) const
 {
 	for( unsigned int i = 0; i < verts.size(); ++i )
 	{
@@ -841,36 +870,7 @@ void Converter::processMeshes( bool optimize )
 }
 
 
-bool Converter::convertModel( bool optimize )
-{
-	if( _daeDoc.scene == 0x0 ) return true;		// Nothing to convert
-	
-	_frameCount = _daeDoc.libAnimations.maxFrameCount;
-
-	// Output default pose if no animation is available
-	if( _frameCount == 0 ) _frameCount = 1;
-
-	vector< Matrix4f > animTransAccum;
-	animTransAccum.resize( _frameCount );
-	
-	// Process all nodes
-	for( unsigned int i = 0; i < _daeDoc.scene->nodes.size(); ++i )
-	{
-		_nodes.push_back( processNode( *_daeDoc.scene->nodes[i], 0x0, Matrix4f(), animTransAccum ) );
-	}
-
-	if( _animNotSampled )
-		log( "Warning: Animation is not sampled and will probably be wrong" );
-
-	// Process joints and meshes
-	processJoints();
-	processMeshes( optimize );
-	
-	return true;
-}
-
-
-bool Converter::writeGeometry( const string &assetPath, const string &assetName )
+bool Converter::writeGeometry( const string &assetPath, const string &assetName ) const
 {
 	string fileName = _outPath + assetPath + assetName + ".geo";
 	FILE *f = fopen( fileName.c_str(), "wb" );
@@ -1094,7 +1094,7 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 }
 
 
-void Converter::writeSGNode( const string &assetPath, const string &modelName, SceneNode *node, unsigned int depth, ofstream &outf )
+void Converter::writeSGNode( const string &assetPath, const string &modelName, SceneNode *node, unsigned int depth, ofstream &outf ) const
 {
 	Vec3f trans, rot, scale;
 	node->matRel.decompose( trans, rot, scale );
@@ -1184,7 +1184,7 @@ void Converter::writeSGNode( const string &assetPath, const string &modelName, S
 }
 
 
-bool Converter::writeSceneGraph( const string &assetPath, const string &assetName, const string &modelName )
+bool Converter::writeSceneGraph( const string &assetPath, const string &assetName, const string &modelName ) const
 {
 	ofstream outf;
 	outf.open( (_outPath + assetPath + assetName + ".scene.xml").c_str(), ios::out );
@@ -1234,7 +1234,7 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 }
 
 
-bool Converter::writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName )
+bool Converter::writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName ) const
 {
 	bool result = true;
 	
@@ -1245,7 +1245,7 @@ bool Converter::writeModel( const std::string &assetPath, const std::string &ass
 }
 
 
-bool Converter::writeMaterials( const string &assetPath, const string &modelName, bool replace )
+bool Converter::writeMaterials( const string &assetPath, const string &modelName, bool replace ) const
 {
 	for( unsigned int i = 0; i < _daeDoc.libMaterials.materials.size(); ++i )
 	{
@@ -1328,13 +1328,13 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 }
 
 
-bool Converter::hasAnimation()
+bool Converter::hasAnimation() const
 {
 	return _frameCount > 0;
 }
 
 
-void Converter::writeAnimFrames( SceneNode &node, FILE *f )
+void Converter::writeAnimFrames( SceneNode &node, FILE *f ) const
 {
 	fwrite( &node.name, 256, 1, f );
 		
@@ -1376,7 +1376,7 @@ void Converter::writeAnimFrames( SceneNode &node, FILE *f )
 }
 
 
-bool Converter::writeAnimation( const string &assetPath, const string &assetName )
+bool Converter::writeAnimation( const string &assetPath, const string &assetName ) const
 {
 	FILE *f = fopen( (_outPath + assetPath + assetName + ".anim").c_str(), "wb" );
 	if( f == 0x0 )

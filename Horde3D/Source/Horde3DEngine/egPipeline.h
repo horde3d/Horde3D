@@ -78,12 +78,12 @@ public:
 		{ if( copy._string ) setString( copy._string->c_str() ); }
 	~PipeCmdParam() { delete _string; }
 	
-	float getFloat() { return _basic.f; }
-	int getInt() { return _basic.i; }
-	bool getBool() { return _basic.b; }
-	void *getPtr() { return _basic.ptr; }
-	const char *getString() { return _string ? _string->c_str() : 0x0; }
-	Resource *getResource() { return _resource.getPtr(); }
+	float getFloat() const { return _basic.f; }
+	int getInt() const { return _basic.i; }
+	bool getBool() const { return _basic.b; }
+	void *getPtr() const { return _basic.ptr; }
+	const char *getString() const { return _string ? _string->c_str() : 0x0; }
+	Resource *getResource() const { return _resource.getPtr(); }
 
 	void setFloat( float f ) { _basic.f = f; }
 	void setInt( int i ) { _basic.i = i; }
@@ -165,13 +165,13 @@ public:
 	bool load( const char *data, int size );
 	void resize( uint32 width, uint32 height );
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void setElemParamI( int elem, int elemIdx, int param, int value );
-	const char *getElemParamStr( int elem, int elemIdx, int param );
+	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 
 	bool getRenderTargetData( const std::string &target, int bufIndex, int *width, int *height,
-	                          int *compCount, void *dataBuffer, int bufferSize );
+	                          int *compCount, void *dataBuffer, int bufferSize ) const;
 
 private:
 	bool raiseError( const std::string &msg, int line = -1 );
@@ -180,7 +180,7 @@ private:
 	void addRenderTarget( const std::string &id, bool depthBuffer, uint32 numBuffers,
 	                      TextureFormats::List format, uint32 samples,
 	                      uint32 width, uint32 height, float scale );
-	RenderTarget *findRenderTarget( const std::string &id );
+	RenderTarget *findRenderTarget( const std::string &id ) const;
 	bool createRenderTargets();
 	void releaseRenderTargets();
 
