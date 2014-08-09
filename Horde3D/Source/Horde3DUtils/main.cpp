@@ -126,7 +126,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 	int res = h3dQueryUnloadedResource( 0 );
 	
 	char *dataBuf = 0;
-	int bufSize = 0;
+	size_t bufSize = 0;
 
 	while( res != 0 )
 	{
@@ -146,7 +146,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 		{
 			// Find size of resource file
 			inf.seekg( 0, ios::end );
-			int fileSize = inf.tellg();
+			size_t fileSize = (size_t) inf.tellg();
 			if( bufSize < fileSize  )
 			{
 				delete[] dataBuf;				
