@@ -5,7 +5,7 @@
 //
 // This file is intended for use as a code example, and may be used, modified, 
 // or distributed in source or object code form, without restriction. 
-// This sample is not covered by the EPL.
+// This sample is not covered by the EPL or LGPL.
 //
 // The code and information is provided "as-is" without warranty of any kind, 
 // either expressed or implied.

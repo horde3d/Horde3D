@@ -8,8 +8,8 @@
 // Copyright (C) 2006-2011 Nicolas Schulz
 //
 //
-// This sample source file is not covered by the EPL as the rest of the SDK
-// and may be used without any restrictions. However, the EPL's disclaimer of
+// This sample source file is not covered by the EPL or LGPL as the rest of the SDK
+// and may be used without any restrictions. However, the EPL's or LGPL's disclaimer of
 // warranty and liability shall be in effect for this file.
 //
 // *************************************************************************************************

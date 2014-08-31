@@ -81,6 +81,6 @@ Here are some quick links to help you get started:
 
 ## License
 
-Horde3D is licensed under the [Eclipse Public License v1.0 (EPL)](http://www.eclipse.org/legal/epl-v10.html).
+Horde3D is dual-licensed under the [Eclipse Public License v1.0 (EPL)](http://www.eclipse.org/legal/epl-v10.html) and the [GNU Lesser General Public License v3 (LGPLv3)](http://www.gnu.org/licenses/lgpl.html) as per the licensee's choosing.
 
-The EPL is a quite liberal license and has fewer restrictions than the popular LGPL. Basically it allows you to use Horde3D in free and commercial projects as long as you contribute improvements like bug fixes, optimizations and code refactorings back to the community. The EPL allows static linking and is not viral; hence it does not affect any other modules of your application.
+The EPL is a quite liberal license and has fewer restrictions than the popular LGPL. Basically it allows you to use Horde3D in free and commercial projects as long as you contribute improvements like bug fixes, optimizations and code refactorings back to the community. The EPL allows static linking and is not viral; hence it does not affect any other modules of your application. However, the EPL is not compatible with the GPL license. The LGPL license is offered as an alternative for developers that wish to link to GPL software.
