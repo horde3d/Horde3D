@@ -370,7 +370,7 @@ bool GeometryResource::load( const char *data, int size )
 		MorphTarget &mt = _morphTargets[i];
 		char name[256];
 		
-		endianless_memcpy( name, pData, 256 ); pData += 256;
+		memcpy( name, pData, 256 ); pData += 256;
 		mt.name = name;
 		
 		// Read vertex indices
