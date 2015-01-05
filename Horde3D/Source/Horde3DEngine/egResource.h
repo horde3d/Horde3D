@@ -84,7 +84,7 @@ public:
 
 	int getType() const { return _type; }
 	int getFlags() const { return _flags; }
-	const std::string getName() const { return _name; }
+	const std::string &getName() const { return _name; }
 	ResHandle getHandle() const { return _handle; }
 	bool isLoaded() const { return _loaded; }
 	void addRef() { ++_refCount; }
