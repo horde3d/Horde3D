@@ -17,47 +17,26 @@
 #ifndef _app_H_
 #define _app_H_
 
-#include "Horde3D.h"
+#include "../Framework/sampleapp.h"
 #include <sstream>
-#include <string>
 
 
-class Application
+class KnightSample : public SampleApplication
 {
 public:
-	Application( const std::string &appPath );
+	KnightSample( int argc, char** argv );
 	
-	void setKeyState( int key, bool state ) { _prevKeys[key] = _keys[key]; _keys[key] = state; }
+protected:
+    bool initResources();
 
-	const char *getTitle() { return "Knight - Horde3D Sample"; }
-	
-	bool init();
-	void mainLoop( float fps );
-	void release();
-	void resize( int width, int height );
-
-	void keyStateHandler();
-	void mouseMoveEvent( float dX, float dY );
+    void update();
 
 private:
-	bool               _keys[320], _prevKeys[320];
-	
-	float              _x, _y, _z, _rx, _ry;  // Viewer position and orientation
-	float              _velocity;  // Velocity for movement
-	float              _curFPS;
 	std::stringstream  _text;
-
-	int                _statMode;
-	int                _freezeMode;
-	bool               _debugViewMode, _wireframeMode;
 	float              _animTime, _weight;
 	
 	// Engine objects
-	H3DRes             _fontMatRes, _panelMatRes;
-	H3DRes             _pipeRes, _logoMatRes, _hdrPipeRes, _forwardPipeRes;
-	H3DNode            _cam, _knight, _particleSys;
-
-	std::string        _contentDir;
+    H3DNode            _knight, _particleSys;
 };
 
 #endif // _app_H_

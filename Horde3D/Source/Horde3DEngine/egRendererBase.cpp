@@ -153,6 +153,7 @@ RenderDevice::RenderDevice()
 	_curVertLayout = _newVertLayout = 0;
 	_curIndexBuf = _newIndexBuf = 0;
 	_defaultFBO = 0;
+    _defaultFBOMultisampled = false;
 	_indexFormat = (uint32)IDXFMT_16;
 	_pendingMask = 0;
 }
@@ -166,6 +167,9 @@ RenderDevice::~RenderDevice()
 void RenderDevice::initStates()
 {
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
+    GLint value;
+    glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
+    _defaultFBOMultisampled = value > 0;
 }
 
 
@@ -343,7 +347,7 @@ void RenderDevice::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, 
 // Textures
 // =================================================================================================
 
-uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, int height, int depth )
+uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const
 {
 	switch( format )
 	{
@@ -786,13 +790,13 @@ void RenderDevice::setShaderSampler( int loc, uint32 texUnit )
 }
 
 
-const char *RenderDevice::getDefaultVSCode()
+const char *RenderDevice::getDefaultVSCode() const
 {
 	return defaultShaderVS;
 }
 
 
-const char *RenderDevice::getDefaultFSCode()
+const char *RenderDevice::getDefaultFSCode() const
 {
 	return defaultShaderFS;
 }
@@ -1030,7 +1034,8 @@ void RenderDevice::setRenderBuffer( uint32 rbObj )
 		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
-		glDisable( GL_MULTISAMPLE );
+        if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
+		else glDisable( GL_MULTISAMPLE );
 	}
 	else
 	{
@@ -1148,7 +1153,7 @@ void RenderDevice::endQuery( uint32 /*queryObj*/ )
 }
 
 
-uint32 RenderDevice::getQueryResult( uint32 queryObj )
+uint32 RenderDevice::getQueryResult( uint32 queryObj ) const
 {
 	uint32 samples = 0;
 	glGetQueryObjectuiv( queryObj, GL_QUERY_RESULT, &samples );

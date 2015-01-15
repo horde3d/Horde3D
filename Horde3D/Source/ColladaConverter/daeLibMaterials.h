@@ -66,7 +66,7 @@ struct DaeLibMaterials
 	}
 
 
-	DaeMaterial *findMaterial( const std::string &id )
+	DaeMaterial *findMaterial( const std::string &id ) const
 	{
 		if( id == "" ) return 0x0;
 		

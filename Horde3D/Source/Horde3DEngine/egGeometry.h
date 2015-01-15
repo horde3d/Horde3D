@@ -96,22 +96,22 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
 	void unmapStream();
 
 	void updateDynamicVertData();
 
-	uint32 getVertCount() { return _vertCount; }
-	char *getIndexData() { return _indexData; }
-	Vec3f *getVertPosData() { return _vertPosData; }
-	VertexDataTan *getVertTanData() { return _vertTanData; }
-	VertexDataStatic *getVertStaticData() { return _vertStaticData; }
-	uint32 getPosVBuf() { return _posVBuf; }
-	uint32 getTanVBuf() { return _tanVBuf; }
-	uint32 getStaticVBuf() { return _staticVBuf; }
-	uint32 getIndexBuf() { return _indexBuf; }
+	uint32 getVertCount() const { return _vertCount; }
+	char *getIndexData() const { return _indexData; }
+	Vec3f *getVertPosData() const { return _vertPosData; }
+	VertexDataTan *getVertTanData() const { return _vertTanData; }
+	VertexDataStatic *getVertStaticData() const { return _vertStaticData; }
+	uint32 getPosVBuf() const { return _posVBuf; }
+	uint32 getTanVBuf() const { return _tanVBuf; }
+	uint32 getStaticVBuf() const { return _staticVBuf; }
+	uint32 getIndexBuf() const { return _indexBuf; }
 	Matrix4f &getInvBindMat( uint32 jointIndex ) { return _joints[jointIndex].invBindMat; }
 
 public:

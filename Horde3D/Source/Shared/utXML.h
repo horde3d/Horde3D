@@ -40,7 +40,7 @@ public:
 	const char *getName() const { return attrib->name(); }
 	const char *getValue() const { return attrib->value(); }
 
-	XMLAttribute getNextAttrib() { return XMLAttribute( attrib->next_attribute( 0x0 ) ); }
+	XMLAttribute getNextAttrib() const { return XMLAttribute( attrib->next_attribute( 0x0 ) ); }
 
 protected:
 	rapidxml::xml_attribute<>  *attrib;
@@ -53,7 +53,7 @@ public:
 	XMLNode() : node( 0x0 ) {}
 	XMLNode( rapidxml::xml_node<> *node ) : node( node ) {}
 
-	rapidxml::xml_node<> *getRapidXMLNode() { return node; }
+	rapidxml::xml_node<> *getRapidXMLNode() const { return node; }
 	
 	bool isEmpty() const { return node == 0x0; }
 	const char *getName() const { return node->name(); }
@@ -61,8 +61,8 @@ public:
 	XMLNode getFirstChild( const char *name = 0x0 ) const { return XMLNode( node->first_node( name ) ); }
 	XMLNode getNextSibling( const char *name = 0x0 ) const { return XMLNode( node->next_sibling( name ) ); }
 
-	XMLAttribute getFirstAttrib() { return XMLAttribute( node->first_attribute( 0x0 ) ); }
-	const char *getAttribute( const char *name, const char *defValue = "" ) const
+	XMLAttribute getFirstAttrib() const { return XMLAttribute( node->first_attribute( 0x0 ) ); }
+	const char *getAttribute ( const char *name, const char *defValue = "" ) const
 	{
 		rapidxml::xml_attribute<> *attrib = node->first_attribute( name );
 		return attrib != 0x0 ? (const char *)attrib->value() : defValue;

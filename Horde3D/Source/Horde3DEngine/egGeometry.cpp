@@ -340,7 +340,7 @@ bool GeometryResource::load( const char *data, int size )
 	memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 
 	_indexCount = count;
-    _16BitIndices = _vertCount<= 65536;
+    _16BitIndices = _vertCount <= 65536;
 	_indexData = new char[count * (_16BitIndices ? 2 : 4)];
 	if( _16BitIndices )
 	{
@@ -484,7 +484,7 @@ bool GeometryResource::load( const char *data, int size )
 }
 
 
-int GeometryResource::getElemCount( int elem )
+int GeometryResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -496,7 +496,7 @@ int GeometryResource::getElemCount( int elem )
 }
 
 
-int GeometryResource::getElemParamI( int elem, int elemIdx, int param )
+int GeometryResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{

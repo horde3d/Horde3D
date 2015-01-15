@@ -158,6 +158,11 @@ public:
 	// ------
 	// Access
 	// ------
+	float operator[]( unsigned int index ) const
+	{
+		return *(&x + index);
+	}
+
 	float &operator[]( unsigned int index )
 	{
 		return *(&x + index);

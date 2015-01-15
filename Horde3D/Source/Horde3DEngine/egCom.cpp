@@ -44,7 +44,7 @@ EngineConfig::EngineConfig()
 }
 
 
-float EngineConfig::getOption( EngineOptions::List param )
+float EngineConfig::getOption( EngineOptions::List param ) const
 {
 	switch( param )
 	{
@@ -189,12 +189,17 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 		_messages.push( LogMessage( "Message queue is full", 1, time ) );
 	}
 
-#if defined( PLATFORM_WIN ) && defined( H3D_DEBUGGER_OUTPUT )
-	const TCHAR *headers[6] = { TEXT(""), TEXT("  [h3d-err] "), TEXT("  [h3d-warn] "), TEXT("[h3d] "), TEXT("  [h3d-dbg] "), TEXT("[h3d- ] ")};
-	
-	OutputDebugString( headers[std::min( (uint32)level, (uint32)5 )] );
+#if defined( H3D_DEBUGGER_OUTPUT )
+    const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
+#if defined( PLATFORM_WIN )
+	OutputDebugStringA( headers[std::min( (uint32)level, (uint32)5 )] );
 	OutputDebugStringA( _textBuf );
 	OutputDebugString( TEXT("\r\n") );
+#else
+    fputs( headers[std::min( (uint32)level, (uint32)5 )], stderr );
+    fputs( _textBuf, stderr );
+    fputs( "\n", stderr );
+#endif
 #endif
 }
 
@@ -383,7 +388,7 @@ Timer *StatManager::getTimer( int param )
 }
 
 
-GPUTimer *StatManager::getGPUTimer( int param )
+GPUTimer *StatManager::getGPUTimer( int param ) const
 {
 	switch( param )
 	{

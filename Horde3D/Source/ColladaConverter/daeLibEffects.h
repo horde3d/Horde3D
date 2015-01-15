@@ -163,7 +163,7 @@ struct DaeLibEffects
 	}
 	
 
-	DaeEffect *findEffect( const std::string &id )
+	DaeEffect *findEffect( const std::string &id ) const
 	{
 		if( id == "" ) return 0x0;
 		

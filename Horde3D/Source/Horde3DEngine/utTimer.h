@@ -85,7 +85,7 @@ public:
 
 protected:
 
-	double getTime()
+	double getTime() const
 	{
 	#if defined( PLATFORM_WIN ) || defined( PLATFORM_WIN_CE )
 		// Make sure that time is read from the same CPU

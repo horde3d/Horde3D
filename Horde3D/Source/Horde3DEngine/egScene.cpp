@@ -46,7 +46,7 @@ SceneNode::~SceneNode()
 }
 
 
-void SceneNode::getTransform( Vec3f &trans, Vec3f &rot, Vec3f &scale )
+void SceneNode::getTransform( Vec3f &trans, Vec3f &rot, Vec3f &scale ) const
 {
 	if( _dirty ) Modules::sceneMan().updateNodes();
 	
@@ -117,7 +117,7 @@ void SceneNode::setFlags( int flags, bool recursive )
 }
 
 
-int SceneNode::getParamI( int param )
+int SceneNode::getParamI( int param ) const
 {
 	Modules::setError( "Invalid param in h3dGetNodeParamI" );
 	return Math::MinInt32;
@@ -128,7 +128,7 @@ void SceneNode::setParamI( int param, int value )
 	Modules::setError( "Invalid param in h3dSetNodeParamI" );
 }
 
-float SceneNode::getParamF( int param, int compIdx )
+float SceneNode::getParamF( int param, int compIdx ) const
 {
 	Modules::setError( "Invalid param in h3dGetNodeParamF" );
 	return Math::NaN;
@@ -139,7 +139,7 @@ void SceneNode::setParamF( int param, int compIdx, float value )
 	Modules::setError( "Invalid param in h3dSetNodeParamF" );
 }
 
-const char *SceneNode::getParamStr( int param )
+const char *SceneNode::getParamStr( int param ) const
 {
 	switch( param )
 	{
@@ -169,13 +169,13 @@ void SceneNode::setParamStr( int param, const char *value )
 }
 
 
-uint32 SceneNode::calcLodLevel( const Vec3f &viewPoint )
+uint32 SceneNode::calcLodLevel( const Vec3f &viewPoint ) const
 {
 	return 0;
 }
 
 
-bool SceneNode::canAttach( SceneNode &/*parent*/ )
+bool SceneNode::canAttach( SceneNode &/*parent*/ ) const
 {
 	return true;
 }

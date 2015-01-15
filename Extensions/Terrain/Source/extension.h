@@ -24,7 +24,7 @@ using namespace Horde3D;
 class ExtTerrain: public IExtension
 {
 public:
-	virtual const char *getName();
+	virtual const char *getName() const { return "Terrain"; };
 	virtual bool init();
 	virtual void release();
 };

@@ -64,10 +64,15 @@ namespace Horde3DNET.Utils
         [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
         internal static extern void h3dutShowText(string text, float x, float y, float size,
                                              float colR, float colG, float colB,
-                                             int fontMatRes );
+                                             int fontMatRes);
 
         [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
-        internal static extern void h3dutShowFrameStats(int fontMaterialRes, int panelMaterialRes, int mode);
+        internal static extern void h3dutShowInfoBox(float x, float y, float width, string title,
+                                             int numRows, string[] column1, string[] column2,
+                                             int fontMaterialRes, int panelMaterialRes);
+
+        [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dutShowFrameStats(int fontMaterialRes, int boxMaterialRes, int mode);
 
         [DllImport(UTILS_DLL), SuppressUnmanagedCodeSecurity]
         [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 

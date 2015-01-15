@@ -1,1 +1,0 @@
-@cmake -G "Visual Studio 8 2005" ..

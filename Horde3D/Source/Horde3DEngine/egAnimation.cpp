@@ -158,7 +158,7 @@ bool AnimationResource::load( const char *data, int size )
 }
 
 
-int AnimationResource::getElemCount( int elem )
+int AnimationResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -170,7 +170,7 @@ int AnimationResource::getElemCount( int elem )
 }
 
 
-int AnimationResource::getElemParamI( int elem, int elemIdx, int param )
+int AnimationResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -520,13 +520,13 @@ bool AnimationController::animate()
 }
 
 
-int AnimationController::getAnimCount()
+int AnimationController::getAnimCount() const
 {
     return _activeStages.size();
 }
 
 
-void AnimationController::getAnimParams( int stage, float *time, float *weight )
+void AnimationController::getAnimParams( int stage, float *time, float *weight ) const
 {
     if( (unsigned)stage > _animStages.size() )
     {
@@ -534,7 +534,7 @@ void AnimationController::getAnimParams( int stage, float *time, float *weight )
         return;
     }
 
-    AnimStage &curStage = _animStages[stage];
+    AnimStage curStage = _animStages[stage];
     if( curStage.anim == 0x0 ) return;
 
     if (time)

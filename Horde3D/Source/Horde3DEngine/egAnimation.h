@@ -66,8 +66,8 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
 
 	AnimResEntity *findEntity( uint32 nameId );
 
@@ -95,8 +95,8 @@ class IAnimatableNode
 {
 public:
 	virtual ~IAnimatableNode() {}
-	virtual const std::string &getANName() = 0;
-	virtual IAnimatableNode *getANParent() = 0;
+	virtual const std::string getANName() const = 0;
+	virtual IAnimatableNode *getANParent() const = 0;
 	virtual Matrix4f &getANRelTransRef() = 0;
 };
 
@@ -132,8 +132,8 @@ public:
 	bool setAnimParams( int stage, float time, float weight );
 	bool animate();
 
-    int  getAnimCount();
-    void getAnimParams( int stage, float *time, float *weight );
+    int  getAnimCount() const;
+    void getAnimParams( int stage, float *time, float *weight ) const;
 
 protected:
 	void mapAnimRes( uint32 node, uint32 stage );
