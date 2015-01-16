@@ -243,7 +243,7 @@ namespace Horde3DNET.Utils
                                        int numRows, string[] column1, string[] column2,
                                        int fontMaterialRes, int panelMaterialRes)
         {
-            NativeMethodsUtils.h3dut<param name="x">(x, y, width, title, numRows, column1, column2, fontMaterialRes, panelMaterialRes);
+            NativeMethodsUtils.h3dutShowInfoBox(x, y, width, title, numRows, column1, column2, fontMaterialRes, panelMaterialRes);
         }
 
         /// <summary>
