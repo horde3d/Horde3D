@@ -528,7 +528,7 @@ void TerrainNode::createBlockTree()
 }
 
 
-int TerrainNode::getParamI( int param )
+int TerrainNode::getParamI( int param ) const
 {
 	switch( param )
 	{
@@ -586,7 +586,7 @@ void TerrainNode::setParamI( int param, int value )
 }
 
 
-float TerrainNode::getParamF( int param, int compIdx )
+float TerrainNode::getParamF( int param, int compIdx ) const
 {
 	switch( param )
 	{
