@@ -1980,7 +1980,11 @@ void Renderer::renderDebugView()
 {
 	float color[4] = { 0 };
 	
-	gRDI->setRenderBuffer( 0 );
+	gRDI->_outputBufferIndex = _curCamera->_outputBufferIndex;
+	if( _curCamera->_outputTex != 0x0 )
+		gRDI->setRenderBuffer( _curCamera->_outputTex->getRBObject() );
+	else 
+		gRDI->setRenderBuffer( 0 );
 	setMaterial( 0x0, "" );
 	gRDI->setFillMode( RS_FILL_WIREFRAME );
 
