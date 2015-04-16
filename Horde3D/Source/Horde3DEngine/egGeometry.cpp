@@ -519,10 +519,8 @@ int GeometryResource::getElemParamI( int elem, int elemIdx, int param ) const
 
 void *GeometryResource::mapStream( int elem, int elemIdx, int stream, bool read, bool write )
 {
-	if( read || write )
+	if( (read || write) && mappedWriteStream == -1 )
 	{
-		mappedWriteStream = -1;
-		
 		switch( elem )
 		{
 		case GeometryResData::GeometryElem:
@@ -550,7 +548,7 @@ void *GeometryResource::mapStream( int elem, int elemIdx, int stream, bool read,
 
 void GeometryResource::unmapStream()
 {
-	if( mappedWriteStream )
+	if( mappedWriteStream >= 0 )
 	{
 		switch( mappedWriteStream )
 		{

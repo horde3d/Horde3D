@@ -14,12 +14,19 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
 include(CheckFunctionExists)
 check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
+# To build or not to build examples (removes GLFW dependency)
+option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
+
 # Look for required GLFW library.
-option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
-find_package(GLFW)
-IF(GLFW_FOUND)
-    include_directories(${GLFW_INCLUDE_DIR})
-ENDIF(GLFW_FOUND)
+if(HORDE3D_BUILD_EXAMPLES)
+    option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
+    find_package(GLFW)
+    IF(GLFW_FOUND)
+        include_directories(${GLFW_INCLUDE_DIR})
+    ENDIF(GLFW_FOUND)
+else()
+    message("Not building examples.")
+endif(HORDE3D_BUILD_EXAMPLES)
 
 # Set binaries output folder.
 SET(HORDE3D_OUTPUT_PATH_PREFIX "${PROJECT_BINARY_DIR}/Binaries")
