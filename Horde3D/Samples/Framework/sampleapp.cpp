@@ -422,7 +422,7 @@ void SampleApplication::render()
 
         h3dutShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
         
-        char* buf = new char[64];
+        char buf[64];
         if ( _sampleCount == 0 ) {
             strcpy(buf, "MSAA: off");
         } else {
