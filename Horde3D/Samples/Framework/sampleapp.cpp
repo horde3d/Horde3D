@@ -319,8 +319,8 @@ bool SampleApplication::initResources()
 	_logoMatRes = h3dAddResource( H3DResTypes::Material, "overlays/logo.material.xml", 0 );
 
     // Help info
-    _helpLabels = (const char**)malloc(_helpRows * sizeof(char*));
-    _helpValues = (const char**)malloc(_helpRows * sizeof(char*));
+    _helpLabels = new const char*[_helpRows];
+    _helpValues = new const char*[_helpRows];
 
     if ( _helpRows > 0 ) { _helpLabels[0] = "F1:"; _helpValues[0] = "Help (ON/OFF)"; }
     if ( _helpRows > 1 ) { _helpLabels[1] = "F2:"; _helpValues[1] = "Stats (...)"; }
