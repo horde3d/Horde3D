@@ -13,6 +13,8 @@
 #ifndef _utPlatform_H_
 #define _utPlatform_H_
 
+#include <cstring>
+
 #if defined( _DEBUG )
 	#include <assert.h>
 #endif
@@ -57,7 +59,6 @@ typedef unsigned int uint32;
 typedef long long int64;
 typedef unsigned long long uint64;
 
-
 #if !defined( PLATFORM_WIN ) && !defined( PLATFORM_WIN_CE )
 #	define _stricmp strcasecmp
 #	define _mkdir( name ) mkdir( name, 0755 )
@@ -81,6 +82,34 @@ typedef unsigned long long uint64;
 #   define vsnprintf _vsnprintf
 #endif
 
+// Utils to handle endianness
+const int bsti = 1;  // Byte swap test integer
+#define is_littleendian() ( (*(char*)&bsti) != 0 )
+
+static void endianless( void* src, size_t size )
+{
+    unsigned char* start;
+    unsigned char* end;
+
+    if ( !is_littleendian() )
+    {
+        for ( start = (unsigned char*)src, end = start + size - 1; start < end; ++start, --end )
+        {
+           unsigned char swap = *start;
+           *start = *end;
+           *end = swap;
+        }
+    }
+}
+
+static void* endianless_memcpy( void* dest, const void* src, size_t count )
+{
+    memcpy( dest, src, count );
+
+    endianless( dest, count );
+
+    return dest;
+}
 
 // Runtime assertion
 #if defined( _DEBUG )

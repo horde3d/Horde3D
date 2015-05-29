@@ -16,7 +16,6 @@
 #include "egModules.h"
 #include "egCom.h"
 #include "egRenderer.h"
-#include <cstring>
 
 #include "utDebug.h"
 
@@ -163,12 +162,12 @@ bool GeometryResource::load( const char *data, int size )
 		return raiseError( "Invalid geometry resource" );
 
 	uint32 version;
-	memcpy( &version, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	endianless_memcpy( &version, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 	if( version != 5 ) return raiseError( "Unsupported version of geometry file" );
 
 	// Load joints
 	uint32 count;
-	memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	endianless_memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 
 	if( count > 75 )
 		Modules::log().writeWarning( "Geometry resource '%s': Model has more than 75 joints; this may cause defective behavior", _name.c_str() );
@@ -181,14 +180,14 @@ bool GeometryResource::load( const char *data, int size )
 		// Inverse bind matrix
 		for( uint32 j = 0; j < 16; ++j )
 		{
-			memcpy( &joint.invBindMat.x[j], pData, sizeof( float ) ); pData += sizeof( float );
+			endianless_memcpy( &joint.invBindMat.x[j], pData, sizeof( float ) ); pData += sizeof( float );
 		}
 	}
 	
 	// Load vertex stream data
 	uint32 streamSize;
-	memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );			// Number of streams
-	memcpy( &streamSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );	// Number of vertices
+	endianless_memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );			// Number of streams
+	endianless_memcpy( &streamSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );	// Number of vertices
 
 	_vertCount = streamSize;
 	_vertPosData = new Vec3f[_vertCount];
@@ -207,8 +206,8 @@ bool GeometryResource::load( const char *data, int size )
 		unsigned char uc;
 		short sh;
 		uint32 streamID, streamElemSize;
-		memcpy( &streamID, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
-		memcpy( &streamElemSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+		endianless_memcpy( &streamID, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+		endianless_memcpy( &streamElemSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 		std::string errormsg;
 
 		switch( streamID )
@@ -221,9 +220,9 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
-				memcpy( &_vertPosData[j].x, pData, sizeof( float ) ); pData += sizeof( float );
-				memcpy( &_vertPosData[j].y, pData, sizeof( float ) ); pData += sizeof( float );
-				memcpy( &_vertPosData[j].z, pData, sizeof( float ) ); pData += sizeof( float );
+				endianless_memcpy( &_vertPosData[j].x, pData, sizeof( float ) ); pData += sizeof( float );
+				endianless_memcpy( &_vertPosData[j].y, pData, sizeof( float ) ); pData += sizeof( float );
+				endianless_memcpy( &_vertPosData[j].z, pData, sizeof( float ) ); pData += sizeof( float );
 			}
 			break;
 		case 1:		// Normal
@@ -234,9 +233,9 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].normal.x = sh / 32767.0f;
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].normal.y = sh / 32767.0f;
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].normal.z = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].normal.x = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].normal.y = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].normal.z = sh / 32767.0f;
 			}
 			break;
 		case 2:		// Tangent
@@ -247,9 +246,9 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].tangent.x = sh / 32767.0f;
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].tangent.y = sh / 32767.0f;
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].tangent.z = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].tangent.x = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].tangent.y = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); _vertTanData[j].tangent.z = sh / 32767.0f;
 			}
 			break;
 		case 3:		// Bitangent
@@ -260,9 +259,9 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); bitangents[j].x = sh / 32767.0f;
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); bitangents[j].y = sh / 32767.0f;
-				memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); bitangents[j].z = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); bitangents[j].x = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); bitangents[j].y = sh / 32767.0f;
+				endianless_memcpy( &sh, pData, sizeof( short ) ); pData += sizeof( short ); bitangents[j].z = sh / 32767.0f;
 			}
 			break;
 		case 4:		// Joint indices
@@ -301,8 +300,8 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
-				memcpy( &_vertStaticData[j].u0, pData, sizeof( float ) ); pData += sizeof( float );
-				memcpy( &_vertStaticData[j].v0, pData, sizeof( float ) ); pData += sizeof( float );
+				endianless_memcpy( &_vertStaticData[j].u0, pData, sizeof( float ) ); pData += sizeof( float );
+				endianless_memcpy( &_vertStaticData[j].v0, pData, sizeof( float ) ); pData += sizeof( float );
 			}
 			break;
 		case 7:		// Texture Coord Set 2
@@ -313,8 +312,8 @@ bool GeometryResource::load( const char *data, int size )
 			}
 			for( uint32 j = 0; j < streamSize; ++j )
 			{
-				memcpy( &_vertStaticData[j].u1, pData, sizeof( float ) ); pData += sizeof( float );
-				memcpy( &_vertStaticData[j].v1, pData, sizeof( float ) ); pData += sizeof( float );
+				endianless_memcpy( &_vertStaticData[j].u1, pData, sizeof( float ) ); pData += sizeof( float );
+				endianless_memcpy( &_vertStaticData[j].v1, pData, sizeof( float ) ); pData += sizeof( float );
 			}
 			break;
 		default:
@@ -337,7 +336,7 @@ bool GeometryResource::load( const char *data, int size )
 	delete[] bitangents;
 		
 	// Load triangle indices
-	memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	endianless_memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 
 	_indexCount = count;
     _16BitIndices = _vertCount <= 65536;
@@ -348,7 +347,7 @@ bool GeometryResource::load( const char *data, int size )
 		uint16 *pIndexData = (uint16 *)_indexData;
 		for( uint32 i = 0; i < count; ++i )
 		{
-			memcpy( &index, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+			endianless_memcpy( &index, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 			pIndexData[i] = (uint16)index;
 		}
 	}
@@ -357,13 +356,13 @@ bool GeometryResource::load( const char *data, int size )
 		uint32 *pIndexData = (uint32 *)_indexData;
 		for( uint32 i = 0; i < count; ++i )
 		{
-			memcpy( &pIndexData[i], pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+			endianless_memcpy( &pIndexData[i], pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 		}
 	}
 
 	// Load morph targets
 	uint32 numTargets;
-	memcpy( &numTargets, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	endianless_memcpy( &numTargets, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 
 	_morphTargets.resize( numTargets );
 	for( uint32 i = 0; i < numTargets; ++i )
@@ -376,20 +375,20 @@ bool GeometryResource::load( const char *data, int size )
 		
 		// Read vertex indices
 		uint32 morphStreamSize;
-		memcpy( &morphStreamSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+		endianless_memcpy( &morphStreamSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 		mt.diffs.resize( morphStreamSize );
 		for( uint32 j = 0; j < morphStreamSize; ++j )
 		{
-			memcpy( &mt.diffs[j].vertIndex, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+			endianless_memcpy( &mt.diffs[j].vertIndex, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 		}
 		
 		// Loop over streams
-		memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+		endianless_memcpy( &count, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 		for( uint32 j = 0; j < count; ++j )
 		{
 			uint32 streamID, streamElemSize;
-			memcpy( &streamID, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
-			memcpy( &streamElemSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+			endianless_memcpy( &streamID, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+			endianless_memcpy( &streamElemSize, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
 
 			switch( streamID )
 			{
@@ -397,27 +396,27 @@ bool GeometryResource::load( const char *data, int size )
 				if( streamElemSize != 12 ) return raiseError( "Invalid position morph stream" );
 				for( uint32 k = 0; k < morphStreamSize; ++k )
 				{
-					memcpy( &mt.diffs[k].posDiff.x, pData, sizeof( float ) ); pData += sizeof( float );
-					memcpy( &mt.diffs[k].posDiff.y, pData, sizeof( float ) ); pData += sizeof( float );
-					memcpy( &mt.diffs[k].posDiff.z, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].posDiff.x, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].posDiff.y, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].posDiff.z, pData, sizeof( float ) ); pData += sizeof( float );
 				}
 				break;
 			case 1:		// Normal
 				if( streamElemSize != 12 ) return raiseError( "Invalid normal morph stream" );
 				for( uint32 k = 0; k < morphStreamSize; ++k )
 				{
-					memcpy( &mt.diffs[k].normDiff.x, pData, sizeof( float ) ); pData += sizeof( float );
-					memcpy( &mt.diffs[k].normDiff.y, pData, sizeof( float ) ); pData += sizeof( float );
-					memcpy( &mt.diffs[k].normDiff.z, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].normDiff.x, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].normDiff.y, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].normDiff.z, pData, sizeof( float ) ); pData += sizeof( float );
 				}
 				break;
 			case 2:		// Tangent
 				if( streamElemSize != 12 ) return raiseError( "Invalid tangent morph stream" );
 				for( uint32 k = 0; k < morphStreamSize; ++k )
 				{
-					memcpy( &mt.diffs[k].tanDiff.x, pData, sizeof( float ) ); pData += sizeof( float );
-					memcpy( &mt.diffs[k].tanDiff.y, pData, sizeof( float ) ); pData += sizeof( float );
-					memcpy( &mt.diffs[k].tanDiff.z, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].tanDiff.x, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].tanDiff.y, pData, sizeof( float ) ); pData += sizeof( float );
+					endianless_memcpy( &mt.diffs[k].tanDiff.z, pData, sizeof( float ) ); pData += sizeof( float );
 				}
 				break;
 			case 3:		// Bitangent

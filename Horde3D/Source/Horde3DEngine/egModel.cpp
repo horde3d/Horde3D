@@ -15,7 +15,6 @@
 #include "egModules.h"
 #include "egRenderer.h"
 #include "egCom.h"
-#include <cstring>
 
 #include "utDebug.h"
 
@@ -380,10 +379,12 @@ bool ModelNode::updateGeometry()
 	if( Modules::config().gatherTimeStats ) timer->setEnabled( true );
 	
 	// Reset vertices to base data
-	memcpy( _geometryRes->getVertPosData(), _baseGeoRes->getVertPosData(),
-	        _geometryRes->_vertCount * sizeof( Vec3f ) );
-	memcpy( _geometryRes->getVertTanData(), _baseGeoRes->getVertTanData(),
-	        _geometryRes->_vertCount * sizeof( VertexDataTan ) );
+	endianless_memcpy( _geometryRes->getVertPosData(),
+        _baseGeoRes->getVertPosData(),
+        _geometryRes->_vertCount * sizeof( Vec3f ) );
+	endianless_memcpy( _geometryRes->getVertTanData(),
+        _baseGeoRes->getVertTanData(),
+        _geometryRes->_vertCount * sizeof( VertexDataTan ) );
 
 	Vec3f *posData = _geometryRes->getVertPosData();
 	VertexDataTan *tanData = _geometryRes->getVertTanData();
