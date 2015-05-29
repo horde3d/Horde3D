@@ -64,10 +64,14 @@ By default, if not present on the system, a default version will be automaticall
 You could force this behavior using `HORDE3D_FORCE_DOWNLOAD_GLFW` flag with CMake (from your build directory):
 
      cmake -DHORDE3D_FORCE_DOWNLOAD_GLFW=ON ..
-     
+
 On **Debian/Ubuntu** platforms, you also need to install the following packages:
 
      sudo apt-get install xorg-dev
+
+You could also skip sample building using `HORDE3D_BUILD_EXAMPLES` flag with CMake (from your build directory):
+
+     cmake -DHORDE3D_BUILD_EXAMPLES=OFF ..
 
 ## What's next
 
