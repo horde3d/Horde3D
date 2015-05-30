@@ -594,29 +594,29 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 	// Write Horde flag
     pData = elemcpyd_le((char*)(pData), "H3DG", 4);
 	// Set version to 5 
-	pData = elemset_le<uint32>((uint32*)(pData), 5);
+	pData = elemset_le((uint32*)(pData), 5u);
 	// Set joint count (zero for this method)
-	pData = elemset_le<uint32>((uint32*)(pData), 0);
+	pData = elemset_le((uint32*)(pData), 0u);
 	// Set number of streams
-	pData = elemset_le<uint32>((uint32*)(pData), 1 + numTexSets + ( normalData ? 1 : 0 ) + ((tangentData && bitangentData) ? 2 : 0));
+	pData = elemset_le((uint32*)(pData), 1u + numTexSets + ( normalData ? 1 : 0 ) + ((tangentData && bitangentData) ? 2 : 0));
 	// Write number of elements in each stream
-	pData = elemset_le<uint32>((uint32*)(pData), numVertices);
+	pData = elemset_le((int32*)(pData), numVertices);
 
 	// Beginning of stream data
 
 	// Vertex Stream ID
-	pData = elemset_le<uint32>((uint32*)(pData), 0);
+	pData = elemset_le((uint32*)(pData), 0u);
 	// set vertex stream element size
-	pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 3);
+	pData = elemset_le((uint32*)(pData), sizeof( float ) * 3);
 	// vertex data
     pData = elemcpyd_le((float*)(pData), posData, numVertices * 3);
 
 	if( normalData )
 	{
 		// Normals Stream ID
-		pData = elemset_le<uint32>((uint32*)(pData), 1);
+		pData = elemset_le((uint32*)(pData), 1u);
 		// set normal stream element size
-		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
+		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
 		// normal data
         pData = elemcpyd_le((short*)(pData), normalData, numVertices * 3);
 	}
@@ -624,16 +624,16 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 	if( tangentData && bitangentData )
 	{
 		// Tangent Stream ID
-		pData = elemset_le<uint32>((uint32*)(pData), 2);
+		pData = elemset_le((uint32*)(pData), 2u);
 		// set tangent stream element size
-		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
+		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
 		// tangent data
 		pData = elemcpyd_le((short*)(pData), tangentData, numVertices * 3);
 	
 		// Bitangent Stream ID
-		pData = elemset_le<uint32>((uint32*)(pData), 3);
+		pData = elemset_le((uint32*)(pData), 3u);
 		// set bitangent stream element size
-		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
+		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
 		// bitangent data
 		pData = elemcpyd_le((short*)(pData), bitangentData, numVertices * 3);
 	}
@@ -641,25 +641,25 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 	// texture coordinates stream
 	if( texData1 )
 	{
-		pData = elemset_le<uint32>((uint32*)(pData), 6); // Tex Set 1
-		pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemset_le((uint32*)(pData), 6u); // Tex Set 1
+		pData = elemset_le((uint32*)(pData), sizeof( float ) * 2); // stream element size
 		pData = elemcpyd_le((float *)(pData), texData1, 2 * numVertices ); // stream data
 	}
 	if( texData2 )
 	{
-		pData = elemset_le<uint32>((uint32*)(pData), 7); // Tex Set 2
-		pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemset_le((uint32*)(pData), 7u); // Tex Set 2
+		pData = elemset_le((uint32*)(pData), sizeof( float ) * 2); // stream element size
 		pData = elemcpyd_le((float *)(pData), texData2, 2 * numVertices ); // stream data
 	}
 
 	// Set number of indices
-	pData = elemset_le<uint32>((uint32*)(pData), numTriangleIndices);	
+	pData = elemset_le((int32*)(pData), numTriangleIndices);	
 	
 	// index data
-	pData = elemcpyd_le(pData, indexData, numTriangleIndices);			
+	pData = elemcpyd_le((uint32*)(pData), indexData, numTriangleIndices);			
 
 	// Set number of morph targets to zero
-	pData = elemset_le<uint32>((uint32*)(pData), 0);
+	pData = elemset_le((uint32*)(pData), 0u);
 
 	if ( res ) h3dLoadResource( res, data, size );
 	delete[] data;

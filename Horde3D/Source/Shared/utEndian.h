@@ -78,14 +78,13 @@ inline void swap_endian(const float* first, const float* last, float* d_first)
 
 #include <algorithm>
 
-template< class InputIt, class OutputIt>
-inline char* elemcpy_le(OutputIt dest, InputIt src, size_t num_elems)
+template<class T>
+inline char* elemcpy_le(T* dest, const T* src, size_t num_elems)
 {
 #if defined(PLATFORM_BIG_ENDIAN)
     swap_endian(src, src + num_elems, dest);
 #elif defined(PLATFORM_LITTLE_ENDIAN)
-    //memcpy(dest, src, num_elems * sizeof(*first));
-    std::copy(src, src + num_elems, dest);
+    memcpy(dest, src, num_elems * sizeof(*src));
 #else
     #error Unknown endianess
 #endif
@@ -93,8 +92,8 @@ inline char* elemcpy_le(OutputIt dest, InputIt src, size_t num_elems)
 }
 
 // Same as elemcpy_le except it returns the new 'dest' pointer instead of a new 'src'.
-template< class InputIt, class OutputIt>
-inline char* elemcpyd_le(OutputIt dest, InputIt src, size_t num_elems)
+template<class T>
+inline char* elemcpyd_le(T* dest, const T* src, size_t num_elems)
 {
     elemcpy_le(dest, src, num_elems);
     return (char*)(dest) + num_elems * sizeof(*dest);

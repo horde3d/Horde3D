@@ -911,19 +911,19 @@ ResHandle TerrainNode::createGeometryResource( const string &name, float lodThre
     // Write Horde flag
     pData = elemcpyd_le((char*)(pData), "H3DG", 4);
 	// Set version to 5
-	pData = elemset_le<uint32>((uint32 *)(pData), 5);
+	pData = elemset_le((uint32 *)(pData), 5u);
 	// Set joint count (zero for terrains)
-	pData = elemset_le<uint32>((uint32 *)(pData), 0);
+	pData = elemset_le((uint32 *)(pData), 0u);
 	// Set number of streams
-	pData = elemset_le<uint32>((uint32 *)(pData), 1);
+	pData = elemset_le((uint32 *)(pData), 1u);
 	// Write size of each stream
-	pData = elemset_le<uint32>((uint32 *)(pData), streamSize);
+	pData = elemset_le((uint32 *)(pData), streamSize);
 	
 	// Beginning of stream data
 	// Stream ID
-	pData = elemset_le<uint32>((uint32 *)(pData), 0);
+	pData = elemset_le((uint32 *)(pData), 0u);
 	// set stream element size
-	pData = elemset_le<uint32>((uint32 *)(pData), streamElementSize);
+	pData = elemset_le((uint32 *)(pData), streamElementSize);
 
 	uint32 index = 0;
 	float *vertexData = (float *)pData;
@@ -936,13 +936,13 @@ ResHandle TerrainNode::createGeometryResource( const string &name, float lodThre
 	pData += streamSize * streamElementSize;
 
 	// Set number of indices
-	pData = elemset_le<uint32>((uint32 *)(pData), indexCount);
+	pData = elemset_le((uint32 *)(pData), indexCount);
 	
 	// Skip index data
 	pData += indexCount * sizeof( uint32 );				
 
 	// Set number of morph targets
-    pData = elemset_le<uint32>((uint32 *)(pData), 0);
+    pData = elemset_le((uint32 *)(pData), 0u);
 
 	ResHandle res = Modules::resMan().addResource( ResourceTypes::Geometry, name, 0, true );
 	resObj = Modules::resMan().resolveResHandle( res );
