@@ -258,8 +258,10 @@ int main( int argc, char **argv )
 		{
 			string sourcePath = basePath + assetList[i];
 			string assetName = extractFileName( assetList[i], false );
+
 			if( addModelName )	
 				modelName = assetName + "_";
+
 			string assetPath = cleanPath( extractFilePath( assetList[i] ) );
 			if( !assetPath.empty() ) assetPath += "/";
 			

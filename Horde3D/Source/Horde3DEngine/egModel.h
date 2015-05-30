@@ -92,22 +92,22 @@ public:
 	void recreateNodeList();
 	void setupAnimStage( int stage, AnimationResource *anim, int layer,
 	                     const std::string &startNode, bool additive );
-	void getAnimParams( int stage, float *time, float *weight );
+	void getAnimParams( int stage, float *time, float *weight ) const;
 	void setAnimParams( int stage, float time, float weight );
 	bool setMorphParam( const std::string &targetName, float weight );
 
-	int getParamI( int param );
+	int getParamI( int param ) const;
 	void setParamI( int param, int value );
-	float getParamF( int param, int compIdx );
+	float getParamF( int param, int compIdx ) const;
 	void setParamF( int param, int compIdx, float value );
 
 	void update( int flags );
-	uint32 calcLodLevel( const Vec3f &viewPoint );
+	uint32 calcLodLevel( const Vec3f &viewPoint ) const;
 
 	void setCustomInstData( float *data, uint32 count );
 
-	GeometryResource *getGeometryResource() { return _geometryRes; }
-	bool jointExists( uint32 jointIndex ) { return jointIndex < _skinMatRows.size() / 3; }
+	GeometryResource *getGeometryResource() const { return _geometryRes; }
+	bool jointExists( uint32 jointIndex ) const { return jointIndex < _skinMatRows.size() / 3; }
 	void setSkinningMat( uint32 index, const Matrix4f &mat )
 		{ _skinMatRows[index * 3 + 0] = mat.getRow( 0 );
 		  _skinMatRows[index * 3 + 1] = mat.getRow( 1 );

@@ -42,12 +42,12 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	bool hasDependency( CodeResource *codeRes );
+	bool hasDependency( CodeResource *codeRes ) const;
 	bool tryLinking( uint32 *flagMask );
-	std::string assembleCode();
+	std::string assembleCode() const;
 
-	bool isLoaded() { return _loaded; }
-	const std::string &getCode() { return _code; }
+	bool isLoaded() const { return _loaded; }
+	const std::string &getCode() const { return _code; }
 
 private:
 	bool raiseError( const std::string &msg );
@@ -221,11 +221,11 @@ public:
 	void compileContexts();
 	ShaderCombination *getCombination( ShaderContext &context, uint32 combMask );
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
-	float getElemParamF( int elem, int elemIdx, int param, int compIdx );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
+	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
-	const char *getElemParamStr( int elem, int elemIdx, int param );
+	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 
 	ShaderContext *findContext( const std::string &name )
 	{

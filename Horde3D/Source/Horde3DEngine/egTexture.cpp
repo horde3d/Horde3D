@@ -10,6 +10,7 @@
 //
 // *************************************************************************************************
 
+#include "utEndian.h"
 #include "egTexture.h"
 #include "egModules.h"
 #include "egCom.h"
@@ -217,9 +218,9 @@ bool TextureResource::raiseError( const string &msg )
 }
 
 
-bool TextureResource::checkDDS( const char *data, int size )
+bool TextureResource::checkDDS( const char *data, int size ) const
 {
-	return size > 128 && *((uint32 *)data) == FOURCC( 'D', 'D', 'S', ' ' );
+    return size > 128 && *((uint32 *)data) == FOURCC( 'D', 'D', 'S', ' ' );
 }
 
 
@@ -227,8 +228,9 @@ bool TextureResource::loadDDS( const char *data, int size )
 {
 	ASSERT_STATIC( sizeof( DDSHeader ) == 128 );
 
-	memcpy( &ddsHeader, data, 128 );
-	
+    // all of the dds header is uint32 data, so we consider it a array of uint32s.
+	elemcpy_le((uint32*)(&ddsHeader), (uint32*)(data), 128 / sizeof(uint32));
+
 	// Check header
 	// There are some flags that are required to be set for every dds but we don't check them
 	if( ddsHeader.dwSize != 124 )
@@ -453,7 +455,7 @@ bool TextureResource::load( const char *data, int size )
 }
 
 
-int TextureResource::getMipCount()
+int TextureResource::getMipCount() const
 {
 	if( _hasMipMaps )
 		return ftoi_t( log( (float)std::max( _width, _height ) ) / log( 2.0f ) );
@@ -462,7 +464,7 @@ int TextureResource::getMipCount()
 }
 
 
-int TextureResource::getElemCount( int elem )
+int TextureResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -476,7 +478,7 @@ int TextureResource::getElemCount( int elem )
 }
 
 
-int TextureResource::getElemParamI( int elem, int elemIdx, int param )
+int TextureResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{

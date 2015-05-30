@@ -13,6 +13,7 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include "Horde3D.h"
 #include "utPlatform.h"
+#include "utEndian.h"
 #include "utMath.h"
 #include <math.h>
 #ifdef PLATFORM_WIN
@@ -126,7 +127,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 	int res = h3dQueryUnloadedResource( 0 );
 	
 	char *dataBuf = 0;
-	int bufSize = 0;
+	size_t bufSize = 0;
 
 	while( res != 0 )
 	{
@@ -146,7 +147,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 		{
 			// Find size of resource file
 			inf.seekg( 0, ios::end );
-			int fileSize = inf.tellg();
+			size_t fileSize = (size_t) inf.tellg();
 			if( bufSize < fileSize  )
 			{
 				delete[] dataBuf;				
@@ -338,7 +339,7 @@ void beginInfoBox( float x, float y, float width, int numRows, const char *title
 	// Title bar
 	float ovTitleVerts[] = { x, y, 0, 1, x, y + barHeight, 0, 0,
 	                         x + width, y + barHeight, 1, 0, x + width, y, 1, 1 };
-	h3dShowOverlays( ovTitleVerts, 4,  0.15f, 0.23f, 0.31f, 0.8f, boxMaterialRes, 0 );
+    h3dShowOverlays( ovTitleVerts, 4,  0.15f, 0.23f, 0.31f, 0.8f, boxMaterialRes, 0 );
 
 	// Title text
 	h3dutShowText( title, x + 0.005f, y + 0.005f, fontSize, 0.7f, 0.85f, 0.95f, fontMaterialRes );
@@ -359,15 +360,31 @@ void addInfoBoxRow( const char *column1, const char *column2 )
 	float y = infoBox.y_row0 + infoBox.row++ * 0.035f;
 
 	// First column
-	h3dutShowText( column1, x + 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    if( column1 )
+    {
+        h3dutShowText( column1, x + 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    }
 
 	// Second column
-	x = infoBox.x + infoBox.width - ((strlen( column2 ) - 1) * fontWidth + fontSize);
-	h3dutShowText( column2, x - 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    if( column2 )
+    {
+        x = infoBox.x + infoBox.width - ((strlen( column2 ) - 1) * fontWidth + fontSize);
+        h3dutShowText( column2, x - 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
+    }
 }
 
 
-DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, int mode )
+DLLEXP void h3dutShowInfoBox( float x, float y, float width, const char *title,
+                              int numRows, const char **column1, const char **column2,
+                              H3DRes fontMaterialRes, H3DRes panelMaterialRes )
+{
+    beginInfoBox( x, y, width, numRows, title, fontMaterialRes, panelMaterialRes );
+    for( int i=0; i<numRows; ++i )
+        addInfoBoxRow( column1 ? column1[i] : 0, column2 ? column2[i] : 0 );
+}
+
+
+DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes, int mode )
 {
 	static stringstream text;
 	static float curFPS = 30;
@@ -411,7 +428,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 	if( mode > 0 )
 	{
 		// InfoBox
-		beginInfoBox( 0.03f, 0.03f, 0.32f, 4, "Frame Stats", fontMaterialRes, boxMaterialRes );
+		beginInfoBox( 0.03f, 0.03f, 0.32f, 4, "Frame Stats", fontMaterialRes, panelMaterialRes );
 		
 		// FPS
 		text.str( "" );
@@ -437,7 +454,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 	if( mode > 1 )
 	{
 		// Video memory
-		beginInfoBox( 0.03f, 0.30f, 0.32f, 2, "VMem", fontMaterialRes, boxMaterialRes );
+		beginInfoBox( 0.03f, 0.30f, 0.32f, 2, "VMem", fontMaterialRes, panelMaterialRes );
 		
 		// Textures
 		text.str( "" );
@@ -450,7 +467,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 		addInfoBoxRow( "Geometry", text.str().c_str() );
 		
 		// CPU time
-		beginInfoBox( 0.03f, 0.44f, 0.32f, 4, "CPU Time", fontMaterialRes, boxMaterialRes );
+		beginInfoBox( 0.03f, 0.44f, 0.32f, 4, "CPU Time", fontMaterialRes, panelMaterialRes );
 		
 		// Frame time
 		text.str( "" );
@@ -473,7 +490,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes boxMaterialRes, 
 		addInfoBoxRow( "Particles", text.str().c_str() );
 
 		// GPU time
-		beginInfoBox( 0.03f, 0.65f, 0.32f, 3, "GPU Time", fontMaterialRes, boxMaterialRes );
+        beginInfoBox( 0.03f, 0.65f, 0.32f, 3, "GPU Time", fontMaterialRes, panelMaterialRes );
 
 		// Forward and deferred lights
 		text.str( "" );
@@ -575,81 +592,74 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 
 	char *pData = data;
 	// Write Horde flag
-	pData[0] = 'H'; pData[1] = '3'; pData[2] = 'D'; pData[3] = 'G'; pData += 4;
+    pData = elemcpyd_le((char*)(pData), "H3DG", 4);
 	// Set version to 5 
-	*( (uint32 *)pData ) = 5; pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 5u);
 	// Set joint count (zero for this method)
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 0u);
 	// Set number of streams
-	*( (uint32 *)pData ) = 1 + numTexSets + ( normalData ? 1 : 0 ) + ((tangentData && bitangentData) ? 2 : 0); pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 1u + numTexSets + ( normalData ? 1 : 0 ) + ((tangentData && bitangentData) ? 2 : 0));
 	// Write number of elements in each stream
-	*( (uint32 *)pData ) = numVertices; pData += sizeof( uint32 );
+	pData = elemset_le((int32*)(pData), numVertices);
 
 	// Beginning of stream data
 
 	// Vertex Stream ID
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 0u);
 	// set vertex stream element size
-	*( (uint32 *)pData ) = sizeof( float ) * 3; pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), sizeof( float ) * 3);
 	// vertex data
-	memcpy( (float*) pData, posData, numVertices * sizeof( float ) * 3 );
-	pData += numVertices * sizeof( float ) * 3;
+    pData = elemcpyd_le((float*)(pData), posData, numVertices * 3);
 
 	if( normalData )
 	{
 		// Normals Stream ID
-		*( (uint32 *)pData ) = 1; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), 1u);
 		// set normal stream element size
-		*( (uint32 *)pData ) = sizeof( short ) * 3; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
 		// normal data
-		memcpy( (short*) pData, normalData, numVertices * sizeof( short ) * 3 );
-		pData += numVertices * sizeof( short ) * 3;
+        pData = elemcpyd_le((short*)(pData), normalData, numVertices * 3);
 	}
 
 	if( tangentData && bitangentData )
 	{
 		// Tangent Stream ID
-		*( (uint32 *)pData ) = 2; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), 2u);
 		// set tangent stream element size
-		*( (uint32 *)pData ) = sizeof( short ) * 3; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
 		// tangent data
-		memcpy( (short*) pData, tangentData, numVertices * sizeof( short ) * 3 );
-		pData += numVertices * sizeof( short ) * 3;
+		pData = elemcpyd_le((short*)(pData), tangentData, numVertices * 3);
 	
 		// Bitangent Stream ID
-		*( (uint32 *)pData ) = 3; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), 3u);
 		// set bitangent stream element size
-		*( (uint32 *)pData ) = sizeof( short ) * 3; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
 		// bitangent data
-		memcpy( (short*) pData, bitangentData, numVertices * sizeof( short ) * 3 );
-		pData += numVertices * sizeof( short ) * 3;
+		pData = elemcpyd_le((short*)(pData), bitangentData, numVertices * 3);
 	}
 
 	// texture coordinates stream
 	if( texData1 )
 	{
-		*( (uint32 *)pData ) = 6; pData += sizeof( uint32 ); // Tex Set 1
-		*( (uint32 *)pData ) = sizeof( float ) * 2; pData += sizeof( uint32 ); // stream element size
-		memcpy( (float *)pData, texData1, sizeof( float ) * 2 * numVertices ); // stream data
-		pData += sizeof( float ) * 2 * numVertices; 
+		pData = elemset_le((uint32*)(pData), 6u); // Tex Set 1
+		pData = elemset_le((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemcpyd_le((float *)(pData), texData1, 2 * numVertices ); // stream data
 	}
 	if( texData2 )
 	{
-		*( (uint32 *)pData ) = 7; pData += sizeof( uint32 ); // Tex Set 2
-		*( (uint32 *)pData ) = sizeof( float ) * 2; pData += sizeof( uint32 ); // stream element size
-		memcpy( (float *)pData, texData2, sizeof( float ) * 2 * numVertices ); // stream data
-		pData += sizeof( float ) * 2 * numVertices; 
+		pData = elemset_le((uint32*)(pData), 7u); // Tex Set 2
+		pData = elemset_le((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemcpyd_le((float *)(pData), texData2, 2 * numVertices ); // stream data
 	}
 
 	// Set number of indices
-	*( (uint32 *) pData ) = numTriangleIndices; pData += sizeof( uint32 );	
+	pData = elemset_le((int32*)(pData), numTriangleIndices);	
 	
 	// index data
-	memcpy( pData, indexData, numTriangleIndices * sizeof( uint32 ) );
-	pData += numTriangleIndices * sizeof( uint32 );				
+	pData = elemcpyd_le((uint32*)(pData), indexData, numTriangleIndices);			
 
 	// Set number of morph targets to zero
-	*( (uint32 *) pData ) = 0;	pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 0u);
 
 	if ( res ) h3dLoadResource( res, data, size );
 	delete[] data;
@@ -673,21 +683,21 @@ DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int hei
 	// Build TGA header
 	char c;
 	short s;
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // idLength
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // colmapType
-	c = 2;      memcpy( data, &c, 1 ); data += 1;  // imageType
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // colmapStart
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // colmapLength
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // colmapBits
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // x
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // y
-	s = width;  memcpy( data, &s, 2 ); data += 2;  // width
-	s = height; memcpy( data, &s, 2 ); data += 2;  // height
-	c = bpp;    memcpy( data, &c, 1 ); data += 1;  // bpp
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // imageDesc
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // idLength
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // colmapType
+	c = 2;      data = elemcpyd_le( data, &c, 1 );              // imageType
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // colmapStart
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // colmapLength
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // colmapBits
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // x
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // y
+	s = width;  data = elemcpyd_le( (short*) data, &s, 1 );     // width
+	s = height; data = elemcpyd_le( (short*) data, &s, 1 );     // height
+	c = bpp;    data = elemcpyd_le( data, &c, 1 );              // bpp
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // imageDesc
 
 	// Copy data
-	if( pixels ) memcpy( data, pixels, width * height * (bpp / 8) );
+    if( pixels ) memcpy( data, pixels, width * height * (bpp / 8) );
 
 	return true;
 }

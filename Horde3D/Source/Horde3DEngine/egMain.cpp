@@ -35,13 +35,26 @@
 
 
 // Check some platform-dependent assumptions
-// Note: this function is never called but just wraps the compile time asserts
 static void __ValidatePlatform__()
 {
 	ASSERT_STATIC( sizeof( int64 ) == 8 );
 	ASSERT_STATIC( sizeof( int ) == 4 );
 	ASSERT_STATIC( sizeof( short ) == 2 );
 	ASSERT_STATIC( sizeof( char ) == 1 );
+    
+    // Check if platform endianess detection is correct.
+    union {
+        uint32         u32;
+        unsigned char  bytes[4];
+    } e;
+    e.u32 = 0xAABBCCDD;
+#ifdef PLATFORM_LITTLE_ENDIAN
+    ASSERT(e.bytes[0] == 0xDD && e.bytes[1] == 0xCC && e.bytes[2] == 0xBB && e.bytes[3] == 0xAA);
+#elif PLATFORM_BIG_ENDIAN
+    ASSERT(e.bytes[3] == 0xDD && e.bytes[2] == 0xCC && e.bytes[1] == 0xBB && e.bytes[0] == 0xAA);
+#else
+#   error Unknown endianess
+#endif
 }
 
 
@@ -94,6 +107,7 @@ DLLEXP bool h3dInit()
 	}
 	initialized = true;
 
+    __ValidatePlatform__();
 	return Modules::init();
 }
 

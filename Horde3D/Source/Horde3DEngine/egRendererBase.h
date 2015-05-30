@@ -40,7 +40,7 @@ public:
 	bool updateResults();
 	
 	void reset();
-	float getTimeMS() { return _time; }
+	float getTimeMS() const { return _time; }
 
 private:
 	std::vector < uint32 >  _queryPool;
@@ -428,29 +428,29 @@ public:
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	void destroyBuffer( uint32 bufObj );
 	void updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data );
-	uint32 getBufferMem() { return _bufferMem; }
+	uint32 getBufferMem() const { return _bufferMem; }
 
 	// Textures
-	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
+	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const;
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 	                      bool hasMips, bool genMips, bool compress, bool sRGB );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	void destroyTexture( uint32 texObj );
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
-	uint32 getTextureMem() { return _textureMem; }
+	uint32 getTextureMem() const { return _textureMem; }
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc );
 	void destroyShader( uint32 shaderId );
 	void bindShader( uint32 shaderId );
-	std::string &getShaderLog() { return _shaderLog; }
+	std::string getShaderLog() const { return _shaderLog; }
 	int getShaderConstLoc( uint32 shaderId, const char *name );
 	int getShaderSamplerLoc( uint32 shaderId, const char *name );
 	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 );
 	void setShaderSampler( int loc, uint32 texUnit );
-	const char *getDefaultVSCode();
-	const char *getDefaultFSCode();
+	const char *getDefaultVSCode() const;
+	const char *getDefaultFSCode() const;
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
@@ -466,7 +466,7 @@ public:
 	void destroyQuery( uint32 queryObj );
 	void beginQuery( uint32 queryObj );
 	void endQuery( uint32 queryObj );
-	uint32 getQueryResult( uint32 queryObj );
+	uint32 getQueryResult( uint32 queryObj ) const;
 
 // -----------------------------------------------------------------------------
 // Commands
@@ -490,45 +490,45 @@ public:
 	// Render states
 	void setColorWriteMask( bool enabled )
 		{ _newRasterState.renderTargetWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
-	void getColorWriteMask( bool &enabled )
+	void getColorWriteMask( bool &enabled ) const
 		{ enabled = _newRasterState.renderTargetWriteMask; }
 	void setFillMode( RDIFillMode fillMode )
 		{ _newRasterState.fillMode = fillMode; _pendingMask |= PM_RENDERSTATES; }
-	void getFillMode( RDIFillMode &fillMode )
+	void getFillMode( RDIFillMode &fillMode ) const
 		{ fillMode = (RDIFillMode)_newRasterState.fillMode; }
 	void setCullMode( RDICullMode cullMode )
 		{ _newRasterState.cullMode = cullMode; _pendingMask |= PM_RENDERSTATES; }
-	void getCullMode( RDICullMode &cullMode )
+	void getCullMode( RDICullMode &cullMode ) const
 		{ cullMode = (RDICullMode)_newRasterState.cullMode; }
 	void setScissorTest( bool enabled )
 		{ _newRasterState.scissorEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-	void getScissorTest( bool &enabled )
+	void getScissorTest( bool &enabled ) const
 		{ enabled = _newRasterState.scissorEnable; }
 	void setMulisampling( bool enabled )
 		{ _newRasterState.multisampleEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-	void getMulisampling( bool &enabled )
+	void getMulisampling( bool &enabled ) const
 		{ enabled = _newRasterState.multisampleEnable; }
 	void setAlphaToCoverage( bool enabled )
 		{ _newBlendState.alphaToCoverageEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-	void getAlphaToCoverage( bool &enabled )
+	void getAlphaToCoverage( bool &enabled ) const
 		{ enabled = _newBlendState.alphaToCoverageEnable; }
 	void setBlendMode( bool enabled, RDIBlendFunc srcBlendFunc = BS_BLEND_ZERO, RDIBlendFunc destBlendFunc = BS_BLEND_ZERO )
 		{ _newBlendState.blendEnable = enabled; _newBlendState.srcBlendFunc = srcBlendFunc;
 		  _newBlendState.destBlendFunc = destBlendFunc; _pendingMask |= PM_RENDERSTATES; }
-	void getBlendMode( bool &enabled, RDIBlendFunc &srcBlendFunc, RDIBlendFunc &destBlendFunc )
+	void getBlendMode( bool &enabled, RDIBlendFunc &srcBlendFunc, RDIBlendFunc &destBlendFunc ) const
 		{ enabled = _newBlendState.blendEnable; srcBlendFunc = (RDIBlendFunc)_newBlendState.srcBlendFunc;
 		  destBlendFunc = (RDIBlendFunc)_newBlendState.destBlendFunc; }
 	void setDepthMask( bool enabled )
 		{ _newDepthStencilState.depthWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
-	void getDepthMask( bool &enabled )
+	void getDepthMask( bool &enabled ) const
 		{ enabled = _newDepthStencilState.depthWriteMask; }
 	void setDepthTest( bool enabled )
 		{ _newDepthStencilState.depthEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-	void getDepthTest( bool &enabled )
+	void getDepthTest( bool &enabled ) const
 		{ enabled = _newDepthStencilState.depthEnable; }
 	void setDepthFunc( RDIDepthFunc depthFunc )
 		{ _newDepthStencilState.depthFunc = depthFunc; _pendingMask |= PM_RENDERSTATES; }
-	void getDepthFunc( RDIDepthFunc &depthFunc )
+	void getDepthFunc( RDIDepthFunc &depthFunc ) const
 		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
 
 	bool commitStates( uint32 filter = 0xFFFFFFFF );
@@ -544,10 +544,10 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps &getCaps() { return _caps; }
-	const RDIBuffer &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITexture &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBuffer &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	const DeviceCaps getCaps() const { return _caps; }
+	const RDIBuffer getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	const RDITexture getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	const RDIRenderBuffer getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 	friend class Renderer;
 
@@ -588,6 +588,8 @@ protected:
 	uint32        _textureMem, _bufferMem;
 
 	int                            _defaultFBO;
+    bool                           _defaultFBOMultisampled;
+
 	uint32                         _numVertexLayouts;
 	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
 	RDIObjects< RDIBuffer >        _buffers;

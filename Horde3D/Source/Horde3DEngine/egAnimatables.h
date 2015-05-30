@@ -68,12 +68,12 @@ public:
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
 
 	// IAnimatableNode
-	const std::string &getANName() { return _name; }
+	const std::string getANName() const { return _name; }
 	Matrix4f &getANRelTransRef() { return _relTrans; }
-	IAnimatableNode *getANParent();
+	IAnimatableNode *getANParent() const;
 	
-	bool canAttach( SceneNode &parent );
-	int getParamI( int param );
+	bool canAttach( SceneNode &parent ) const;
+	int getParamI( int param ) const;
 	void setParamI( int param, int value );
 	bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
 
@@ -81,13 +81,13 @@ public:
 	void onDetach( SceneNode &parentNode );
 	void onPostUpdate();
 
-	MaterialResource *getMaterialRes() { return _materialRes; }
-	uint32 getBatchStart() { return _batchStart; }
-	uint32 getBatchCount() { return _batchCount; }
-	uint32 getVertRStart() { return _vertRStart; }
-	uint32 getVertREnd() { return _vertREnd; }
-	uint32 getLodLevel() { return _lodLevel; }
-	ModelNode *getParentModel() { return _parentModel; }
+	MaterialResource *getMaterialRes() const { return _materialRes; }
+	uint32 getBatchStart() const { return _batchStart; }
+	uint32 getBatchCount() const { return _batchCount; }
+	uint32 getVertRStart() const { return _vertRStart; }
+	uint32 getVertREnd() const { return _vertREnd; }
+	uint32 getLodLevel() const { return _lodLevel; }
+	ModelNode *getParentModel() const { return _parentModel; }
 
 protected:
 	MeshNode( const MeshNodeTpl &meshTpl );
@@ -145,12 +145,12 @@ public:
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
 	
 	// IAnimatableNode
-	const std::string &getANName() { return _name; }
+	const std::string getANName() const { return _name; }
 	Matrix4f &getANRelTransRef() { return _relTrans; }
-	IAnimatableNode *getANParent();
+	IAnimatableNode *getANParent() const;
 	
-	bool canAttach( SceneNode &parent );
-	int getParamI( int param );
+	bool canAttach( SceneNode &parent ) const;
+	int getParamI( int param ) const;
 
 	void onPostUpdate();
 	void onAttach( SceneNode &parentNode );

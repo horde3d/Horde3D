@@ -212,7 +212,7 @@ bool MaterialResource::setUniform( const string &name, float a, float b, float c
 }
 
 
-bool MaterialResource::isOfClass( const string &theClass )
+bool MaterialResource::isOfClass( const string &theClass ) const
 {
 	static string theClass2;
 	
@@ -250,7 +250,7 @@ bool MaterialResource::isOfClass( const string &theClass )
 }
 
 
-int MaterialResource::getElemCount( int elem )
+int MaterialResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -266,7 +266,7 @@ int MaterialResource::getElemCount( int elem )
 }
 
 
-int MaterialResource::getElemParamI( int elem, int elemIdx, int param )
+int MaterialResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -357,7 +357,7 @@ void MaterialResource::setElemParamI( int elem, int elemIdx, int param, int valu
 }
 
 
-float MaterialResource::getElemParamF( int elem, int elemIdx, int param, int compIdx )
+float MaterialResource::getElemParamF( int elem, int elemIdx, int param, int compIdx ) const
 {
 	switch( elem )
 	{
@@ -403,7 +403,7 @@ void MaterialResource::setElemParamF( int elem, int elemIdx, int param, int comp
 }
 
 
-const char *MaterialResource::getElemParamStr( int elem, int elemIdx, int param )
+const char *MaterialResource::getElemParamStr( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{

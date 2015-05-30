@@ -19,12 +19,31 @@
 #include "converter.h"
 #include "optimizer.h"
 #include "utPlatform.h"
+#include "utEndian.h"
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
 using namespace std;
 
+// little endian element writer
+template<class T>
+inline void fwrite_le(const T* data, size_t count, FILE* f)
+{
+    char buffer[256];
+    ASSERT(sizeof(T) > sizeof(buffer));
+    const size_t capacity = sizeof(buffer) / sizeof(T);
+
+    size_t i = 0;
+    while(i < count)
+    {
+        size_t nelems = std::min(capacity, (count - i));
+        data = (const T*) elemcpy_le((T*)(buffer), data, nelems);
+        fwrite(buffer, sizeof(T), nelems, f);
+        i += nelems;
+    }
+}
 
 Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDists ) :
 	_daeDoc( doc )
@@ -45,6 +64,35 @@ Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDis
 Converter::~Converter()
 {
 	for( unsigned int i = 0; i < _nodes.size(); ++i ) delete _nodes[i];	
+}
+
+
+bool Converter::convertModel( bool optimize )
+{
+	if( _daeDoc.scene == 0x0 ) return true;		// Nothing to convert
+	
+	_frameCount = _daeDoc.libAnimations.maxFrameCount;
+
+	// Output default pose if no animation is available
+	if( _frameCount == 0 ) _frameCount = 1;
+
+	vector< Matrix4f > animTransAccum;
+	animTransAccum.resize( _frameCount );
+	
+	// Process all nodes
+	for( unsigned int i = 0; i < _daeDoc.scene->nodes.size(); ++i )
+	{
+		_nodes.push_back( processNode( *_daeDoc.scene->nodes[i], 0x0, Matrix4f(), animTransAccum ) );
+	}
+
+	if( _animNotSampled )
+		log( "Warning: Animation is not sampled and will probably be wrong" );
+
+	// Process joints and meshes
+	processJoints();
+	processMeshes( optimize );
+	
+	return true;
 }
 
 
@@ -149,7 +197,7 @@ void Converter::checkNodeName( SceneNode *node )
 }
 
 
-bool Converter::validateInstance( const std::string &instanceId )
+bool Converter::validateInstance( const std::string &instanceId ) const
 {
 	string id = instanceId;
 	
@@ -327,7 +375,7 @@ SceneNode *Converter::processNode( DaeNode &node, SceneNode *parentNode,
 }
 
 
-void Converter::calcTangentSpaceBasis( vector<Vertex> &verts )
+void Converter::calcTangentSpaceBasis( vector<Vertex> &verts ) const
 {
 	for( unsigned int i = 0; i < verts.size(); ++i )
 	{
@@ -389,7 +437,7 @@ void Converter::calcTangentSpaceBasis( vector<Vertex> &verts )
 		if( verts[i].normal.length() == 0 || verts[i].tangent.length() == 0 || verts[i].bitangent.length() == 0 )
 			++numInvalidBasis;
 		
-		// Gram–Schmidt orthogonalization
+		// Gram-Schmidt orthogonalization
 		verts[i].normal.normalize();
 		Vec3f &n = verts[i].normal;
 		Vec3f &t = verts[i].tangent;
@@ -841,36 +889,7 @@ void Converter::processMeshes( bool optimize )
 }
 
 
-bool Converter::convertModel( bool optimize )
-{
-	if( _daeDoc.scene == 0x0 ) return true;		// Nothing to convert
-	
-	_frameCount = _daeDoc.libAnimations.maxFrameCount;
-
-	// Output default pose if no animation is available
-	if( _frameCount == 0 ) _frameCount = 1;
-
-	vector< Matrix4f > animTransAccum;
-	animTransAccum.resize( _frameCount );
-	
-	// Process all nodes
-	for( unsigned int i = 0; i < _daeDoc.scene->nodes.size(); ++i )
-	{
-		_nodes.push_back( processNode( *_daeDoc.scene->nodes[i], 0x0, Matrix4f(), animTransAccum ) );
-	}
-
-	if( _animNotSampled )
-		log( "Warning: Animation is not sampled and will probably be wrong" );
-
-	// Process joints and meshes
-	processJoints();
-	processMeshes( optimize );
-	
-	return true;
-}
-
-
-bool Converter::writeGeometry( const string &assetPath, const string &assetName )
+bool Converter::writeGeometry( const string &assetPath, const string &assetName ) const
 {
 	string fileName = _outPath + assetPath + assetName + ".geo";
 	FILE *f = fopen( fileName.c_str(), "wb" );
@@ -882,31 +901,31 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 
 	// Write header
 	unsigned int version = 5;
-	fwrite( "H3DG", 4, 1, f );
-	fwrite( &version, sizeof( int ), 1, f ); 
+	fwrite_le("H3DG", 4, f);
+	fwrite_le(&version, 1, f); 
 	
 	// Write joints
 	unsigned int count = (unsigned int)_joints.size() + 1;
-	fwrite( &count, sizeof( int ), 1, f );
+	fwrite_le(&count, 1, f);
 
 	// Write default identity matrix
 	for( unsigned int j = 0; j < 16; ++j )
-		fwrite( &Matrix4f().x[j], sizeof( float ), 1, f );
+		fwrite_le<float>(&Matrix4f().x[j], 1, f);
 
 	for( unsigned int i = 0; i < _joints.size(); ++i )
 	{
 		// Inverse bind matrix
 		for( unsigned int j = 0; j < 16; ++j )
 		{
-			fwrite( &_joints[i]->invBindMat.x[j], sizeof( float ), 1, f );
+			fwrite_le<float>(&_joints[i]->invBindMat.x[j], 1, f);
 		}
 	}
 	
 	// Write vertex stream data
 	if( _joints.empty() ) count = 6; else count = 8;	// Number of streams
-	fwrite( &count, sizeof( int ), 1, f );
+	fwrite_le(&count, 1, f);
 	count = (unsigned int)_vertices.size();
-	fwrite( &count, sizeof( int ), 1, f );
+	fwrite_le(&count, 1, f);
 
 	for( unsigned int i = 0; i < 8; ++i )
 	{
@@ -919,48 +938,48 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 		switch( i )
 		{
 		case 0:		// Position
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 3 * sizeof( float ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 3 * sizeof( float ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
-				fwrite( &_vertices[j].pos.x, sizeof( float ), 1, f );
-				fwrite( &_vertices[j].pos.y, sizeof( float ), 1, f );
-				fwrite( &_vertices[j].pos.z, sizeof( float ), 1, f );
+				fwrite_le<float>(&_vertices[j].pos.x, 1, f);
+				fwrite_le<float>(&_vertices[j].pos.y, 1, f);
+				fwrite_le<float>(&_vertices[j].pos.z, 1, f);
 			}
 			break;
 		case 1:		// Normal
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 3 * sizeof( short ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 3 * sizeof( short ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
-				sh = (short)(_vertices[j].normal.x * 32767); fwrite( &sh, sizeof( short ), 1, f );
-				sh = (short)(_vertices[j].normal.y * 32767); fwrite( &sh, sizeof( short ), 1, f );
-				sh = (short)(_vertices[j].normal.z * 32767); fwrite( &sh, sizeof( short ), 1, f );
+				sh = (short)(_vertices[j].normal.x * 32767); fwrite_le<short>(&sh, 1, f);
+				sh = (short)(_vertices[j].normal.y * 32767); fwrite_le<short>(&sh, 1, f);
+				sh = (short)(_vertices[j].normal.z * 32767); fwrite_le<short>(&sh, 1, f);
 			}
 			break;
 		case 2:		// Tangent
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 3 * sizeof( short ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 3 * sizeof( short ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
-				sh = (short)(_vertices[j].tangent.x * 32767); fwrite( &sh, sizeof( short ), 1, f );
-				sh = (short)(_vertices[j].tangent.y * 32767); fwrite( &sh, sizeof( short ), 1, f );
-				sh = (short)(_vertices[j].tangent.z * 32767); fwrite( &sh, sizeof( short ), 1, f );
+				sh = (short)(_vertices[j].tangent.x * 32767); fwrite_le<short>(&sh, 1, f);
+				sh = (short)(_vertices[j].tangent.y * 32767); fwrite_le<short>(&sh, 1, f);
+				sh = (short)(_vertices[j].tangent.z * 32767); fwrite_le<short>(&sh, 1, f);
 			}
 			break;
 		case 3:		// Bitangent
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 3 * sizeof( short ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 3 * sizeof( short ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
-				sh = (short)(_vertices[j].bitangent.x * 32767); fwrite( &sh, sizeof( short ), 1, f );
-				sh = (short)(_vertices[j].bitangent.y * 32767); fwrite( &sh, sizeof( short ), 1, f );
-				sh = (short)(_vertices[j].bitangent.z * 32767); fwrite( &sh, sizeof( short ), 1, f );
+				sh = (short)(_vertices[j].bitangent.x * 32767); fwrite_le<short>(&sh, 1, f);
+				sh = (short)(_vertices[j].bitangent.y * 32767); fwrite_le<short>(&sh, 1, f);
+				sh = (short)(_vertices[j].bitangent.z * 32767); fwrite_le<short>(&sh, 1, f);
 			}
 			break;
 		case 4:		// Joint indices
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 4 * sizeof( char ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 4 * sizeof( char ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
 				unsigned char jointIndices[4] = { 0, 0, 0, 0 };
@@ -972,39 +991,39 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 					jointIndices[2] = (unsigned char)_vertices[j].joints[2]->index;
 				if( _vertices[j].joints[3] != 0x0 )
 					jointIndices[3] = (unsigned char)_vertices[j].joints[3]->index;
-				fwrite( &jointIndices[0], sizeof( char ), 1, f );
-				fwrite( &jointIndices[1], sizeof( char ), 1, f );
-				fwrite( &jointIndices[2], sizeof( char ), 1, f );
-				fwrite( &jointIndices[3], sizeof( char ), 1, f );
+				fwrite_le(&jointIndices[0], 1, f);
+				fwrite_le(&jointIndices[1], 1, f);
+				fwrite_le(&jointIndices[2], 1, f);
+				fwrite_le(&jointIndices[3], 1, f);
 			}
 			break;
 		case 5:		// Weights
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 4 * sizeof( char ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 4 * sizeof( char ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
-				uc = (unsigned char)(_vertices[j].weights[0] * 255); fwrite( &uc, sizeof( char ), 1, f );
-				uc = (unsigned char)(_vertices[j].weights[1] * 255); fwrite( &uc, sizeof( char ), 1, f );
-				uc = (unsigned char)(_vertices[j].weights[2] * 255); fwrite( &uc, sizeof( char ), 1, f );
-				uc = (unsigned char)(_vertices[j].weights[3] * 255); fwrite( &uc, sizeof( char ), 1, f );
+				uc = (unsigned char)(_vertices[j].weights[0] * 255); fwrite_le(&uc, 1, f);
+				uc = (unsigned char)(_vertices[j].weights[1] * 255); fwrite_le(&uc, 1, f);
+				uc = (unsigned char)(_vertices[j].weights[2] * 255); fwrite_le(&uc, 1, f);
+				uc = (unsigned char)(_vertices[j].weights[3] * 255); fwrite_le(&uc, 1, f);
 			}
 			break;
 		case 6:		// Texture Coord Set 1
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 2 * sizeof( float ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 2 * sizeof( float ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
-				fwrite( &_vertices[j].texCoords[0].x, sizeof( float ), 1, f );
-				fwrite( &_vertices[j].texCoords[0].y, sizeof( float ), 1, f );
+				fwrite_le<float>(&_vertices[j].texCoords[0].x, 1, f);
+				fwrite_le<float>(&_vertices[j].texCoords[0].y, 1, f);
 			}
 			break;
 		case 7:		// Texture Coord Set 2
-			fwrite( &i, sizeof( int ), 1, f );
-			streamElemSize = 2 * sizeof( float ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+			fwrite_le(&i, 1, f);
+			streamElemSize = 2 * sizeof( float ); fwrite_le(&streamElemSize, 1, f);
 			for( unsigned int j = 0; j < count; ++j )
 			{
-				fwrite( &_vertices[j].texCoords[1].x, sizeof( float ), 1, f );
-				fwrite( &_vertices[j].texCoords[1].y, sizeof( float ), 1, f );
+				fwrite_le<float>(&_vertices[j].texCoords[1].x, 1, f);
+				fwrite_le<float>(&_vertices[j].texCoords[1].y, 1, f);
 			}
 			break;
 		}
@@ -1012,76 +1031,76 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 
 	// Write triangle indices
 	count = (unsigned int)_indices.size();
-	fwrite( &count, sizeof( int ), 1, f );
+	fwrite_le(&count, 1, f);
 
 	for( unsigned int i = 0; i < _indices.size(); ++i )
 	{
-		fwrite( &_indices[i], sizeof( int ), 1, f );
+		fwrite_le(&_indices[i], 1, f);
 	}
 
 	// Write morph targets
 	count = (unsigned int)_morphTargets.size();
-	fwrite( &count, sizeof( int ), 1, f );
+	fwrite_le(&count, 1, f);
 
 	for( unsigned int i = 0; i < _morphTargets.size(); ++i )
 	{
-		fwrite( &_morphTargets[i].name, 256, 1, f );
+        fwrite_le(_morphTargets[i].name, 256, f);
 		
 		// Write vertex indices
 		count = (unsigned int)_morphTargets[i].diffs.size();
-		fwrite( &count, sizeof( int ), 1, f );
+		fwrite_le(&count, 1, f);
 
 		for( unsigned int j = 0; j < count; ++j )
 		{
-			fwrite( &_morphTargets[i].diffs[j].vertIndex, sizeof( int ), 1, f );
+			fwrite_le(&_morphTargets[i].diffs[j].vertIndex, 1, f);
 		}
 		
 		// Write stream data
 		unsigned int numStreams = 4, streamElemSize;
-		fwrite( &numStreams, sizeof( int ), 1, f );
+		fwrite_le(&numStreams, 1, f);
 
 		for( unsigned int j = 0; j < 4; ++j )
 		{
 			switch( j )
 			{
 			case 0:		// Position
-				fwrite( &j, sizeof( int ), 1, f );
-				streamElemSize = 3 * sizeof( float ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+				fwrite_le(&j, 1, f);
+				streamElemSize = 3 * sizeof( float ); fwrite_le(&streamElemSize, 1, f);
 				for( unsigned int k = 0; k < count; ++k )
 				{
-					fwrite( &_morphTargets[i].diffs[k].posDiff.x, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].posDiff.y, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].posDiff.z, sizeof( float ), 1, f );
+					fwrite_le<float>(&_morphTargets[i].diffs[k].posDiff.x, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].posDiff.y, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].posDiff.z, 1, f);
 				}
 				break;
 			case 1:		// Normal
-				fwrite( &j, sizeof( int ), 1, f );
-				streamElemSize = 3 * sizeof( float ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+				fwrite_le(&j, 1, f);
+				streamElemSize = 3 * sizeof( float ); fwrite_le(&streamElemSize, 1, f);
 				for( unsigned int k = 0; k < count; ++k )
 				{
-					fwrite( &_morphTargets[i].diffs[k].normDiff.x, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].normDiff.y, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].normDiff.z, sizeof( float ), 1, f );
+					fwrite_le<float>(&_morphTargets[i].diffs[k].normDiff.x, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].normDiff.y, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].normDiff.z, 1, f);
 				}
 				break;
 			case 2:		// Tangent
-				fwrite( &j, sizeof( int ), 1, f );
-				streamElemSize = 3 * sizeof( float ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+				fwrite_le(&j, 1, f);
+				streamElemSize = 3 * sizeof( float ); fwrite_le(&streamElemSize, 1, f);
 				for( unsigned int k = 0; k < count; ++k )
 				{
-					fwrite( &_morphTargets[i].diffs[k].tanDiff.x, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].tanDiff.y, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].tanDiff.z, sizeof( float ), 1, f );
+					fwrite_le<float>(&_morphTargets[i].diffs[k].tanDiff.x, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].tanDiff.y, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].tanDiff.z, 1, f);
 				}
 				break;
 			case 3:		// Bitangent
-				fwrite( &j, sizeof( int ), 1, f );
-				streamElemSize = 3 * sizeof( float ); fwrite( &streamElemSize, sizeof( int ), 1, f );
+				fwrite_le(&j, 1, f);
+				streamElemSize = 3 * sizeof( float ); fwrite_le(&streamElemSize, 1, f);
 				for( unsigned int k = 0; k < count; ++k )
 				{
-					fwrite( &_morphTargets[i].diffs[k].bitanDiff.x, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].bitanDiff.y, sizeof( float ), 1, f );
-					fwrite( &_morphTargets[i].diffs[k].bitanDiff.z, sizeof( float ), 1, f );
+					fwrite_le<float>(&_morphTargets[i].diffs[k].bitanDiff.x, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].bitanDiff.y, 1, f);
+					fwrite_le<float>(&_morphTargets[i].diffs[k].bitanDiff.z, 1, f);
 				}
 				break;
 			}
@@ -1094,7 +1113,7 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 }
 
 
-void Converter::writeSGNode( const string &assetPath, const string &modelName, SceneNode *node, unsigned int depth, ofstream &outf )
+void Converter::writeSGNode( const string &assetPath, const string &modelName, SceneNode *node, unsigned int depth, ofstream &outf ) const
 {
 	Vec3f trans, rot, scale;
 	node->matRel.decompose( trans, rot, scale );
@@ -1184,7 +1203,7 @@ void Converter::writeSGNode( const string &assetPath, const string &modelName, S
 }
 
 
-bool Converter::writeSceneGraph( const string &assetPath, const string &assetName, const string &modelName )
+bool Converter::writeSceneGraph( const string &assetPath, const string &assetName, const string &modelName ) const
 {
 	ofstream outf;
 	outf.open( (_outPath + assetPath + assetName + ".scene.xml").c_str(), ios::out );
@@ -1234,7 +1253,7 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 }
 
 
-bool Converter::writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName )
+bool Converter::writeModel( const std::string &assetPath, const std::string &assetName, const std::string &modelName ) const
 {
 	bool result = true;
 	
@@ -1245,7 +1264,7 @@ bool Converter::writeModel( const std::string &assetPath, const std::string &ass
 }
 
 
-bool Converter::writeMaterials( const string &assetPath, const string &modelName, bool replace )
+bool Converter::writeMaterials( const string &assetPath, const string &modelName, bool replace ) const
 {
 	for( unsigned int i = 0; i < _daeDoc.libMaterials.materials.size(); ++i )
 	{
@@ -1328,15 +1347,15 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 }
 
 
-bool Converter::hasAnimation()
+bool Converter::hasAnimation() const
 {
 	return _frameCount > 0;
 }
 
 
-void Converter::writeAnimFrames( SceneNode &node, FILE *f )
+void Converter::writeAnimFrames( SceneNode &node, FILE *f ) const
 {
-	fwrite( &node.name, 256, 1, f );
+	fwrite_le(node.name, 256, f);
 		
 	// Animation compression: just store a single frame if all frames are equal
 	char canCompress = 0;
@@ -1354,7 +1373,7 @@ void Converter::writeAnimFrames( SceneNode &node, FILE *f )
 			}
 		}
 	}
-	fwrite( &canCompress, sizeof( char ), 1, f );
+	fwrite_le(&canCompress, 1, f);
 	
 	for( size_t i = 0; i < (canCompress ? 1 : node.frames.size()); ++i )
 	{
@@ -1362,21 +1381,21 @@ void Converter::writeAnimFrames( SceneNode &node, FILE *f )
 		node.frames[i].decompose( transVec, rotVec, scaleVec );
 		Quaternion rotQuat( rotVec.x, rotVec.y, rotVec.z );
 		
-		fwrite( &rotQuat.x, sizeof( float ), 1, f );
-		fwrite( &rotQuat.y, sizeof( float ), 1, f );
-		fwrite( &rotQuat.z, sizeof( float ), 1, f );
-		fwrite( &rotQuat.w, sizeof( float ), 1, f );
-		fwrite( &transVec.x, sizeof( float ), 1, f );
-		fwrite( &transVec.y, sizeof( float ), 1, f );
-		fwrite( &transVec.z, sizeof( float ), 1, f );
-		fwrite( &scaleVec.x, sizeof( float ), 1, f );
-		fwrite( &scaleVec.y, sizeof( float ), 1, f );
-		fwrite( &scaleVec.z, sizeof( float ), 1, f );
+		fwrite_le<float>(&rotQuat.x, 1, f);
+		fwrite_le<float>(&rotQuat.y, 1, f);
+		fwrite_le<float>(&rotQuat.z, 1, f);
+		fwrite_le<float>(&rotQuat.w, 1, f);
+		fwrite_le<float>(&transVec.x, 1, f);
+		fwrite_le<float>(&transVec.y, 1, f);
+		fwrite_le<float>(&transVec.z, 1, f);
+		fwrite_le<float>(&scaleVec.x, 1, f);
+		fwrite_le<float>(&scaleVec.y, 1, f);
+		fwrite_le<float>(&scaleVec.z, 1, f);
 	}
 }
 
 
-bool Converter::writeAnimation( const string &assetPath, const string &assetName )
+bool Converter::writeAnimation( const string &assetPath, const string &assetName ) const
 {
 	FILE *f = fopen( (_outPath + assetPath + assetName + ".anim").c_str(), "wb" );
 	if( f == 0x0 )
@@ -1387,8 +1406,8 @@ bool Converter::writeAnimation( const string &assetPath, const string &assetName
 
 	// Write header
 	unsigned int version = 3;
-	fwrite( "H3DA", 4, 1, f );
-	fwrite( &version, sizeof( int ), 1, f );
+	fwrite_le("H3DA", 4, f);
+	fwrite_le(&version, 1, f);
 	
 	// Write number of nodes
 	unsigned int count = 0;
@@ -1396,8 +1415,8 @@ bool Converter::writeAnimation( const string &assetPath, const string &assetName
 		if( _joints[i]->frames.size() > 0 ) ++count;
 	for( unsigned int i = 0; i < _meshes.size(); ++i )
 		if( _meshes[i]->frames.size() > 0 ) ++count;
-	fwrite( &count, sizeof( int ), 1, f );
-	fwrite( &_frameCount, sizeof( int ), 1, f );
+	fwrite_le(&count, 1, f);
+	fwrite_le(&_frameCount, 1, f);
 
 	for( unsigned int i = 0; i < _joints.size(); ++i )
 	{

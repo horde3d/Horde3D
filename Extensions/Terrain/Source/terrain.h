@@ -76,13 +76,13 @@ public:
 	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
-	bool canAttach( SceneNode &parent );
-	int getParamI( int param );
-	void setParamI( int param, int value );
-	float getParamF( int param, int compIdx );
-	void setParamF( int param, int compIdx, float value );
+	virtual bool canAttach( SceneNode &parent );
+	virtual int getParamI( int param ) const;
+	virtual void setParamI( int param, int value );
+	virtual float getParamF( int param, int compIdx ) const;
+	virtual void setParamF( int param, int compIdx, float value );
 
-	bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
+	virtual bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
 
 	ResHandle createGeometryResource( const std::string &name, float lodThreshold );
 	
@@ -96,7 +96,7 @@ public:
 protected:
 	TerrainNode( const TerrainNodeTpl &terrainTpl );
 	
-	void onPostUpdate();
+	virtual void onPostUpdate();
 	
 	bool updateHeightData( TextureResource &hmap );
 	void calcMaxLevel();

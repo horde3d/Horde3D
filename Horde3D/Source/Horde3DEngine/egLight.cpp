@@ -104,7 +104,7 @@ SceneNode *LightNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 }
 
 
-int LightNode::getParamI( int param )
+int LightNode::getParamI( int param ) const
 {
 	switch( param )
 	{
@@ -144,7 +144,7 @@ void LightNode::setParamI( int param, int value )
 }
 
 
-float LightNode::getParamF( int param, int compIdx )
+float LightNode::getParamF( int param, int compIdx ) const
 {
 	switch( param )
 	{
@@ -201,7 +201,7 @@ void LightNode::setParamF( int param, int compIdx, float value )
 }
 
 
-const char *LightNode::getParamStr( int param )
+const char *LightNode::getParamStr( int param ) const
 {
 	switch( param )
 	{
@@ -231,7 +231,7 @@ void LightNode::setParamStr( int param, const char *value )
 }
 
 
-void LightNode::calcScreenSpaceAABB( const Matrix4f &mat, float &x, float &y, float &w, float &h )
+void LightNode::calcScreenSpaceAABB( const Matrix4f &mat, float &x, float &y, float &w, float &h ) const
 {
 	uint32 numPoints = 0;
 	Vec3f points[8];

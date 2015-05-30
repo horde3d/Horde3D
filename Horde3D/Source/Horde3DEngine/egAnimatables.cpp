@@ -99,7 +99,7 @@ SceneNode *MeshNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 }
 
 
-IAnimatableNode *MeshNode::getANParent()
+IAnimatableNode *MeshNode::getANParent() const
 {
 	switch( _parent->getType() )
 	{
@@ -113,7 +113,7 @@ IAnimatableNode *MeshNode::getANParent()
 }
 
 
-bool MeshNode::canAttach( SceneNode &parent )
+bool MeshNode::canAttach( SceneNode &parent ) const
 {
 	// Important: Meshes may not live outside of models
 	return (parent.getType() == SceneNodeTypes::Model) ||
@@ -122,7 +122,7 @@ bool MeshNode::canAttach( SceneNode &parent )
 }
 
 
-int MeshNode::getParamI( int param )
+int MeshNode::getParamI( int param ) const
 {
 	switch( param )
 	{
@@ -283,7 +283,7 @@ SceneNode *JointNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 }
 
 
-IAnimatableNode *JointNode::getANParent()
+IAnimatableNode *JointNode::getANParent() const
 {
 	switch( _parent->getType() )
 	{
@@ -297,7 +297,7 @@ IAnimatableNode *JointNode::getANParent()
 }
 
 
-bool JointNode::canAttach( SceneNode &parent )
+bool JointNode::canAttach( SceneNode &parent ) const
 {
 	// Important: Joints may not live outside of models
 	return (parent.getType() == SceneNodeTypes::Model) ||
@@ -305,7 +305,7 @@ bool JointNode::canAttach( SceneNode &parent )
 }
 
 
-int JointNode::getParamI( int param )
+int JointNode::getParamI( int param ) const
 {
 	switch( param )
 	{

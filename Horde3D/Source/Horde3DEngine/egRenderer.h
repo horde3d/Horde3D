@@ -157,11 +157,11 @@ public:
 	void render( CameraNode *camNode );
 	void finalizeFrame();
 
-	uint32 getFrameID() { return _frameID; }
-	ShaderCombination *getCurShader() { return _curShader; }
-	CameraNode *getCurCamera() { return _curCamera; }
-	uint32 getQuadIdxBuf() { return _quadIdxBuf; }
-	uint32 getParticleVBO() { return _particleVBO; }
+	uint32 getFrameID() const { return _frameID; }
+	ShaderCombination *getCurShader() const { return _curShader; }
+	CameraNode *getCurCamera() const { return _curCamera; }
+	uint32 getQuadIdxBuf() const { return _quadIdxBuf; }
+	uint32 getParticleVBO() const { return _particleVBO; }
 
 protected:
 	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );

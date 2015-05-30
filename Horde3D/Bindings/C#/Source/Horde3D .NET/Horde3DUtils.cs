@@ -228,6 +228,25 @@ namespace Horde3DNET.Utils
         }
 
         /// <summary>
+        /// This utility function displays an info box with customizable text for the current frame on the screen.
+        /// </summary>
+	    /// <param name="x">position of the top left corner of the box; for more details on coordinate system see overlay documentation</param>
+	    /// <param name="y">position of the top left corner of the box; for more details on coordinate system see overlay documentation</param>
+		/// <param name="width">maximum width of info box</param>
+		/// <param name="title">title string of info box</param>
+		/// <param name="numRows">Number of info rows</param>
+		/// <param name="column1">list of strings to print in first column (=numRows)</param>
+		/// <param name="column2">list of strings to print in second column (=numRows)</param>
+        /// <param name="fontMaterialRes">font material resource used for drawing text</param>
+        /// <param name="panelMaterialRes">material resource used for drawing info box</param>
+        public static void showInfoBox(float x, float y, float width, string title,
+                                       int numRows, string[] column1, string[] column2,
+                                       int fontMaterialRes, int panelMaterialRes)
+        {
+            NativeMethodsUtils.h3dutShowInfoBox(x, y, width, title, numRows, column1, column2, fontMaterialRes, panelMaterialRes);
+        }
+
+        /// <summary>
         /// This utility function displays an info box with statistics for the current frame on the screen.
 		/// Since the statistic counters are reset after the call, the function should be called exactly once
 		/// per frame to obtain correct values.

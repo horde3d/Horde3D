@@ -137,7 +137,7 @@ void ModelNode::setupAnimStage( int stage, AnimationResource *anim, int layer,
 }
 
 
-void ModelNode::getAnimParams( int stage, float *time, float *weight )
+void ModelNode::getAnimParams( int stage, float *time, float *weight ) const
 {
 	_animCtrl.getAnimParams( stage, time, weight );
 }
@@ -259,7 +259,7 @@ void ModelNode::setGeometryRes( GeometryResource &geoRes )
 }
 
 
-int ModelNode::getParamI( int param )
+int ModelNode::getParamI( int param ) const
 {
 	switch( param )
 	{
@@ -267,6 +267,8 @@ int ModelNode::getParamI( int param )
 		return _geometryRes != 0x0 ? _geometryRes->_handle : 0;
 	case ModelNodeParams::SWSkinningI:
 		return _softwareSkinning ? 1 : 0;
+  case ModelNodeParams::AnimCountI:
+    return _animCtrl.getAnimCount();
 	}
 
 	return SceneNode::getParamI( param );
@@ -302,7 +304,7 @@ void ModelNode::setParamI( int param, int value )
 }
 
 
-float ModelNode::getParamF( int param, int compIdx )
+float ModelNode::getParamF( int param, int compIdx ) const
 {
 	switch( param )
 	{
@@ -468,7 +470,7 @@ bool ModelNode::updateGeometry()
 }
 
 
-uint32 ModelNode::calcLodLevel( const Vec3f &viewPoint )
+uint32 ModelNode::calcLodLevel( const Vec3f &viewPoint ) const
 {
 	Vec3f pos( _absTrans.c[3][0], _absTrans.c[3][1], _absTrans.c[3][2] );
 	float dist = (pos - viewPoint).length();
