@@ -9,6 +9,7 @@
 //
 // *************************************************************************************************
 
+#include "utEndian.h"
 #include "terrain.h"
 #include "egModules.h"
 #include "egCom.h"
@@ -798,7 +799,7 @@ uint32 TerrainNode::calculateGeometryBlockCount( float lodThreshold, float minU,
 
 
 void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float minV, float maxU,
-	float maxV, int level, float scale, float *&vertData, unsigned int *&indexData, uint32 &indexOffset )
+	float maxV, int level, float scale, float *&vertData, uint32 *&indexData, uint32 &indexOffset )
 {
 	const float halfU = (minU + maxU) / 2.0f;
 	const float halfV = (minV + maxV) / 2.0f;
@@ -831,14 +832,14 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 				const float newV = (t * scale + minV) * _hmapSize + 0.5f;
 				uint32 index = ftoi_t( newV ) * (_hmapSize + 1) + ftoi_t( newU );
 
-				*vertData++ = (s * scale + minU);
+                vertData = (float*) elemset_le(vertData, (s * scale + minU));
 
 				if( v == 0 || v == size - 1 || u == 0 || u == size - 1 )
-					*vertData++ = maxf( _heightData[index] / 65535.0f - _skirtHeight, 0 );
+					vertData = (float*) elemset_le(vertData, (maxf( _heightData[index] / 65535.0f - _skirtHeight, 0 )));
 				else
-					*vertData++ = _heightData[index] / 65535.0f;
+					vertData = (float*) elemset_le(vertData, (_heightData[index] / 65535.0f));
 
-				*vertData++ = (t * scale + minV);
+                vertData = (float*) elemset_le(vertData, (t * scale + minV));
 			}
 		}
 
@@ -846,13 +847,13 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 		{
 			for( uint32 u = 0; u < size - 1; ++u )
 			{
-				*indexData++ = indexOffset + v * size + u;
-				*indexData++ = indexOffset + (v + 1) * size + u;
-				*indexData++ = indexOffset + (v + 1) * size + u + 1;
+                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
 
-				*indexData++ = indexOffset + v * size + u;
-				*indexData++ = indexOffset + (v + 1) * size + u + 1;
-				*indexData++ = indexOffset + v * size + u + 1;
+                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u + 1);
 			}
 		}
 		indexOffset += size * size;
@@ -905,24 +906,24 @@ ResHandle TerrainNode::createGeometryResource( const string &name, float lodThre
 
 	// Create geometry data block
 	char *data = new char[size];
-
 	char *pData = data;
-	// Write Horde flag
-	pData[0] = 'H'; pData[1] = '3'; pData[2] = 'D'; pData[3] = 'G'; pData += 4;
-	// Set version to 5 
-	*( (uint32 *)pData ) = 5; pData += sizeof( uint32 );
+
+    // Write Horde flag
+    pData = elemcpyd_le((char*)(pData), "H3DG", 4);
+	// Set version to 5
+	pData = elemset_le<uint32>((uint32 *)(pData), 5);
 	// Set joint count (zero for terrains)
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le<uint32>((uint32 *)(pData), 0);
 	// Set number of streams
-	*( (uint32 *)pData ) = 1; pData += sizeof( uint32 );
+	pData = elemset_le<uint32>((uint32 *)(pData), 1);
 	// Write size of each stream
-	*( (uint32 *)pData ) = streamSize; pData += sizeof( uint32 );
+	pData = elemset_le<uint32>((uint32 *)(pData), streamSize);
 	
 	// Beginning of stream data
 	// Stream ID
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le<uint32>((uint32 *)(pData), 0);
 	// set stream element size
-	*( (uint32 *)pData ) = streamElementSize; pData += sizeof( uint32 );
+	pData = elemset_le<uint32>((uint32 *)(pData), streamElementSize);
 
 	uint32 index = 0;
 	float *vertexData = (float *)pData;
@@ -935,13 +936,13 @@ ResHandle TerrainNode::createGeometryResource( const string &name, float lodThre
 	pData += streamSize * streamElementSize;
 
 	// Set number of indices
-	*( (uint32 *) pData ) = indexCount; pData += sizeof( uint32 );
+	pData = elemset_le<uint32>((uint32 *)(pData), indexCount);
 	
 	// Skip index data
 	pData += indexCount * sizeof( uint32 );				
 
 	// Set number of morph targets
-	*( (uint32 *) pData ) = 0;	pData += sizeof( uint32 );
+    pData = elemset_le<uint32>((uint32 *)(pData), 0);
 
 	ResHandle res = Modules::resMan().addResource( ResourceTypes::Geometry, name, 0, true );
 	resObj = Modules::resMan().resolveResHandle( res );

@@ -10,7 +10,7 @@
 //
 // *************************************************************************************************
 
-#include <utEndian.h>
+#include "utEndian.h"
 #include "egGeometry.h"
 #include "egResource.h"
 #include "egAnimation.h"
