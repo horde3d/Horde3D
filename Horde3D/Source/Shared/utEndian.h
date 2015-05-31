@@ -100,7 +100,7 @@ inline char* elemcpyd_le(T* dest, const T* src, size_t num_elems)
 template<class T>
 inline char* elemset_le(T* dest, T value)
 {
-    return elemcpy_le(dest, &value, 1);
+    return elemcpyd_le(dest, &value, 1);
 }
 
 template<class T>
