@@ -76,8 +76,6 @@ inline void swap_endian(const float* first, const float* last, float* d_first)
                 reinterpret_cast<uint32*>(d_first));
 }
 
-#include <algorithm>
-
 template<class T>
 inline char* elemcpy_le(T* dest, const T* src, size_t num_elems)
 {

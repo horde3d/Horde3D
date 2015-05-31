@@ -607,7 +607,7 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 	// Vertex Stream ID
 	pData = elemset_le((uint32*)(pData), 0u);
 	// set vertex stream element size
-	pData = elemset_le((uint32*)(pData), sizeof( float ) * 3);
+	pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 3);
 	// vertex data
     pData = elemcpyd_le((float*)(pData), posData, numVertices * 3);
 
@@ -616,7 +616,7 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 		// Normals Stream ID
 		pData = elemset_le((uint32*)(pData), 1u);
 		// set normal stream element size
-		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
 		// normal data
         pData = elemcpyd_le((short*)(pData), normalData, numVertices * 3);
 	}
@@ -626,14 +626,14 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 		// Tangent Stream ID
 		pData = elemset_le((uint32*)(pData), 2u);
 		// set tangent stream element size
-		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
 		// tangent data
 		pData = elemcpyd_le((short*)(pData), tangentData, numVertices * 3);
 	
 		// Bitangent Stream ID
 		pData = elemset_le((uint32*)(pData), 3u);
 		// set bitangent stream element size
-		pData = elemset_le((uint32*)(pData), sizeof( short ) * 3);
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
 		// bitangent data
 		pData = elemcpyd_le((short*)(pData), bitangentData, numVertices * 3);
 	}
@@ -642,13 +642,13 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 	if( texData1 )
 	{
 		pData = elemset_le((uint32*)(pData), 6u); // Tex Set 1
-		pData = elemset_le((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 2); // stream element size
 		pData = elemcpyd_le((float *)(pData), texData1, 2 * numVertices ); // stream data
 	}
 	if( texData2 )
 	{
 		pData = elemset_le((uint32*)(pData), 7u); // Tex Set 2
-		pData = elemset_le((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 2); // stream element size
 		pData = elemcpyd_le((float *)(pData), texData2, 2 * numVertices ); // stream data
 	}
 
