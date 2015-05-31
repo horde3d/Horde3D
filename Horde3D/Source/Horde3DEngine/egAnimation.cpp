@@ -10,6 +10,7 @@
 //
 // *************************************************************************************************
 
+#include "utEndian.h"
 #include "egAnimation.h"
 #include "egModules.h"
 #include "egCom.h"
@@ -93,19 +94,19 @@ bool AnimationResource::load( const char *data, int size )
 	
 	// Check header and version
 	char id[4];
-	memcpy( &id, pData, 4 ); pData += 4;
+	pData = elemcpy_le(id, (char*)(pData), 4);
 	if( id[0] != 'H' || id[1] != '3' || id[2] != 'D' || id[3] != 'A' )
 		return raiseError( "Invalid animation resource" );
 	
 	uint32 version;
-	memcpy( &version, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	pData = elemcpy_le(&version, (uint32*)(pData), 1);
 	if( version != 2 && version != 3 )
 		return raiseError( "Unsupported version of animation resource" );
 	
 	// Load animation data
 	uint32 numEntities;
-	memcpy( &numEntities, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
-	memcpy( &_numFrames, pData, sizeof( uint32 ) ); pData += sizeof( uint32 );
+	pData = elemcpy_le(&numEntities, (uint32*)(pData), 1);
+	pData = elemcpy_le(&_numFrames, (uint32*)(pData), 1);
 
 	_entities.resize( numEntities );
 
@@ -114,13 +115,13 @@ bool AnimationResource::load( const char *data, int size )
 		char name[256], compressed = 0;
 		AnimResEntity &entity = _entities[i];
 		
-		memcpy( name, pData, 256 ); pData += 256;
+		pData = elemcpy_le(name, (char*)(pData), 256);
 		entity.nameId = AnimationController::hashName( name );
 		
 		// Animation compression
 		if( version == 3 )
 		{
-			memcpy( &compressed, pData, sizeof( char ) ); pData += sizeof( char ); 
+			pData = elemcpy_le(&compressed, (char*)(pData), 1); 
 		}
 
 		entity.frames.resize( compressed ? 1 : _numFrames );
@@ -128,18 +129,18 @@ bool AnimationResource::load( const char *data, int size )
 		{
 			Frame &frame = entity.frames[j];
 
-			memcpy( &frame.rotQuat.x, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.rotQuat.y, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.rotQuat.z, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.rotQuat.w, pData, sizeof( float ) ); pData += sizeof( float );
+			pData = elemcpy_le(&frame.rotQuat.x, (float*)(pData), 1);
+			pData = elemcpy_le(&frame.rotQuat.y, (float*)(pData), 1);
+			pData = elemcpy_le(&frame.rotQuat.z, (float*)(pData), 1);
+			pData = elemcpy_le(&frame.rotQuat.w, (float*)(pData), 1);
 
-			memcpy( &frame.transVec.x, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.transVec.y, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.transVec.z, pData, sizeof( float ) ); pData += sizeof( float );
+			pData = elemcpy_le(&frame.transVec.x, (float*)(pData), 1);
+			pData = elemcpy_le(&frame.transVec.y, (float*)(pData), 1);
+			pData = elemcpy_le(&frame.transVec.z, (float*)(pData), 1);
 
-			memcpy( &frame.scaleVec.x, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.scaleVec.y, pData, sizeof( float ) ); pData += sizeof( float );
-			memcpy( &frame.scaleVec.z, pData, sizeof( float ) ); pData += sizeof( float );
+			pData = elemcpy_le(&frame.scaleVec.x, (float*)(pData), 1);
+			pData = elemcpy_le(&frame.scaleVec.y, (float*)(pData), 1);
+			pData = elemcpy_le(&frame.scaleVec.z, (float*)(pData), 1);
 
 			// Prebake transformation matrix for fast animation path
 			frame.bakedTransMat.scale( frame.scaleVec.x, frame.scaleVec.y, frame.scaleVec.z );
