@@ -32,7 +32,7 @@ template<class T>
 inline void fwrite_le(const T* data, size_t count, FILE* f)
 {
     char buffer[256];
-    ASSERT(sizeof(T) > sizeof(buffer));
+    ASSERT(sizeof(T) < sizeof(buffer));
     const size_t capacity = sizeof(buffer) / sizeof(T);
 
     size_t i = 0;
