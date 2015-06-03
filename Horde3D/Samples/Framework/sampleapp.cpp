@@ -78,7 +78,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
     _velocity(0.1f),
-	_helpRows(10), _helpLabels(0), _helpValues(0),
+	_helpRows(12), _helpLabels(0), _helpValues(0),
     _curPipeline(0),
     _cam(0),
     _initialized(false),
@@ -275,7 +275,7 @@ int SampleApplication::run()
     {
         double avgFPS = _benchmarkLength / (glfwGetTime() - _t0);
         const char* fpsLabel = "Average FPS:";
-        char* fpsValue = new char[10];
+        char fpsValue[10];
         sprintf( fpsValue, "%.2f", avgFPS );
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
@@ -319,8 +319,8 @@ bool SampleApplication::initResources()
 	_logoMatRes = h3dAddResource( H3DResTypes::Material, "overlays/logo.material.xml", 0 );
 
     // Help info
-    _helpLabels = (const char**)malloc(_helpRows * sizeof(char*));
-    _helpValues = (const char**)malloc(_helpRows * sizeof(char*));
+    _helpLabels = new const char*[_helpRows];
+    _helpValues = new const char*[_helpRows];
 
     if ( _helpRows > 0 ) { _helpLabels[0] = "F1:"; _helpValues[0] = "Help (ON/OFF)"; }
     if ( _helpRows > 1 ) { _helpLabels[1] = "F2:"; _helpValues[1] = "Stats (...)"; }

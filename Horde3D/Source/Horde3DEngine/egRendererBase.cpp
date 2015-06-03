@@ -153,8 +153,9 @@ RenderDevice::RenderDevice()
 	_curVertLayout = _newVertLayout = 0;
 	_curIndexBuf = _newIndexBuf = 0;
 	_defaultFBO = 0;
-    _defaultFBOMultisampled = false;
+	_defaultFBOMultisampled = false;
 	_indexFormat = (uint32)IDXFMT_16;
+	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 }
 
@@ -167,9 +168,9 @@ RenderDevice::~RenderDevice()
 void RenderDevice::initStates()
 {
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
-    GLint value;
-    glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
-    _defaultFBOMultisampled = value > 0;
+	GLint value;
+	glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
+	_defaultFBOMultisampled = value > 0;
 }
 
 

@@ -13,6 +13,7 @@
 #define _CRT_SECURE_NO_DEPRECATE
 #include "Horde3D.h"
 #include "utPlatform.h"
+#include "utEndian.h"
 #include "utMath.h"
 #include <math.h>
 #ifdef PLATFORM_WIN
@@ -591,81 +592,74 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 
 	char *pData = data;
 	// Write Horde flag
-	pData[0] = 'H'; pData[1] = '3'; pData[2] = 'D'; pData[3] = 'G'; pData += 4;
+    pData = elemcpyd_le((char*)(pData), "H3DG", 4);
 	// Set version to 5 
-	*( (uint32 *)pData ) = 5; pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 5u);
 	// Set joint count (zero for this method)
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 0u);
 	// Set number of streams
-	*( (uint32 *)pData ) = 1 + numTexSets + ( normalData ? 1 : 0 ) + ((tangentData && bitangentData) ? 2 : 0); pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 1u + numTexSets + ( normalData ? 1 : 0 ) + ((tangentData && bitangentData) ? 2 : 0));
 	// Write number of elements in each stream
-	*( (uint32 *)pData ) = numVertices; pData += sizeof( uint32 );
+	pData = elemset_le((int32*)(pData), numVertices);
 
 	// Beginning of stream data
 
 	// Vertex Stream ID
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 0u);
 	// set vertex stream element size
-	*( (uint32 *)pData ) = sizeof( float ) * 3; pData += sizeof( uint32 );
+	pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 3);
 	// vertex data
-	memcpy( (float*) pData, posData, numVertices * sizeof( float ) * 3 );
-	pData += numVertices * sizeof( float ) * 3;
+    pData = elemcpyd_le((float*)(pData), posData, numVertices * 3);
 
 	if( normalData )
 	{
 		// Normals Stream ID
-		*( (uint32 *)pData ) = 1; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), 1u);
 		// set normal stream element size
-		*( (uint32 *)pData ) = sizeof( short ) * 3; pData += sizeof( uint32 );
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
 		// normal data
-		memcpy( (short*) pData, normalData, numVertices * sizeof( short ) * 3 );
-		pData += numVertices * sizeof( short ) * 3;
+        pData = elemcpyd_le((short*)(pData), normalData, numVertices * 3);
 	}
 
 	if( tangentData && bitangentData )
 	{
 		// Tangent Stream ID
-		*( (uint32 *)pData ) = 2; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), 2u);
 		// set tangent stream element size
-		*( (uint32 *)pData ) = sizeof( short ) * 3; pData += sizeof( uint32 );
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
 		// tangent data
-		memcpy( (short*) pData, tangentData, numVertices * sizeof( short ) * 3 );
-		pData += numVertices * sizeof( short ) * 3;
+		pData = elemcpyd_le((short*)(pData), tangentData, numVertices * 3);
 	
 		// Bitangent Stream ID
-		*( (uint32 *)pData ) = 3; pData += sizeof( uint32 );
+		pData = elemset_le((uint32*)(pData), 3u);
 		// set bitangent stream element size
-		*( (uint32 *)pData ) = sizeof( short ) * 3; pData += sizeof( uint32 );
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( short ) * 3);
 		// bitangent data
-		memcpy( (short*) pData, bitangentData, numVertices * sizeof( short ) * 3 );
-		pData += numVertices * sizeof( short ) * 3;
+		pData = elemcpyd_le((short*)(pData), bitangentData, numVertices * 3);
 	}
 
 	// texture coordinates stream
 	if( texData1 )
 	{
-		*( (uint32 *)pData ) = 6; pData += sizeof( uint32 ); // Tex Set 1
-		*( (uint32 *)pData ) = sizeof( float ) * 2; pData += sizeof( uint32 ); // stream element size
-		memcpy( (float *)pData, texData1, sizeof( float ) * 2 * numVertices ); // stream data
-		pData += sizeof( float ) * 2 * numVertices; 
+		pData = elemset_le((uint32*)(pData), 6u); // Tex Set 1
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemcpyd_le((float *)(pData), texData1, 2 * numVertices ); // stream data
 	}
 	if( texData2 )
 	{
-		*( (uint32 *)pData ) = 7; pData += sizeof( uint32 ); // Tex Set 2
-		*( (uint32 *)pData ) = sizeof( float ) * 2; pData += sizeof( uint32 ); // stream element size
-		memcpy( (float *)pData, texData2, sizeof( float ) * 2 * numVertices ); // stream data
-		pData += sizeof( float ) * 2 * numVertices; 
+		pData = elemset_le((uint32*)(pData), 7u); // Tex Set 2
+		pData = elemset_le<uint32>((uint32*)(pData), sizeof( float ) * 2); // stream element size
+		pData = elemcpyd_le((float *)(pData), texData2, 2 * numVertices ); // stream data
 	}
 
 	// Set number of indices
-	*( (uint32 *) pData ) = numTriangleIndices; pData += sizeof( uint32 );	
+	pData = elemset_le((int32*)(pData), numTriangleIndices);	
 	
 	// index data
-	memcpy( pData, indexData, numTriangleIndices * sizeof( uint32 ) );
-	pData += numTriangleIndices * sizeof( uint32 );				
+	pData = elemcpyd_le((uint32*)(pData), indexData, numTriangleIndices);			
 
 	// Set number of morph targets to zero
-	*( (uint32 *) pData ) = 0;	pData += sizeof( uint32 );
+	pData = elemset_le((uint32*)(pData), 0u);
 
 	if ( res ) h3dLoadResource( res, data, size );
 	delete[] data;
@@ -689,21 +683,21 @@ DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int hei
 	// Build TGA header
 	char c;
 	short s;
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // idLength
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // colmapType
-	c = 2;      memcpy( data, &c, 1 ); data += 1;  // imageType
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // colmapStart
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // colmapLength
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // colmapBits
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // x
-	s = 0;      memcpy( data, &s, 2 ); data += 2;  // y
-	s = width;  memcpy( data, &s, 2 ); data += 2;  // width
-	s = height; memcpy( data, &s, 2 ); data += 2;  // height
-	c = bpp;    memcpy( data, &c, 1 ); data += 1;  // bpp
-	c = 0;      memcpy( data, &c, 1 ); data += 1;  // imageDesc
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // idLength
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // colmapType
+	c = 2;      data = elemcpyd_le( data, &c, 1 );              // imageType
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // colmapStart
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // colmapLength
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // colmapBits
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // x
+	s = 0;      data = elemcpyd_le( (short*) data, &s, 1 );     // y
+	s = width;  data = elemcpyd_le( (short*) data, &s, 1 );     // width
+	s = height; data = elemcpyd_le( (short*) data, &s, 1 );     // height
+	c = bpp;    data = elemcpyd_le( data, &c, 1 );              // bpp
+	c = 0;      data = elemcpyd_le( data, &c, 1 );              // imageDesc
 
 	// Copy data
-	if( pixels ) memcpy( data, pixels, width * height * (bpp / 8) );
+    if( pixels ) memcpy( data, pixels, width * height * (bpp / 8) );
 
 	return true;
 }
