@@ -295,6 +295,15 @@ void InitLegacyExtensions( bool &r )
 		isExtensionSupported( "GL_ATI_texture_float" );
 
 	glExt::ARB_texture_non_power_of_two = isExtensionSupported( "GL_ARB_texture_non_power_of_two" );
+
+	glExt::ARB_timer_query = isExtensionSupported( "GL_ARB_timer_query" );
+	if ( glExt::ARB_timer_query )
+	{
+		r &= ( glQueryCounter = ( PFNGLQUERYCOUNTERPROC ) platGetProcAddress( "glQueryCounter" ) ) != 0x0;
+		r &= ( glGetQueryObjecti64v = ( PFNGLGETQUERYOBJECTI64VPROC ) platGetProcAddress( "glGetQueryObjecti64v" ) ) != 0x0;
+		r &= ( glGetQueryObjectui64v = ( PFNGLGETQUERYOBJECTUI64VPROC ) platGetProcAddress( "glGetQueryObjectui64v" ) ) != 0x0;
+	}
+	
 }
 
 void InitModernExtensions( bool &r )
@@ -442,19 +451,6 @@ bool initOpenGLExtensions()
 	glExt::EXT_texture_compression_s3tc = isExtensionSupported( "GL_EXT_texture_compression_s3tc" );
 
 	glExt::EXT_texture_sRGB = isExtensionSupported( "GL_EXT_texture_sRGB" );
-
-	if ( glExt::majorVersion * 10 + glExt::minorVersion < 33 )
-	{
-		// Get extension for OpenGL 3.2 and earlier
-		glExt::ARB_timer_query = isExtensionSupported( "GL_ARB_timer_query" );
-		if ( glExt::ARB_timer_query )
-		{
-			r &= ( glQueryCounter = ( PFNGLQUERYCOUNTERPROC ) platGetProcAddress( "glQueryCounter" ) ) != 0x0;
-			r &= ( glGetQueryObjecti64v = ( PFNGLGETQUERYOBJECTI64VPROC ) platGetProcAddress( "glGetQueryObjecti64v" ) ) != 0x0;
-			r &= ( glGetQueryObjectui64v = ( PFNGLGETQUERYOBJECTUI64VPROC ) platGetProcAddress( "glGetQueryObjectui64v" ) ) != 0x0;
-		}
-	}
-	
 
 	return r;
 }
