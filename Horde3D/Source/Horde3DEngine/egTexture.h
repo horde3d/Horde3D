@@ -37,7 +37,8 @@ struct TextureResData
 		TexSliceCountI,
 		ImgWidthI,
 		ImgHeightI,
-		ImgPixelStream
+		ImgPixelStream,
+		TexNativeRefI
 	};
 };
 
@@ -97,6 +98,7 @@ protected:
 	uint32                _rbObj;  // Used when texture is renderable
 	bool                  _sRGB;
 	bool                  _hasMipMaps;
+	uint32                _texNativeRef; // Raw OpenGL texture id
 
 	friend class ResourceManager;
 };

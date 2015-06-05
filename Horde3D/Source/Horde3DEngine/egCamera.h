@@ -88,6 +88,7 @@ public:
 	void setParamF( int param, int compIdx, float value );
 
 	void setupViewParams( float fov, float aspect, float nearPlane, float farPlane );
+	void setProjectionMatrix( float* projMat );
 
 	const Frustum &getFrustum() { return _frustum; }
 	const Matrix4f &getViewMat() { return _viewMat; }
@@ -110,6 +111,7 @@ private:
 	int                 _outputBufferIndex;
 	int                 _occSet;
 	bool                _orthographic;  // Perspective or orthographic frustum?
+	bool                _manualProjMat; // Projection matrix manually set?
 
 	friend class SceneManager;
 	friend class Renderer;

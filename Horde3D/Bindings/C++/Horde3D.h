@@ -356,7 +356,8 @@ struct H3DTexRes
 		TexSliceCountI,
 		ImgWidthI,
 		ImgHeightI,
-		ImgPixelStream
+		ImgPixelStream,
+		TexNativeRefI
 	};
 };
 
@@ -2137,6 +2138,21 @@ DLL void h3dSetupCameraView( H3DNode cameraNode, float fov, float aspect, float 
 */
 DLL void h3dGetCameraProjMat( H3DNode cameraNode, float *projMat );
 
+/* Function: h3dSetCameraProjMat
+		Sets the camera projection matrix.
+	
+	Details:
+		This function sets the camera projection matrix used for bringing the geometry to
+		screen space.
+	
+	Parameters:
+		cameraNode  - handle to Camera node
+		projMat     - pointer to float array with 16 elements
+		
+	Returns:
+		nothing
+*/
+DLL void h3dSetCameraProjMat( H3DNode cameraNode, float *projMat );
 
 /* Group: Emitter-specific scene graph functions */
 /* Function: h3dAddEmitterNode

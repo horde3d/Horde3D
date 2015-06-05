@@ -297,7 +297,8 @@ namespace Horde3DNET
             TexSliceCountI,
             ImgWidthI,
             ImgHeightI,
-            ImgPixelStream
+            ImgPixelStream,
+            TexNativeRefI
         }
 
 

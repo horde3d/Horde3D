@@ -568,6 +568,12 @@ bool RenderDevice::getTextureData( uint32 texObj, int slice, int mipLevel, void 
 	return true;
 }
 
+uint32 RenderDevice::getTextureNativeReference( uint32 texObj ) 
+{
+	const RDITexture &tex = _textures.getRef( texObj );
+	return tex.glObj;
+}
+
 
 // =================================================================================================
 // Shaders

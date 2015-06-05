@@ -37,6 +37,7 @@ CameraNode::CameraNode( const CameraNodeTpl &cameraTpl ) :
 	_frustFar = cameraTpl.farPlane;
 	_orthographic = cameraTpl.orthographic;
 	_occSet = cameraTpl.occlusionCulling ? Modules::renderer().registerOccSet() : -1;
+	_manualProjMat = false;
 }
 
 
@@ -268,7 +269,18 @@ void CameraNode::setupViewParams( float fov, float aspect, float nearPlane, floa
 	_frustTop = ymax;
 	_frustNear = nearPlane;
 	_frustFar = farPlane;
+
+	// setting view params implicitly disables the manual projection matrix
+	_manualProjMat = false;
 	
+	markDirty();
+}
+
+void CameraNode::setProjectionMatrix( float* projMat ) 
+{
+	memcpy( _projMat.x, projMat, 16 * sizeof( float ) );
+	_manualProjMat = true;
+
 	markDirty();
 }
 
@@ -281,11 +293,14 @@ void CameraNode::onPostUpdate()
 	// Calculate view matrix
 	_viewMat = _absTrans.inverted();
 	
-	// Calculate projection matrix
-	if( !_orthographic )
-		_projMat = Matrix4f::PerspectiveMat( _frustLeft, _frustRight, _frustBottom, _frustTop, _frustNear, _frustFar );
-	else
-		_projMat = Matrix4f::OrthoMat( _frustLeft, _frustRight, _frustBottom, _frustTop, _frustNear, _frustFar );
+	// Calculate projection matrix if not using a manually set one
+	if( !_manualProjMat )
+	{
+		if( !_orthographic )
+			_projMat = Matrix4f::PerspectiveMat( _frustLeft, _frustRight, _frustBottom, _frustTop, _frustNear, _frustFar );
+		else
+			_projMat = Matrix4f::OrthoMat( _frustLeft, _frustRight, _frustBottom, _frustTop, _frustNear, _frustFar );
+	}
 
 	// Update frustum
 	_frustum.buildViewFrustum( _viewMat, _projMat );
