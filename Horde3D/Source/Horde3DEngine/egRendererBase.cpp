@@ -85,7 +85,7 @@ void GPUTimer::beginQuery( uint32 frameID )
 	}
 	
 	_activeQuery = true;
-	 glQueryCounter( queryObjs[0], GL_TIMESTAMP );
+	 glQueryCounterARB( queryObjs[0], GL_TIMESTAMP );
 }
 
 
@@ -93,7 +93,7 @@ void GPUTimer::endQuery()
 {
 	if( _activeQuery )
 	{	
-		glQueryCounter( _queryPool[_numQueries * 2 - 1], GL_TIMESTAMP );
+		glQueryCounterARB( _queryPool[_numQueries * 2 - 1], GL_TIMESTAMP );
 		_activeQuery = false;
 	}
 }
@@ -118,8 +118,8 @@ bool GPUTimer::updateResults()
 	GLuint64 timeStart = 0, timeEnd = 0, timeAccum = 0;
 	for( uint32 i = 0; i < _numQueries; ++i )
 	{
-		glGetQueryObjectui64v( _queryPool[i * 2], GL_QUERY_RESULT, &timeStart );
-		glGetQueryObjectui64v( _queryPool[i * 2 + 1], GL_QUERY_RESULT, &timeEnd );
+		glGetQueryObjectui64vARB( _queryPool[i * 2], GL_QUERY_RESULT, &timeStart );
+		glGetQueryObjectui64vARB( _queryPool[i * 2 + 1], GL_QUERY_RESULT, &timeEnd );
 		timeAccum += timeEnd - timeStart;
 	}
 	
