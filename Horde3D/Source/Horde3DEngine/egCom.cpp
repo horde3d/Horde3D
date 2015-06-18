@@ -273,10 +273,10 @@ StatManager::StatManager()
 
 	_frameTime = 0;
 
-	_fwdLightsGPUTimer = new GPUTimer();
-	_defLightsGPUTimer = new GPUTimer();
-	_shadowsGPUTimer = new GPUTimer();
-	_particleGPUTimer = new GPUTimer();
+	_fwdLightsGPUTimer = gRDI->createGPUTimer();
+	_defLightsGPUTimer = gRDI->createGPUTimer();
+	_shadowsGPUTimer = gRDI->createGPUTimer();
+	_particleGPUTimer = gRDI->createGPUTimer();
 }
 
 

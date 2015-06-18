@@ -468,6 +468,9 @@ public:
 	void endQuery( uint32 queryObj );
 	uint32 getQueryResult( uint32 queryObj ) const;
 
+	// Render Device dependent GPU Timer
+	GPUTimer *createGPUTimer() { return new GPUTimer(); }
+
 // -----------------------------------------------------------------------------
 // Commands
 // -----------------------------------------------------------------------------
