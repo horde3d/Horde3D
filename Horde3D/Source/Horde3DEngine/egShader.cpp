@@ -403,11 +403,13 @@ void ShaderResource::initDefault()
 
 void ShaderResource::release()
 {
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _contexts.size(); ++i )
 	{
 		for( uint32 j = 0; j < _contexts[i].shaderCombs.size(); ++j )
 		{
-			gRDI->destroyShader( _contexts[i].shaderCombs[j].shaderObj );
+			rdi->destroyShader( _contexts[i].shaderCombs[j].shaderObj );
 		}
 	}
 
@@ -846,10 +848,12 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	Modules::log().writeInfo( "---- C O M P I L I N G  . S H A D E R . %s@%s[%i] ----",
 		_name.c_str(), context.id.c_str(), sc.combMask );
 	
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
 	// Unload shader if necessary
 	if( sc.shaderObj != 0 )
 	{
-		gRDI->destroyShader( sc.shaderObj );
+		rdi->destroyShader( sc.shaderObj );
 		sc.shaderObj = 0;
 	}
 	
@@ -870,18 +874,18 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	}
 	else
 	{
-		gRDI->bindShader( sc.shaderObj );
+		rdi->bindShader( sc.shaderObj );
 
 		// Find samplers in compiled shader
 		sc.customSamplers.reserve( _samplers.size() );
 		for( uint32 i = 0; i < _samplers.size(); ++i )
 		{
-			int samplerLoc = gRDI->getShaderSamplerLoc( sc.shaderObj, _samplers[i].id.c_str() );
+			int samplerLoc = rdi->getShaderSamplerLoc( sc.shaderObj, _samplers[i].id.c_str() );
 			sc.customSamplers.push_back( samplerLoc );
 			
 			// Set texture unit
 			if( samplerLoc >= 0 )
-				gRDI->setShaderSampler( samplerLoc, _samplers[i].texUnit );
+				rdi->setShaderSampler( samplerLoc, _samplers[i].texUnit );
 		}
 		
 		// Find uniforms in compiled shader
@@ -889,15 +893,15 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 		for( uint32 i = 0; i < _uniforms.size(); ++i )
 		{
 			sc.customUniforms.push_back(
-				gRDI->getShaderConstLoc( sc.shaderObj, _uniforms[i].id.c_str() ) );
+				rdi->getShaderConstLoc( sc.shaderObj, _uniforms[i].id.c_str() ) );
 		}
 	}
 
-	gRDI->bindShader( 0 );
+	rdi->bindShader( 0 );
 
 	// Output shader log
-	if( gRDI->getShaderLog() != "" )
-		Modules::log().writeInfo( "Shader resource '%s': ShaderLog: %s", _name.c_str(), gRDI->getShaderLog().c_str() );
+	if( rdi->getShaderLog() != "" )
+		Modules::log().writeInfo( "Shader resource '%s': ShaderLog: %s", _name.c_str(), rdi->getShaderLog().c_str() );
 }
 
 

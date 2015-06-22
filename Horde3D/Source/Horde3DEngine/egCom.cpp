@@ -273,10 +273,12 @@ StatManager::StatManager()
 
 	_frameTime = 0;
 
-	_fwdLightsGPUTimer = gRDI->createGPUTimer();
-	_defLightsGPUTimer = gRDI->createGPUTimer();
-	_shadowsGPUTimer = gRDI->createGPUTimer();
-	_particleGPUTimer = gRDI->createGPUTimer();
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
+	_fwdLightsGPUTimer = rdi->createGPUTimer();
+	_defLightsGPUTimer = rdi->createGPUTimer();
+	_shadowsGPUTimer = rdi->createGPUTimer();
+	_particleGPUTimer = rdi->createGPUTimer();
 }
 
 
@@ -340,9 +342,9 @@ float StatManager::getStat( int param, bool reset )
 		if( reset ) _shadowsGPUTimer->reset();
 		return value;
 	case EngineStats::TextureVMem:
-		return (gRDI->getTextureMem() / 1024) / 1024.0f;
+		return ( Modules::renderer().getRenderDevice()->getTextureMem() / 1024) / 1024.0f;
 	case EngineStats::GeometryVMem:
-		return (gRDI->getBufferMem() / 1024) / 1024.0f;
+		return ( Modules::renderer().getRenderDevice()->getBufferMem() / 1024 ) / 1024.0f;
 	default:
 		Modules::setError( "Invalid param for h3dGetStat" );
 		return Math::NaN;

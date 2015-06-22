@@ -322,10 +322,12 @@ EmitterNode::EmitterNode( const EmitterNodeTpl &emitterTpl ) :
 
 EmitterNode::~EmitterNode()
 {
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _occQueries.size(); ++i )
 	{
 		if( _occQueries[i] != 0 )
-			gRDI->destroyQuery( _occQueries[i] );
+			rdi->destroyQuery( _occQueries[i] );
 	}
 	
 	delete[] _particles;

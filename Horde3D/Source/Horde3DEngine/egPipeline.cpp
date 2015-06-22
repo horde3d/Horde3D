@@ -294,6 +294,8 @@ RenderTarget *PipelineResource::findRenderTarget( const string &id ) const
 
 bool PipelineResource::createRenderTargets()
 {
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{
 		RenderTarget &rt = _renderTargets[i];
@@ -302,7 +304,7 @@ bool PipelineResource::createRenderTargets()
 		if( width == 0 ) width = ftoi_r( _baseWidth * rt.scale );
 		if( height == 0 ) height = ftoi_r( _baseHeight * rt.scale );
 		
-		rt.rendBuf = gRDI->createRenderBuffer(
+		rt.rendBuf = rdi->createRenderBuffer(
 			width, height, rt.format, rt.hasDepthBuf, rt.numColBufs, rt.samples );
 		if( rt.rendBuf == 0 ) return false;
 	}
@@ -313,11 +315,13 @@ bool PipelineResource::createRenderTargets()
 
 void PipelineResource::releaseRenderTargets()
 {
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{
 		RenderTarget &rt = _renderTargets[i];
 		if( rt.rendBuf )
-			gRDI->destroyRenderBuffer( rt.rendBuf );
+			rdi->destroyRenderBuffer( rt.rendBuf );
 	}
 }
 
@@ -499,8 +503,8 @@ bool PipelineResource::getRenderTargetData( const string &target, int bufIndex, 
 		else rbObj = rt->rendBuf;
 	}
 	
-	return gRDI->getRenderBufferData(
-		rbObj, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+	return Modules::renderer().getRenderDevice()->getRenderBufferData( rbObj, bufIndex, width, height, 
+																	   compCount, dataBuffer, bufferSize );
 }
 
 }  // namespace

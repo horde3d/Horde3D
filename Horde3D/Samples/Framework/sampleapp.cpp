@@ -587,6 +587,8 @@ bool SampleApplication::init()
     glfwWindowHint( GLFW_ALPHA_BITS, 8 );
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
+	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 2 );
+	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1 );
 
     if ( _winFullScreen ) {
         const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
@@ -600,11 +602,11 @@ bool SampleApplication::init()
 		// Fake message box
         glfwDestroyWindow(_winHandle);
 		
-        _winHandle = glfwCreateWindow( 800, 50, "Unable to initalize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
+        _winHandle = glfwCreateWindow( 800, 50, "Unable to initialize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
 		double startTime = glfwGetTime();
         while( glfwGetTime() - startTime < 5.0 ) { /* Sleep */ }
 		
-		std::cout << "Unable to initalize window" << std::endl;
+		std::cout << "Unable to initialize window" << std::endl;
         std::cout << "Make sure you have an OpenGL 2.0 compatible graphics card" << std::endl;
 		
 		return false;

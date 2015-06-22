@@ -15,6 +15,7 @@
 #include "egLight.h"
 #include "egCamera.h"
 #include "egModules.h"
+//#include "egRendererBase.h"
 #include "egCom.h"
 #include <cstring>
 
@@ -46,15 +47,19 @@ Renderer::Renderer()
 	_vlOverlay = 0;
 	_vlModel = 0;
 	_vlParticle = 0;
+
+	_renderDevice = nullptr;
 }
 
 
 Renderer::~Renderer()
 {
 	releaseShadowRB();
-	gRDI->destroyTexture( _defShadowMap );
-	gRDI->destroyBuffer( _particleVBO );
+	_renderDevice->destroyTexture( _defShadowMap );
+	_renderDevice->destroyBuffer( _particleVBO );
 	releaseShaderComb( _defColorShader );
+
+	releaseRenderDevice();
 
 	delete[] _scratchBuf;
 	delete[] _overlayVerts;
@@ -89,28 +94,34 @@ unsigned char *Renderer::useScratchBuf( uint32 minSize )
 
 bool Renderer::init()
 {
+	if ( _renderDevice == nullptr ) _renderDevice = createRenderDevice();
+
 	// Init Render Device Interface
-	if( !gRDI->init() ) return false;
+	if( !_renderDevice->init() ) 
+	{
+		releaseRenderDevice();
+		return false;
+	}
 
 	// Check capabilities
-	if( !gRDI->getCaps().texFloat )
+	if( !_renderDevice->getCaps().texFloat )
 		Modules::log().writeWarning( "Renderer: No floating point texture support available" );
-	if( !gRDI->getCaps().texNPOT )
+	if( !_renderDevice->getCaps().texNPOT )
 		Modules::log().writeWarning( "Renderer: No non-Power-of-two texture support available" );
-	if( !gRDI->getCaps().rtMultisampling )
+	if( !_renderDevice->getCaps().rtMultisampling )
 		Modules::log().writeWarning( "Renderer: No multisampling for render targets available" );
 	
 	// Create vertex layouts
 	VertexLayoutAttrib attribsPosOnly[1] = {
 		{"vertPos", 0, 3, 0}
 	};
-	_vlPosOnly = gRDI->registerVertexLayout( 1, attribsPosOnly );
+	_vlPosOnly = _renderDevice->registerVertexLayout( 1, attribsPosOnly );
 
 	VertexLayoutAttrib attribsOverlay[2] = {
 		{"vertPos", 0, 2, 0},
 		{"texCoords0", 0, 2, 8}
 	};
-	_vlOverlay = gRDI->registerVertexLayout( 2, attribsOverlay );
+	_vlOverlay = _renderDevice->registerVertexLayout( 2, attribsOverlay );
 	
 	VertexLayoutAttrib attribsModel[7] = {
 		{"vertPos", 0, 3, 0},
@@ -121,23 +132,23 @@ bool Renderer::init()
 		{"texCoords0", 3, 2, 0},
 		{"texCoords1", 3, 2, 40}
 	};
-	_vlModel = gRDI->registerVertexLayout( 7, attribsModel );
+	_vlModel = _renderDevice->registerVertexLayout( 7, attribsModel );
 
 	VertexLayoutAttrib attribsParticle[2] = {
 		{"texCoords0", 0, 2, 0},
 		{"parIdx", 0, 1, 8}
 	};
-	_vlParticle = gRDI->registerVertexLayout( 2, attribsParticle );
+	_vlParticle = _renderDevice->registerVertexLayout( 2, attribsParticle );
 	
 	// Upload default shaders
-	if( !createShaderComb( gRDI->getDefaultVSCode(), gRDI->getDefaultFSCode(), _defColorShader ) )
+	if( !createShaderComb( _renderDevice->getDefaultVSCode(), _renderDevice->getDefaultFSCode(), _defColorShader ) )
 	{
 		Modules::log().writeError( "Failed to compile default shaders" );
 		return false;
 	}
 
 	// Cache common uniforms
-	_defColShader_color = gRDI->getShaderConstLoc( _defColorShader.shaderObj, "color" );
+	_defColShader_color = _renderDevice->getShaderConstLoc( _defColorShader.shaderObj, "color" );
 	
 	// Create shadow map render target
 	if( !createShadowRB( Modules::config().shadowMapSize, Modules::config().shadowMapSize ) )
@@ -148,8 +159,8 @@ bool Renderer::init()
 
 	// Create default shadow map
 	float shadowTex[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-	_defShadowMap = gRDI->createTexture( TextureTypes::Tex2D, 4, 4, 1, TextureFormats::DEPTH, false, false, false, false );
-	gRDI->uploadTextureData( _defShadowMap, 0, 0, shadowTex );
+	_defShadowMap = _renderDevice->createTexture( TextureTypes::Tex2D, 4, 4, 1, TextureFormats::DEPTH, false, false, false, false );
+	_renderDevice->uploadTextureData( _defShadowMap, 0, 0, shadowTex );
 
 	// Create index buffer used for drawing quads
 	uint16 *quadIndices = new uint16[QuadIndexBufCount];
@@ -158,7 +169,7 @@ bool Renderer::init()
 		quadIndices[i*6+0] = i * 4 + 0; quadIndices[i*6+1] = i * 4 + 1; quadIndices[i*6+2] = i * 4 + 2;
 		quadIndices[i*6+3] = i * 4 + 2; quadIndices[i*6+4] = i * 4 + 3; quadIndices[i*6+5] = i * 4 + 0;
 	}
-	_quadIdxBuf = gRDI->createIndexBuffer( QuadIndexBufCount * sizeof( uint16 ), quadIndices );
+	_quadIdxBuf = _renderDevice->createIndexBuffer( QuadIndexBufCount * sizeof( uint16 ), quadIndices );
 	delete[] quadIndices; quadIndices = 0x0;
 	
 	// Create particle geometry array
@@ -175,12 +186,12 @@ bool Renderer::init()
 		parVerts[i * 4 + 2] = v2; parVerts[i * 4 + 2].index = (float)i;
 		parVerts[i * 4 + 3] = v3; parVerts[i * 4 + 3].index = (float)i;
 	}
-	_particleVBO = gRDI->createVertexBuffer( ParticlesPerBatch * 4 * sizeof( ParticleVert ), (float *)parVerts );
+	_particleVBO = _renderDevice->createVertexBuffer( ParticlesPerBatch * 4 * sizeof( ParticleVert ), ( float * ) parVerts );
 	delete[] parVerts; parVerts = 0x0;
 
 	_overlayBatches.reserve( 64 );
-	_overlayVerts = new OverlayVert[MaxNumOverlayVerts];
-	_overlayVB = gRDI->createVertexBuffer( MaxNumOverlayVerts * sizeof( OverlayVert ), 0x0 );
+	_overlayVerts = new OverlayVert[ MaxNumOverlayVerts ];
+	_overlayVB = _renderDevice->createVertexBuffer( MaxNumOverlayVerts * sizeof( OverlayVert ), 0x0 );
 
 	// Create unit primitives
 	createPrimitives();
@@ -202,9 +213,18 @@ bool Renderer::init()
 
 void Renderer::initStates()
 {
-	gRDI->initStates();
+	_renderDevice->initStates();
 }
 
+RenderDevice *Renderer::createRenderDevice()
+{
+	return new RenderDevice();
+}
+
+void Renderer::releaseRenderDevice()
+{
+	delete _renderDevice; _renderDevice = nullptr;
+}
 
 // =================================================================================================
 // Misc Helper Functions
@@ -240,8 +260,8 @@ void Renderer::createPrimitives()
 		0, 1, 2, 2, 3, 0,   1, 5, 6, 6, 2, 1,   5, 4, 7, 7, 6, 5,
 		4, 0, 3, 3, 7, 4,   3, 2, 6, 6, 7, 3,   4, 5, 1, 1, 0, 4
 	};
-	_vbCube = gRDI->createVertexBuffer( 8 * 3 * sizeof( float ), cubeVerts );
-	_ibCube = gRDI->createIndexBuffer( 36 * sizeof( uint16 ), cubeInds );
+	_vbCube = _renderDevice->createVertexBuffer( 8 * 3 * sizeof( float ), cubeVerts );
+	_ibCube = _renderDevice->createIndexBuffer( 36 * sizeof( uint16 ), cubeInds );
 
 	// Unit (geodesic) sphere (created by recursively subdividing a base octahedron)
 	Vec3f spVerts[126] = {  // x, y, z
@@ -267,8 +287,8 @@ void Renderer::createPrimitives()
 			spInds[j + 0] = nv - 3; spInds[j + 1] = nv - 2; spInds[j + 2] = nv - 1;
 		}
 	}
-	_vbSphere = gRDI->createVertexBuffer( 126 * sizeof( Vec3f ), spVerts );
-	_ibSphere = gRDI->createIndexBuffer( 128 * 3 * sizeof( uint16 ), spInds );
+	_vbSphere = _renderDevice->createVertexBuffer( 126 * sizeof( Vec3f ), spVerts );
+	_ibSphere = _renderDevice->createIndexBuffer( 128 * 3 * sizeof( uint16 ), spInds );
 	
 	// Unit cone
 	float coneVerts[13 * 3] = {  // x, y, z
@@ -284,14 +304,14 @@ void Renderer::createPrimitives()
 		10, 6, 2,   10, 8, 6,   10, 9, 8,   8, 7, 6,   6, 4, 2,   6, 5, 4,   4, 3, 2,
 		2, 12, 10,   2, 1, 12,   12, 11, 10
 	};
-	_vbCone = gRDI->createVertexBuffer( 13 * 3 * sizeof( float ), coneVerts );
-	_ibCone = gRDI->createIndexBuffer( 22 * 3 * sizeof( uint16 ), coneInds );
+	_vbCone = _renderDevice->createVertexBuffer( 13 * 3 * sizeof( float ), coneVerts );
+	_ibCone = _renderDevice->createIndexBuffer( 22 * 3 * sizeof( uint16 ), coneInds );
 
 	// Fullscreen polygon
 	float fsVerts[3 * 3] = {  // x, y, z
 		0.f, 0.f, 1.f,   2.f, 0.f, 1.f,   0.f, 2.f, 1.f
 	};
-	_vbFSPoly = gRDI->createVertexBuffer( 3 * 3 * sizeof( float ), fsVerts );
+	_vbFSPoly = _renderDevice->createVertexBuffer( 3 * 3 * sizeof( float ), fsVerts );
 }
 
 
@@ -301,13 +321,13 @@ void Renderer::drawAABB( const Vec3f &bbMin, const Vec3f &bbMax )
 	
 	Matrix4f mat = Matrix4f::TransMat( bbMin.x, bbMin.y, bbMin.z ) *
 		Matrix4f::ScaleMat( bbMax.x - bbMin.x, bbMax.y - bbMin.y, bbMax.z - bbMin.z );
-	gRDI->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[0] );
+	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
 	
-	gRDI->setVertexBuffer( 0, _vbCube, 0, 12 );
-	gRDI->setIndexBuffer( _ibCube, IDXFMT_16 );
-	gRDI->setVertexLayout( _vlPosOnly );
+	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
+	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
+	_renderDevice->setVertexLayout( _vlPosOnly );
 
-	gRDI->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
+	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
 }
 
 
@@ -317,13 +337,13 @@ void Renderer::drawSphere( const Vec3f &pos, float radius )
 
 	Matrix4f mat = Matrix4f::TransMat( pos.x, pos.y, pos.z ) *
 	               Matrix4f::ScaleMat( radius, radius, radius );
-	gRDI->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[0] );
+	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
 	
-	gRDI->setVertexBuffer( 0, _vbSphere, 0, 12 );
-	gRDI->setIndexBuffer( _ibSphere, IDXFMT_16 );
-	gRDI->setVertexLayout( _vlPosOnly );
+	_renderDevice->setVertexBuffer( 0, _vbSphere, 0, 12 );
+	_renderDevice->setIndexBuffer( _ibSphere, IDXFMT_16 );
+	_renderDevice->setVertexLayout( _vlPosOnly );
 
-	gRDI->drawIndexed( PRIM_TRILIST, 0, 128 * 3, 0, 126 );
+	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 128 * 3, 0, 126 );
 }
 
 
@@ -332,13 +352,13 @@ void Renderer::drawCone( float height, float radius, const Matrix4f &transMat )
 	ASSERT( _curShader != 0x0 );
 
 	Matrix4f mat = transMat * Matrix4f::ScaleMat( radius, radius, height );
-	gRDI->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[0] );
+	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
 	
-	gRDI->setVertexBuffer( 0, _vbCone, 0, 12 );
-	gRDI->setIndexBuffer( _ibCone, IDXFMT_16 );
-	gRDI->setVertexLayout( _vlPosOnly );
+	_renderDevice->setVertexBuffer( 0, _vbCone, 0, 12 );
+	_renderDevice->setIndexBuffer( _ibCone, IDXFMT_16 );
+	_renderDevice->setVertexLayout( _vlPosOnly );
 
-	gRDI->drawIndexed( PRIM_TRILIST, 0, 22 * 3, 0, 13 );
+	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 22 * 3, 0, 13 );
 }
 
 
@@ -349,50 +369,50 @@ void Renderer::drawCone( float height, float radius, const Matrix4f &transMat )
 bool Renderer::createShaderComb( const char *vertexShader, const char *fragmentShader, ShaderCombination &sc )
 {
 	// Create shader program
-	uint32 shdObj = gRDI->createShader( vertexShader, fragmentShader );
+	uint32 shdObj = _renderDevice->createShader( vertexShader, fragmentShader );
 	if( shdObj == 0 ) return false;
 	
 	sc.shaderObj = shdObj;
-	gRDI->bindShader( shdObj );
+	_renderDevice->bindShader( shdObj );
 	
 	// Set standard uniforms
-	int loc =gRDI-> getShaderSamplerLoc( shdObj, "shadowMap" );
-	if( loc >= 0 ) gRDI->setShaderSampler( loc, 12 );
+	int loc =_renderDevice-> getShaderSamplerLoc( shdObj, "shadowMap" );
+	if( loc >= 0 ) _renderDevice->setShaderSampler( loc, 12 );
 
 	// Misc general uniforms
-	sc.uni_frameBufSize = gRDI->getShaderConstLoc( shdObj, "frameBufSize" );
+	sc.uni_frameBufSize = _renderDevice->getShaderConstLoc( shdObj, "frameBufSize" );
 	
 	// View/projection uniforms
-	sc.uni_viewMat = gRDI->getShaderConstLoc( shdObj, "viewMat" );
-	sc.uni_viewMatInv = gRDI->getShaderConstLoc( shdObj, "viewMatInv" );
-	sc.uni_projMat = gRDI->getShaderConstLoc( shdObj, "projMat" );
-	sc.uni_viewProjMat = gRDI->getShaderConstLoc( shdObj, "viewProjMat" );
-	sc.uni_viewProjMatInv = gRDI->getShaderConstLoc( shdObj, "viewProjMatInv" );
-	sc.uni_viewerPos = gRDI->getShaderConstLoc( shdObj, "viewerPos" );
+	sc.uni_viewMat = _renderDevice->getShaderConstLoc( shdObj, "viewMat" );
+	sc.uni_viewMatInv = _renderDevice->getShaderConstLoc( shdObj, "viewMatInv" );
+	sc.uni_projMat = _renderDevice->getShaderConstLoc( shdObj, "projMat" );
+	sc.uni_viewProjMat = _renderDevice->getShaderConstLoc( shdObj, "viewProjMat" );
+	sc.uni_viewProjMatInv = _renderDevice->getShaderConstLoc( shdObj, "viewProjMatInv" );
+	sc.uni_viewerPos = _renderDevice->getShaderConstLoc( shdObj, "viewerPos" );
 	
 	// Per-instance uniforms
-	sc.uni_worldMat = gRDI->getShaderConstLoc( shdObj, "worldMat" );
-	sc.uni_worldNormalMat = gRDI->getShaderConstLoc( shdObj, "worldNormalMat" );
-	sc.uni_nodeId = gRDI->getShaderConstLoc( shdObj, "nodeId" );
-	sc.uni_customInstData = gRDI->getShaderConstLoc( shdObj, "customInstData[0]" );
-	sc.uni_skinMatRows = gRDI->getShaderConstLoc( shdObj, "skinMatRows[0]" );
+	sc.uni_worldMat = _renderDevice->getShaderConstLoc( shdObj, "worldMat" );
+	sc.uni_worldNormalMat = _renderDevice->getShaderConstLoc( shdObj, "worldNormalMat" );
+	sc.uni_nodeId = _renderDevice->getShaderConstLoc( shdObj, "nodeId" );
+	sc.uni_customInstData = _renderDevice->getShaderConstLoc( shdObj, "customInstData[0]" );
+	sc.uni_skinMatRows = _renderDevice->getShaderConstLoc( shdObj, "skinMatRows[0]" );
 	
 	// Lighting uniforms
-	sc.uni_lightPos = gRDI->getShaderConstLoc( shdObj, "lightPos" );
-	sc.uni_lightDir = gRDI->getShaderConstLoc( shdObj, "lightDir" );
-	sc.uni_lightColor = gRDI->getShaderConstLoc( shdObj, "lightColor" );
-	sc.uni_shadowSplitDists = gRDI->getShaderConstLoc( shdObj, "shadowSplitDists" );
-	sc.uni_shadowMats = gRDI->getShaderConstLoc( shdObj, "shadowMats" );
-	sc.uni_shadowMapSize = gRDI->getShaderConstLoc( shdObj, "shadowMapSize" );
-	sc.uni_shadowBias = gRDI->getShaderConstLoc( shdObj, "shadowBias" );
+	sc.uni_lightPos = _renderDevice->getShaderConstLoc( shdObj, "lightPos" );
+	sc.uni_lightDir = _renderDevice->getShaderConstLoc( shdObj, "lightDir" );
+	sc.uni_lightColor = _renderDevice->getShaderConstLoc( shdObj, "lightColor" );
+	sc.uni_shadowSplitDists = _renderDevice->getShaderConstLoc( shdObj, "shadowSplitDists" );
+	sc.uni_shadowMats = _renderDevice->getShaderConstLoc( shdObj, "shadowMats" );
+	sc.uni_shadowMapSize = _renderDevice->getShaderConstLoc( shdObj, "shadowMapSize" );
+	sc.uni_shadowBias = _renderDevice->getShaderConstLoc( shdObj, "shadowBias" );
 	
 	// Particle-specific uniforms
-	sc.uni_parPosArray = gRDI->getShaderConstLoc( shdObj, "parPosArray" );
-	sc.uni_parSizeAndRotArray = gRDI->getShaderConstLoc( shdObj, "parSizeAndRotArray" );
-	sc.uni_parColorArray = gRDI->getShaderConstLoc( shdObj, "parColorArray" );
+	sc.uni_parPosArray = _renderDevice->getShaderConstLoc( shdObj, "parPosArray" );
+	sc.uni_parSizeAndRotArray = _renderDevice->getShaderConstLoc( shdObj, "parSizeAndRotArray" );
+	sc.uni_parColorArray = _renderDevice->getShaderConstLoc( shdObj, "parColorArray" );
 	
 	// Overlay-specific uniforms
-	sc.uni_olayColor = gRDI->getShaderConstLoc( shdObj, "olayColor" );
+	sc.uni_olayColor = _renderDevice->getShaderConstLoc( shdObj, "olayColor" );
 
 	return true;
 }
@@ -400,7 +420,7 @@ bool Renderer::createShaderComb( const char *vertexShader, const char *fragmentS
 
 void Renderer::releaseShaderComb( ShaderCombination &sc )
 {
-	gRDI->destroyShader( sc.shaderObj );
+	_renderDevice->destroyShader( sc.shaderObj );
 }
 
 
@@ -408,8 +428,8 @@ void Renderer::setShaderComb( ShaderCombination *sc )
 {
 	if( _curShader != sc )
 	{
-		if( sc == 0x0 ) gRDI->bindShader( 0 );
-		else gRDI->bindShader( sc->shaderObj );
+		if( sc == 0x0 ) _renderDevice->bindShader( 0 );
+		else _renderDevice->bindShader( sc->shaderObj );
 
 		_curShader = sc;
 	}
@@ -425,28 +445,28 @@ void Renderer::commitGeneralUniforms()
 	{
 		if( _curShader->uni_frameBufSize >= 0 )
 		{
-			float dimensions[2] = { (float)gRDI->_fbWidth, (float)gRDI->_fbHeight };
-			gRDI->setShaderConst( _curShader->uni_frameBufSize, CONST_FLOAT2, dimensions );
+			float dimensions[2] = { (float)_renderDevice->_fbWidth, (float)_renderDevice->_fbHeight };
+			_renderDevice->setShaderConst( _curShader->uni_frameBufSize, CONST_FLOAT2, dimensions );
 		}
 		
 		// Viewer params
 		if( _curShader->uni_viewMat >= 0 )
-			gRDI->setShaderConst( _curShader->uni_viewMat, CONST_FLOAT44, _viewMat.x );
+			_renderDevice->setShaderConst( _curShader->uni_viewMat, CONST_FLOAT44, _viewMat.x );
 		
 		if( _curShader->uni_viewMatInv >= 0 )
-			gRDI->setShaderConst( _curShader->uni_viewMatInv, CONST_FLOAT44, _viewMatInv.x );
+			_renderDevice->setShaderConst( _curShader->uni_viewMatInv, CONST_FLOAT44, _viewMatInv.x );
 		
 		if( _curShader->uni_projMat >= 0 )
-			gRDI->setShaderConst( _curShader->uni_projMat, CONST_FLOAT44, _projMat.x );
+			_renderDevice->setShaderConst( _curShader->uni_projMat, CONST_FLOAT44, _projMat.x );
 		
 		if( _curShader->uni_viewProjMat >= 0 )
-			gRDI->setShaderConst( _curShader->uni_viewProjMat, CONST_FLOAT44, _viewProjMat.x );
+			_renderDevice->setShaderConst( _curShader->uni_viewProjMat, CONST_FLOAT44, _viewProjMat.x );
 
 		if( _curShader->uni_viewProjMatInv >= 0 )
-			gRDI->setShaderConst( _curShader->uni_viewProjMatInv, CONST_FLOAT44, _viewProjMatInv.x );
+			_renderDevice->setShaderConst( _curShader->uni_viewProjMatInv, CONST_FLOAT44, _viewProjMatInv.x );
 		
 		if( _curShader->uni_viewerPos >= 0 )
-			gRDI->setShaderConst( _curShader->uni_viewerPos, CONST_FLOAT3, &_viewMatInv.x[12] );
+			_renderDevice->setShaderConst( _curShader->uni_viewerPos, CONST_FLOAT3, &_viewMatInv.x[12] );
 		
 		// Light params
 		if( _curLight != 0x0 )
@@ -455,33 +475,33 @@ void Renderer::commitGeneralUniforms()
 			{
 				float data[4] = { _curLight->_absPos.x, _curLight->_absPos.y,
 				                  _curLight->_absPos.z, _curLight->_radius };
-				gRDI->setShaderConst( _curShader->uni_lightPos, CONST_FLOAT4, data );
+				_renderDevice->setShaderConst( _curShader->uni_lightPos, CONST_FLOAT4, data );
 			}
 			
 			if( _curShader->uni_lightDir >= 0 )
 			{
 				float data[4] = { _curLight->_spotDir.x, _curLight->_spotDir.y,
 				                  _curLight->_spotDir.z, cosf( degToRad( _curLight->_fov / 2.0f ) ) };
-				gRDI->setShaderConst( _curShader->uni_lightDir, CONST_FLOAT4, data );
+				_renderDevice->setShaderConst( _curShader->uni_lightDir, CONST_FLOAT4, data );
 			}
 			
 			if( _curShader->uni_lightColor >= 0 )
 			{
 				Vec3f col = _curLight->_diffuseCol * _curLight->_diffuseColMult;
-				gRDI->setShaderConst( _curShader->uni_lightColor, CONST_FLOAT3, &col.x );
+				_renderDevice->setShaderConst( _curShader->uni_lightColor, CONST_FLOAT3, &col.x );
 			}
 			
 			if( _curShader->uni_shadowSplitDists >= 0 )
-				gRDI->setShaderConst( _curShader->uni_shadowSplitDists, CONST_FLOAT4, &_splitPlanes[1] );
+				_renderDevice->setShaderConst( _curShader->uni_shadowSplitDists, CONST_FLOAT4, &_splitPlanes[1] );
 
 			if( _curShader->uni_shadowMats >= 0 )
-				gRDI->setShaderConst( _curShader->uni_shadowMats, CONST_FLOAT44, &_lightMats[0].x[0], 4 );
+				_renderDevice->setShaderConst( _curShader->uni_shadowMats, CONST_FLOAT44, &_lightMats[0].x[0], 4 );
 			
 			if( _curShader->uni_shadowMapSize >= 0 )
-				gRDI->setShaderConst( _curShader->uni_shadowMapSize, CONST_FLOAT, &_smSize );
+				_renderDevice->setShaderConst( _curShader->uni_shadowMapSize, CONST_FLOAT, &_smSize );
 			
 			if( _curShader->uni_shadowBias >= 0 )
-				gRDI->setShaderConst( _curShader->uni_shadowBias, CONST_FLOAT, &_curLight->_shadowMapBias );
+				_renderDevice->setShaderConst( _curShader->uni_shadowBias, CONST_FLOAT, &_curLight->_shadowMapBias );
 		}
 
 		_curShader->lastUpdateStamp = _curShaderUpdateStamp;
@@ -510,46 +530,46 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		// Set shader combination
 		ShaderCombination *sc = shaderRes->getCombination( *context, materialRes->_combMask );
 		if( sc != _curShader ) setShaderComb( sc );
-		if( _curShader == 0x0 || gRDI->_curShaderId == 0 ) return false;
+		if( _curShader == 0x0 || _renderDevice->_curShaderId == 0 ) return false;
 
 		// Setup standard shader uniforms
 		commitGeneralUniforms();
 
 		// Configure depth mask
-		gRDI->setDepthMask( context->writeDepth );
+		_renderDevice->setDepthMask( context->writeDepth );
 
 		// Configure cull mode
 		if( !Modules::config().wireframeMode )
 		{
-			gRDI->setCullMode( (RDICullMode)context->cullMode );
+			_renderDevice->setCullMode( (RDICullMode)context->cullMode );
 		}
 		
 		// Configure blending
 		switch( context->blendMode )
 		{
 		case BlendModes::Replace:
-			gRDI->setBlendMode( false );
+			_renderDevice->setBlendMode( false );
 			break;
 		case BlendModes::Blend:
-			gRDI->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_INV_SRC_ALPHA );
+			_renderDevice->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_INV_SRC_ALPHA );
 			break;
 		case BlendModes::Add:
-			gRDI->setBlendMode( true, BS_BLEND_ONE, BS_BLEND_ONE );
+			_renderDevice->setBlendMode( true, BS_BLEND_ONE, BS_BLEND_ONE );
 			break;
 		case BlendModes::AddBlended:
-			gRDI->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_ONE );
+			_renderDevice->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_ONE );
 			break;
 		case BlendModes::Mult:
-			gRDI->setBlendMode( true, BS_BLEND_DEST_COLOR, BS_BLEND_ZERO );
+			_renderDevice->setBlendMode( true, BS_BLEND_DEST_COLOR, BS_BLEND_ZERO );
 			break;
 		}
 
 		// Configure depth test
-		gRDI->setDepthTest( context->depthTest );
-		gRDI->setDepthFunc( (RDIDepthFunc)context->depthFunc );
+		_renderDevice->setDepthTest( context->depthTest );
+		_renderDevice->setDepthFunc( (RDIDepthFunc)context->depthFunc );
 
 		// Configure alpha-to-coverage
-		gRDI->setAlphaToCoverage( context->alphaToCoverage && Modules::config().sampleCount > 0 );
+		_renderDevice->setAlphaToCoverage( context->alphaToCoverage && Modules::config().sampleCount > 0 );
 	}
 
 	// Setup texture samplers
@@ -589,21 +609,21 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 			{
 				if( texRes->getRBObject() == 0 )
 				{
-					gRDI->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState );
+					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState );
 				}
-				else if( texRes->getRBObject() != gRDI->_curRendBuf )
+				else if( texRes->getRBObject() != _renderDevice->_curRendBuf )
 				{
-					gRDI->setTexture( shaderRes->_samplers[i].texUnit,
-					                  gRDI->getRenderBufferTex( texRes->getRBObject(), 0 ), sampState );
+					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit,
+					                  _renderDevice->getRenderBufferTex( texRes->getRBObject(), 0 ), sampState );
 				}
 				else  // Trying to bind active render buffer as texture
 				{
-					gRDI->setTexture( shaderRes->_samplers[i].texUnit, TextureResource::defTex2DObject, 0 );
+					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, TextureResource::defTex2DObject, 0 );
 				}
 			}
 			else
 			{
-				gRDI->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState );
+				_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState );
 			}
 		}
 
@@ -614,7 +634,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 			{
 				if( strcmp( _pipeSamplerBindings[j].sampler, sampler.id.c_str() ) == 0 )
 				{
-					gRDI->setTexture( shaderRes->_samplers[i].texUnit, gRDI->getRenderBufferTex(
+					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, _renderDevice->getRenderBufferTex(
 						_pipeSamplerBindings[j].rbObj, _pipeSamplerBindings[j].bufIndex ), sampState );
 
 					break;
@@ -651,10 +671,10 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 			switch( shaderRes->_uniforms[i].size )
 			{
 			case 1:
-				gRDI->setShaderConst( _curShader->customUniforms[i], CONST_FLOAT, unifData );
+				_renderDevice->setShaderConst( _curShader->customUniforms[i], CONST_FLOAT, unifData );
 				break;
 			case 4:
-				gRDI->setShaderConst( _curShader->customUniforms[i], CONST_FLOAT4, unifData );
+				_renderDevice->setShaderConst( _curShader->customUniforms[i], CONST_FLOAT4, unifData );
 				break;
 			}
 		}
@@ -684,11 +704,11 @@ bool Renderer::setMaterial( MaterialResource *materialRes, const string &shaderC
 	if( materialRes == 0x0 )
 	{	
 		setShaderComb( 0x0 );
-		gRDI->setBlendMode( false );
-		gRDI->setAlphaToCoverage( false );
-		gRDI->setDepthTest( true );
-		gRDI->setDepthFunc( DSS_DEPTHFUNC_LESS_EQUAL );
-		gRDI->setDepthMask( true );
+		_renderDevice->setBlendMode( false );
+		_renderDevice->setAlphaToCoverage( false );
+		_renderDevice->setDepthTest( true );
+		_renderDevice->setDepthFunc( DSS_DEPTHFUNC_LESS_EQUAL );
+		_renderDevice->setDepthMask( true );
 		return false;
 	}
 
@@ -708,7 +728,7 @@ bool Renderer::setMaterial( MaterialResource *materialRes, const string &shaderC
 
 bool Renderer::createShadowRB( uint32 width, uint32 height )
 {
-	_shadowRB = gRDI->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0 );
+	_shadowRB = _renderDevice->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0 );
 	
 	return _shadowRB != 0;
 }
@@ -716,7 +736,7 @@ bool Renderer::createShadowRB( uint32 width, uint32 height )
 
 void Renderer::releaseShadowRB()
 {
-	if( _shadowRB ) gRDI->destroyRenderBuffer( _shadowRB );
+	if( _shadowRB ) _renderDevice->destroyRenderBuffer( _shadowRB );
 }
 
 
@@ -727,12 +747,12 @@ void Renderer::setupShadowMap( bool noShadows )
 	// Bind shadow map
 	if( !noShadows && _curLight->_shadowMapCount > 0 )
 	{
-		gRDI->setTexture( 12, gRDI->getRenderBufferTex( _shadowRB, 32 ), sampState );
+		_renderDevice->setTexture( 12, _renderDevice->getRenderBufferTex( _shadowRB, 32 ), sampState );
 		_smSize = (float)Modules::config().shadowMapSize;
 	}
 	else
 	{
-		gRDI->setTexture( 12, _defShadowMap, sampState );
+		_renderDevice->setTexture( 12, _defShadowMap, sampState );
 		_smSize = 4;
 	}
 }
@@ -836,15 +856,15 @@ void Renderer::updateShadowMap()
 {
 	if( _curLight == 0x0 ) return;
 	
-	uint32 prevRendBuf = gRDI->_curRendBuf;
-	int prevVPX = gRDI->_vpX, prevVPY = gRDI->_vpY, prevVPWidth = gRDI->_vpWidth, prevVPHeight = gRDI->_vpHeight;
-	RDIRenderBuffer &shadowRT = gRDI->_rendBufs.getRef( _shadowRB );
-	gRDI->setViewport( 0, 0, shadowRT.width, shadowRT.height );
-	gRDI->setRenderBuffer( _shadowRB );
+	uint32 prevRendBuf = _renderDevice->_curRendBuf;
+	int prevVPX = _renderDevice->_vpX, prevVPY = _renderDevice->_vpY, prevVPWidth = _renderDevice->_vpWidth, prevVPHeight = _renderDevice->_vpHeight;
+	RDIRenderBuffer &shadowRT = _renderDevice->_rendBufs.getRef( _shadowRB );
+	_renderDevice->setViewport( 0, 0, shadowRT.width, shadowRT.height );
+	_renderDevice->setRenderBuffer( _shadowRB );
 	
-	gRDI->setColorWriteMask( false );
-	gRDI->setDepthMask( true );
-	gRDI->clear( CLR_DEPTH, 0x0, 1.f );
+	_renderDevice->setColorWriteMask( false );
+	_renderDevice->setDepthMask( true );
+	_renderDevice->clear( CLR_DEPTH, 0x0, 1.f );
 
 	// ********************************************************************************************
 	// Cascaded Shadow Maps
@@ -891,8 +911,8 @@ void Renderer::updateShadowMap()
 	}
 	
 	// Prepare shadow map rendering
-	gRDI->setDepthTest( true );
-	//gRDI->setCullMode( RS_CULL_FRONT );	// Front face culling reduces artefacts but produces more "peter-panning"
+	_renderDevice->setDepthTest( true );
+	//_renderDevice->setCullMode( RS_CULL_FRONT );	// Front face culling reduces artefacts but produces more "peter-panning"
 	
 	// Split viewing frustum into slices and render shadow maps
 	Frustum frustum;
@@ -937,12 +957,12 @@ void Renderer::updateShadowMap()
 			const int scissorXY[8] = { 0, 0,  hsm, 0,  hsm, hsm,  0, hsm };
 			const float transXY[8] = { -0.5f, -0.5f,  0.5f, -0.5f,  0.5f, 0.5f,  -0.5f, 0.5f };
 			
-			gRDI->setScissorTest( true );
+			_renderDevice->setScissorTest( true );
 
 			// Select quadrant of shadow map
 			lightProjMat.scale( 0.5f, 0.5f, 1.0f );
 			lightProjMat.translate( transXY[i * 2], transXY[i * 2 + 1], 0.0f );
-			gRDI->setScissorRect( scissorXY[i * 2], scissorXY[i * 2 + 1], hsm, hsm );
+			_renderDevice->setScissorRect( scissorXY[i * 2], scissorXY[i * 2 + 1], hsm, hsm );
 		}
 	
 		_lightMats[i] = lightProjMat * _curLight->getViewMat();
@@ -961,12 +981,12 @@ void Renderer::updateShadowMap()
 
 	// ********************************************************************************************
 
-	gRDI->setCullMode( RS_CULL_BACK );
-	gRDI->setScissorTest( false );
+	_renderDevice->setCullMode( RS_CULL_BACK );
+	_renderDevice->setScissorTest( false );
 		
-	gRDI->setViewport( prevVPX, prevVPY, prevVPWidth, prevVPHeight );
-	gRDI->setRenderBuffer( prevRendBuf );
-	gRDI->setColorWriteMask( true );
+	_renderDevice->setViewport( prevVPX, prevVPY, prevVPWidth, prevVPHeight );
+	_renderDevice->setRenderBuffer( prevRendBuf );
+	_renderDevice->setColorWriteMask( true );
 }
 
 
@@ -1002,39 +1022,39 @@ void Renderer::drawOccProxies( uint32 list )
 	ASSERT( list < 2 );
 
 	bool prevColorMask, prevDepthMask;
-	gRDI->getColorWriteMask( prevColorMask );
-	gRDI->getDepthMask( prevDepthMask );
+	_renderDevice->getColorWriteMask( prevColorMask );
+	_renderDevice->getDepthMask( prevDepthMask );
 	
 	setMaterial( 0x0, "" );
-	gRDI->setColorWriteMask( false );
-	gRDI->setDepthMask( false );
+	_renderDevice->setColorWriteMask( false );
+	_renderDevice->setDepthMask( false );
 	
 	setShaderComb( &Modules::renderer()._defColorShader );
 	commitGeneralUniforms();
-	gRDI->setVertexBuffer( 0, _vbCube, 0, 12 );
-	gRDI->setIndexBuffer( _ibCube, IDXFMT_16 );
-	gRDI->setVertexLayout( _vlPosOnly );
+	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
+	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
+	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	// Draw occlusion proxies
 	for( size_t i = 0, s = _occProxies[list].size(); i < s; ++i )
 	{
 		OccProxy &proxy = _occProxies[list][i];
 
-		gRDI->beginQuery( proxy.queryObj );
+		_renderDevice->beginQuery( proxy.queryObj );
 		
 		Matrix4f mat = Matrix4f::TransMat( proxy.bbMin.x, proxy.bbMin.y, proxy.bbMin.z ) *
 			Matrix4f::ScaleMat( proxy.bbMax.x - proxy.bbMin.x, proxy.bbMax.y - proxy.bbMin.y, proxy.bbMax.z - proxy.bbMin.z );
-		gRDI->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[0] );
+		_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[0] );
 
 		// Draw AABB
-		gRDI->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
+		_renderDevice->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
 
-		gRDI->endQuery( proxy.queryObj );
+		_renderDevice->endQuery( proxy.queryObj );
 	}
 
 	setShaderComb( 0x0 );
-	gRDI->setColorWriteMask( prevColorMask );
-	gRDI->setDepthMask( prevDepthMask );
+	_renderDevice->setColorWriteMask( prevColorMask );
+	_renderDevice->setDepthMask( prevDepthMask );
 
 	_occProxies[list].resize( 0 );
 }
@@ -1087,10 +1107,10 @@ void Renderer::drawOverlays( const string &shaderContext )
 	if( numOverlayVerts == 0 ) return;
 	
 	// Upload overlay vertices
-	gRDI->updateBufferData( _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
+	_renderDevice->updateBufferData( _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
 
-	gRDI->setVertexBuffer( 0, _overlayVB, 0, sizeof( OverlayVert ) );
-	gRDI->setIndexBuffer( _quadIdxBuf, IDXFMT_16 );
+	_renderDevice->setVertexBuffer( 0, _overlayVB, 0, sizeof( OverlayVert ) );
+	_renderDevice->setIndexBuffer( _quadIdxBuf, IDXFMT_16 );
 	ASSERT( QuadIndexBufCount >= MaxNumOverlayVerts * 6 );
 
 	float aspect = (float)_curCamera->_vpWidth / (float)_curCamera->_vpHeight;
@@ -1110,15 +1130,15 @@ void Renderer::drawOverlays( const string &shaderContext )
 				curMatRes = 0x0;
 				continue;
 			}
-			gRDI->setVertexLayout( _vlOverlay );
+			_renderDevice->setVertexLayout( _vlOverlay );
 			curMatRes = ob.materialRes;
 		}
 		
 		if( _curShader->uni_olayColor >= 0 )
-			gRDI->setShaderConst( _curShader->uni_olayColor, CONST_FLOAT4, ob.colRGBA );
+			_renderDevice->setShaderConst( _curShader->uni_olayColor, CONST_FLOAT4, ob.colRGBA );
 		
 		// Draw batch
-		gRDI->drawIndexed( PRIM_TRILIST, ob.firstVert * 6/4, ob.vertCount * 6/4, ob.firstVert, ob.vertCount );
+		_renderDevice->drawIndexed( PRIM_TRILIST, ob.firstVert * 6/4, ob.vertCount * 6/4, ob.firstVert, ob.vertCount );
 	}
 }
 
@@ -1163,8 +1183,8 @@ void Renderer::clear( bool depth, bool buf0, bool buf1, bool buf2, bool buf3,
 {
 	float clrColor[] = { r, g, b, a };
 
-	gRDI->setBlendMode( false );  // Clearing floating point buffers causes problems when blending is enabled on Radeon 9600
-	gRDI->setDepthMask( true );
+	_renderDevice->setBlendMode( false );  // Clearing floating point buffers causes problems when blending is enabled on Radeon 9600
+	_renderDevice->setDepthMask( true );
 
 	uint32 clearFlags = 0;
 	if( depth ) clearFlags |= CLR_DEPTH;
@@ -1173,14 +1193,14 @@ void Renderer::clear( bool depth, bool buf0, bool buf1, bool buf2, bool buf3,
 	if( buf2 ) clearFlags |= CLR_COLOR_RT2;
 	if( buf3 ) clearFlags |= CLR_COLOR_RT3;
 	
-	if( gRDI->_curRendBuf == 0x0 )
+	if( _renderDevice->_curRendBuf == 0x0 )
 	{
-		gRDI->setScissorRect( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
-		gRDI->setScissorTest( true );
+		_renderDevice->setScissorRect( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
+		_renderDevice->setScissorTest( true );
 	}
 	
-	gRDI->clear( clearFlags, clrColor, 1.f );
-	gRDI->setScissorTest( false );
+	_renderDevice->clear( clearFlags, clrColor, 1.f );
+	_renderDevice->setScissorTest( false );
 }
 
 
@@ -1192,11 +1212,11 @@ void Renderer::drawFSQuad( Resource *matRes, const string &shaderContext )
 	
 	if( !setMaterial( (MaterialResource *)matRes, shaderContext ) ) return;
 
-	gRDI->setVertexBuffer( 0, _vbFSPoly, 0, 12 );
-	gRDI->setIndexBuffer( 0, IDXFMT_16 );
-	gRDI->setVertexLayout( _vlPosOnly );
+	_renderDevice->setVertexBuffer( 0, _vbFSPoly, 0, 12 );
+	_renderDevice->setIndexBuffer( 0, IDXFMT_16 );
+	_renderDevice->setVertexLayout( _vlPosOnly );
 
-	gRDI->draw( PRIM_TRILIST, 0, 3 );
+	_renderDevice->draw( PRIM_TRILIST, 0, 3 );
 }
 
 
@@ -1237,7 +1257,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 			}
 			if( _curLight->_occQueries[occSet] == 0 )
 			{
-				_curLight->_occQueries[occSet] = gRDI->createOcclusionQuery();
+				_curLight->_occQueries[occSet] = _renderDevice->createOcclusionQuery();
 				_curLight->_lastVisited[occSet] = 0;
 			}
 			else
@@ -1255,7 +1275,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 						Modules::renderer().pushOccProxy( 1, bbMin, bbMax, _curLight->_occQueries[occSet] );
 
 						// Check query result from previous frame
-						if( gRDI->getQueryResult( _curLight->_occQueries[occSet] ) < 1 )
+						if( _renderDevice->getQueryResult( _curLight->_occQueries[occSet] ) < 1 )
 						{
 							continue;
 						}
@@ -1290,9 +1310,9 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 		// Set scissor rectangle
 		if( bbx != 0 || bby != 0 || bbw != 1 || bbh != 1 )
 		{
-			gRDI->setScissorRect( ftoi_r( bbx * gRDI->_fbWidth ), ftoi_r( bby * gRDI->_fbHeight ),
-			                      ftoi_r( bbw * gRDI->_fbWidth ), ftoi_r( bbh * gRDI->_fbHeight ) );
-			gRDI->setScissorTest( true );
+			_renderDevice->setScissorRect( ftoi_r( bbx * _renderDevice->_fbWidth ), ftoi_r( bby * _renderDevice->_fbHeight ),
+			                      ftoi_r( bbw * _renderDevice->_fbWidth ), ftoi_r( bbh * _renderDevice->_fbHeight ) );
+			_renderDevice->setScissorTest( true );
 		}
 		
 		// Render
@@ -1305,7 +1325,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, const string &the
 		Modules().stats().incStat( EngineStats::LightPassCount, 1 );
 
 		// Reset
-		gRDI->setScissorTest( false );
+		_renderDevice->setScissorTest( false );
 	}
 
 	_curLight = 0x0;
@@ -1348,7 +1368,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 			}
 			if( _curLight->_occQueries[occSet] == 0 )
 			{
-				_curLight->_occQueries[occSet] = gRDI->createOcclusionQuery();
+				_curLight->_occQueries[occSet] = _renderDevice->createOcclusionQuery();
 				_curLight->_lastVisited[occSet] = 0;
 			}
 			else
@@ -1366,7 +1386,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 						Modules::renderer().pushOccProxy( 1, bbMin, bbMax, _curLight->_occQueries[occSet] );
 
 						// Check query result from previous frame
-						if( gRDI->getQueryResult( _curLight->_occQueries[occSet] ) < 1 )
+						if( _renderDevice->getQueryResult( _curLight->_occQueries[occSet] ) < 1 )
 						{
 							continue;
 						}
@@ -1410,8 +1430,8 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 			commitGeneralUniforms();
 		}
 
-		gRDI->setCullMode( RS_CULL_FRONT );
-		gRDI->setDepthTest( false );
+		_renderDevice->setCullMode( RS_CULL_FRONT );
+		_renderDevice->setDepthTest( false );
 
 		if( _curLight->_fov < 180 )
 		{
@@ -1426,8 +1446,8 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 		Modules().stats().incStat( EngineStats::LightPassCount, 1 );
 
 		// Reset
-		gRDI->setCullMode( RS_CULL_BACK );
-		gRDI->setDepthTest( true );
+		_renderDevice->setCullMode( RS_CULL_BACK );
+		_renderDevice->setDepthTest( true );
 	}
 
 	_curLight = 0x0;
@@ -1460,8 +1480,8 @@ void Renderer::drawRenderables( const string &shaderContext, const string &theCl
 	// Set global render states
 	if( Modules::config().wireframeMode && !Modules::config().debugViewMode )
 	{
-		gRDI->setCullMode( RS_CULL_NONE );
-		gRDI->setFillMode( RS_FILL_WIREFRAME );
+		_renderDevice->setCullMode( RS_CULL_NONE );
+		_renderDevice->setFillMode( RS_FILL_WIREFRAME );
 	}
 
 	// Process all render queue items
@@ -1490,7 +1510,7 @@ void Renderer::drawRenderables( const string &shaderContext, const string &theCl
 	// Reset states
 	if( Modules::config().wireframeMode && !Modules::config().debugViewMode )
 	{
-		gRDI->setFillMode( RS_FILL_SOLID );
+		_renderDevice->setFillMode( RS_FILL_SOLID );
 	}
 }
 
@@ -1501,6 +1521,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 {
 	if( frust1 == 0x0 ) return;
 	
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	GeometryResource *curGeoRes = 0x0;
 	MaterialResource *curMatRes = 0x0;
@@ -1530,7 +1552,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			}
 			if( meshNode->_occQueries[occSet] == 0 )
 			{
-				queryObj = gRDI->createOcclusionQuery();
+				queryObj = rdi->createOcclusionQuery();
 				meshNode->_occQueries[occSet] = queryObj;
 				meshNode->_lastVisited[occSet] = 0;
 			}
@@ -1543,7 +1565,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 					// Check query result (viewer must be outside of bounding box)
 					if( nearestDistToAABB( frust1->getOrigin(), meshNode->getBBox().min,
 					                       meshNode->getBBox().max ) > 0 &&
-						gRDI->getQueryResult( meshNode->_occQueries[occSet] ) < 1 )
+						rdi->getQueryResult( meshNode->_occQueries[occSet] ) < 1 )
 					{
 						Modules::renderer().pushOccProxy( 0, meshNode->getBBox().min, meshNode->getBBox().max,
 						                                  meshNode->_occQueries[occSet] );
@@ -1562,7 +1584,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			ASSERT( curGeoRes != 0x0 );
 		
 			// Indices
-			gRDI->setIndexBuffer( curGeoRes->getIndexBuf(),
+			rdi->setIndexBuffer( curGeoRes->getIndexBuf(),
 			                      curGeoRes->_16BitIndices ? IDXFMT_16 : IDXFMT_32 );
 
 			// Vertices
@@ -1570,13 +1592,13 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			uint32 tanVBuf = curGeoRes->getTanVBuf();
 			uint32 staticVBuf = curGeoRes->getStaticVBuf();
 			
-			gRDI->setVertexBuffer( 0, posVBuf, 0, sizeof( Vec3f ) );
-			gRDI->setVertexBuffer( 1, tanVBuf, 0, sizeof( VertexDataTan ) );
-			gRDI->setVertexBuffer( 2, tanVBuf, sizeof( Vec3f ), sizeof( VertexDataTan ) );
-			gRDI->setVertexBuffer( 3, staticVBuf, 0, sizeof( VertexDataStatic ) );
+			rdi->setVertexBuffer( 0, posVBuf, 0, sizeof( Vec3f ) );
+			rdi->setVertexBuffer( 1, tanVBuf, 0, sizeof( VertexDataTan ) );
+			rdi->setVertexBuffer( 2, tanVBuf, sizeof( Vec3f ), sizeof( VertexDataTan ) );
+			rdi->setVertexBuffer( 3, staticVBuf, 0, sizeof( VertexDataStatic ) );
 		}
 
-		gRDI->setVertexLayout( Modules::renderer()._vlModel );
+		rdi->setVertexLayout( Modules::renderer()._vlModel );
 		
 		ShaderCombination *prevShader = Modules::renderer().getCurShader();
 		
@@ -1611,7 +1633,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			// Darken models with skeleton so that bones are more noticable
 			if( !modelNode->_jointList.empty() ) color = color * 0.3f;
 
-			gRDI->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, &color.x );
+			rdi->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, &color.x );
 		}
 
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
@@ -1624,7 +1646,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 				// Note:	OpenGL 2.1 supports mat4x3 but it is internally realized as mat4 on most
 				//			hardware so it would require 4 instead of 3 uniform slots per joint
 				
-				gRDI->setShaderConst( curShader->uni_skinMatRows, CONST_FLOAT4,
+				rdi->setShaderConst( curShader->uni_skinMatRows, CONST_FLOAT4,
 				                      &modelNode->_skinMatRows[0], (int)modelNode->_skinMatRows.size() );
 			}
 
@@ -1634,7 +1656,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 		// World transformation
 		if( curShader->uni_worldMat >= 0 )
 		{
-			gRDI->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &meshNode->_absTrans.x[0] );
+			rdi->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &meshNode->_absTrans.x[0] );
 		}
 		if( curShader->uni_worldNormalMat >= 0 )
 		{
@@ -1643,37 +1665,37 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			float normalMat[9] = { normalMat4.x[0], normalMat4.x[1], normalMat4.x[2],
 			                       normalMat4.x[4], normalMat4.x[5], normalMat4.x[6],
 			                       normalMat4.x[8], normalMat4.x[9], normalMat4.x[10] };
-			gRDI->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
+			rdi->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
 		}
 		if( curShader->uni_nodeId >= 0 )
 		{
 			float id = (float)meshNode->getHandle();
-			gRDI->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
 		}
 		if( curShader->uni_customInstData >= 0 )
 		{
-			gRDI->setShaderConst( curShader->uni_customInstData, CONST_FLOAT4,
+			rdi->setShaderConst( curShader->uni_customInstData, CONST_FLOAT4,
 			                      &modelNode->_customInstData[0].x, ModelCustomVecCount );
 		}
 
 		if( queryObj )
-			gRDI->beginQuery( queryObj );
+			rdi->beginQuery( queryObj );
 		
 		// Render
-		gRDI->drawIndexed( PRIM_TRILIST, meshNode->getBatchStart(), meshNode->getBatchCount(),
+		rdi->drawIndexed( PRIM_TRILIST, meshNode->getBatchStart(), meshNode->getBatchCount(),
 		                   meshNode->getVertRStart(), meshNode->getVertREnd() - meshNode->getVertRStart() + 1 );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
 		Modules::stats().incStat( EngineStats::TriCount, meshNode->getBatchCount() / 3.0f );
 
 		if( queryObj )
-			gRDI->endQuery( queryObj );
+			rdi->endQuery( queryObj );
 	}
 
 	// Draw occlusion proxies
 	if( occSet >= 0 )
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
 
-	gRDI->setVertexLayout( 0 );
+	rdi->setVertexLayout( 0 );
 }
 
 
@@ -1684,6 +1706,8 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 	if( frust1 == 0x0 || Modules::renderer().getCurCamera() == 0x0 ) return;
 	if( debugView ) return;  // Don't render particles in debug view
 
+	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	MaterialResource *curMatRes = 0x0;
 
@@ -1691,8 +1715,8 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
 
 	// Bind particle geometry
-	gRDI->setVertexBuffer( 0, Modules::renderer().getParticleVBO(), 0, sizeof( ParticleVert ) );
-	gRDI->setIndexBuffer( Modules::renderer().getQuadIdxBuf(), IDXFMT_16 );
+	rdi->setVertexBuffer( 0, Modules::renderer().getParticleVBO(), 0, sizeof( ParticleVert ) );
+	rdi->setIndexBuffer( Modules::renderer().getQuadIdxBuf(), IDXFMT_16 );
 	ASSERT( QuadIndexBufCount >= ParticlesPerBatch * 6 );
 
 	// Loop through emitter queue
@@ -1714,7 +1738,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 			}
 			if( emitter->_occQueries[occSet] == 0 )
 			{
-				queryObj = gRDI->createOcclusionQuery();
+				queryObj = rdi->createOcclusionQuery();
 				emitter->_occQueries[occSet] = queryObj;
 				emitter->_lastVisited[occSet] = 0;
 			}
@@ -1727,7 +1751,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 					// Check query result (viewer must be outside of bounding box)
 					if( nearestDistToAABB( frust1->getOrigin(), emitter->getBBox().min,
 					                       emitter->getBBox().max ) > 0 &&
-						gRDI->getQueryResult( emitter->_occQueries[occSet] ) < 1 )
+						rdi->getQueryResult( emitter->_occQueries[occSet] ) < 1 )
 					{
 						Modules::renderer().pushOccProxy( 0, emitter->getBBox().min,
 							emitter->getBBox().max, emitter->_occQueries[occSet] );
@@ -1747,17 +1771,17 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 		}
 
 		// Set vertex layout
-		gRDI->setVertexLayout( Modules::renderer()._vlParticle );
+		rdi->setVertexLayout( Modules::renderer()._vlParticle );
 		
 		if( queryObj )
-			gRDI->beginQuery( queryObj );
+			rdi->beginQuery( queryObj );
 		
 		// Shader uniforms
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
 		if( curShader->uni_nodeId >= 0 )
 		{
 			float id = (float)emitter->getHandle();
-			gRDI->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
 		}
 
 		// Divide particles in batches and render them
@@ -1777,16 +1801,16 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 
 			// Render batch
 			if( curShader->uni_parPosArray >= 0 )
-				gRDI->setShaderConst( curShader->uni_parPosArray, CONST_FLOAT3,
+				rdi->setShaderConst( curShader->uni_parPosArray, CONST_FLOAT3,
 				                      (float *)emitter->_parPositions + j*ParticlesPerBatch*3, ParticlesPerBatch );
 			if( curShader->uni_parSizeAndRotArray >= 0 )
-				gRDI->setShaderConst( curShader->uni_parSizeAndRotArray, CONST_FLOAT2,
+				rdi->setShaderConst( curShader->uni_parSizeAndRotArray, CONST_FLOAT2,
 				                      (float *)emitter->_parSizesANDRotations + j*ParticlesPerBatch*2, ParticlesPerBatch );
 			if( curShader->uni_parColorArray >= 0 )
-				gRDI->setShaderConst( curShader->uni_parColorArray, CONST_FLOAT4,
+				rdi->setShaderConst( curShader->uni_parColorArray, CONST_FLOAT4,
 				                      (float *)emitter->_parColors + j*ParticlesPerBatch*4, ParticlesPerBatch );
 
-			gRDI->drawIndexed( PRIM_TRILIST, 0, ParticlesPerBatch * 6, 0, ParticlesPerBatch * 4 );
+			rdi->drawIndexed( PRIM_TRILIST, 0, ParticlesPerBatch * 6, 0, ParticlesPerBatch * 4 );
 			Modules::stats().incStat( EngineStats::BatchCount, 1 );
 			Modules::stats().incStat( EngineStats::TriCount, ParticlesPerBatch * 2.0f );
 		}
@@ -1811,23 +1835,23 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 			{
 				// Render batch
 				if( curShader->uni_parPosArray >= 0 )
-					gRDI->setShaderConst( curShader->uni_parPosArray, CONST_FLOAT3,
+					rdi->setShaderConst( curShader->uni_parPosArray, CONST_FLOAT3,
 					                      (float *)emitter->_parPositions + offset*3, count );
 				if( curShader->uni_parSizeAndRotArray >= 0 )
-					gRDI->setShaderConst( curShader->uni_parSizeAndRotArray, CONST_FLOAT2,
+					rdi->setShaderConst( curShader->uni_parSizeAndRotArray, CONST_FLOAT2,
 					                      (float *)emitter->_parSizesANDRotations + offset*2, count );
 				if( curShader->uni_parColorArray >= 0 )
-					gRDI->setShaderConst( curShader->uni_parColorArray, CONST_FLOAT4,
+					rdi->setShaderConst( curShader->uni_parColorArray, CONST_FLOAT4,
 					                      (float *)emitter->_parColors + offset*4, count );
 				
-				gRDI->drawIndexed( PRIM_TRILIST, 0, count * 6, 0, count * 4 );
+				rdi->drawIndexed( PRIM_TRILIST, 0, count * 6, 0, count * 4 );
 				Modules::stats().incStat( EngineStats::BatchCount, 1 );
 				Modules::stats().incStat( EngineStats::TriCount, count * 2.0f );
 			}
 		}
 
 		if( queryObj )
-			gRDI->endQuery( queryObj );
+			rdi->endQuery( queryObj );
 	}
 
 	timer->endQuery();
@@ -1836,7 +1860,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 	if( occSet >= 0 )
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
 	
-	gRDI->setVertexLayout( 0 );
+	rdi->setVertexLayout( 0 );
 }
 
 
@@ -1856,8 +1880,8 @@ void Renderer::render( CameraNode *camNode )
 	else if( maxAniso <= 4 ) _maxAnisoMask = SS_ANISO4;
 	else if( maxAniso <= 8 ) _maxAnisoMask = SS_ANISO8;
 	else _maxAnisoMask = SS_ANISO16;
-	gRDI->beginRendering();
-	gRDI->setViewport( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
+	_renderDevice->beginRendering();
+	_renderDevice->setViewport( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
 	if( Modules::config().debugViewMode || _curCamera->_pipelineRes == 0x0 )
 	{
 		renderDebugView();
@@ -1866,11 +1890,11 @@ void Renderer::render( CameraNode *camNode )
 	}
 	
 	// Initialize
-	gRDI->_outputBufferIndex = _curCamera->_outputBufferIndex;
+	_renderDevice->_outputBufferIndex = _curCamera->_outputBufferIndex;
 	if( _curCamera->_outputTex != 0x0 )
-		gRDI->setRenderBuffer( _curCamera->_outputTex->getRBObject() );
+		_renderDevice->setRenderBuffer( _curCamera->_outputTex->getRBObject() );
 	else 
-		gRDI->setRenderBuffer( 0 );
+		_renderDevice->setRenderBuffer( 0 );
 
 	// Process pipeline commands
 	for( uint32 i = 0; i < _curCamera->_pipelineRes->_stages.size(); ++i )
@@ -1896,15 +1920,15 @@ void Renderer::render( CameraNode *camNode )
 
 				if( rt != 0x0 )
 				{
-					RDIRenderBuffer &rendBuf = gRDI->_rendBufs.getRef( rt->rendBuf );
-					gRDI->_outputBufferIndex = _curCamera->_outputBufferIndex;
-					gRDI->setViewport( 0, 0, rendBuf.width, rendBuf.height );
-					gRDI->setRenderBuffer( rt->rendBuf );
+					RDIRenderBuffer &rendBuf = _renderDevice->_rendBufs.getRef( rt->rendBuf );
+					_renderDevice->_outputBufferIndex = _curCamera->_outputBufferIndex;
+					_renderDevice->setViewport( 0, 0, rendBuf.width, rendBuf.height );
+					_renderDevice->setRenderBuffer( rt->rendBuf );
 				}
 				else
 				{
-					gRDI->setViewport( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
-					gRDI->setRenderBuffer( _curCamera->_outputTex != 0x0 ?
+					_renderDevice->setViewport( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
+					_renderDevice->setRenderBuffer( _curCamera->_outputTex != 0x0 ?
 					                       _curCamera->_outputTex->getRBObject() : 0 );
 				}
 				break;
@@ -1980,15 +2004,15 @@ void Renderer::renderDebugView()
 {
 	float color[4] = { 0 };
 	
-	gRDI->_outputBufferIndex = _curCamera->_outputBufferIndex;
+	_renderDevice->_outputBufferIndex = _curCamera->_outputBufferIndex;
 	if( _curCamera->_outputTex != 0x0 )
-		gRDI->setRenderBuffer( _curCamera->_outputTex->getRBObject() );
+		_renderDevice->setRenderBuffer( _curCamera->_outputTex->getRBObject() );
 	else 
-		gRDI->setRenderBuffer( 0 );
+		_renderDevice->setRenderBuffer( 0 );
 	setMaterial( 0x0, "" );
-	gRDI->setFillMode( RS_FILL_WIREFRAME );
+	_renderDevice->setFillMode( RS_FILL_WIREFRAME );
 
-	gRDI->clear( CLR_DEPTH | CLR_COLOR_RT0 );
+	_renderDevice->clear( CLR_DEPTH | CLR_COLOR_RT0 );
 
 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
 	                                  SceneNodeFlags::NoDraw, true, true );
@@ -1998,27 +2022,27 @@ void Renderer::renderDebugView()
 	drawRenderables( "", "", true, &_curCamera->getFrustum(), 0x0, RenderingOrder::None, -1 );
 
 	// Draw bounding boxes
-	gRDI->setCullMode( RS_CULL_NONE );
+	_renderDevice->setCullMode( RS_CULL_NONE );
 	setMaterial( 0x0, "" );
 	setShaderComb( &_defColorShader );
 	commitGeneralUniforms();
-	gRDI->setShaderConst( _defColorShader.uni_worldMat, CONST_FLOAT44, &Matrix4f().x[0] );
+	_renderDevice->setShaderConst( _defColorShader.uni_worldMat, CONST_FLOAT44, &Matrix4f().x[0] );
 	color[0] = 0.4f; color[1] = 0.4f; color[2] = 0.4f; color[3] = 1;
-	gRDI->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
+	_renderDevice->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
 	for( uint32 i = 0, s = (uint32)Modules::sceneMan().getRenderQueue().size(); i < s; ++i )
 	{
 		SceneNode *sn = Modules::sceneMan().getRenderQueue()[i].node;
 		
 		drawAABB( sn->_bBox.min, sn->_bBox.max );
 	}
-	gRDI->setCullMode( RS_CULL_BACK );
+	_renderDevice->setCullMode( RS_CULL_BACK );
 
 	// Draw light volumes
-	gRDI->setFillMode( RS_FILL_SOLID );
-	gRDI->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_ONE );
-	gRDI->setCullMode( RS_CULL_FRONT );
+	_renderDevice->setFillMode( RS_FILL_SOLID );
+	_renderDevice->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_ONE );
+	_renderDevice->setCullMode( RS_CULL_FRONT );
 	color[0] = 1; color[1] = 1; color[2] = 0; color[3] = 0.25f;
-	gRDI->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
+	_renderDevice->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
 	for( size_t i = 0, s = Modules::sceneMan().getLightQueue().size(); i < s; ++i )
 	{
 		LightNode *lightNode = (LightNode *)Modules::sceneMan().getLightQueue()[i];
@@ -2033,16 +2057,16 @@ void Renderer::renderDebugView()
 			drawSphere( lightNode->_absPos, lightNode->_radius );
 		}
 	}
-	gRDI->setCullMode( RS_CULL_BACK );
-	gRDI->setBlendMode( false );
+	_renderDevice->setCullMode( RS_CULL_BACK );
+	_renderDevice->setBlendMode( false );
 }
 
 
 void Renderer::finishRendering()
 {
-	gRDI->setRenderBuffer( 0 );
+	_renderDevice->setRenderBuffer( 0 );
 	setMaterial( 0x0, "" );
-	gRDI->resetStates();
+	_renderDevice->resetStates();
 }
 
 }  // namespace
