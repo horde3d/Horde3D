@@ -15,7 +15,7 @@
 #include <cstring>
 
 //for testing
-//#undef PLATFORM_LITTLE_ENDINA
+//#undef PLATFORM_LITTLE_ENDIAN
 //#define PLATFORM_BIG_ENDIAN
 
 inline void swap_endian(const char* first, const char* last, char* d_first)
