@@ -42,7 +42,7 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 
 MeshNode::~MeshNode()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	_materialRes = 0x0;
 	for( uint32 i = 0; i < _occQueries.size(); ++i )

@@ -403,7 +403,7 @@ void ShaderResource::initDefault()
 
 void ShaderResource::release()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	for( uint32 i = 0; i < _contexts.size(); ++i )
 	{
@@ -848,7 +848,7 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	Modules::log().writeInfo( "---- C O M P I L I N G  . S H A D E R . %s@%s[%i] ----",
 		_name.c_str(), context.id.c_str(), sc.combMask );
 	
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Unload shader if necessary
 	if( sc.shaderObj != 0 )

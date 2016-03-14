@@ -15,7 +15,7 @@
 #include "egLight.h"
 #include "egCamera.h"
 #include "egModules.h"
-//#include "egRendererBase.h"
+#include "egRendererBaseGL2.h"
 #include "egCom.h"
 #include <cstring>
 
@@ -216,9 +216,10 @@ void Renderer::initStates()
 	_renderDevice->initStates();
 }
 
-RenderDevice *Renderer::createRenderDevice()
+template <typename Implementation>
+RenderDeviceInterface *Renderer::createRenderDevice()
 {
-	return new RenderDevice();
+	return new RenderDeviceGL2();
 }
 
 void Renderer::releaseRenderDevice()
@@ -1521,7 +1522,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 {
 	if( frust1 == 0x0 ) return;
 	
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	GeometryResource *curGeoRes = 0x0;
@@ -1706,7 +1707,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 	if( frust1 == 0x0 || Modules::renderer().getCurCamera() == 0x0 ) return;
 	if( debugView ) return;  // Don't render particles in debug view
 
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 	MaterialResource *curMatRes = 0x0;

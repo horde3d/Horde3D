@@ -87,7 +87,7 @@ void TextureResource::initializationFunc()
 		  128,192,255,255, 128,192,255,255, 128,192,255,255, 128,192,255,255,
 		  128,192,255,255, 128,192,255,255, 128,192,255,255, 128,192,255,255 };
 
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Upload default textures
 	defTex2DObject = rdi->createTexture( TextureTypes::Tex2D, 4, 4, 1,
@@ -114,7 +114,7 @@ void TextureResource::initializationFunc()
 
 void TextureResource::releaseFunc()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	rdi->destroyTexture( defTex2DObject );
 	rdi->destroyTexture( defTex3DObject );
@@ -138,7 +138,7 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 	_loaded = true;
 	_texFormat = fmt;
 	
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	if( flags & ResourceFlags::TexRenderable )
 	{
@@ -198,7 +198,7 @@ void TextureResource::initDefault()
 
 void TextureResource::release()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	if( _rbObj != 0 )
 	{
@@ -345,7 +345,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 	if( _texFormat == TextureFormats::Unknown )
 		return raiseError( "Unsupported DDS pixel format" );
 
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Create texture
 	_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
@@ -443,7 +443,7 @@ bool TextureResource::loadSTBI( const char *data, int size )
 	_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
 	_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
 	
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Create and upload texture
 	_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
@@ -535,7 +535,7 @@ void *TextureResource::mapStream( int elem, int elemIdx, int stream, bool read, 
 		if( elem == TextureResData::ImageElem && stream == TextureResData::ImgPixelStream &&
 		    elemIdx < getElemCount( elem ) )
 		{
-			RenderDevice *rdi = Modules::renderer().getRenderDevice();
+			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 			mappedData = Modules::renderer().useScratchBuf(
 				rdi->calcTextureSize( _texFormat, _width, _height, _depth ) );

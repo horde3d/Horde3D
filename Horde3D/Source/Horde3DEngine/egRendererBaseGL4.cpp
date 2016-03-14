@@ -21,7 +21,7 @@
 namespace Horde3D {
 
 #ifdef H3D_VALIDATE_DRAWCALLS
-#	define CHECK_GL_ERROR checkGLError();
+#	define CHECK_GL_ERROR checkError();
 #else
 #	define CHECK_GL_ERROR
 #endif
@@ -136,7 +136,7 @@ void GPUTimer::reset()
 // RenderDevice
 // =================================================================================================
 
-RenderDevice::RenderDevice()
+RenderDeviceInterface::RenderDeviceInterface()
 {
 	_numVertexLayouts = 0;
 	
@@ -158,12 +158,12 @@ RenderDevice::RenderDevice()
 }
 
 
-RenderDevice::~RenderDevice()
+RenderDeviceInterface::~RenderDeviceInterface()
 {
 }
 
 
-void RenderDevice::initStates()
+void RenderDeviceInterface::initStates()
 {
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 	GLint value;
@@ -172,7 +172,7 @@ void RenderDevice::initStates()
 }
 
 
-bool RenderDevice::init()
+bool RenderDeviceInterface::init()
 {
 	bool failed = false;
 
@@ -251,7 +251,7 @@ bool RenderDevice::init()
 // Vertex layouts
 // =================================================================================================
 
-uint32 RenderDevice::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs )
+uint32 RenderDeviceInterface::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs )
 {
 	if( _numVertexLayouts == MaxNumVertexLayouts )
 		return 0;
@@ -269,14 +269,14 @@ uint32 RenderDevice::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib
 // Buffers
 // =================================================================================================
 
-void RenderDevice::beginRendering()
+void RenderDeviceInterface::beginRendering()
 {	
 	//	Get the currently bound frame buffer object. 
 	glGetIntegerv( GL_FRAMEBUFFER_BINDING, &_defaultFBO );
 	resetStates();
 }
 
-uint32 RenderDevice::createVertexBuffer( uint32 size, const void *data )
+uint32 RenderDeviceInterface::createVertexBuffer( uint32 size, const void *data )
 {
 	RDIBuffer buf;
 
@@ -292,7 +292,7 @@ uint32 RenderDevice::createVertexBuffer( uint32 size, const void *data )
 }
 
 
-uint32 RenderDevice::createIndexBuffer( uint32 size, const void *data )
+uint32 RenderDeviceInterface::createIndexBuffer( uint32 size, const void *data )
 {
 	RDIBuffer buf;
 
@@ -308,7 +308,7 @@ uint32 RenderDevice::createIndexBuffer( uint32 size, const void *data )
 }
 
 
-void RenderDevice::destroyBuffer( uint32 bufObj )
+void RenderDeviceInterface::destroyBuffer( uint32 bufObj )
 {
 	if( bufObj == 0 ) return;
 	
@@ -320,7 +320,7 @@ void RenderDevice::destroyBuffer( uint32 bufObj )
 }
 
 
-void RenderDevice::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data )
+void RenderDeviceInterface::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
 	const RDIBuffer &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
@@ -342,7 +342,7 @@ void RenderDevice::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, 
 // Textures
 // =================================================================================================
 
-uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const
+uint32 RenderDeviceInterface::calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const
 {
 	switch( format )
 	{
@@ -364,7 +364,7 @@ uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, in
 }
 
 
-uint32 RenderDevice::createTexture( TextureTypes::List type, int width, int height, int depth,
+uint32 RenderDeviceInterface::createTexture( TextureTypes::List type, int width, int height, int depth,
                                     TextureFormats::List format,
                                     bool hasMips, bool genMips, bool compress, bool sRGB )
 {
@@ -439,7 +439,7 @@ uint32 RenderDevice::createTexture( TextureTypes::List type, int width, int heig
 }
 
 
-void RenderDevice::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
+void RenderDeviceInterface::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	const RDITexture &tex = _textures.getRef( texObj );
 	TextureFormats::List format = tex.format;
@@ -506,7 +506,7 @@ void RenderDevice::uploadTextureData( uint32 texObj, int slice, int mipLevel, co
 }
 
 
-void RenderDevice::destroyTexture( uint32 texObj )
+void RenderDeviceInterface::destroyTexture( uint32 texObj )
 {
 	if( texObj == 0 ) return;
 	
@@ -518,13 +518,13 @@ void RenderDevice::destroyTexture( uint32 texObj )
 }
 
 
-void RenderDevice::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
+void RenderDeviceInterface::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	uploadTextureData( texObj, slice, mipLevel, pixels );
 }
 
 
-bool RenderDevice::getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
+bool RenderDeviceInterface::getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
 {
 	const RDITexture &tex = _textures.getRef( texObj );
 	
@@ -572,7 +572,7 @@ bool RenderDevice::getTextureData( uint32 texObj, int slice, int mipLevel, void 
 // Shaders
 // =================================================================================================
 
-uint32 RenderDevice::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc )
+uint32 RenderDeviceInterface::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc )
 {
 	int infologLength = 0;
 	int charsWritten = 0;
@@ -634,7 +634,7 @@ uint32 RenderDevice::createShaderProgram( const char *vertexShaderSrc, const cha
 }
 
 
-bool RenderDevice::linkShaderProgram( uint32 programObj )
+bool RenderDeviceInterface::linkShaderProgram( uint32 programObj )
 {
 	int infologLength = 0;
 	int charsWritten = 0;
@@ -660,7 +660,7 @@ bool RenderDevice::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDevice::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc )
+uint32 RenderDeviceInterface::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc )
 {
 	// Compile and link shader
 	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
@@ -712,7 +712,7 @@ uint32 RenderDevice::createShader( const char *vertexShaderSrc, const char *frag
 }
 
 
-void RenderDevice::destroyShader( uint32 shaderId )
+void RenderDeviceInterface::destroyShader( uint32 shaderId )
 {
 	if( shaderId == 0 ) return;
 
@@ -722,7 +722,7 @@ void RenderDevice::destroyShader( uint32 shaderId )
 }
 
 
-void RenderDevice::bindShader( uint32 shaderId )
+void RenderDeviceInterface::bindShader( uint32 shaderId )
 {
 	if( shaderId != 0 )
 	{
@@ -739,21 +739,21 @@ void RenderDevice::bindShader( uint32 shaderId )
 } 
 
 
-int RenderDevice::getShaderConstLoc( uint32 shaderId, const char *name )
+int RenderDeviceInterface::getShaderConstLoc( uint32 shaderId, const char *name )
 {
 	RDIShader &shader = _shaders.getRef( shaderId );
 	return glGetUniformLocation( shader.oglProgramObj, name );
 }
 
 
-int RenderDevice::getShaderSamplerLoc( uint32 shaderId, const char *name )
+int RenderDeviceInterface::getShaderSamplerLoc( uint32 shaderId, const char *name )
 {
 	RDIShader &shader = _shaders.getRef( shaderId );
 	return glGetUniformLocation( shader.oglProgramObj, name );
 }
 
 
-void RenderDevice::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
+void RenderDeviceInterface::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
 {
 	switch( type )
 	{
@@ -779,19 +779,19 @@ void RenderDevice::setShaderConst( int loc, RDIShaderConstType type, void *value
 }
 
 
-void RenderDevice::setShaderSampler( int loc, uint32 texUnit )
+void RenderDeviceInterface::setShaderSampler( int loc, uint32 texUnit )
 {
 	glUniform1i( loc, (int)texUnit );
 }
 
 
-const char *RenderDevice::getDefaultVSCode() const
+const char *RenderDeviceInterface::getDefaultVSCode() const
 {
 	return defaultShaderVS;
 }
 
 
-const char *RenderDevice::getDefaultFSCode() const
+const char *RenderDeviceInterface::getDefaultFSCode() const
 {
 	return defaultShaderFS;
 }
@@ -801,7 +801,7 @@ const char *RenderDevice::getDefaultFSCode() const
 // Renderbuffers
 // =================================================================================================
 
-uint32 RenderDevice::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
+uint32 RenderDeviceInterface::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
                                          bool depth, uint32 numColBufs, uint32 samples )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
@@ -940,7 +940,7 @@ uint32 RenderDevice::createRenderBuffer( uint32 width, uint32 height, TextureFor
 }
 
 
-void RenderDevice::destroyRenderBuffer( uint32 rbObj )
+void RenderDeviceInterface::destroyRenderBuffer( uint32 rbObj )
 {
 	RDIRenderBuffer &rb = _rendBufs.getRef( rbObj );
 	
@@ -965,7 +965,7 @@ void RenderDevice::destroyRenderBuffer( uint32 rbObj )
 }
 
 
-uint32 RenderDevice::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
+uint32 RenderDeviceInterface::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
 {
 	RDIRenderBuffer &rb = _rendBufs.getRef( rbObj );
 	
@@ -975,7 +975,7 @@ uint32 RenderDevice::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
 }
 
 
-void RenderDevice::resolveRenderBuffer( uint32 rbObj )
+void RenderDeviceInterface::resolveRenderBuffer( uint32 rbObj )
 {
 	RDIRenderBuffer &rb = _rendBufs.getRef( rbObj );
 	
@@ -1015,7 +1015,7 @@ void RenderDevice::resolveRenderBuffer( uint32 rbObj )
 }
 
 
-void RenderDevice::setRenderBuffer( uint32 rbObj )
+void RenderDeviceInterface::setRenderBuffer( uint32 rbObj )
 {
 	// Resolve render buffer if necessary
 	if( _curRendBuf != 0 ) resolveRenderBuffer( _curRendBuf );
@@ -1051,7 +1051,7 @@ void RenderDevice::setRenderBuffer( uint32 rbObj )
 }
 
 
-bool RenderDevice::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
+bool RenderDeviceInterface::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
                                         int *compCount, void *dataBuffer, int bufferSize )
 {
 	int x, y, w, h;
@@ -1120,7 +1120,7 @@ bool RenderDevice::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, 
 // Queries
 // =================================================================================================
 
-uint32 RenderDevice::createOcclusionQuery()
+uint32 RenderDeviceInterface::createOcclusionQuery()
 {
 	uint32 queryObj;
 	glGenQueries( 1, &queryObj );
@@ -1128,7 +1128,7 @@ uint32 RenderDevice::createOcclusionQuery()
 }
 
 
-void RenderDevice::destroyQuery( uint32 queryObj )
+void RenderDeviceInterface::destroyQuery( uint32 queryObj )
 {
 	if( queryObj == 0 ) return;
 	
@@ -1136,19 +1136,19 @@ void RenderDevice::destroyQuery( uint32 queryObj )
 }
 
 
-void RenderDevice::beginQuery( uint32 queryObj )
+void RenderDeviceInterface::beginQuery( uint32 queryObj )
 {
 	glBeginQuery( GL_SAMPLES_PASSED, queryObj );
 }
 
 
-void RenderDevice::endQuery( uint32 /*queryObj*/ )
+void RenderDeviceInterface::endQuery( uint32 /*queryObj*/ )
 {
 	glEndQuery( GL_SAMPLES_PASSED );
 }
 
 
-uint32 RenderDevice::getQueryResult( uint32 queryObj ) const
+uint32 RenderDeviceInterface::getQueryResult( uint32 queryObj ) const
 {
 	uint32 samples = 0;
 	glGetQueryObjectuiv( queryObj, GL_QUERY_RESULT, &samples );
@@ -1160,7 +1160,7 @@ uint32 RenderDevice::getQueryResult( uint32 queryObj ) const
 // Internal state management
 // =================================================================================================
 
-void RenderDevice::checkGLError()
+void RenderDeviceInterface::checkError()
 {
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
@@ -1171,7 +1171,7 @@ void RenderDevice::checkGLError()
 }
 
 
-bool RenderDevice::applyVertexLayout()
+bool RenderDeviceInterface::applyVertexLayout()
 {
 	uint32 newVertexAttribMask = 0;
 	
@@ -1222,7 +1222,7 @@ bool RenderDevice::applyVertexLayout()
 }
 
 
-void RenderDevice::applySamplerState( RDITexture &tex )
+void RenderDeviceInterface::applySamplerState( RDITexture &tex )
 {
 	uint32 state = tex.samplerState;
 	uint32 target = tex.type;
@@ -1255,7 +1255,7 @@ void RenderDevice::applySamplerState( RDITexture &tex )
 }
 
 
-void RenderDevice::applyRenderStates()
+void RenderDeviceInterface::applyRenderStates()
 {
 	// Rasterizer state
 	if( _newRasterState.hash != _curRasterState.hash )
@@ -1331,7 +1331,7 @@ void RenderDevice::applyRenderStates()
 }
 
 
-bool RenderDevice::commitStates( uint32 filter )
+bool RenderDeviceInterface::commitStates( uint32 filter )
 {
 	if( _pendingMask & filter )
 	{
@@ -1422,7 +1422,7 @@ bool RenderDevice::commitStates( uint32 filter )
 }
 
 
-void RenderDevice::resetStates()
+void RenderDeviceInterface::resetStates()
 {
 	_curIndexBuf = 1; _newIndexBuf = 0;
 	_curVertLayout = 1; _newVertLayout = 0;
@@ -1446,7 +1446,7 @@ void RenderDevice::resetStates()
 // Draw calls and clears
 // =================================================================================================
 
-void RenderDevice::clear( uint32 flags, float *colorRGBA, float depth )
+void RenderDeviceInterface::clear( uint32 flags, float *colorRGBA, float depth )
 {
 	uint32 prevBuffers[4] = { 0 };
 
@@ -1501,7 +1501,7 @@ void RenderDevice::clear( uint32 flags, float *colorRGBA, float depth )
 }
 
 
-void RenderDevice::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
+void RenderDeviceInterface::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
 {
 	if( commitStates() )
 	{
@@ -1512,7 +1512,7 @@ void RenderDevice::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts
 }
 
 
-void RenderDevice::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
+void RenderDeviceInterface::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
                                 uint32 firstVert, uint32 numVerts )
 {
 	if( commitStates() )

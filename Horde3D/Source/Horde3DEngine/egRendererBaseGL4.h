@@ -94,7 +94,7 @@ public:
 		return _objects[handle - 1];
 	}
 
-	friend class RenderDevice;
+	friend class RenderDeviceInterface;
 
 private:
 	std::vector< T >       _objects;
@@ -405,12 +405,12 @@ enum RDIPrimType
 // =================================================================================================
 
 
-class RenderDevice
+class RenderDeviceInterface
 {
 public:
 
-	RenderDevice();
-	~RenderDevice();
+	RenderDeviceInterface();
+	~RenderDeviceInterface();
 	
 	void initStates();
 	bool init();
@@ -572,7 +572,7 @@ protected:
 	bool linkShaderProgram( uint32 programObj );
 	void resolveRenderBuffer( uint32 rbObj );
 
-	void checkGLError();
+	void checkError();
 	bool applyVertexLayout();
 	void applySamplerState( RDITexture &tex );
 	void applyRenderStates();

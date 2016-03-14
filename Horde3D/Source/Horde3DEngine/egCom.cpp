@@ -273,7 +273,7 @@ StatManager::StatManager()
 
 	_frameTime = 0;
 
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	_fwdLightsGPUTimer = rdi->createGPUTimer();
 	_defLightsGPUTimer = rdi->createGPUTimer();

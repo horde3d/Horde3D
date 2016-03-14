@@ -294,7 +294,7 @@ RenderTarget *PipelineResource::findRenderTarget( const string &id ) const
 
 bool PipelineResource::createRenderTargets()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{
@@ -315,7 +315,7 @@ bool PipelineResource::createRenderTargets()
 
 void PipelineResource::releaseRenderTargets()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{

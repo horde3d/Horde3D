@@ -322,7 +322,7 @@ EmitterNode::EmitterNode( const EmitterNodeTpl &emitterTpl ) :
 
 EmitterNode::~EmitterNode()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	for( uint32 i = 0; i < _occQueries.size(); ++i )
 	{

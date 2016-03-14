@@ -740,7 +740,7 @@ int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool ch
 	
 	if( node._dirty ) updateNodes();
 
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Check occlusion
 	if( checkOcclusion && cam._occSet >= 0 )

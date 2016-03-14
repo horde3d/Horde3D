@@ -10,7 +10,7 @@
 //
 // *************************************************************************************************
 
-#include "egRendererBase.h"
+#include "egRendererBaseGL2.h"
 #include "egModules.h"
 #include "egCom.h"
 #include "utOpenGL.h"
@@ -19,9 +19,10 @@
 
 
 namespace Horde3D {
+namespace RDI_GL2 {
 
 #ifdef H3D_VALIDATE_DRAWCALLS
-#	define CHECK_GL_ERROR checkGLError();
+#	define CHECK_GL_ERROR checkError();
 #else
 #	define CHECK_GL_ERROR
 #endif
@@ -40,6 +41,9 @@ static const char *defaultShaderFS =
 	"	gl_FragColor = color;\n"
 	"}\n";
 
+static const int indexFormat[ 2 ] = { GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
+
+static const int primitiveTypes[ 2 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP };
 
 // =================================================================================================
 // GPUTimer
@@ -138,7 +142,7 @@ void GPUTimer::reset()
 // RenderDevice
 // =================================================================================================
 
-RenderDevice::RenderDevice()
+RenderDeviceGL2::RenderDeviceGL2()
 {
 	_numVertexLayouts = 0;
 	
@@ -160,12 +164,12 @@ RenderDevice::RenderDevice()
 }
 
 
-RenderDevice::~RenderDevice()
+RenderDeviceGL2::~RenderDeviceGL2()
 {
 }
 
 
-void RenderDevice::initStates()
+void RenderDeviceGL2::initStates()
 {
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 	GLint value;
@@ -174,7 +178,7 @@ void RenderDevice::initStates()
 }
 
 
-bool RenderDevice::init()
+bool RenderDeviceGL2::init()
 {
 	bool failed = false;
 
@@ -257,7 +261,7 @@ bool RenderDevice::init()
 // Vertex layouts
 // =================================================================================================
 
-uint32 RenderDevice::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs )
+uint32 RenderDeviceGL2::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs )
 {
 	if( _numVertexLayouts == MaxNumVertexLayouts )
 		return 0;
@@ -275,14 +279,14 @@ uint32 RenderDevice::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib
 // Buffers
 // =================================================================================================
 
-void RenderDevice::beginRendering()
+void RenderDeviceGL2::beginRendering()
 {	
 	//	Get the currently bound frame buffer object. 
 	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
 	resetStates();
 }
 
-uint32 RenderDevice::createVertexBuffer( uint32 size, const void *data )
+uint32 RenderDeviceGL2::createVertexBuffer( uint32 size, const void *data )
 {
 	RDIBuffer buf;
 
@@ -298,7 +302,7 @@ uint32 RenderDevice::createVertexBuffer( uint32 size, const void *data )
 }
 
 
-uint32 RenderDevice::createIndexBuffer( uint32 size, const void *data )
+uint32 RenderDeviceGL2::createIndexBuffer( uint32 size, const void *data )
 {
 	RDIBuffer buf;
 
@@ -314,7 +318,7 @@ uint32 RenderDevice::createIndexBuffer( uint32 size, const void *data )
 }
 
 
-void RenderDevice::destroyBuffer( uint32 bufObj )
+void RenderDeviceGL2::destroyBuffer( uint32 bufObj )
 {
 	if( bufObj == 0 ) return;
 	
@@ -326,7 +330,7 @@ void RenderDevice::destroyBuffer( uint32 bufObj )
 }
 
 
-void RenderDevice::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data )
+void RenderDeviceGL2::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
 	const RDIBuffer &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
@@ -348,7 +352,7 @@ void RenderDevice::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, 
 // Textures
 // =================================================================================================
 
-uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const
+uint32 RenderDeviceGL2::calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const
 {
 	switch( format )
 	{
@@ -370,7 +374,7 @@ uint32 RenderDevice::calcTextureSize( TextureFormats::List format, int width, in
 }
 
 
-uint32 RenderDevice::createTexture( TextureTypes::List type, int width, int height, int depth,
+uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int height, int depth,
                                     TextureFormats::List format,
                                     bool hasMips, bool genMips, bool compress, bool sRGB )
 {
@@ -445,7 +449,7 @@ uint32 RenderDevice::createTexture( TextureTypes::List type, int width, int heig
 }
 
 
-void RenderDevice::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
+void RenderDeviceGL2::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	const RDITexture &tex = _textures.getRef( texObj );
 	TextureFormats::List format = tex.format;
@@ -512,7 +516,7 @@ void RenderDevice::uploadTextureData( uint32 texObj, int slice, int mipLevel, co
 }
 
 
-void RenderDevice::destroyTexture( uint32 texObj )
+void RenderDeviceGL2::destroyTexture( uint32 texObj )
 {
 	if( texObj == 0 ) return;
 	
@@ -524,13 +528,13 @@ void RenderDevice::destroyTexture( uint32 texObj )
 }
 
 
-void RenderDevice::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
+void RenderDeviceGL2::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	uploadTextureData( texObj, slice, mipLevel, pixels );
 }
 
 
-bool RenderDevice::getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
+bool RenderDeviceGL2::getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
 {
 	const RDITexture &tex = _textures.getRef( texObj );
 	
@@ -578,7 +582,7 @@ bool RenderDevice::getTextureData( uint32 texObj, int slice, int mipLevel, void 
 // Shaders
 // =================================================================================================
 
-uint32 RenderDevice::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc )
+uint32 RenderDeviceGL2::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc )
 {
 	int infologLength = 0;
 	int charsWritten = 0;
@@ -640,7 +644,7 @@ uint32 RenderDevice::createShaderProgram( const char *vertexShaderSrc, const cha
 }
 
 
-bool RenderDevice::linkShaderProgram( uint32 programObj )
+bool RenderDeviceGL2::linkShaderProgram( uint32 programObj )
 {
 	int infologLength = 0;
 	int charsWritten = 0;
@@ -666,7 +670,7 @@ bool RenderDevice::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDevice::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc )
+uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc )
 {
 	// Compile and link shader
 	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
@@ -718,7 +722,7 @@ uint32 RenderDevice::createShader( const char *vertexShaderSrc, const char *frag
 }
 
 
-void RenderDevice::destroyShader( uint32 shaderId )
+void RenderDeviceGL2::destroyShader( uint32 shaderId )
 {
 	if( shaderId == 0 ) return;
 
@@ -728,7 +732,7 @@ void RenderDevice::destroyShader( uint32 shaderId )
 }
 
 
-void RenderDevice::bindShader( uint32 shaderId )
+void RenderDeviceGL2::bindShader( uint32 shaderId )
 {
 	if( shaderId != 0 )
 	{
@@ -745,21 +749,21 @@ void RenderDevice::bindShader( uint32 shaderId )
 } 
 
 
-int RenderDevice::getShaderConstLoc( uint32 shaderId, const char *name )
+int RenderDeviceGL2::getShaderConstLoc( uint32 shaderId, const char *name )
 {
 	RDIShader &shader = _shaders.getRef( shaderId );
 	return glGetUniformLocation( shader.oglProgramObj, name );
 }
 
 
-int RenderDevice::getShaderSamplerLoc( uint32 shaderId, const char *name )
+int RenderDeviceGL2::getShaderSamplerLoc( uint32 shaderId, const char *name )
 {
 	RDIShader &shader = _shaders.getRef( shaderId );
 	return glGetUniformLocation( shader.oglProgramObj, name );
 }
 
 
-void RenderDevice::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
+void RenderDeviceGL2::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
 {
 	switch( type )
 	{
@@ -785,19 +789,19 @@ void RenderDevice::setShaderConst( int loc, RDIShaderConstType type, void *value
 }
 
 
-void RenderDevice::setShaderSampler( int loc, uint32 texUnit )
+void RenderDeviceGL2::setShaderSampler( int loc, uint32 texUnit )
 {
 	glUniform1i( loc, (int)texUnit );
 }
 
 
-const char *RenderDevice::getDefaultVSCode() const
+const char *RenderDeviceGL2::getDefaultVSCode() const
 {
 	return defaultShaderVS;
 }
 
 
-const char *RenderDevice::getDefaultFSCode() const
+const char *RenderDeviceGL2::getDefaultFSCode() const
 {
 	return defaultShaderFS;
 }
@@ -807,7 +811,7 @@ const char *RenderDevice::getDefaultFSCode() const
 // Renderbuffers
 // =================================================================================================
 
-uint32 RenderDevice::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
+uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
                                          bool depth, uint32 numColBufs, uint32 samples )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
@@ -946,7 +950,7 @@ uint32 RenderDevice::createRenderBuffer( uint32 width, uint32 height, TextureFor
 }
 
 
-void RenderDevice::destroyRenderBuffer( uint32 rbObj )
+void RenderDeviceGL2::destroyRenderBuffer( uint32 rbObj )
 {
 	RDIRenderBuffer &rb = _rendBufs.getRef( rbObj );
 	
@@ -971,7 +975,7 @@ void RenderDevice::destroyRenderBuffer( uint32 rbObj )
 }
 
 
-uint32 RenderDevice::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
+uint32 RenderDeviceGL2::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
 {
 	RDIRenderBuffer &rb = _rendBufs.getRef( rbObj );
 	
@@ -981,7 +985,7 @@ uint32 RenderDevice::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
 }
 
 
-void RenderDevice::resolveRenderBuffer( uint32 rbObj )
+void RenderDeviceGL2::resolveRenderBuffer( uint32 rbObj )
 {
 	RDIRenderBuffer &rb = _rendBufs.getRef( rbObj );
 	
@@ -1021,7 +1025,7 @@ void RenderDevice::resolveRenderBuffer( uint32 rbObj )
 }
 
 
-void RenderDevice::setRenderBuffer( uint32 rbObj )
+void RenderDeviceGL2::setRenderBuffer( uint32 rbObj )
 {
 	// Resolve render buffer if necessary
 	if( _curRendBuf != 0 ) resolveRenderBuffer( _curRendBuf );
@@ -1057,7 +1061,7 @@ void RenderDevice::setRenderBuffer( uint32 rbObj )
 }
 
 
-bool RenderDevice::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
+bool RenderDeviceGL2::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
                                         int *compCount, void *dataBuffer, int bufferSize )
 {
 	int x, y, w, h;
@@ -1126,7 +1130,7 @@ bool RenderDevice::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, 
 // Queries
 // =================================================================================================
 
-uint32 RenderDevice::createOcclusionQuery()
+uint32 RenderDeviceGL2::createOcclusionQuery()
 {
 	uint32 queryObj;
 	glGenQueries( 1, &queryObj );
@@ -1134,7 +1138,7 @@ uint32 RenderDevice::createOcclusionQuery()
 }
 
 
-void RenderDevice::destroyQuery( uint32 queryObj )
+void RenderDeviceGL2::destroyQuery( uint32 queryObj )
 {
 	if( queryObj == 0 ) return;
 	
@@ -1142,19 +1146,19 @@ void RenderDevice::destroyQuery( uint32 queryObj )
 }
 
 
-void RenderDevice::beginQuery( uint32 queryObj )
+void RenderDeviceGL2::beginQuery( uint32 queryObj )
 {
 	glBeginQuery( GL_SAMPLES_PASSED, queryObj );
 }
 
 
-void RenderDevice::endQuery( uint32 /*queryObj*/ )
+void RenderDeviceGL2::endQuery( uint32 /*queryObj*/ )
 {
 	glEndQuery( GL_SAMPLES_PASSED );
 }
 
 
-uint32 RenderDevice::getQueryResult( uint32 queryObj ) const
+uint32 RenderDeviceGL2::getQueryResult( uint32 queryObj ) const
 {
 	uint32 samples = 0;
 	glGetQueryObjectuiv( queryObj, GL_QUERY_RESULT, &samples );
@@ -1166,7 +1170,7 @@ uint32 RenderDevice::getQueryResult( uint32 queryObj ) const
 // Internal state management
 // =================================================================================================
 
-void RenderDevice::checkGLError()
+void RenderDeviceGL2::checkGLError()
 {
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
@@ -1177,7 +1181,7 @@ void RenderDevice::checkGLError()
 }
 
 
-bool RenderDevice::applyVertexLayout()
+bool RenderDeviceGL2::applyVertexLayout()
 {
 	uint32 newVertexAttribMask = 0;
 	
@@ -1228,7 +1232,7 @@ bool RenderDevice::applyVertexLayout()
 }
 
 
-void RenderDevice::applySamplerState( RDITexture &tex )
+void RenderDeviceGL2::applySamplerState( RDITexture &tex )
 {
 	uint32 state = tex.samplerState;
 	uint32 target = tex.type;
@@ -1261,7 +1265,7 @@ void RenderDevice::applySamplerState( RDITexture &tex )
 }
 
 
-void RenderDevice::applyRenderStates()
+void RenderDeviceGL2::applyRenderStates()
 {
 	// Rasterizer state
 	if( _newRasterState.hash != _curRasterState.hash )
@@ -1337,7 +1341,7 @@ void RenderDevice::applyRenderStates()
 }
 
 
-bool RenderDevice::commitStates( uint32 filter )
+bool RenderDeviceGL2::commitStates( uint32 filter )
 {
 	if( _pendingMask & filter )
 	{
@@ -1428,7 +1432,7 @@ bool RenderDevice::commitStates( uint32 filter )
 }
 
 
-void RenderDevice::resetStates()
+void RenderDeviceGL2::resetStates()
 {
 	_curIndexBuf = 1; _newIndexBuf = 0;
 	_curVertLayout = 1; _newVertLayout = 0;
@@ -1452,7 +1456,7 @@ void RenderDevice::resetStates()
 // Draw calls and clears
 // =================================================================================================
 
-void RenderDevice::clear( uint32 flags, float *colorRGBA, float depth )
+void RenderDeviceGL2::clear( uint32 flags, float *colorRGBA, float depth )
 {
 	uint32 prevBuffers[4] = { 0 };
 
@@ -1507,29 +1511,30 @@ void RenderDevice::clear( uint32 flags, float *colorRGBA, float depth )
 }
 
 
-void RenderDevice::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
+void RenderDeviceGL2::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
 {
 	if( commitStates() )
 	{
-		glDrawArrays( (uint32)primType, firstVert, numVerts );
+		glDrawArrays( primitiveTypes[ (uint32)primType ], firstVert, numVerts );
 	}
 
 	CHECK_GL_ERROR
 }
 
 
-void RenderDevice::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
+void RenderDeviceGL2::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
                                 uint32 firstVert, uint32 numVerts )
 {
 	if( commitStates() )
 	{
 		firstIndex *= (_indexFormat == IDXFMT_16) ? sizeof( short ) : sizeof( int );
 		
-		glDrawRangeElements( (uint32)primType, firstVert, firstVert + numVerts,
+		glDrawRangeElements( primitiveTypes[ (uint32)primType ], firstVert, firstVert + numVerts,
 		                     numIndices, _indexFormat, (char *)0 + firstIndex );
 	}
 
 	CHECK_GL_ERROR
 }
 
-}  // namespace
+}  // namespace RDI_GL2
+}  // namespace Horde3D

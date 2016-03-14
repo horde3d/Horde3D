@@ -94,7 +94,7 @@ public:
 		return _objects[handle - 1];
 	}
 
-	friend class RenderDevice;
+//	friend RenderDeviceInterface< Implementation >;
 
 private:
 	std::vector< T >       _objects;
@@ -392,84 +392,204 @@ enum RDIClearFlags
 
 enum RDIIndexFormat
 {
-	IDXFMT_16 = GL_UNSIGNED_SHORT,
-	IDXFMT_32 = GL_UNSIGNED_INT
+	IDXFMT_16,
+	IDXFMT_32
 };
 
 enum RDIPrimType
 {
-	PRIM_TRILIST = GL_TRIANGLES,
-	PRIM_TRISTRIP = GL_TRIANGLE_STRIP
+	PRIM_TRILIST,
+	PRIM_TRISTRIP
 };
 
 // =================================================================================================
 
+// Using the SFINAE (Substitution Failure Is Not An Error) technique,
+// the following macro creates a template class with typename T and a
+// static boolean member "value" that is set to true if the specified
+// member function exists in the T class.
+// This macro was created based on information that was retrieved from
+// the following URLs:
+// https://groups.google.com/forum/?fromgroups#!topic/comp.lang.c++/DAq3H8Ph_1k
+// http://objectmix.com/c/779528-call-member-function-only-if-exists-vc-9-a.html
 
-class RenderDevice
+#define CreateMemberFunctionChecker( FNNAME )                            \
+  template<typename T> struct has_member_##FNNAME;                       \
+                                                                         \
+  template<typename R, typename C> class has_member_##FNNAME<R C::*> {   \
+     private:                                                            \
+        template<R C::*> struct helper;                                  \
+        template<typename T> static char check(helper<&T::FNNAME>*);     \
+        template<typename T> static char (& check(...))[2];              \
+     public:                                                             \
+        static const bool value = (sizeof(check<C>(0)) == sizeof(char)); \
+		  }
+
+//
+// Current RenderDeviceInterface implementation is based on Simulated C++ Interface Template Pattern from
+// http://www.codeproject.com/Articles/603818/Cplusplus-Runtime-Polymorphism-without-Virtual-Fun
+//
+
+// This corresponding macro is used to check the existence of the
+// interface function in the derived class.
+#define CheckMemberFunction( FNNAME, FNPROTOTYPE ) {                     \
+              assert( has_member_##FNNAME<FNPROTOTYPE>::value ); }
+
+class RenderDeviceInterface
 {
+// -----------------------------------------------------------------------------
+// Template functions
+// -----------------------------------------------------------------------------
+private:
+	// Function checking
+	CreateMemberFunctionChecker( init );
+	CreateMemberFunctionChecker( initStates );
+	CreateMemberFunctionChecker( registerVertexLayout );
+	CreateMemberFunctionChecker( beginRendering );
+	CreateMemberFunctionChecker( createVertexBuffer );
+	CreateMemberFunctionChecker( createIndexBuffer );
+	CreateMemberFunctionChecker( destroyBuffer );
+
+	// Typedefs
+	typedef bool( *PFN_INIT )( void* const );
+	typedef void( *PFN_INITSTATES )( void* const );
+	typedef uint32( *PFN_REGISTERVERTEXLAYOUT )( void* const, uint32 numAttribs, VertexLayoutAttrib *attribs );
+	typedef void( *PFN_BEGINRENDERING )( void* const );
+	typedef uint32( *PFN_CREATEVERTEXBUFFER )( void* const, uint32 size, const void *data );
+	typedef uint32( *PFN_CREATEINDEXBUFFER )( void* const, uint32 size, const void *data );
+	typedef void( *PFN_DESTROYBUFFER )( void* const, uint32 bufObj );
+
+	// pointers to functions
+	PFN_INIT					_pfnInit;
+	PFN_INITSTATES				_pfnInitStates;
+	PFN_REGISTERVERTEXLAYOUT	_pfnRegisterVertexLayout;
+	PFN_BEGINRENDERING			_pfnBeginRendering;
+	PFN_CREATEVERTEXBUFFER		_pfnCreateVertexBuffer;
+	PFN_CREATEINDEXBUFFER		_pfnCreateIndexBuffer;
+	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
+
+	// invoker functions
+	template<typename T>
+	static bool              init_Invoker( void* const pObj ) { return static_cast< T* >( pObj )->init(); }
+
+	template<typename T>
+	static void              initStates_Invoker( void* const pObj ) { static_cast< T* >( pObj )->initStates(); }
+
+	template<typename T>
+	static uint32            registerVertexLayout_Invoker( void* const pObj, uint32 numAttribs, VertexLayoutAttrib *attribs )
+	{ return static_cast< T* >( pObj )->registerVertexLayout( numAttribs, attribs ); }
+	
+	template<typename T>
+	static void              beginRendering_Invoker( void* const pObj ) { static_cast< T* >( pObj )->beginRendering(); }
+
+	template<typename T>
+	static uint32            createVertexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	{ return static_cast< T* >( pObj )->createVertexBuffer( size, data ); }
+
+	template<typename T>
+	static uint32            createIndexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	{ return static_cast< T* >( pObj )->createIndexBuffer( size, data ); }
+
+	template<typename T>
+	static void              destroyBuffer_Invoker( void* const pObj, uint32 bufObj )
+	{ return static_cast< T* >( pObj )->destroyBuffer( bufObj ); }
+
+protected:
+
+	template<typename T> void initRDIFunctions()
+	{
+		// check for implementation
+		CheckMemberFunction( init, bool ( T::* ) );
+		CheckMemberFunction( initStates, void ( T::* ) );
+		CheckMemberFunction( registerVertexLayout, uint32( T::* )( uint32, VertexLayoutAttrib * ) );
+		CheckMemberFunction( beginRendering, bool( T::* ) );
+		CheckMemberFunction( createVertexBuffer, uint32( T::* )( uint32, const void* ) );
+		CheckMemberFunction( createIndexBuffer, uint32( T::* )( uint32, const void* ) );
+		CheckMemberFunction( destroyBuffer, uint32( T::* )( uint32 ) );
+
+		// create pointer to implementation
+		_pfnInit = ( PFN_INIT ) &init_Invoker< T > ;
+		_pfnInitStates = ( PFN_INITSTATES ) &initStates_Invoker< T >;
+		_pfnRegisterVertexLayout = ( PFN_REGISTERVERTEXLAYOUT ) &registerVertexLayout_Invoker< T >;
+		_pfnBeginRendering = ( PFN_BEGINRENDERING ) &beginRendering_Invoker< T >;
+		_pfnCreateVertexBuffer = ( PFN_CREATEVERTEXBUFFER ) &createVertexBuffer_Invoker < T > ;
+		_pfnCreateIndexBuffer = ( PFN_CREATEINDEXBUFFER ) &createIndexBuffer_Invoker < T > ;
+		_pfnDestroyBuffer = ( PFN_DESTROYBUFFER ) &destroyBuffer_Invoker < T > ;
+
+	}
+
+// -----------------------------------------------------------------------------
+// Main interface
+// -----------------------------------------------------------------------------
 public:
 
-	RenderDevice();
-	~RenderDevice();
+ 	RenderDeviceInterface();
+ 	virtual ~RenderDeviceInterface();
 	
-	void initStates();
-	bool init();
+	void initStates() { ( *_pfnInitStates )( this ); }
+	bool init() { return ( *_pfnInit )( this );	}
+
 	
 // -----------------------------------------------------------------------------
 // Resources
 // -----------------------------------------------------------------------------
 
 	// Vertex layouts
-	uint32 registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs );
+	uint32 registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs ) { return ( *_pfnRegisterVertexLayout )( this, numAttribs, attribs ); }
 	
 	// Buffers
-	void beginRendering();
-	uint32 createVertexBuffer( uint32 size, const void *data );
-	uint32 createIndexBuffer( uint32 size, const void *data );
-	void destroyBuffer( uint32 bufObj );
-	void updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data );
+	void beginRendering() { ( *_pfnBeginRendering )( this ); }
+	uint32 createVertexBuffer( uint32 size, const void *data ) { return ( *_pfnCreateVertexBuffer )( this, size, data ); }
+	uint32 createIndexBuffer( uint32 size, const void *data ) { return ( *_pfnCreateIndexBuffer )( this, size, data ); }
+	void destroyBuffer( uint32 bufObj ) { ( *_pfnDestroyBuffer )( this, bufObj ); }
+	void updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data ) { impl().updateBufferData( bufObj, offset, size, data ); }
 	uint32 getBufferMem() const { return _bufferMem; }
 
 	// Textures
-	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const;
+	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const { return impl().calcTextureSize( format, width, height, depth ); }
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
-	                      bool hasMips, bool genMips, bool compress, bool sRGB );
-	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
-	void destroyTexture( uint32 texObj );
-	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
-	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
+	                      bool hasMips, bool genMips, bool compress, bool sRGB )
+		   { return impl().createTexture( type, width, height, depth, format, hasMips, genMips, compress, sRGB ); }
+	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels ) { impl().uploadTextureData( texObj, slice, mipLevel, pixels ); }
+	void destroyTexture( uint32 texObj ) { impl().destroyTexture( texObj ); }
+	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels ) { impl().updateTextureData( texObj, slice, mipLevel, pixels ); }
+	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer ) { return impl().getTextureData( texObj, slice, mipLevel, buffer ); }
 	uint32 getTextureMem() const { return _textureMem; }
 
 	// Shaders
-	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc );
-	void destroyShader( uint32 shaderId );
-	void bindShader( uint32 shaderId );
+	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc ) { return impl().createShader( vertexShaderSrc, fragmentShaderSrc ); }
+	void destroyShader( uint32 shaderId ) { impl().destroyShader( shaderId ); }
+	void bindShader( uint32 shaderId ) { impl().bindShader( shaderId ); }
 	std::string getShaderLog() const { return _shaderLog; }
-	int getShaderConstLoc( uint32 shaderId, const char *name );
-	int getShaderSamplerLoc( uint32 shaderId, const char *name );
-	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 );
-	void setShaderSampler( int loc, uint32 texUnit );
-	const char *getDefaultVSCode() const;
-	const char *getDefaultFSCode() const;
+	int getShaderConstLoc( uint32 shaderId, const char *name ) { return impl().getShaderConstLoc( shaderId, name ); }
+	int getShaderSamplerLoc( uint32 shaderId, const char *name ) { return impl().getShaderSamplerLoc( shaderId, name ); }
+	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 ) { impl().setShaderConst( loc, type, values, count ); }
+	void setShaderSampler( int loc, uint32 texUnit ) { impl().setShaderSampler( loc, texUnit ); }
+	const char *getDefaultVSCode() const { return impl().getDefaultVSCode(); }
+	const char *getDefaultFSCode() const { return impl().getDefaultFSCode(); }
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples );
-	void destroyRenderBuffer( uint32 rbObj );
-	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex );
-	void setRenderBuffer( uint32 rbObj );
+	                           bool depth, uint32 numColBufs, uint32 samples )
+		   { return impl().createRenderBuffer( width, height, format, depth, numColBufs, samples ); }
+	void destroyRenderBuffer( uint32 rbObj ) { impl().destroyRenderBuffer( rbObj ); }
+	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex ) { return impl().getRenderBufferTex( rbObj, bufIndex ); }
+	void setRenderBuffer( uint32 rbObj ) { impl().setRenderBuffer( rbObj ); }
 	bool getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
-	                          int *compCount, void *dataBuffer, int bufferSize );
+	                          int *compCount, void *dataBuffer, int bufferSize )
+	{
+		return impl().getRenderBufferData( rbObj, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+	}
 
 	// Queries
-	uint32 createOcclusionQuery();
-	void destroyQuery( uint32 queryObj );
-	void beginQuery( uint32 queryObj );
-	void endQuery( uint32 queryObj );
-	uint32 getQueryResult( uint32 queryObj ) const;
+	uint32 createOcclusionQuery() { return impl().createOcclusionQuery(); }
+	void destroyQuery( uint32 queryObj ) { impl().destroyQuery( queryObj ); }
+	void beginQuery( uint32 queryObj ) { impl().beginQuery( queryObj); }
+	void endQuery( uint32 queryObj ) { impl().endQuery( queryObj ); }
+	uint32 getQueryResult( uint32 queryObj ) const { return impl().getQueryResult( queryObj ); }
 
 	// Render Device dependent GPU Timer
-	GPUTimer *createGPUTimer() { return new GPUTimer(); }
+	GPUTimer *createGPUTimer() { return impl().createGPUTimer(); }
 
 // -----------------------------------------------------------------------------
 // Commands
@@ -534,14 +654,15 @@ public:
 	void getDepthFunc( RDIDepthFunc &depthFunc ) const
 		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
 
-	bool commitStates( uint32 filter = 0xFFFFFFFF );
-	void resetStates();
+	bool commitStates( uint32 filter = 0xFFFFFFFF ) { return impl().commitStates( filter ); }
+	void resetStates() { impl().resetStates(); }
 	
 	// Draw calls and clears
-	void clear( uint32 flags, float *colorRGBA = 0x0, float depth = 1.0f );
-	void draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts );
+	void clear( uint32 flags, float *colorRGBA = 0x0, float depth = 1.0f ) { return impl().clear( flags, colorRGBA, depth ); }
+	void draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts ) { impl().draw( primType, firstVert, numVerts ); }
 	void drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
-	                  uint32 firstVert, uint32 numVerts );
+	                  uint32 firstVert, uint32 numVerts )
+	{ return impl().drawIndexed( primType, firstIndex, numIndices, firstVert, numVerts ); }
 
 // -----------------------------------------------------------------------------
 // Getters
@@ -552,7 +673,7 @@ public:
 	const RDITexture getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
 	const RDIRenderBuffer getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
-	friend class Renderer;
+//	friend class Renderer;
 
 protected:
 
@@ -568,14 +689,14 @@ protected:
 
 protected:
 
-	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc );
-	bool linkShaderProgram( uint32 programObj );
-	void resolveRenderBuffer( uint32 rbObj );
+	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc ) { return impl().createShaderProgram( vertexShaderSrc, fragmentShaderSrc ); }
+	bool linkShaderProgram( uint32 programObj ) { impl().linkShaderProgram( programObj ); }
+	void resolveRenderBuffer( uint32 rbObj ) { impl().resolveRenderBuffer( rbObj ); }
 
-	void checkGLError();
-	bool applyVertexLayout();
-	void applySamplerState( RDITexture &tex );
-	void applyRenderStates();
+	void checkError() { impl().checkError(); }
+	bool applyVertexLayout() { return impl().applyVertexLayout(); }
+	void applySamplerState( RDITexture &tex ) { return impl().applySamplerState( tex ); }
+	void applyRenderStates() { return impl().applyRenderStates(); }
 
 protected:
 
@@ -611,6 +732,7 @@ protected:
 	uint32                _indexFormat;
 	uint32                _activeVertexAttribsMask;
 	uint32                _pendingMask;
+
 };
 
 }

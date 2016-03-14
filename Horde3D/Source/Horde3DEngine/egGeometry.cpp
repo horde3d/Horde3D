@@ -65,7 +65,7 @@ Resource *GeometryResource::clone()
 
 	*res = *this;
 
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Make a deep copy of the data
 	res->_indexData = new char[_indexCount * (_16BitIndices ? 2 : 4)];
@@ -106,7 +106,7 @@ void GeometryResource::initDefault()
 
 void GeometryResource::release()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	if( _posVBuf != 0 && _posVBuf != defVertBuffer )
 	{
@@ -476,7 +476,7 @@ bool GeometryResource::load( const char *data, int size )
 	// Upload data
 	if( _vertCount > 0 && _indexCount > 0 )
 	{
-		RenderDevice *rdi = Modules::renderer().getRenderDevice();
+		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 		// Upload indices
 		_indexBuf = rdi->createIndexBuffer( _indexCount * (_16BitIndices ? 2 : 4), _indexData );
@@ -556,7 +556,7 @@ void GeometryResource::unmapStream()
 {
 	if( mappedWriteStream >= 0 )
 	{
-		RenderDevice *rdi = Modules::renderer().getRenderDevice();
+		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 		switch( mappedWriteStream )
 		{

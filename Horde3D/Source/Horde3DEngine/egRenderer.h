@@ -120,7 +120,8 @@ public:
 	~Renderer();
 
 	void registerRenderFunc( int nodeType, RenderFunc rf );
-	inline RenderDevice *getRenderDevice() const { return _renderDevice; }
+
+	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
 
 	unsigned char *useScratchBuf( uint32 minSize );
 	
@@ -192,11 +193,13 @@ protected:
 	void renderDebugView();
 	void finishRendering();
 
-	RenderDevice *createRenderDevice();
+	RenderDeviceInterface *createRenderDevice();
+
 	void		  releaseRenderDevice();
 
 protected:
-	RenderDevice					  *_renderDevice;
+	
+	RenderDeviceInterface		       *_renderDevice;
 
 	std::vector< RenderFuncListItem >  _renderFuncRegistry;
 	
