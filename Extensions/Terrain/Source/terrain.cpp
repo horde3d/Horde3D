@@ -136,7 +136,7 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
                                     int level, float scale, const Vec3f &localCamPos, const Frustum *frust1,
                                     const Frustum *frust2, int uni_terBlockParams )
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	const float halfU = (minU + maxU) / 2.0f;
 	const float halfV = (minV + maxV) / 2.0f;
@@ -248,7 +248,7 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 	CameraNode *curCam = Modules::renderer().getCurCamera();
 	if( curCam == 0x0 ) return;
 
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 
@@ -451,7 +451,7 @@ uint16 *TerrainNode::createIndices()
 
 void TerrainNode::recreateVertexBuffer()
 {
-	RenderDevice *rdi = Modules::renderer().getRenderDevice();
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	rdi->destroyBuffer( _vertexBuffer );
 	rdi->destroyBuffer( _indexBuffer );
