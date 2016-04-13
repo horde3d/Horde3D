@@ -216,10 +216,9 @@ void Renderer::initStates()
 	_renderDevice->initStates();
 }
 
-template <typename Implementation>
 RenderDeviceInterface *Renderer::createRenderDevice()
 {
-	return new RenderDeviceGL2();
+	return new RDI_GL2::RenderDeviceGL2();
 }
 
 void Renderer::releaseRenderDevice()
@@ -859,8 +858,11 @@ void Renderer::updateShadowMap()
 	
 	uint32 prevRendBuf = _renderDevice->_curRendBuf;
 	int prevVPX = _renderDevice->_vpX, prevVPY = _renderDevice->_vpY, prevVPWidth = _renderDevice->_vpWidth, prevVPHeight = _renderDevice->_vpHeight;
-	RDIRenderBuffer &shadowRT = _renderDevice->_rendBufs.getRef( _shadowRB );
-	_renderDevice->setViewport( 0, 0, shadowRT.width, shadowRT.height );
+	
+	int shadowRTWidth, shadowRTHeight;
+	_renderDevice->getRenderBufferDimensions( _shadowRB, &shadowRTWidth, &shadowRTHeight );
+
+	_renderDevice->setViewport( 0, 0, shadowRTWidth, shadowRTHeight );
 	_renderDevice->setRenderBuffer( _shadowRB );
 	
 	_renderDevice->setColorWriteMask( false );
@@ -1921,9 +1923,10 @@ void Renderer::render( CameraNode *camNode )
 
 				if( rt != 0x0 )
 				{
-					RDIRenderBuffer &rendBuf = _renderDevice->_rendBufs.getRef( rt->rendBuf );
+					int width, height;
+					_renderDevice->getRenderBufferDimensions( rt->rendBuf, &width, &height );
 					_renderDevice->_outputBufferIndex = _curCamera->_outputBufferIndex;
-					_renderDevice->setViewport( 0, 0, rendBuf.width, rendBuf.height );
+					_renderDevice->setViewport( 0, 0, width, height );
 					_renderDevice->setRenderBuffer( rt->rendBuf );
 				}
 				else
