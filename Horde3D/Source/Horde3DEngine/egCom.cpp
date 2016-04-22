@@ -272,24 +272,31 @@ StatManager::StatManager()
 	_statLightPassCount = 0;
 
 	_frameTime = 0;
-
-	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
-
-	_fwdLightsGPUTimer = rdi->createGPUTimer();
-	_defLightsGPUTimer = rdi->createGPUTimer();
-	_shadowsGPUTimer = rdi->createGPUTimer();
-	_particleGPUTimer = rdi->createGPUTimer();
 }
 
 
 StatManager::~StatManager()
 {
-	delete _fwdLightsGPUTimer;
-	delete _defLightsGPUTimer;
-	delete _shadowsGPUTimer;
-	delete _particleGPUTimer;
+	if ( _fwdLightsGPUTimer ) delete _fwdLightsGPUTimer;
+	if ( _defLightsGPUTimer ) delete _defLightsGPUTimer;
+	if ( _shadowsGPUTimer ) delete _shadowsGPUTimer;
+	if ( _particleGPUTimer ) delete _particleGPUTimer;
 }
 
+
+bool StatManager::init()
+{
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+	if ( !rdi )
+		return false;
+
+	_fwdLightsGPUTimer = rdi->createGPUTimer();
+	_defLightsGPUTimer = rdi->createGPUTimer();
+	_shadowsGPUTimer = rdi->createGPUTimer();
+	_particleGPUTimer = rdi->createGPUTimer();
+
+	return true;
+}
 
 float StatManager::getStat( int param, bool reset )
 {

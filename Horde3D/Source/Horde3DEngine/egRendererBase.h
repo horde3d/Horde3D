@@ -15,10 +15,9 @@
 
 #include "egPrerequisites.h"
 #include "utMath.h"
-#include "utOpenGL.h"
 #include <string>
 #include <vector>
-
+#include <cassert>
 
 namespace Horde3D {
 
@@ -48,15 +47,23 @@ const uint32 MaxNumVertexLayouts = 16;
         static const bool value = (sizeof(check<C>(0)) == sizeof(char)); \
 		  }
 
-//
-// Current RenderDeviceInterface and GPUTimer implementation is based on Simulated C++ Interface Template Pattern from
-// http://www.codeproject.com/Articles/603818/Cplusplus-Runtime-Polymorphism-without-Virtual-Fun
-//
-
 // This corresponding macro is used to check the existence of the
 // interface function in the derived class.
 #define CheckMemberFunction( FNNAME, FNPROTOTYPE ) {                     \
               assert( has_member_##FNNAME<FNPROTOTYPE>::value ); }
+
+//
+// Current RenderDeviceInterface and GPUTimer implementation is based on Simulated C++ Interface Template Pattern from
+// http://www.codeproject.com/Articles/603818/Cplusplus-Runtime-Polymorphism-without-Virtual-Fun
+//
+// Tips:
+// 1) There are 5 sections to consider: 
+// - function checking, that checks the availability of the function in inherited class
+// - typedefs that create a representation of the function
+// - pointers to functions of the inherited class that will be called by the base class
+// - invoker functions that are called by the base class
+// - template <typename T> void initFunctions(): a function that should be called by any inherited class that will create pointers to class member functions
+// 2) DO NOT FORGET to add empty brackets in CheckMemberFunction macro for functions that have no parameters. Something like this: CheckMemberFunction( reset, void( T::* )( ) );
 
 
 // =================================================================================================
@@ -931,7 +938,7 @@ protected:
 		CheckMemberFunction( initStates, void( T::* )() );
 		CheckMemberFunction( init, bool( T::* )() );
 		CheckMemberFunction( registerVertexLayout, uint32( T::* )( uint32, VertexLayoutAttrib * ) );
-		CheckMemberFunction( beginRendering, bool( T::* ) );
+		CheckMemberFunction( beginRendering, void( T::* )() );
 		CheckMemberFunction( createVertexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( createIndexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
@@ -942,15 +949,15 @@ protected:
 		CheckMemberFunction( destroyTexture, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateTextureData, void( T::* )( uint32, int, int, const void * ) );
 		CheckMemberFunction( getTextureData, bool( T::* )( uint32, int, int, void * ) );
-		CheckMemberFunction( createShader, uint32( T::* )( uint32, const char *, const char * ) );
+		CheckMemberFunction( createShader, uint32( T::* )( const char *, const char * ) );
 		CheckMemberFunction( destroyShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( bindShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( getShaderConstLoc, int( T::* )( uint32, const char * ) );
 		CheckMemberFunction( getShaderSamplerLoc, int( T::* )( uint32, const char * ) );
 		CheckMemberFunction( setShaderConst, void( T::* )( int, RDIShaderConstType, void *, uint32 ) );
 		CheckMemberFunction( setShaderSampler, void( T::* )( int, uint32 ) );
-		CheckMemberFunction( getDefaultVSCode, const char *( T::* ) );
-		CheckMemberFunction( getDefaultFSCode, const char *( T::* ) );
+		CheckMemberFunction( getDefaultVSCode, const char *( T::* )() );
+		CheckMemberFunction( getDefaultFSCode, const char *( T::* )() );
 		CheckMemberFunction( createRenderBuffer, uint32( T::* )( uint32, uint32, TextureFormats::List, bool, uint32, uint32 ) );
 		CheckMemberFunction( destroyRenderBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( getRenderBufferTex, uint32( T::* )( uint32, uint32 ) );

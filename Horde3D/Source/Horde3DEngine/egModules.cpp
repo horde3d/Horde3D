@@ -75,6 +75,7 @@ bool Modules::init()
 
 	// Init modules
 	if( !renderer().init() ) return false;
+	if ( !stats().init() ) return false;
 
 	// Register resource types
 	resMan().registerResType( ResourceTypes::SceneGraph, "SceneGraph", 0x0, 0x0,

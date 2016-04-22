@@ -157,6 +157,8 @@ public:
 	StatManager();
 	~StatManager();
 	
+	bool init();	// Should be called after Renderer initialization
+
 	float getStat( int param, bool reset );
 	void incStat( int param, float value );
 	Timer *getTimer( int param );
