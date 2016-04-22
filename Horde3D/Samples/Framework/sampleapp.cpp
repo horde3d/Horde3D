@@ -275,8 +275,8 @@ int SampleApplication::run()
     {
         double avgFPS = _benchmarkLength / (glfwGetTime() - _t0);
         const char* fpsLabel = "Average FPS:";
-        char fpsValue[10];
-        sprintf( fpsValue, "%.2f", avgFPS );
+		const char* fpsValue = new char[ 16 ];
+        sprintf( (char*)fpsValue, "%.2f", avgFPS );
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
 
@@ -285,11 +285,13 @@ int SampleApplication::run()
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
-            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, (const char**)&fpsValue, _fontMatRes, _panelMatRes );
+            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, &fpsValue, _fontMatRes, _panelMatRes );
 
             render();
             finalize();
         }
+
+		delete[] fpsValue;
 	}
 	
     release();
@@ -632,7 +634,7 @@ bool SampleApplication::init()
 	// Initialize engine
 	if( !h3dInit() )
 	{
-		std::cout << "Unable to initalize engine" << std::endl;
+		std::cout << "Unable to initialize engine" << std::endl;
 		
 		h3dutDumpMessages();
 		return false;
