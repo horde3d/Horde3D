@@ -53,6 +53,16 @@ struct RenderFuncListItem
 	RenderFunc  renderFunc;
 };
 
+struct RenderBackendType
+{
+	enum List
+	{
+		OpenGL2 = 2,
+		OpenGL4 = 4,
+		OpenGLES = 8
+	};
+};
+
 // =================================================================================================
 
 struct OverlayBatch
@@ -125,7 +135,7 @@ public:
 
 	unsigned char *useScratchBuf( uint32 minSize );
 	
-	bool init();
+	bool init( RenderBackendType::List type );
 	void initStates();
 
 	void drawAABB( const Vec3f &bbMin, const Vec3f &bbMax );
@@ -165,6 +175,8 @@ public:
 	uint32 getQuadIdxBuf() const { return _quadIdxBuf; }
 	uint32 getParticleVBO() const { return _particleVBO; }
 
+	int getRenderDeviceType() { return _renderDeviceType; }
+
 protected:
 	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
 	
@@ -193,7 +205,7 @@ protected:
 	void renderDebugView();
 	void finishRendering();
 
-	RenderDeviceInterface *createRenderDevice();
+	RenderDeviceInterface *createRenderDevice( int type );
 
 	void		  releaseRenderDevice();
 
@@ -239,6 +251,8 @@ protected:
 	
 	uint32                             _vbCube, _ibCube, _vbSphere, _ibSphere;
 	uint32                             _vbCone, _ibCone, _vbFSPoly;
+	
+	int									_renderDeviceType;
 };
 
 }

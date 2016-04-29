@@ -632,7 +632,7 @@ bool SampleApplication::init()
     showCursor( _winShowCursor );
     
 	// Initialize engine
-	if( !h3dInit() )
+	if( !h3dInit( H3DRenderDevice::OpenGL4 ) )
 	{
 		std::cout << "Unable to initialize engine" << std::endl;
 		
@@ -651,7 +651,7 @@ bool SampleApplication::init()
 	// Init resources
     if( !initResources() )
 	{
-		std::cout << "Unable to initalize resources" << std::endl;
+		std::cout << "Unable to initialize resources" << std::endl;
 		
 		h3dutDumpMessages();
 	    return false;

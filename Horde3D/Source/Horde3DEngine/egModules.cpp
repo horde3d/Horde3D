@@ -62,7 +62,7 @@ void Modules::installExtensions()
 }
 
 
-bool Modules::init()
+bool Modules::init( int backendType )
 {
 	// Create modules (order is important because of dependencies)
 	if( _extensionManager == 0x0 ) _extensionManager = new ExtensionManager();
@@ -74,7 +74,7 @@ bool Modules::init()
 	if( _statManager == 0x0 ) _statManager = new StatManager();
 
 	// Init modules
-	if( !renderer().init() ) return false;
+	if ( !renderer().init( ( RenderBackendType::List ) backendType ) ) return false;
 	if ( !stats().init() ) return false;
 
 	// Register resource types

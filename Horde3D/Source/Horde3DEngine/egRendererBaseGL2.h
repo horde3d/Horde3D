@@ -333,7 +333,7 @@ public:
 	const RDITextureGL2 getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
 	const RDIRenderBufferGL2 getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
-	friend class Renderer;
+//	friend class Renderer;
 
 protected:
 
@@ -374,7 +374,7 @@ protected:
 // 	int                            _defaultFBO;
 //     bool                           _defaultFBOMultisampled;
 
-	uint32                         _numVertexLayouts;
+//	uint32                         _numVertexLayouts;
 	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
 	RDIObjects< RDIBufferGL2 >        _buffers;
 	RDIObjects< RDITextureGL2 >       _textures;

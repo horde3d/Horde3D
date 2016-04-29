@@ -58,8 +58,23 @@ typedef int H3DNode;
 */
 const H3DNode H3DRootNode = 1;
 
-
 /* Group: Enumerations */
+struct H3DRenderDevice
+{
+	/* Enum: H3DRenderDevice
+	The available engine Renderer backends.
+
+	OpenGL2				- force OpenGL 2 renderer backend
+	OpenGL4				- use OpenGL 4 as renderer backend
+	*/
+	enum List
+	{
+		OpenGL2 = 2,
+		OpenGL4 = 4
+	};
+};
+
+
 struct H3DOptions
 {
 	/* Enum: H3DOptions
@@ -722,12 +737,12 @@ DLL bool h3dGetError();
 		called several times on different rendering contexts in order to initialize them.
 	
 	Parameters:
-		none
+		deviceType - type of the render device
 		
 	Returns:
 		true in case of success, otherwise false
 */
-DLL bool h3dInit();
+DLL bool h3dInit( H3DRenderDevice::List deviceType );
 
 /* Function: h3dRelease
 		Releases the engine.

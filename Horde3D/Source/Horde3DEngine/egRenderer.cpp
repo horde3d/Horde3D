@@ -16,6 +16,7 @@
 #include "egCamera.h"
 #include "egModules.h"
 #include "egRendererBaseGL2.h"
+#include "egRendererBaseGL4.h"
 #include "egCom.h"
 #include <cstring>
 
@@ -92,15 +93,27 @@ unsigned char *Renderer::useScratchBuf( uint32 minSize )
 }
 
 
-bool Renderer::init()
+bool Renderer::init( RenderBackendType::List type )
 {
-	if ( _renderDevice == nullptr ) _renderDevice = createRenderDevice();
+	if ( _renderDevice == nullptr ) _renderDevice = createRenderDevice( type );
 
 	// Init Render Device Interface
 	if( !_renderDevice->init() ) 
 	{
 		releaseRenderDevice();
-		return false;
+
+		if ( type == RenderBackendType::OpenGL4 )
+		{
+			// try to use legacy OpenGL renderer backend
+			_renderDevice = createRenderDevice( RenderBackendType::OpenGL2 );
+			if ( !_renderDevice->init() )
+			{
+				releaseRenderDevice();
+				return false;
+			}
+		}
+		else
+			return false;
 	}
 
 	// Check capabilities
@@ -207,6 +220,9 @@ bool Renderer::init()
 	ASSERT( timer != 0x0 );
 	timer->setEnabled( true );
 	
+	// Save render device type for later use, particularly by shaders
+	_renderDeviceType = type;
+
 	return true;
 }
 
@@ -216,9 +232,24 @@ void Renderer::initStates()
 	_renderDevice->initStates();
 }
 
-RenderDeviceInterface *Renderer::createRenderDevice()
+RenderDeviceInterface *Renderer::createRenderDevice( int type )
 {
-	return new RDI_GL2::RenderDeviceGL2();
+	if ( type == RenderBackendType::OpenGL4 )
+	{
+		return new RDI_GL4::RenderDeviceGL4();
+	}
+
+	if ( type == RenderBackendType::OpenGL2 )
+	{
+		return new RDI_GL2::RenderDeviceGL2();
+	}
+
+	if ( type == RenderBackendType::OpenGLES )
+	{
+
+	}
+
+	return nullptr;
 }
 
 void Renderer::releaseRenderDevice()

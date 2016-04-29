@@ -265,7 +265,7 @@ bool EngineLog::getMessage( LogMessage &msg )
 // Class StatManager
 // *************************************************************************************************
 
-StatManager::StatManager()
+StatManager::StatManager() : _fwdLightsGPUTimer( nullptr ), _defLightsGPUTimer( nullptr ), _shadowsGPUTimer( nullptr ), _particleGPUTimer( nullptr )
 {
 	_statTriCount = 0;
 	_statBatchCount = 0;

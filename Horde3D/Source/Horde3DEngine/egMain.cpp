@@ -97,7 +97,7 @@ DLLEXP bool h3dGetError()
 }
 
 
-DLLEXP bool h3dInit()
+DLLEXP bool h3dInit( RenderBackendType::List backendType )
 {
 	if( initialized )
 	{	
@@ -108,7 +108,7 @@ DLLEXP bool h3dInit()
 	initialized = true;
 
     __ValidatePlatform__();
-	return Modules::init();
+	return Modules::init( backendType );
 }
 
 
