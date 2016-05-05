@@ -21,6 +21,9 @@
 
 namespace Horde3D {
 
+// forward declarations
+class Tokenizer;
+
 // =================================================================================================
 // Code Resource
 // =================================================================================================
@@ -163,14 +166,14 @@ struct ShaderContext
 	
 	// Shaders
 	std::vector< ShaderCombination >  shaderCombs;
-	int                               vertCodeIdx, fragCodeIdx;
+	int                               vertCodeIdx, fragCodeIdx, geomCodeIdx, tessCtlCodeIdx, tessEvalCodeIdx, computeCodeIdx;
 	bool                              compiled;
 
 
 	ShaderContext() :
 		blendMode( BlendModes::Replace ), depthFunc( TestModes::LessEqual ),
 		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ),
-		vertCodeIdx( -1 ), fragCodeIdx( -1 ), compiled( false )
+		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false )
 	{
 	}
 };
@@ -198,7 +201,6 @@ struct ShaderUniform
 	float          defValues[4];
 	unsigned char  size;
 };
-
 
 class ShaderResource : public Resource
 {
@@ -241,11 +243,14 @@ public:
 private:
 	bool raiseError( const std::string &msg, int line = -1 );
 	bool parseFXSection( char *data );
+
+	bool parseFXSectionContext( Tokenizer &tok, const char * identifier, int targetRenderBackend );
+
 	void compileCombination( ShaderContext &context, ShaderCombination &sc );
 	
 private:
 	static std::string            _vertPreamble, _fragPreamble;
-	static std::string            _tmpCode0, _tmpCode1;
+	static std::string            _tmpCodeVS, _tmpCodeFS, _tmpCodeGS, _tmpCodeCS, _tmpCodeTSCtl, _tmpCodeTSEval;
 	
 	std::vector< ShaderContext >  _contexts;
 	std::vector< ShaderSampler >  _samplers;

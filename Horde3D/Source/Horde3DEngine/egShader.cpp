@@ -243,8 +243,13 @@ void CodeResource::updateShaders()
 			{
 				ShaderContext &context = shaderRes->getContexts()[j];
 				
+				// !!!CHECK THIS FOR ADDITIONAL SHADER TYPES!!!
 				if( shaderRes->getCode( context.vertCodeIdx )->hasDependency( this ) ||
-				    shaderRes->getCode( context.fragCodeIdx )->hasDependency( this ) )
+				    shaderRes->getCode( context.fragCodeIdx )->hasDependency( this ) || 
+					shaderRes->getCode( context.geomCodeIdx )->hasDependency( this ) ||
+					shaderRes->getCode( context.computeCodeIdx )->hasDependency( this ) ||
+					shaderRes->getCode( context.tessCtlCodeIdx )->hasDependency( this ) ||
+					shaderRes->getCode( context.tessEvalCodeIdx )->hasDependency( this ) )
 				{
 					context.compiled = false;
 				}
@@ -379,8 +384,12 @@ protected:
 
 string ShaderResource::_vertPreamble = "";
 string ShaderResource::_fragPreamble = "";
-string ShaderResource::_tmpCode0 = "";
-string ShaderResource::_tmpCode1 = "";
+string ShaderResource::_tmpCodeVS = "";
+string ShaderResource::_tmpCodeFS = "";
+string ShaderResource::_tmpCodeGS = "";
+string ShaderResource::_tmpCodeCS = "";
+string ShaderResource::_tmpCodeTSCtl = "";
+string ShaderResource::_tmpCodeTSEval = "";
 
 
 ShaderResource::ShaderResource( const string &name, int flags ) :
@@ -463,6 +472,8 @@ bool ShaderResource::parseFXSection( char *data )
 	const char *identifier = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
 	const char *intnum = "+-0123456789";
 	const char *floatnum = "+-0123456789.eE";
+
+	bool parseOnlyGL4Data = false;
 	
 	bool unitFree[12] = {true, true, true, true, true, true, true, true, true, true, true, true}; 
 	Tokenizer tok( data );
@@ -603,103 +614,33 @@ bool ShaderResource::parseFXSection( char *data )
 		}
 		else if( tok.checkToken( "context" ) )
 		{
-			ShaderContext context;
-			_tmpCode0 = _tmpCode1 = "";
-			context.id = tok.getToken( identifier );
-			if( context.id == "" ) return raiseError( "FX: Invalid identifier", tok.getLine() );
-
-			// Skip annotations
-			if( tok.checkToken( "<" ) )
-				if( !tok.seekToken( ">" ) ) return raiseError( "FX: expected '>'", tok.getLine() );
-			
-			if( !tok.checkToken( "{" ) ) return raiseError( "FX: expected '{'", tok.getLine() );
-			while( true )
+			bool success = parseFXSectionContext( tok, identifier, RenderBackendType::OpenGL2 );
+			if ( !success )
 			{
-				if( !tok.hasToken() )
+				return false;
+			}
+		}
+		else if ( tok.checkToken( "OpenGL4" ) )
+		{
+			if ( !tok.checkToken( "{" ) ) return raiseError( "FX: expected '{'", tok.getLine() );
+			while ( true )
+			{
+				if ( !tok.hasToken() )
 					return raiseError( "FX: expected '}'", tok.getLine() );
-				else if( tok.checkToken( "}" ) )
+				else if ( tok.checkToken( "}" ) )
 					break;
-				else if( tok.checkToken( "ZWriteEnable" ) )
+				else if ( tok.checkToken( "context" ) )
 				{
-					if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
-					if( tok.checkToken( "true" ) ) context.writeDepth = true;
-					else if( tok.checkToken( "false" ) ) context.writeDepth = false;
-					else return raiseError( "FX: invalid bool value", tok.getLine() );
-				}
-				else if( tok.checkToken( "ZEnable" ) )
-				{
-					if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
-					if( tok.checkToken( "true" ) ) context.depthTest = true;
-					else if( tok.checkToken( "false" ) ) context.depthTest = false;
-					else return raiseError( "FX: invalid bool value", tok.getLine() );
-				}
-				else if( tok.checkToken( "ZFunc" ) )
-				{
-					if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
-					if( tok.checkToken( "LessEqual" ) ) context.depthFunc = TestModes::LessEqual;
-					else if( tok.checkToken( "Always" ) ) context.depthFunc = TestModes::Always;
-					else if( tok.checkToken( "Equal" ) ) context.depthFunc = TestModes::Equal;
-					else if( tok.checkToken( "Less" ) ) context.depthFunc = TestModes::Less;
-					else if( tok.checkToken( "Greater" ) ) context.depthFunc = TestModes::Greater;
-					else if( tok.checkToken( "GreaterEqual" ) ) context.depthFunc = TestModes::GreaterEqual;
-					else return raiseError( "FX: invalid enum value", tok.getLine() );
-				}
-				else if( tok.checkToken( "BlendMode" ) )
-				{
-					if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
-					if( tok.checkToken( "Replace" ) ) context.blendMode = BlendModes::Replace;
-					else if( tok.checkToken( "Blend" ) ) context.blendMode = BlendModes::Blend;
-					else if( tok.checkToken( "Add" ) ) context.blendMode = BlendModes::Add;
-					else if( tok.checkToken( "AddBlended" ) ) context.blendMode = BlendModes::AddBlended;
-					else if( tok.checkToken( "Mult" ) ) context.blendMode = BlendModes::Mult;
-					else return raiseError( "FX: invalid enum value", tok.getLine() );
-				}
-				else if( tok.checkToken( "CullMode" ) )
-				{
-					if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
-					if( tok.checkToken( "Back" ) ) context.cullMode = CullModes::Back;
-					else if( tok.checkToken( "Front" ) ) context.cullMode = CullModes::Front;
-					else if( tok.checkToken( "None" ) ) context.cullMode = CullModes::None;
-					else return raiseError( "FX: invalid enum value", tok.getLine() );
-				}
-				else if( tok.checkToken( "AlphaToCoverage" ) )
-				{
-					if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
-					if( tok.checkToken( "true" ) || tok.checkToken( "1" ) ) context.alphaToCoverage = true;
-					else if( tok.checkToken( "false" ) || tok.checkToken( "1" ) ) context.alphaToCoverage = false;
-					else return raiseError( "FX: invalid bool value", tok.getLine() );
-				}
-				else if( tok.checkToken( "VertexShader" ) )
-				{
-					if( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
-						return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
-					_tmpCode0 = tok.getToken( identifier );
-					if( _tmpCode0 == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
-				}
-				else if( tok.checkToken( "PixelShader" ) )
-				{
-					if( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
-						return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
-					_tmpCode1 = tok.getToken( identifier );
-					if( _tmpCode1 == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+					bool success = parseFXSectionContext( tok, identifier, RenderBackendType::OpenGL4 );
+					if ( !success )
+					{
+						return false;
+					}
 				}
 				else
 					return raiseError( "FX: unexpected token", tok.getLine() );
-				if( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
+				if ( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
 			}
-
-			// Handle shaders
-			for( uint32 i = 0; i < _codeSections.size(); ++i )
-			{
-				if( _codeSections[i].getName() == _tmpCode0 ) context.vertCodeIdx = i;
-				if( _codeSections[i].getName() == _tmpCode1 ) context.fragCodeIdx = i;
-			}
-			if( context.vertCodeIdx < 0 )
-				return raiseError( "FX: Vertex shader referenced by context '" + context.id + "' not found" );
-			if( context.fragCodeIdx < 0 )
-				return raiseError( "FX: Pixel shader referenced by context '" + context.id + "' not found" );
-
-			_contexts.push_back( context );
 		}
 		else
 		{
@@ -729,6 +670,173 @@ bool ShaderResource::parseFXSection( char *data )
 	return true;
 }
 
+
+bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identifier, int targetRenderBackend )
+{
+	ShaderContext context;
+	_tmpCodeVS = _tmpCodeFS = _tmpCodeGS = _tmpCodeCS = _tmpCodeTSCtl = _tmpCodeTSEval = "";
+	
+	bool geometryShaderAvailable, computeShaderAvailable, tessControlShaderAvailable, tessEvalShaderAvailable;
+	geometryShaderAvailable = computeShaderAvailable = tessControlShaderAvailable = tessEvalShaderAvailable = false;
+
+	context.id = tok.getToken( identifier );
+	if ( context.id == "" ) return raiseError( "FX: Invalid identifier", tok.getLine() );
+
+	// Skip annotations
+	if ( tok.checkToken( "<" ) )
+		if ( !tok.seekToken( ">" ) ) return raiseError( "FX: expected '>'", tok.getLine() );
+
+	if ( !tok.checkToken( "{" ) ) return raiseError( "FX: expected '{'", tok.getLine() );
+	while ( true )
+	{
+		if ( !tok.hasToken() )
+			return raiseError( "FX: expected '}'", tok.getLine() );
+		else if ( tok.checkToken( "}" ) )
+			break;
+		else if ( tok.checkToken( "ZWriteEnable" ) )
+		{
+			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+			if ( tok.checkToken( "true" ) ) context.writeDepth = true;
+			else if ( tok.checkToken( "false" ) ) context.writeDepth = false;
+			else return raiseError( "FX: invalid bool value", tok.getLine() );
+		}
+		else if ( tok.checkToken( "ZEnable" ) )
+		{
+			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+			if ( tok.checkToken( "true" ) ) context.depthTest = true;
+			else if ( tok.checkToken( "false" ) ) context.depthTest = false;
+			else return raiseError( "FX: invalid bool value", tok.getLine() );
+		}
+		else if ( tok.checkToken( "ZFunc" ) )
+		{
+			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+			if ( tok.checkToken( "LessEqual" ) ) context.depthFunc = TestModes::LessEqual;
+			else if ( tok.checkToken( "Always" ) ) context.depthFunc = TestModes::Always;
+			else if ( tok.checkToken( "Equal" ) ) context.depthFunc = TestModes::Equal;
+			else if ( tok.checkToken( "Less" ) ) context.depthFunc = TestModes::Less;
+			else if ( tok.checkToken( "Greater" ) ) context.depthFunc = TestModes::Greater;
+			else if ( tok.checkToken( "GreaterEqual" ) ) context.depthFunc = TestModes::GreaterEqual;
+			else return raiseError( "FX: invalid enum value", tok.getLine() );
+		}
+		else if ( tok.checkToken( "BlendMode" ) )
+		{
+			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+			if ( tok.checkToken( "Replace" ) ) context.blendMode = BlendModes::Replace;
+			else if ( tok.checkToken( "Blend" ) ) context.blendMode = BlendModes::Blend;
+			else if ( tok.checkToken( "Add" ) ) context.blendMode = BlendModes::Add;
+			else if ( tok.checkToken( "AddBlended" ) ) context.blendMode = BlendModes::AddBlended;
+			else if ( tok.checkToken( "Mult" ) ) context.blendMode = BlendModes::Mult;
+			else return raiseError( "FX: invalid enum value", tok.getLine() );
+		}
+		else if ( tok.checkToken( "CullMode" ) )
+		{
+			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+			if ( tok.checkToken( "Back" ) ) context.cullMode = CullModes::Back;
+			else if ( tok.checkToken( "Front" ) ) context.cullMode = CullModes::Front;
+			else if ( tok.checkToken( "None" ) ) context.cullMode = CullModes::None;
+			else return raiseError( "FX: invalid enum value", tok.getLine() );
+		}
+		else if ( tok.checkToken( "AlphaToCoverage" ) )
+		{
+			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+			if ( tok.checkToken( "true" ) || tok.checkToken( "1" ) ) context.alphaToCoverage = true;
+			else if ( tok.checkToken( "false" ) || tok.checkToken( "1" ) ) context.alphaToCoverage = false;
+			else return raiseError( "FX: invalid bool value", tok.getLine() );
+		}
+		else if ( tok.checkToken( "VertexShader" ) )
+		{
+			if ( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
+				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
+			_tmpCodeVS = tok.getToken( identifier );
+			if ( _tmpCodeVS == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+		}
+		else if ( tok.checkToken( "GeometryShader" ) )
+		{
+			if ( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
+				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
+			_tmpCodeGS = tok.getToken( identifier );
+			if ( _tmpCodeGS == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+			
+			geometryShaderAvailable = true;
+		}
+		else if ( tok.checkToken( "ComputeShader" ) )
+		{
+			if ( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
+				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
+			_tmpCodeCS = tok.getToken( identifier );
+			if ( _tmpCodeCS == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+
+			computeShaderAvailable = true;
+		}
+		else if ( tok.checkToken( "PixelShader" ) )
+		{
+			if ( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
+				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
+			_tmpCodeFS = tok.getToken( identifier );
+			if ( _tmpCodeFS == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+		}
+		else if ( tok.checkToken( "TessControlShader" ) )
+		{
+			if ( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
+				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
+			_tmpCodeTSCtl = tok.getToken( identifier );
+			if ( _tmpCodeTSCtl == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+
+			tessControlShaderAvailable = true;
+		}
+		else if ( tok.checkToken( "TessEvalShader" ) )
+		{
+			if ( !tok.checkToken( "=" ) || !tok.checkToken( "compile" ) || !tok.checkToken( "GLSL" ) )
+				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
+			_tmpCodeTSEval = tok.getToken( identifier );
+			if ( _tmpCodeTSEval == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+
+			tessEvalShaderAvailable = true;
+		}
+		else
+			return raiseError( "FX: unexpected token", tok.getLine() );
+		if ( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
+}
+
+	// Handle shaders
+	for ( uint32 i = 0; i < _codeSections.size(); ++i )
+	{
+		if ( _codeSections[ i ].getName() == _tmpCodeVS ) context.vertCodeIdx = i;
+		if ( _codeSections[ i ].getName() == _tmpCodeFS ) context.fragCodeIdx = i;
+		if ( _codeSections[ i ].getName() == _tmpCodeCS ) context.computeCodeIdx = i;
+		if ( _codeSections[ i ].getName() == _tmpCodeGS ) context.geomCodeIdx = i;
+		if ( _codeSections[ i ].getName() == _tmpCodeTSCtl ) context.tessCtlCodeIdx = i;
+		if ( _codeSections[ i ].getName() == _tmpCodeTSEval ) context.tessEvalCodeIdx = i;
+	}
+
+	if ( !computeShaderAvailable ) 
+	{
+		// compute shader is a standalone type of shader and is not directly attached to any geometry object, hence it is not a part of VS-GS-FS shader pipeline
+		if ( context.vertCodeIdx < 0 )
+			return raiseError( "FX: Vertex shader referenced by context '" + context.id + "' not found" );
+		if ( context.fragCodeIdx < 0 )
+			return raiseError( "FX: Pixel shader referenced by context '" + context.id + "' not found" );
+		if ( geometryShaderAvailable && context.geomCodeIdx < 0 )
+			return raiseError( "FX: Geometry shader referenced by context '" + context.id + "' not found" );
+		if ( tessControlShaderAvailable && context.tessCtlCodeIdx < 0 )
+			return raiseError( "FX: Tessellation control shader referenced by context '" + context.id + "' not found" );
+		if ( tessEvalShaderAvailable && context.tessEvalCodeIdx < 0 )
+			return raiseError( "FX: Tessellation evaluation shader referenced by context '" + context.id + "' not found" );
+	}
+	else
+	{
+		if ( context.computeCodeIdx < 0 )
+			return raiseError( "FX: Compute shader referenced by context '" + context.id + "' not found" );
+	}
+
+	// skip contexts that are intended for other render interfaces
+	if ( Modules::renderer().getRenderDeviceType() == targetRenderBackend )
+	{
+		_contexts.push_back( context );
+	}
+
+	return true;
+}
 
 bool ShaderResource::load( const char *data, int size )
 {
@@ -770,10 +878,10 @@ bool ShaderResource::load( const char *data, int size )
 			else
 			{
 				// Add section as private code resource which is not managed by resource manager
-				_tmpCode0.assign( sectionNameStart, sectionNameEnd );
-				_codeSections.push_back( CodeResource( _tmpCode0, 0 ) );
-				_tmpCode0.assign( sectionContentStart, sectionContentEnd );
-				_codeSections.back().load( _tmpCode0.c_str(), (uint32)_tmpCode0.length() );
+				_tmpCodeVS.assign( sectionNameStart, sectionNameEnd );
+				_codeSections.push_back( CodeResource( _tmpCodeVS, 0 ) );
+				_tmpCodeVS.assign( sectionContentStart, sectionContentEnd );
+				_codeSections.back().load( _tmpCodeVS.c_str(), (uint32)_tmpCodeVS.length() );
 			}
 		}
 		else
@@ -813,38 +921,75 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	uint32 combMask = sc.combMask;
 	
 	// Add preamble
-	_tmpCode0 = _vertPreamble;
-	_tmpCode1 = _fragPreamble;
+	_tmpCodeVS = _vertPreamble;
+	_tmpCodeFS = _fragPreamble;
+	_tmpCodeGS = _tmpCodeCS = _tmpCodeTSCtl = _tmpCodeTSEval = "";
 
 	// Insert defines for flags
 	if( combMask != 0 )
 	{
-		_tmpCode0 += "\r\n// ---- Flags ----\r\n";
-		_tmpCode1 += "\r\n// ---- Flags ----\r\n";
+		_tmpCodeVS += "\r\n// ---- Flags ----\r\n";
+		_tmpCodeFS += "\r\n// ---- Flags ----\r\n";
+		_tmpCodeGS += "\r\n// ---- Flags ----\r\n";
+		_tmpCodeTSCtl += "\r\n// ---- Flags ----\r\n";
+		_tmpCodeTSEval += "\r\n// ---- Flags ----\r\n";
+		_tmpCodeCS += "\r\n// ---- Flags ----\r\n";
+
 		for( uint32 i = 1; i <= 32; ++i )
 		{
 			if( combMask & (1 << (i-1)) )
 			{
-				_tmpCode0 += "#define _F";
-				_tmpCode0 += (char)(48 + i / 10);
-				_tmpCode0 += (char)(48 + i % 10);
-				_tmpCode0 += "_\r\n";
+				_tmpCodeVS += "#define _F";
+				_tmpCodeVS += ( char ) ( 48 + i / 10 );
+				_tmpCodeVS += ( char ) ( 48 + i % 10 );
+				_tmpCodeVS += "_\r\n";
+
+				_tmpCodeFS += "#define _F";
+				_tmpCodeFS += ( char ) ( 48 + i / 10 );
+				_tmpCodeFS += ( char ) ( 48 + i % 10 );
+				_tmpCodeFS += "_\r\n";
 				
-				_tmpCode1 += "#define _F";
-				_tmpCode1 += (char)(48 + i / 10);
-				_tmpCode1 += (char)(48 + i % 10);
-				_tmpCode1 += "_\r\n";
+				// geometry
+				_tmpCodeGS += "#define _F";
+				_tmpCodeGS += ( char ) ( 48 + i / 10 );
+				_tmpCodeGS += ( char ) ( 48 + i % 10 );
+				_tmpCodeGS += "_\r\n";
+
+				// tessellation
+				_tmpCodeTSCtl += "#define _F";
+				_tmpCodeTSCtl += ( char ) ( 48 + i / 10 );
+				_tmpCodeTSCtl += ( char ) ( 48 + i % 10 );
+				_tmpCodeTSCtl += "_\r\n";
+
+				_tmpCodeTSEval += "#define _F";
+				_tmpCodeTSEval += ( char ) ( 48 + i / 10 );
+				_tmpCodeTSEval += ( char ) ( 48 + i % 10 );
+				_tmpCodeTSEval += "_\r\n";
+
+				// compute
+				_tmpCodeCS += "#define _F";
+				_tmpCodeCS += ( char ) ( 48 + i / 10 );
+				_tmpCodeCS += ( char ) ( 48 + i % 10 );
+				_tmpCodeCS += "_\r\n";
 			}
 		}
-		_tmpCode0 += "// ---------------\r\n";
-		_tmpCode1 += "// ---------------\r\n";
+
+		_tmpCodeVS += "// ---------------\r\n";
+		_tmpCodeFS += "// ---------------\r\n";
+		_tmpCodeGS += "// ---------------\r\n";
+		_tmpCodeTSCtl += "// ---------------\r\n";
+		_tmpCodeTSEval += "// ---------------\r\n";
+		_tmpCodeCS += "// ---------------\r\n";
 	}
 
 	// Add actual shader code
-	_tmpCode0 += getCode( context.vertCodeIdx )->assembleCode();
-	_tmpCode1 += getCode( context.fragCodeIdx )->assembleCode();
+	_tmpCodeVS += getCode( context.vertCodeIdx )->assembleCode();
+	_tmpCodeFS += getCode( context.fragCodeIdx )->assembleCode();
+	_tmpCodeGS += getCode( context.geomCodeIdx )->assembleCode();
+	_tmpCodeTSCtl += getCode( context.tessCtlCodeIdx )->assembleCode();
+	_tmpCodeTSEval += getCode( context.tessEvalCodeIdx )->assembleCode();
+	_tmpCodeCS += getCode( context.computeCodeIdx )->assembleCode();
 
-	
 	Modules::log().writeInfo( "---- C O M P I L I N G  . S H A D E R . %s@%s[%i] ----",
 		_name.c_str(), context.id.c_str(), sc.combMask );
 	
@@ -858,7 +1003,8 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	}
 	
 	// Compile shader
-	if( !Modules::renderer().createShaderComb( _tmpCode0.c_str(), _tmpCode1.c_str(), sc ) )
+	bool compiled = Modules::renderer().createShaderComb( _tmpCodeVS.c_str(), _tmpCodeFS.c_str(), sc );
+	if( !compiled )
 	{
 		Modules::log().writeError( "Shader resource '%s': Failed to compile shader context '%s' (comb %i)",
 			_name.c_str(), context.id.c_str(), sc.combMask );
@@ -866,8 +1012,8 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 		if( Modules::config().dumpFailedShaders )
 		{
 			std::ofstream out0( "shdDumpVS.txt", ios::binary ), out1( "shdDumpFS.txt", ios::binary );
-			if( out0.good() ) out0 << _tmpCode0;
-			if( out1.good() ) out1 << _tmpCode1;
+			if( out0.good() ) out0 << _tmpCodeVS;
+			if( out1.good() ) out1 << _tmpCodeFS;
 			out0.close();
 			out1.close();
 		}
