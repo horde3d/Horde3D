@@ -38,8 +38,8 @@ bool ExtTerrain::init()
 	TerrainNode::vlTerrain = Modules::renderer().getRenderDevice()->registerVertexLayout( 2, attribs );
 
 	// Upload default shader used for debug view
-	Modules::renderer().createShaderComb(
-		vsTerrainDebugView, fsTerrainDebugView, TerrainNode::debugViewShader );
+	Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+		vsTerrainDebugView, fsTerrainDebugView, nullptr, nullptr, nullptr, nullptr );
 	
 	return true;
 }

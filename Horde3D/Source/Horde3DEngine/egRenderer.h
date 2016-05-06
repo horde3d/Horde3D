@@ -142,7 +142,8 @@ public:
 	void drawSphere( const Vec3f &pos, float radius );
 	void drawCone( float height, float fov, const Matrix4f &transMat );
 	
-	bool createShaderComb( const char *vertexShader, const char *fragmentShader, ShaderCombination &sc );
+	bool createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
+						   const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader );
 	void releaseShaderComb( ShaderCombination &sc );
 	void setShaderComb( ShaderCombination *sc );
 	void commitGeneralUniforms();

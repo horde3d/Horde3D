@@ -154,7 +154,7 @@ bool Renderer::init( RenderBackendType::List type )
 	_vlParticle = _renderDevice->registerVertexLayout( 2, attribsParticle );
 	
 	// Upload default shaders
-	if( !createShaderComb( _renderDevice->getDefaultVSCode(), _renderDevice->getDefaultFSCode(), _defColorShader ) )
+	if ( !createShaderComb( _defColorShader, _renderDevice->getDefaultVSCode(), _renderDevice->getDefaultFSCode(), nullptr, nullptr, nullptr, nullptr ) )
 	{
 		Modules::log().writeError( "Failed to compile default shaders" );
 		return false;
@@ -397,7 +397,8 @@ void Renderer::drawCone( float height, float radius, const Matrix4f &transMat )
 // Material System
 // =================================================================================================
 
-bool Renderer::createShaderComb( const char *vertexShader, const char *fragmentShader, ShaderCombination &sc )
+bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
+								 const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader )
 {
 	// Create shader program
 	uint32 shdObj = _renderDevice->createShader( vertexShader, fragmentShader );

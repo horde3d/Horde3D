@@ -190,7 +190,7 @@ struct ShaderSampler
 
 
 	ShaderSampler() :
-		texUnit( -1 ), sampState( 0 )
+		texUnit( -1 ), sampState( 0 ), type( TextureTypes::Tex2D )
 	{
 	}
 };

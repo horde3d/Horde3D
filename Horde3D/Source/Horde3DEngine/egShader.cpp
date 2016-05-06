@@ -230,9 +230,10 @@ std::string CodeResource::assembleCode() const
 
 void CodeResource::updateShaders()
 {
-	for( uint32 i = 0; i < Modules::resMan().getResources().size(); ++i )
+	auto resources = Modules::resMan().getResources();
+	for( uint32 i = 0; i < resources.size(); ++i )
 	{
-		Resource *res = Modules::resMan().getResources()[i];
+		Resource *res = resources[ i ];
 
 		if( res != 0x0 && res->getType() == ResourceTypes::Shader )
 		{
@@ -243,13 +244,12 @@ void CodeResource::updateShaders()
 			{
 				ShaderContext &context = shaderRes->getContexts()[j];
 				
-				// !!!CHECK THIS FOR ADDITIONAL SHADER TYPES!!!
-				if( shaderRes->getCode( context.vertCodeIdx )->hasDependency( this ) ||
-				    shaderRes->getCode( context.fragCodeIdx )->hasDependency( this ) || 
-					shaderRes->getCode( context.geomCodeIdx )->hasDependency( this ) ||
-					shaderRes->getCode( context.computeCodeIdx )->hasDependency( this ) ||
-					shaderRes->getCode( context.tessCtlCodeIdx )->hasDependency( this ) ||
-					shaderRes->getCode( context.tessEvalCodeIdx )->hasDependency( this ) )
+				if ( ( context.vertCodeIdx >= 0 && shaderRes->getCode( context.vertCodeIdx )->hasDependency( this ) ) ||
+					 ( context.fragCodeIdx >= 0 && shaderRes->getCode( context.fragCodeIdx )->hasDependency( this ) ) ||
+					( context.geomCodeIdx >= 0 && shaderRes->getCode( context.geomCodeIdx )->hasDependency( this ) ) ||
+					( context.computeCodeIdx >= 0 && shaderRes->getCode( context.computeCodeIdx )->hasDependency( this ) ) ||
+					( context.tessCtlCodeIdx >= 0 && shaderRes->getCode( context.tessCtlCodeIdx )->hasDependency( this ) ) ||
+					( context.tessEvalCodeIdx >= 0 && shaderRes->getCode( context.tessEvalCodeIdx )->hasDependency( this ) ) )
 				{
 					context.compiled = false;
 				}
@@ -830,10 +830,10 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 	}
 
 	// skip contexts that are intended for other render interfaces
-	if ( Modules::renderer().getRenderDeviceType() == targetRenderBackend )
-	{
+// 	if ( Modules::renderer().getRenderDeviceType() == targetRenderBackend )
+// 	{
 		_contexts.push_back( context );
-	}
+// 	}
 
 	return true;
 }
@@ -983,12 +983,39 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	}
 
 	// Add actual shader code
-	_tmpCodeVS += getCode( context.vertCodeIdx )->assembleCode();
-	_tmpCodeFS += getCode( context.fragCodeIdx )->assembleCode();
-	_tmpCodeGS += getCode( context.geomCodeIdx )->assembleCode();
-	_tmpCodeTSCtl += getCode( context.tessCtlCodeIdx )->assembleCode();
-	_tmpCodeTSEval += getCode( context.tessEvalCodeIdx )->assembleCode();
-	_tmpCodeCS += getCode( context.computeCodeIdx )->assembleCode();
+	bool vsAvailable, fsAvailable, csAvailable, gsAvailable, tscAvailable, tseAvailable;
+	vsAvailable = fsAvailable = csAvailable = gsAvailable = tscAvailable = tseAvailable = false;
+
+	if ( context.vertCodeIdx >= 0 )
+	{
+		_tmpCodeVS += getCode( context.vertCodeIdx )->assembleCode();
+		vsAvailable = true;
+	}
+	if ( context.fragCodeIdx >= 0 )
+	{
+		_tmpCodeFS += getCode( context.fragCodeIdx )->assembleCode();
+		fsAvailable = true;
+	}
+	if ( context.geomCodeIdx >= 0 )
+	{
+		_tmpCodeGS += getCode( context.geomCodeIdx )->assembleCode();
+		gsAvailable = true;
+	}
+	if ( context.tessCtlCodeIdx >= 0 )
+	{
+		_tmpCodeTSCtl += getCode( context.tessCtlCodeIdx )->assembleCode();
+		tscAvailable = true;
+	}
+	if ( context.tessEvalCodeIdx >= 0 )
+	{
+		_tmpCodeTSEval += getCode( context.tessEvalCodeIdx )->assembleCode();
+		tseAvailable = true;
+	}
+	if ( context.computeCodeIdx >= 0 )
+	{
+		_tmpCodeCS += getCode( context.computeCodeIdx )->assembleCode();
+		csAvailable = true;
+	}
 
 	Modules::log().writeInfo( "---- C O M P I L I N G  . S H A D E R . %s@%s[%i] ----",
 		_name.c_str(), context.id.c_str(), sc.combMask );
@@ -1003,7 +1030,14 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	}
 	
 	// Compile shader
-	bool compiled = Modules::renderer().createShaderComb( _tmpCodeVS.c_str(), _tmpCodeFS.c_str(), sc );
+	bool compiled = Modules::renderer().createShaderComb( sc, 
+														  vsAvailable ? _tmpCodeVS.c_str() : nullptr,
+														  fsAvailable ? _tmpCodeFS.c_str() : nullptr,  
+														  gsAvailable ? _tmpCodeGS.c_str() : nullptr,
+														  tscAvailable ? _tmpCodeTSCtl.c_str() : nullptr,
+														  tseAvailable ? _tmpCodeTSEval.c_str() : nullptr,
+														  csAvailable ? _tmpCodeCS.c_str() : nullptr
+														  );
 	if( !compiled )
 	{
 		Modules::log().writeError( "Shader resource '%s': Failed to compile shader context '%s' (comb %i)",
@@ -1057,45 +1091,51 @@ void ShaderResource::compileContexts()
 	{
 		ShaderContext &context = _contexts[i];
 
-		if( !context.compiled )
-		{
-			context.flagMask = 0;
-			if( !getCode( context.vertCodeIdx )->tryLinking( &context.flagMask ) ||
-			    !getCode( context.fragCodeIdx )->tryLinking( &context.flagMask ) )
-			{
-				continue;
-			}
-			
-			// Add preloaded combinations
-			for( std::set< uint32 >::iterator itr = _preLoadList.begin(); itr != _preLoadList.end(); ++itr )
-			{
-				uint32 combMask = *itr & context.flagMask;
-				
-				// Check if combination already exists
-				bool found = false;
-				for( size_t j = 0; j < context.shaderCombs.size(); ++j )
-				{
-					if( context.shaderCombs[j].combMask == combMask )
-					{
-						found = true;
-						break;
-					}
-				}
+		if( context.compiled )
+			continue;
+		
+		context.flagMask = 0;
 
-				if( !found )
-				{	
-					context.shaderCombs.push_back( ShaderCombination() );
-					context.shaderCombs.back().combMask = combMask;
-				}
-			}
-			
+		if ( ( context.vertCodeIdx >= 0 && !getCode( context.vertCodeIdx )->tryLinking( &context.flagMask ) ) ||
+			 ( context.fragCodeIdx >= 0 && !getCode( context.fragCodeIdx )->tryLinking( &context.flagMask ) ) ||
+			 ( context.geomCodeIdx >= 0 && !getCode( context.geomCodeIdx )->tryLinking( &context.flagMask ) ) ||
+			 ( context.tessCtlCodeIdx >= 0 && !getCode( context.tessCtlCodeIdx )->tryLinking( &context.flagMask ) ) ||
+			 ( context.tessEvalCodeIdx >= 0 && !getCode( context.tessEvalCodeIdx )->tryLinking( &context.flagMask ) ) ||
+			 ( context.computeCodeIdx >= 0 && !getCode( context.computeCodeIdx )->tryLinking( &context.flagMask ) )
+		   )
+		{
+			continue;
+		}
+
+		// Add preloaded combinations
+		for( std::set< uint32 >::iterator itr = _preLoadList.begin(); itr != _preLoadList.end(); ++itr )
+		{
+			uint32 combMask = *itr & context.flagMask;
+				
+			// Check if combination already exists
+			bool found = false;
 			for( size_t j = 0; j < context.shaderCombs.size(); ++j )
 			{
-				compileCombination( context, context.shaderCombs[j] );
+				if( context.shaderCombs[j].combMask == combMask )
+				{
+					found = true;
+					break;
+				}
 			}
 
-			context.compiled = true;
+			if( !found )
+			{	
+				context.shaderCombs.push_back( ShaderCombination() );
+				context.shaderCombs.back().combMask = combMask;
+			}
 		}
+			
+		for( size_t j = 0; j < context.shaderCombs.size(); ++j )
+		{
+			compileCombination( context, context.shaderCombs[j] );
+		}
+
+		context.compiled = true;
 	}
 }
 
