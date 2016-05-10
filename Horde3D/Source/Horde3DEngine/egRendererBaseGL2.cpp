@@ -51,7 +51,7 @@ static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTU
 // GPUTimer
 // =================================================================================================
 
-GPUTimerGL2::GPUTimerGL2() : _numQueries( 0 ),  _queryFrame( 0 ), _time( 0 ), _activeQuery( false )
+GPUTimerGL2::GPUTimerGL2() : _numQueries( 0 ),  _queryFrame( 0 ), _activeQuery( false )
 {
 	GPUTimer::initFunctions< GPUTimerGL2 >();
 
@@ -676,7 +676,8 @@ bool RenderDeviceGL2::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc )
+uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+									  const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
 {
 	// Compile and link shader
 	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );

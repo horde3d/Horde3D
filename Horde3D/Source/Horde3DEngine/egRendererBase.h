@@ -163,7 +163,7 @@ public:
 	}
 	bool updateResults()
 	{
-		( *_pfn_GPUTimer_UpdateResults ) ( this );
+		return ( *_pfn_GPUTimer_UpdateResults ) ( this );
 	}
 	
 	void reset()
@@ -602,7 +602,8 @@ private:
 	typedef void( *PFN_UPDATETEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, const void *pixels );
 	typedef bool( *PFN_GETTEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, void *buffer );
 	
-	typedef uint32( *PFN_CREATESHADER )( void* const, const char *vertexShaderSrc, const char *fragmentShaderSrc );
+	typedef uint32( *PFN_CREATESHADER )( void* const, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+										 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc );
 	typedef void( *PFN_DESTROYSHADER )( void* const, uint32 shaderId );
 	typedef void( *PFN_BINDSHADER )( void* const, uint32 shaderId );
 	typedef int( *PFN_GETSHADERCONSTLOC )( void* const, uint32 shaderId, const char *name );
@@ -769,9 +770,10 @@ private:
 
 	// shaders
 	template<typename T>
-	static uint32            createShader_Invoker( void* const pObj, const char *vertexShaderSrc, const char *fragmentShaderSrc )
+	static uint32            createShader_Invoker( void* const pObj, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+												   const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
 	{
-		return static_cast< T* >( pObj )->createShader( vertexShaderSrc, fragmentShaderSrc );
+		return static_cast< T* >( pObj )->createShader( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
 	}
 
 	template<typename T>
@@ -949,7 +951,7 @@ protected:
 		CheckMemberFunction( destroyTexture, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateTextureData, void( T::* )( uint32, int, int, const void * ) );
 		CheckMemberFunction( getTextureData, bool( T::* )( uint32, int, int, void * ) );
-		CheckMemberFunction( createShader, uint32( T::* )( const char *, const char * ) );
+		CheckMemberFunction( createShader, uint32( T::* )( const char *, const char *, const char *, const char *, const char *, const char * ) );
 		CheckMemberFunction( destroyShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( bindShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( getShaderConstLoc, int( T::* )( uint32, const char * ) );
@@ -1112,9 +1114,11 @@ public:
 	}
 
 	// Shaders
-	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc ) 
+	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
+						 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc ) 
 	{
-		return ( *_pfnCreateShader )( this, vertexShaderSrc, fragmentShaderSrc );
+		return ( *_pfnCreateShader )( this, vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
+									  tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
 	}
 	void destroyShader( uint32 shaderId )
 	{

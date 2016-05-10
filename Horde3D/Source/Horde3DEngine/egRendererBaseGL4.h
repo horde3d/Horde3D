@@ -40,13 +40,13 @@ public:
 	bool updateResults();
 	
 	void reset();
-	float getTimeMS() const { return _time; }
+//	float getTimeMS() const { return _time; }
 
 private:
 	std::vector < uint32 >  _queryPool;
 	uint32                  _numQueries;
 	uint32                  _queryFrame;
-	float                   _time;
+//	float                   _time;
 	bool                    _activeQuery;
 };
 
@@ -161,7 +161,7 @@ struct RDIRenderBufferGL4
 	uint32  depthTex, colTexs[MaxColorAttachmentCount];
 	uint32  depthBuf, colBufs[MaxColorAttachmentCount];  // Used for multisampling
 
-	RDIRenderBufferGL4() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 )
+	RDIRenderBufferGL4() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 ), samples( 0 )
 	{
 		for( uint32 i = 0; i < MaxColorAttachmentCount; ++i ) colTexs[i] = colBufs[i] = 0;
 	}
@@ -206,7 +206,8 @@ public:
 	uint32 getTextureMem() const { return _textureMem; }
 
 	// Shaders
-	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc );
+	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+						 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc );
 	void destroyShader( uint32 shaderId );
 	void bindShader( uint32 shaderId );
 	std::string getShaderLog() const { return _shaderLog; }

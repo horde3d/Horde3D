@@ -126,7 +126,7 @@ struct PipelineStage
 	std::vector< PipelineCommand >  commands;
 	bool                            enabled;
 
-	PipelineStage() : matLink( 0x0 ) {}
+	PipelineStage() : matLink( 0x0 ), enabled( false ) {}
 };
 
 
@@ -146,6 +146,10 @@ struct RenderTarget
 		hasDepthBuf = false;
 		numColBufs = 0;
 		rendBuf = 0;
+		width = height = 0;
+		samples = 0;
+		scale = 0;
+		format = TextureFormats::Unknown;
 	}
 };
 

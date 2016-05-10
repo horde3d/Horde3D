@@ -401,7 +401,7 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 								 const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader )
 {
 	// Create shader program
-	uint32 shdObj = _renderDevice->createShader( vertexShader, fragmentShader );
+	uint32 shdObj = _renderDevice->createShader( vertexShader, fragmentShader, geometryShader, tessControlShader, tessEvaluationShader, computeShader );
 	if( shdObj == 0 ) return false;
 	
 	sc.shaderObj = shdObj;

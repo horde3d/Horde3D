@@ -395,7 +395,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 // Class SceneManager
 // *************************************************************************************************
 
-SceneManager::SceneManager()
+SceneManager::SceneManager() : _rayNum( 0 )
 {
 	SceneNode *rootNode = GroupNode::factoryFunc( GroupNodeTpl( "RootNode" ) );
 	rootNode->_handle = RootNode;
