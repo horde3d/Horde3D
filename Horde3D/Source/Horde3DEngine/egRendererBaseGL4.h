@@ -238,7 +238,7 @@ public:
 	// Render Device dependent GPU Timer
 	GPUTimer *createGPUTimer()
 	{
-		return new GPUTimerGL4; 
+		return new GPUTimerGL4(); 
 	}
 
 // -----------------------------------------------------------------------------
@@ -338,7 +338,8 @@ protected:
 
 protected:
 
-	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc );
+	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
+								const char *tessControlShaderSrc, const char *tessEvalShaderSrc, const char *computeShaderSrc );
 	bool linkShaderProgram( uint32 programObj );
 	void resolveRenderBuffer( uint32 rbObj );
 

@@ -354,7 +354,7 @@ protected:
 	bool linkShaderProgram( uint32 programObj );
 	void resolveRenderBuffer( uint32 rbObj );
 
-	void checkGLError();
+	void checkError();
 	bool applyVertexLayout();
 	void applySamplerState( RDITextureGL2 &tex );
 	void applyRenderStates();

@@ -1184,7 +1184,7 @@ uint32 RenderDeviceGL2::getQueryResult( uint32 queryObj )
 // Internal state management
 // =================================================================================================
 
-void RenderDeviceGL2::checkGLError()
+void RenderDeviceGL2::checkError()
 {
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );

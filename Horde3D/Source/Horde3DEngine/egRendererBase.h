@@ -123,6 +123,11 @@ private:
 
 protected:
 
+	GPUTimer()
+	{
+
+	}
+
 	template <typename T>
 	void initFunctions()
 	{
@@ -140,14 +145,10 @@ protected:
 	}
 
 public:
+	
 	// -----------------------------------------------------------------------------
 	// Interface
 	// -----------------------------------------------------------------------------
-	GPUTimer()
-	{
-
-	}
-	
 	virtual ~GPUTimer()
 	{
 

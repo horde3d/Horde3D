@@ -583,7 +583,8 @@ bool RenderDeviceGL4::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 // Shaders
 // =================================================================================================
 
-uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc )
+uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
+											 const char *tessControlShaderSrc, const char *tessEvalShaderSrc, const char *computeShaderSrc )
 {
 	int infologLength = 0;
 	int charsWritten = 0;
@@ -591,55 +592,196 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 	int status;
 
 	_shaderLog = "";
+	
+	uint32 vs, fs, gs, tsC, tsE, cs;
+	vs = fs = gs = tsC = tsE = cs = 0;
 
 	// Vertex shader
-	uint32 vs = glCreateShader( GL_VERTEX_SHADER );
-	glShaderSource( vs, 1, &vertexShaderSrc, 0x0 );
-	glCompileShader( vs );
-	glGetShaderiv( vs, GL_COMPILE_STATUS, &status );
-	if( !status )
-	{	
-		// Get info
-		glGetShaderiv( vs, GL_INFO_LOG_LENGTH, &infologLength );
-		if( infologLength > 1 )
+	if ( vertexShaderSrc )
+	{
+		vs = glCreateShader( GL_VERTEX_SHADER );
+		glShaderSource( vs, 1, &vertexShaderSrc, 0x0 );
+		glCompileShader( vs );
+		glGetShaderiv( vs, GL_COMPILE_STATUS, &status );
+		if ( !status )
 		{
-			infoLog = new char[infologLength];
-			glGetShaderInfoLog( vs, infologLength, &charsWritten, infoLog );
-			_shaderLog = _shaderLog + "[Vertex Shader]\n" + infoLog;
-			delete[] infoLog; infoLog = 0x0;
-		}
+			// Get info
+			glGetShaderiv( vs, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( vs, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Vertex Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
 
-		glDeleteShader( vs );
-		return 0;
+			glDeleteShader( vs );
+			return 0;
+		}
+	}
+	
+	// Fragment shader
+	if ( fragmentShaderSrc )
+	{
+		fs = glCreateShader( GL_FRAGMENT_SHADER );
+		glShaderSource( fs, 1, &fragmentShaderSrc, 0x0 );
+		glCompileShader( fs );
+		glGetShaderiv( fs, GL_COMPILE_STATUS, &status );
+		if ( !status )
+		{
+			glGetShaderiv( fs, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( fs, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Fragment Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
+
+			glDeleteShader( vs );
+			glDeleteShader( fs );
+			return 0;
+		}
+	}
+	
+	// Geometry shader
+	if ( geometryShaderSrc )
+	{
+		uint32 gs = glCreateShader( GL_GEOMETRY_SHADER );
+		glShaderSource( gs, 1, &geometryShaderSrc, 0x0 );
+		glCompileShader( gs );
+		glGetShaderiv( gs, GL_COMPILE_STATUS, &status );
+		if ( !status )
+		{
+			glGetShaderiv( gs, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( gs, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Geometry Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
+
+			glDeleteShader( vs );
+			glDeleteShader( fs );
+			glDeleteShader( gs );
+			return 0;
+		}
+	}
+	
+	// Tesselation control shader
+	if ( tessControlShaderSrc )
+	{
+		tsC = glCreateShader( GL_TESS_CONTROL_SHADER );
+		glShaderSource( tsC, 1, &tessControlShaderSrc, 0x0 );
+		glCompileShader( tsC );
+		glGetShaderiv( tsC, GL_COMPILE_STATUS, &status );
+		if ( !status )
+		{
+			glGetShaderiv( tsC, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( tsC, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Tesselation Control Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
+
+			glDeleteShader( vs );
+			glDeleteShader( fs );
+			if ( gs ) glDeleteShader( gs );
+			glDeleteShader( tsC );
+			return 0;
+		}
 	}
 
-	// Fragment shader
-	uint32 fs = glCreateShader( GL_FRAGMENT_SHADER );
-	glShaderSource( fs, 1, &fragmentShaderSrc, 0x0 );
-	glCompileShader( fs );
-	glGetShaderiv( fs, GL_COMPILE_STATUS, &status );
-	if( !status )
-	{	
-		glGetShaderiv( fs, GL_INFO_LOG_LENGTH, &infologLength );
-		if( infologLength > 1 )
+	// Tesselation evaluation shader
+	if ( tessEvalShaderSrc )
+	{
+		tsE = glCreateShader( GL_TESS_EVALUATION_SHADER );
+		glShaderSource( tsE, 1, &tessEvalShaderSrc, 0x0 );
+		glCompileShader( tsE );
+		glGetShaderiv( tsE, GL_COMPILE_STATUS, &status );
+		if ( !status )
 		{
-			infoLog = new char[infologLength];
-			glGetShaderInfoLog( fs, infologLength, &charsWritten, infoLog );
-			_shaderLog = _shaderLog + "[Fragment Shader]\n" + infoLog;
-			delete[] infoLog; infoLog = 0x0;
-		}
+			glGetShaderiv( tsE, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( tsE, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Tesselation Evaluation Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
 
-		glDeleteShader( vs );
-		glDeleteShader( fs );
-		return 0;
+			glDeleteShader( vs );
+			glDeleteShader( fs );
+			if ( gs ) glDeleteShader( gs );
+			glDeleteShader( tsC );
+			glDeleteShader( tsE );
+			return 0;
+		}
+	}
+
+	// Tesselation evaluation shader
+	if ( computeShaderSrc )
+	{
+		cs = glCreateShader( GL_COMPUTE_SHADER );
+		glShaderSource( cs, 1, &computeShaderSrc, 0x0 );
+		glCompileShader( cs );
+		glGetShaderiv( cs, GL_COMPILE_STATUS, &status );
+		if ( !status )
+		{
+			glGetShaderiv( cs, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( cs, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Compute Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
+
+			// other shader types should not be present in compute context, but better check
+			if ( vs ) glDeleteShader( vs );
+			if ( fs ) glDeleteShader( fs );
+			if ( gs ) glDeleteShader( gs );
+			if ( tsC ) glDeleteShader( tsC );
+			if ( tsE ) glDeleteShader( tsE );
+			glDeleteShader( cs );
+			return 0;
+		}
 	}
 
 	// Shader program
 	uint32 program = glCreateProgram();
-	glAttachShader( program, vs );
-	glAttachShader( program, fs );
-	glDeleteShader( vs );
-	glDeleteShader( fs );
+	if ( vs && fs )
+	{
+		glAttachShader( program, vs );
+		glAttachShader( program, fs );
+
+		glDeleteShader( vs );
+		glDeleteShader( fs );
+	}
+
+	if ( gs )
+	{
+		glAttachShader( program, gs );
+		glDeleteShader( gs );
+	}
+	if ( tsC )
+	{
+		glAttachShader( program, tsC );
+		glDeleteShader( tsC );
+	}
+	if ( tsE )
+	{
+		glAttachShader( program, tsE );
+		glDeleteShader( tsE );
+	}
+	if ( cs )
+	{
+		glAttachShader( program, cs );
+		glDeleteShader( cs );
+	}
 
 	return program;
 }
@@ -675,10 +817,12 @@ uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *f
 									  const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
 {
 	// Compile and link shader
-	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
+	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
 	if( programObj == 0 ) return 0;
 	if( !linkShaderProgram( programObj ) ) return 0;
-	
+
+	int loc = glGetFragDataLocation( programObj, "fragColor" );
+
 	uint32 shaderId = _shaders.add( RDIShaderGL4() );
 	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
 	shader.oglProgramObj = programObj;

@@ -249,9 +249,10 @@ private:
 	void compileCombination( ShaderContext &context, ShaderCombination &sc );
 	
 private:
-	static std::string            _vertPreamble, _fragPreamble;
+	static std::string            _vertPreamble, _fragPreamble, _geomPreamble, _tessPreamble, _computePreamble;
 	static std::string            _tmpCodeVS, _tmpCodeFS, _tmpCodeGS, _tmpCodeCS, _tmpCodeTSCtl, _tmpCodeTSEval;
-	
+	static bool					  _defaultPreambleSet;
+
 	std::vector< ShaderContext >  _contexts;
 	std::vector< ShaderSampler >  _samplers;
 	std::vector< ShaderUniform >  _uniforms;

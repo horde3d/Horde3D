@@ -384,6 +384,11 @@ protected:
 
 string ShaderResource::_vertPreamble = "";
 string ShaderResource::_fragPreamble = "";
+string ShaderResource::_geomPreamble = "";
+string ShaderResource::_tessPreamble = "";
+string ShaderResource::_computePreamble = "";
+bool ShaderResource::_defaultPreambleSet = false;
+
 string ShaderResource::_tmpCodeVS = "";
 string ShaderResource::_tmpCodeFS = "";
 string ShaderResource::_tmpCodeGS = "";
@@ -407,6 +412,20 @@ ShaderResource::~ShaderResource()
 
 void ShaderResource::initDefault()
 {
+	if ( !_defaultPreambleSet )
+	{
+		// specify default version preamble for shaders
+		if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGL4 )
+		{
+			_vertPreamble = "#version 330\r\n";
+			_fragPreamble = "#version 330\r\n";
+			_geomPreamble = "#version 330\r\n";
+			_tessPreamble = "#version 410\r\n";
+			_computePreamble = "#version 430\r\n";
+		}
+
+		_defaultPreambleSet = true;
+	}
 }
 
 
@@ -473,8 +492,6 @@ bool ShaderResource::parseFXSection( char *data )
 	const char *intnum = "+-0123456789";
 	const char *floatnum = "+-0123456789.eE";
 
-	bool parseOnlyGL4Data = false;
-	
 	bool unitFree[12] = {true, true, true, true, true, true, true, true, true, true, true, true}; 
 	Tokenizer tok( data );
 
@@ -639,7 +656,7 @@ bool ShaderResource::parseFXSection( char *data )
 				}
 				else
 					return raiseError( "FX: unexpected token", tok.getLine() );
-				if ( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
+// 				if ( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
 			}
 		}
 		else
@@ -830,10 +847,10 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 	}
 
 	// skip contexts that are intended for other render interfaces
-// 	if ( Modules::renderer().getRenderDeviceType() == targetRenderBackend )
-// 	{
+	if ( Modules::renderer().getRenderDeviceType() == targetRenderBackend )
+	{
 		_contexts.push_back( context );
-// 	}
+ 	}
 
 	return true;
 }
@@ -923,7 +940,9 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	// Add preamble
 	_tmpCodeVS = _vertPreamble;
 	_tmpCodeFS = _fragPreamble;
-	_tmpCodeGS = _tmpCodeCS = _tmpCodeTSCtl = _tmpCodeTSEval = "";
+	_tmpCodeGS = _geomPreamble;
+	_tmpCodeCS = _computePreamble;
+	_tmpCodeTSCtl = _tmpCodeTSEval = _tessPreamble;
 
 	// Insert defines for flags
 	if( combMask != 0 )
