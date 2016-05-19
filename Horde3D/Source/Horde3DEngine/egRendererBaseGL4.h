@@ -56,29 +56,6 @@ private:
 // =================================================================================================
 
 // ---------------------------------------------------------
-// General
-// ---------------------------------------------------------
-
-// ---------------------------------------------------------
-// Vertex layout
-// ---------------------------------------------------------
-
-// struct VertexLayoutAttribGL4
-// {
-// 	std::string  semanticName;
-// 	uint32       vbSlot;
-// 	uint32       size;
-// 	uint32       offset;
-// };
-// 
-// struct RDIVertexLayoutGL4
-// {
-// 	uint32              numAttribs;
-// 	VertexLayoutAttribGL4  attribs[16];
-// };
-
-
-// ---------------------------------------------------------
 // Buffers
 // ---------------------------------------------------------
 
@@ -100,6 +77,17 @@ struct RDIVertBufSlotGL4
 		vbObj( vbObj ), offset( offset ), stride( stride ) {}
 };
 
+struct RDIGeometryInfoGL4
+{
+	std::vector< RDIVertBufSlotGL4 > vertexBufInfo;
+	uint32 vao;
+	uint32 indexBuf;
+	uint32 layout;
+	bool indexBuf32Bit;
+	bool atrribsBinded;
+
+	RDIGeometryInfoGL4() : vao( 0 ), indexBuf( 0 ), layout( 0 ), indexBuf32Bit( false ), atrribsBinded( false ) {}
+};
 
 // ---------------------------------------------------------
 // Textures
@@ -189,6 +177,12 @@ public:
 	
 	// Buffers
 	void beginRendering();
+	uint32 beginCreatingGeometry( uint32 vlObj );
+	void finishCreatingGeometry( uint32 geoObj );
+	void setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
+	void setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format );
+	void destroyGeometry( uint32 geoObj );
+
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	void destroyBuffer( uint32 bufObj );
@@ -344,7 +338,7 @@ protected:
 	void resolveRenderBuffer( uint32 rbObj );
 
 	void checkError();
-	bool applyVertexLayout();
+	bool applyVertexLayout( RDIGeometryInfoGL4 &geo );
 	void applySamplerState( RDITextureGL4 &tex );
 	void applyRenderStates();
 
@@ -370,17 +364,20 @@ protected:
 	RDIObjects< RDITextureGL4 >       _textures;
 	RDIObjects< RDIShaderGL4 >        _shaders;
 	RDIObjects< RDIRenderBufferGL4 >  _rendBufs;
+	RDIObjects< RDIGeometryInfoGL4 >  _vaos;
+
+	RDIGeometryInfoGL4				  _tempGeometry;
 
 // 	RDIVertBufSlotGL4        _vertBufSlots[16];
 // 	RDITexSlotGL4            _texSlots[16];
 // 	RDIRasterState        _curRasterState, _newRasterState;
 // 	RDIBlendState         _curBlendState, _newBlendState;
 // 	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
-// 	uint32                _prevShaderId, _curShaderId;
+	uint32                _prevShaderId, _curShaderId;
 // 	uint32                _curVertLayout, _newVertLayout;
 // 	uint32                _curIndexBuf, _newIndexBuf;
-// 	uint32                _indexFormat;
-// 	uint32                _activeVertexAttribsMask;
+ 	uint32                _indexFormat;
+ 	uint32                _activeVertexAttribsMask;
 // 	uint32                _pendingMask;
 };
 

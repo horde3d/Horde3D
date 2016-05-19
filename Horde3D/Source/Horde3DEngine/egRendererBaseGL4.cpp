@@ -159,11 +159,12 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_curRasterState.hash = _newRasterState.hash = 0;
 	_curBlendState.hash = _newBlendState.hash = 0;
 	_curDepthStencilState.hash = _newDepthStencilState.hash = 0;
-	_curVertLayout = _newVertLayout = 0;
-	_curIndexBuf = _newIndexBuf = 0;
+// 	_curVertLayout = _newVertLayout = 0;
+// 	_curIndexBuf = _newIndexBuf = 0;
+	_curGeometryIndex = 0;
 	_defaultFBO = 0;
 	_defaultFBOMultisampled = false;
-	_indexFormat = (uint32)IDXFMT_16;
+ 	_indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 }
@@ -195,7 +196,7 @@ bool RenderDeviceGL4::init()
 	                          version, vendor, renderer );
 	
 	// Init extensions
-	if( !initOpenGLExtensions() )
+	if( !initOpenGLExtensions( false ) )
 	{	
 		Modules::log().writeError( "Could not find all required OpenGL function entry points" );
 		failed = true;
@@ -204,7 +205,7 @@ bool RenderDeviceGL4::init()
 	// Check that OpenGL 3.3 is available
 	if( glExt::majorVersion * 10 + glExt::minorVersion < 33 )
 	{
-//		Modules::log().writeError( "OpenGL 3.3 not available" );
+		Modules::log().writeError( "OpenGL 3.3 not available" );
 		failed = true;
 	}
 	
@@ -236,9 +237,13 @@ bool RenderDeviceGL4::init()
 	}
 	
 	// Set capabilities
-	_caps.texFloat = 1;
-	_caps.texNPOT = 1;
-	_caps.rtMultisampling = 1;
+	_caps.texFloat = true;
+	_caps.texNPOT = true;
+	_caps.rtMultisampling = true;
+	_caps.geometryShaders = true;
+	_caps.tesselation = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
+	_caps.computeShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 3;
+	_caps.instancing = true;
 
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
@@ -285,6 +290,73 @@ void RenderDeviceGL4::beginRendering()
 	//	Get the currently bound frame buffer object. 
 	glGetIntegerv( GL_FRAMEBUFFER_BINDING, &_defaultFBO );
 	resetStates();
+}
+
+uint32 RenderDeviceGL4::beginCreatingGeometry( uint32 vlObj )
+{
+	RDIGeometryInfoGL4 vao;
+	vao.layout = vlObj;
+
+	uint32 vaoID;
+	glGenVertexArrays( 1, &vaoID );
+	vao.vao = vaoID;
+
+	return _vaos.add( vao );
+}
+
+void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
+{
+	ASSERT( geoObj > 0 )
+	
+	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+	glBindVertexArray( curVao.vao );
+
+	// bind index buffer, if present
+	if ( _tempGeometry.indexBuf )
+	{
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _tempGeometry.indexBuf );
+	}
+
+	// bind vertex buffers
+	for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
+	{
+		glBindBuffer( GL_ARRAY_BUFFER, curVao.vertexBufInfo[ i ].vbObj );
+	}
+}
+
+void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
+{
+	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+
+	RDIVertBufSlotGL4 attribInfo;
+	attribInfo.vbObj = vbo;
+	attribInfo.offset = offset;
+	attribInfo.stride = stride;
+
+	curVao.vertexBufInfo.push_back( attribInfo );
+}
+
+void RenderDeviceGL4::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
+{
+	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+
+	curVao.indexBuf = indBuf;
+	curVao.indexBuf32Bit = ( format == IDXFMT_32 ? true : false );
+}
+
+void RenderDeviceGL4::destroyGeometry( uint32 geoObj )
+{
+	if ( geoObj == 0 ) return;
+	
+	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+	destroyBuffer( curVao.indexBuf );
+	
+	for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
+	{
+		destroyBuffer( curVao.vertexBufInfo[ i ].vbObj );
+	}
+
+	glDeleteVertexArrays( 1, &geoObj );
 }
 
 uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
@@ -891,7 +963,7 @@ void RenderDeviceGL4::bindShader( uint32 shaderId )
 	}
 	
 	_curShaderId = shaderId;
-	_pendingMask |= PM_VERTLAYOUT;
+	_pendingMask |= PM_GEOMETRY;
 } 
 
 
@@ -1336,41 +1408,39 @@ void RenderDeviceGL4::checkError()
 }
 
 
-bool RenderDeviceGL4::applyVertexLayout()
+bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
 {
 	uint32 newVertexAttribMask = 0;
 	
-	if( _newVertLayout != 0 )
+	if( _curShaderId == 0 ) return false;
+		
+	RDIVertexLayout &vl = _vertexLayouts[ geo.layout - 1 ];
+	RDIShaderGL4 &shader = _shaders.getRef( _curShaderId );
+	RDIInputLayoutGL4 &inputLayout = shader.inputLayouts[ geo.layout - 1 ];
+		
+	if( !inputLayout.valid )
+		return false;
+
+	// Set vertex attrib pointers
+	for( uint32 i = 0; i < vl.numAttribs; ++i )
 	{
-		if( _curShaderId == 0 ) return false;
-		
-		RDIVertexLayout &vl = _vertexLayouts[_newVertLayout - 1];
-		RDIShaderGL4 &shader = _shaders.getRef( _curShaderId );
-		RDIInputLayoutGL4 &inputLayout = shader.inputLayouts[_newVertLayout - 1];
-		
-		if( !inputLayout.valid )
-			return false;
-
-		// Set vertex attrib pointers
-		for( uint32 i = 0; i < vl.numAttribs; ++i )
+		int8 attribIndex = inputLayout.attribIndices[i];
+		if( attribIndex >= 0 )
 		{
-			int8 attribIndex = inputLayout.attribIndices[i];
-			if( attribIndex >= 0 )
-			{
-				VertexLayoutAttrib &attrib = vl.attribs[i];
-				const RDIVertBufSlot &vbSlot = _vertBufSlots[attrib.vbSlot];
+			VertexLayoutAttrib &attrib = vl.attribs[i];
+			const RDIVertBufSlotGL4 &vbSlot = geo.vertexBufInfo[ attrib.vbSlot ];
 				
-				ASSERT( _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj != 0 &&
-						_buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).type == GL_ARRAY_BUFFER );
+// 			ASSERT( _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj != 0 &&
+// 					_buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).type == GL_ARRAY_BUFFER );
 				
-				glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj );
-				glVertexAttribPointer( attribIndex, attrib.size, GL_FLOAT, GL_FALSE,
-									   vbSlot.stride, (char *)0 + vbSlot.offset + attrib.offset );
+// 			glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj );
+			glVertexAttribPointer( attribIndex, attrib.size, GL_FLOAT, GL_FALSE,
+									vbSlot.stride, (char *)0 + vbSlot.offset + attrib.offset );
 
-				newVertexAttribMask |= 1 << attribIndex;
-			}
+			newVertexAttribMask |= 1 << attribIndex;
 		}
 	}
+	
 	
 	for( uint32 i = 0; i < 16; ++i )
 	{
@@ -1523,19 +1593,19 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		}
 		
 		// Bind index buffer
-		if( mask & PM_INDEXBUF )
-		{
-			if( _newIndexBuf != _curIndexBuf )
-			{
-				if( _newIndexBuf != 0 )
-					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _buffers.getRef( _newIndexBuf ).glObj );
-				else
-					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-				
-				_curIndexBuf = _newIndexBuf;
-				_pendingMask &= ~PM_INDEXBUF;
-			}
-		}
+// 		if( mask & PM_INDEXBUF )
+// 		{
+// 			if( _newIndexBuf != _curIndexBuf )
+// 			{
+// 				if( _newIndexBuf != 0 )
+// 					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _buffers.getRef( _newIndexBuf ).glObj );
+// 				else
+// 					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+// 				
+// 				_curIndexBuf = _newIndexBuf;
+// 				_pendingMask &= ~PM_INDEXBUF;
+// 			}
+// 		}
 
 		// Bind textures and set sampler state
 		if( mask & PM_TEXTURES )
@@ -1568,15 +1638,22 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		}
 
 		// Bind vertex buffers
-		if( mask & PM_VERTLAYOUT )
+		if( mask & PM_GEOMETRY )
 		{
 			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
 			{
-				if( !applyVertexLayout() )
-					return false;
-				_curVertLayout = _newVertLayout;
+				RDIGeometryInfoGL4 geo = _vaos.getRef( _curGeometryIndex );
+				if ( !geo.atrribsBinded )
+				{
+					if ( !applyVertexLayout(geo) )
+						return false;
+				}
+				else glBindVertexArray( geo.vao );
+
+				_indexFormat = geo.indexBuf32Bit;
+// 				_curVertLayout = _newVertLayout;
 				_prevShaderId = _curShaderId;
-				_pendingMask &= ~PM_VERTLAYOUT;
+				_pendingMask &= ~PM_GEOMETRY;
 			}
 		}
 
@@ -1589,8 +1666,9 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 
 void RenderDeviceGL4::resetStates()
 {
-	_curIndexBuf = 1; _newIndexBuf = 0;
-	_curVertLayout = 1; _newVertLayout = 0;
+// 	_curIndexBuf = 1; _newIndexBuf = 0;
+// 	_curVertLayout = 1; _newVertLayout = 0;
+	_curGeometryIndex = 0;
 	_curRasterState.hash = 0xFFFFFFFF; _newRasterState.hash = 0;
 	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
 	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;
@@ -1602,7 +1680,7 @@ void RenderDeviceGL4::resetStates()
 	_pendingMask = 0xFFFFFFFF;
 	commitStates();
 
-	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+// 	glBindVertexArray( 0 );
 	glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
 }
 

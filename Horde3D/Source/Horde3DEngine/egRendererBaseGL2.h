@@ -109,6 +109,15 @@ struct RDIVertBufSlotGL2
 		vbObj( vbObj ), offset( offset ), stride( stride ) {}
 };
 
+struct RDIGeometryInfoGL2
+{
+	std::vector< RDIVertBufSlotGL2 > vertexBufInfo;
+	uint32 indexBufIdx;
+	uint32 layout;
+	bool indexBuf32Bit;
+	
+	RDIGeometryInfoGL2() : indexBufIdx( 0 ), layout( 0 ), indexBuf32Bit( false ) {}
+};
 
 // ---------------------------------------------------------
 // Textures
@@ -204,6 +213,13 @@ public:
 	
 	// Buffers
 	void beginRendering();
+	
+	uint32 beginCreatingGeometry( uint32 vlObj );
+	void finishCreatingGeometry( uint32 geoObj );
+	void setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
+	void setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format );
+	void destroyGeometry( uint32 geoObj );
+
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	void destroyBuffer( uint32 bufObj );
@@ -338,24 +354,25 @@ public:
 
 protected:
 
-	enum RDIPendingMask
-	{
-		PM_VIEWPORT      = 0x00000001,
-		PM_INDEXBUF      = 0x00000002,
-		PM_VERTLAYOUT    = 0x00000004,
-		PM_TEXTURES      = 0x00000008,
-		PM_SCISSOR       = 0x00000010,
-		PM_RENDERSTATES  = 0x00000020
-	};
+// 	enum RDIPendingMask
+// 	{
+// 		PM_VIEWPORT      = 0x00000001,
+// 		PM_INDEXBUF      = 0x00000002,
+// 		PM_VERTLAYOUT    = 0x00000004,
+// 		PM_TEXTURES      = 0x00000008,
+// 		PM_SCISSOR       = 0x00000010,
+// 		PM_RENDERSTATES  = 0x00000020
+// 	};
 
 protected:
 
 	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc );
 	bool linkShaderProgram( uint32 programObj );
 	void resolveRenderBuffer( uint32 rbObj );
+	inline uint32 createBuffer( uint32 type, uint32 size, const void *data );
 
 	void checkError();
-	bool applyVertexLayout();
+	bool applyVertexLayout( const RDIGeometryInfoGL2 &geo );
 	void applySamplerState( RDITextureGL2 &tex );
 	void applyRenderStates();
 
@@ -376,22 +393,23 @@ protected:
 //     bool                           _defaultFBOMultisampled;
 
 //	uint32                         _numVertexLayouts;
-	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
-	RDIObjects< RDIBufferGL2 >        _buffers;
-	RDIObjects< RDITextureGL2 >       _textures;
-	RDIObjects< RDIShaderGL2 >        _shaders;
-	RDIObjects< RDIRenderBufferGL2 >  _rendBufs;
+	RDIVertexLayout						_vertexLayouts[MaxNumVertexLayouts];
+	RDIObjects< RDIBufferGL2 >			_buffers;
+	RDIObjects< RDITextureGL2 >			_textures;
+	RDIObjects< RDIShaderGL2 >			_shaders;
+	RDIObjects< RDIRenderBufferGL2 >	_rendBufs;
+	RDIObjects< RDIGeometryInfoGL2 >	_geometryInfo;
 
-// 	RDIVertBufSlot        _vertBufSlots[16];
+//  	RDIVertBufSlot						_vertBufSlots[16];
 // 	RDITexSlot            _texSlots[16];
 // 	RDIRasterState        _curRasterState, _newRasterState;
 // 	RDIBlendState         _curBlendState, _newBlendState;
 // 	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
-// 	uint32                _prevShaderId, _curShaderId;
+	uint32                _prevShaderId, _curShaderId;
 // 	uint32                _curVertLayout, _newVertLayout;
-// 	uint32                _curIndexBuf, _newIndexBuf;
-// 	uint32                _indexFormat;
-// 	uint32                _activeVertexAttribsMask;
+	uint32                _curIndexBuf; //, _newIndexBuf;
+ 	uint32                _indexFormat;
+ 	uint32                _activeVertexAttribsMask;
 // 	uint32                _pendingMask;
 };
 

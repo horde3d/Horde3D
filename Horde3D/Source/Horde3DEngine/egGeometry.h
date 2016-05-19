@@ -108,6 +108,7 @@ public:
 	Vec3f *getVertPosData() const { return _vertPosData; }
 	VertexDataTan *getVertTanData() const { return _vertTanData; }
 	VertexDataStatic *getVertStaticData() const { return _vertStaticData; }
+	uint32 getGeometryInfo() const { return _geoObj; }
 	uint32 getPosVBuf() const { return _posVBuf; }
 	uint32 getTanVBuf() const { return _tanVBuf; }
 	uint32 getStaticVBuf() const { return _staticVBuf; }
@@ -124,6 +125,7 @@ private:
 	static int                  mappedWriteStream;
 	
 	uint32                      _indexBuf, _posVBuf, _tanVBuf, _staticVBuf;
+	uint32						_geoObj;
 
 	uint32                      _indexCount, _vertCount;
 	bool                        _16BitIndices;

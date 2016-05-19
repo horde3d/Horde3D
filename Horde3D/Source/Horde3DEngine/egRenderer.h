@@ -122,6 +122,16 @@ struct PipeSamplerBinding
 	uint32  bufIndex;
 };
 
+struct DefaultVertexLayouts
+{
+	enum List
+	{
+		Position = 0,
+		Particle,
+		Model,
+		Overlay
+	};
+};
 
 class Renderer
 {
@@ -175,6 +185,8 @@ public:
 	CameraNode *getCurCamera() const { return _curCamera; }
 	uint32 getQuadIdxBuf() const { return _quadIdxBuf; }
 	uint32 getParticleVBO() const { return _particleVBO; }
+	uint32 getParticleGeometry() const { return _particleGeo; }
+	uint32 getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const;
 
 	int getRenderDeviceType() { return _renderDeviceType; }
 
@@ -227,8 +239,16 @@ protected:
 	
 	std::vector< OverlayBatch >        _overlayBatches;
 	OverlayVert                        *_overlayVerts;
+	uint32							   _overlayGeo;
 	uint32                             _overlayVB;
 	
+	// standard geometry
+	uint32								_particleGeo;
+	uint32								_cubeGeo;
+	uint32								_sphereGeo;
+	uint32								_coneGeo;
+	uint32								_FSPolyGeo;
+
 	uint32                             _shadowRB;
 	uint32                             _frameID;
 	uint32                             _defShadowMap;
@@ -254,6 +274,7 @@ protected:
 	uint32                             _vbCone, _ibCone, _vbFSPoly;
 	
 	int									_renderDeviceType;
+	
 };
 
 }

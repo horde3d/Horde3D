@@ -669,12 +669,20 @@ void initModernExtensions( bool &r )
 //	throw std::exception( "The method or operation is not implemented." );
 }
 
-bool initOpenGLExtensions()
+bool initOpenGLExtensions( bool forceLegacyFuncs )
 {
 	bool r = true;
 	
 	getOpenGLVersion();
 	
+	if ( forceLegacyFuncs )
+	{
+		if ( glExt::majorVersion > 2 && glExt::minorVersion >= 1 )
+		{
+			glExt::majorVersion = 2; glExt::minorVersion = 1;
+		}
+	}
+
 	// GL 1.2
 	r &= (glBlendColor = (PFNGLBLENDCOLORPROC) platGetProcAddress( "glBlendColor" )) != 0x0;
 	r &= (glBlendEquation = (PFNGLBLENDEQUATIONPROC) platGetProcAddress( "glBlendEquation" )) != 0x0;
@@ -948,7 +956,7 @@ bool initOpenGLExtensions()
 	}
 	
 	// GL 4.0 - GL 4.4
-	if ( glExt::majorVersion >= 4 )
+	if ( glExt::majorVersion >= 4 && !forceLegacyFuncs )
 	{
 		// GL 4.0
 		r &= ( glMinSampleShading = ( PFNGLMINSAMPLESHADINGPROC ) platGetProcAddress( "glMinSampleShading" ) ) != nullptr;

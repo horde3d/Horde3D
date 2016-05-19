@@ -233,6 +233,10 @@ struct DeviceCaps
 	bool  texFloat;
 	bool  texNPOT;
 	bool  rtMultisampling;
+	bool  geometryShaders;
+	bool  tesselation;
+	bool  computeShaders;
+	bool  instancing;
 };
 
 
@@ -259,23 +263,26 @@ struct RDIVertexLayout
 // Buffers
 // ---------------------------------------------------------
 
-struct RDIBuffer
+struct RDIBufferTypes
 {
-	uint32  type;
-	uint32  glObj;
-	uint32  size;
+	enum List
+	{
+		VertexBuffer = 0,
+		IndexBuffer,
+		UniformBuffer
+	};
 };
 
-struct RDIVertBufSlot
-{
-	uint32  vbObj;
-	uint32  offset;
-	uint32  stride;
-
-	RDIVertBufSlot() : vbObj( 0 ), offset( 0 ), stride( 0 ) {}
-	RDIVertBufSlot( uint32 vbObj, uint32 offset, uint32 stride ) :
-		vbObj( vbObj ), offset( offset ), stride( stride ) {}
-};
+// struct RDIVertBufSlot
+// {
+// 	uint32  vbObj;
+// 	uint32  offset;
+// 	uint32  stride;
+// 
+// 	RDIVertBufSlot() : vbObj( 0 ), offset( 0 ), stride( 0 ) {}
+// 	RDIVertBufSlot( uint32 vbObj, uint32 offset, uint32 stride ) :
+// 		vbObj( vbObj ), offset( offset ), stride( stride ) {}
+// };
 
 
 // ---------------------------------------------------------
@@ -307,19 +314,6 @@ struct TextureFormats
 	};
 };
 
-// struct RDITexture
-// {
-// 	uint32                glObj;
-// 	uint32                glFmt;
-// 	int                   type;
-// 	TextureFormats::List  format;
-// 	int                   width, height, depth;
-// 	int                   memSize;
-// 	uint32                samplerState;
-// 	bool                  sRGB;
-// 	bool                  hasMips, genMips;
-// };
-
 struct RDITexSlot
 {
 	uint32  texObj;
@@ -344,41 +338,6 @@ enum RDIShaderConstType
 	CONST_FLOAT44,
 	CONST_FLOAT33
 };
-
-// struct RDIInputLayout
-// {
-// 	bool  valid;
-// 	int8  attribIndices[16];
-// };
-// 
-// struct RDIShader
-// {
-// 	uint32          oglProgramObj;
-// 	RDIInputLayout  inputLayouts[MaxNumVertexLayouts];
-// };
-
-
-// ---------------------------------------------------------
-// Render buffers
-// ---------------------------------------------------------
-
-// struct RDIRenderBuffer
-// {
-// 	static const uint32 MaxColorAttachmentCount = 4;
-// 
-// 	uint32  fbo, fboMS;  // fboMS: Multisampled FBO used when samples > 0
-// 	uint32  width, height;
-// 	uint32  samples;
-// 
-// 	uint32  depthTex, colTexs[MaxColorAttachmentCount];
-// 	uint32  depthBuf, colBufs[MaxColorAttachmentCount];  // Used for multisampling
-// 
-// 	RDIRenderBuffer() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 )
-// 	{
-// 		for( uint32 i = 0; i < MaxColorAttachmentCount; ++i ) colTexs[i] = colBufs[i] = 0;
-// 	}
-// };
-
 
 // ---------------------------------------------------------
 // Render states
@@ -525,7 +484,9 @@ enum RDIIndexFormat
 enum RDIPrimType
 {
 	PRIM_TRILIST,
-	PRIM_TRISTRIP
+	PRIM_TRISTRIP,
+	PRIM_LINES,
+	PRIM_PATCHES
 };
 
 
@@ -541,6 +502,11 @@ private:
 	CreateMemberFunctionChecker( registerVertexLayout );
 	CreateMemberFunctionChecker( beginRendering );
 
+	CreateMemberFunctionChecker( beginCreatingGeometry );
+	CreateMemberFunctionChecker( setGeomVertexParams );
+	CreateMemberFunctionChecker( setGeomIndexParams );
+	CreateMemberFunctionChecker( finishCreatingGeometry );
+	CreateMemberFunctionChecker( destroyGeometry );
 	CreateMemberFunctionChecker( createVertexBuffer );
 	CreateMemberFunctionChecker( createIndexBuffer );
 	CreateMemberFunctionChecker( destroyBuffer );
@@ -589,7 +555,13 @@ private:
 	typedef void( *PFN_INITSTATES )( void* const );
 	typedef uint32( *PFN_REGISTERVERTEXLAYOUT )( void* const, uint32 numAttribs, VertexLayoutAttrib *attribs );
 	typedef void( *PFN_BEGINRENDERING )( void* const );
-	
+
+	typedef uint32( *PFN_BEGINCREATINGGEOMETRY )( void* const, uint32 vlObj );
+	typedef void( *PFN_FINISHCREATINGGEOMETRY )( void* const, uint32 geoIndex );
+	typedef void( *PFN_DESTROYGEOMETRY )( void* const, uint32 geoIndex );
+	typedef void( *PFN_SETGEOMVERTEXPARAMS )( void* const, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
+	typedef void( *PFN_SETGEOMINDEXPARAMS )( void* const, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format );
+
 	typedef uint32( *PFN_CREATEVERTEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef uint32( *PFN_CREATEINDEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef void( *PFN_DESTROYBUFFER )( void* const, uint32 bufObj );
@@ -643,6 +615,12 @@ private:
 	PFN_INITSTATES				_pfnInitStates;
 	PFN_REGISTERVERTEXLAYOUT	_pfnRegisterVertexLayout;
 	PFN_BEGINRENDERING			_pfnBeginRendering;
+	PFN_BEGINCREATINGGEOMETRY	_pfnBeginCreatingGeometry;
+	PFN_SETGEOMVERTEXPARAMS		_pfnSetGeomVertexParams;
+	PFN_SETGEOMINDEXPARAMS		_pfnSetGeomIndexParams;
+	PFN_FINISHCREATINGGEOMETRY  _pfnFinishCreatingGeometry;
+	PFN_DESTROYGEOMETRY			_pfnDestroyGeometry;
+// 	PFN_CREATEBUFFER			_pfnCreateBuffer;
 	PFN_CREATEVERTEXBUFFER		_pfnCreateVertexBuffer;
 	PFN_CREATEINDEXBUFFER		_pfnCreateIndexBuffer;
 	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
@@ -717,6 +695,36 @@ private:
 	static uint32            createIndexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
 	{ 
 		return static_cast< T* >( pObj )->createIndexBuffer( size, data ); 
+	}
+
+	template<typename T>
+	static void				 setGeomVertexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
+	{
+		static_cast< T* >( pObj )->setGeomVertexParams( geoIndex, vbo, vbSlot, offset, stride );
+	}
+
+	template<typename T>
+	static void				 setGeomIndexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format )
+	{
+		static_cast< T* >( pObj )->setGeomIndexParams( geoIndex, idxBuf, format );
+	}
+
+	template<typename T>
+	static uint32            beginCreatingGeometry_Invoker( void* const pObj, uint32 vlObj )
+	{
+		return static_cast< T* >( pObj )->beginCreatingGeometry( vlObj );
+	}
+
+	template<typename T>
+	static void		         finishCreatingGeometry_Invoker( void* const pObj, uint32 geoIndex )
+	{
+		static_cast< T* >( pObj )->finishCreatingGeometry( geoIndex );
+	}
+
+	template<typename T>
+	static void              destroyGeometry_Invoker( void* const pObj, uint32 geoIndex )
+	{
+		static_cast< T* >( pObj )->destroyGeometry( geoIndex );
 	}
 
 	template<typename T>
@@ -944,6 +952,12 @@ protected:
 		CheckMemberFunction( beginRendering, void( T::* )() );
 		CheckMemberFunction( createVertexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( createIndexBuffer, uint32( T::* )( uint32, const void* ) );
+		CheckMemberFunction( beginCreatingGeometry, uint32( T::* )( uint32 ) );
+		CheckMemberFunction( setGeomVertexParams, void( T::* )( uint32, uint32, uint32, uint32, uint32 ) );
+		CheckMemberFunction( setGeomIndexParams, void( T::* )( uint32, uint32, RDIIndexFormat ) );
+		CheckMemberFunction( finishCreatingGeometry, void( T::* )( uint32 ) );
+		CheckMemberFunction( destroyGeometry, void( T::* )( uint32 ) );
+// 		CheckMemberFunction( createBuffer, void( T::* )( RDIBufferTypes::List, uint32, uint32, const void * ) );
 		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, void * ) );
 		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
@@ -986,6 +1000,11 @@ protected:
 		_pfnBeginRendering = ( PFN_BEGINRENDERING ) &beginRendering_Invoker< T >;
 		_pfnCreateVertexBuffer = ( PFN_CREATEVERTEXBUFFER ) &createVertexBuffer_Invoker < T >;
 		_pfnCreateIndexBuffer = ( PFN_CREATEINDEXBUFFER ) &createIndexBuffer_Invoker < T >;
+		_pfnBeginCreatingGeometry = ( PFN_BEGINCREATINGGEOMETRY ) &beginCreatingGeometry_Invoker < T > ;
+		_pfnSetGeomVertexParams = ( PFN_SETGEOMVERTEXPARAMS ) &setGeomVertexParams_Invoker < T > ;
+		_pfnSetGeomIndexParams = ( PFN_SETGEOMINDEXPARAMS ) &setGeomIndexParams_Invoker < T > ;
+		_pfnFinishCreatingGeometry = ( PFN_FINISHCREATINGGEOMETRY ) &finishCreatingGeometry_Invoker < T > ;
+		_pfnDestroyGeometry = ( PFN_DESTROYGEOMETRY ) &destroyGeometry_Invoker < T > ;
 		_pfnDestroyBuffer = ( PFN_DESTROYBUFFER ) &destroyBuffer_Invoker < T >;
 		_pfnUpdateBufferData = ( PFN_UPDATEBUFFERDATA ) &updateBufferData_Invoker < T >;
 		_pfnCalcTextureSize = ( PFN_CALCTEXTURESIZE ) &calcTextureSize_Invoker < T >;
@@ -1062,14 +1081,38 @@ public:
 	{ 
 		( *_pfnBeginRendering )( this );
 	}
+	uint32 beginCreatingGeometry( uint32 vlObj )
+	{
+		return ( *_pfnBeginCreatingGeometry ) ( this, vlObj );
+	}
+	void setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
+	{
+		( *_pfnSetGeomVertexParams ) ( this, geoObj, vbo, vbSlot, offset, stride );
+	}
+	void setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
+	{
+		( *_pfnSetGeomIndexParams ) ( this, geoObj, indBuf, format );
+	}
+	void finishCreatingGeometry( uint32 geoObj )
+	{
+		( *_pfnFinishCreatingGeometry ) ( this, geoObj );
+	}
+	void destroyGeometry( uint32 geoObj )
+	{
+		( *_pfnDestroyGeometry ) ( this, geoObj );
+	}
 	uint32 createVertexBuffer( uint32 size, const void *data )
-	{ 
+	{
 		return ( *_pfnCreateVertexBuffer )( this, size, data );
 	}
 	uint32 createIndexBuffer( uint32 size, const void *data ) 
 	{ 
 		return ( *_pfnCreateIndexBuffer )( this, size, data );
 	}
+// 	uint32 createUniformBuffer( uint32 size, const void *data )
+// 	{
+// 		return ( *_pfnCreateIndexBuffer )( this, size, data );
+// 	}
 	void destroyBuffer( uint32 bufObj ) 
 	{ 
 		( *_pfnDestroyBuffer )( this, bufObj );
@@ -1222,13 +1265,15 @@ public:
 		{ _vpX = x; _vpY = y; _vpWidth = width; _vpHeight = height; _pendingMask |= PM_VIEWPORT; }
 	void setScissorRect( int x, int y, int width, int height )
 		{ _scX = x; _scY = y; _scWidth = width; _scHeight = height; _pendingMask |= PM_SCISSOR; }
-	void setIndexBuffer( uint32 bufObj, RDIIndexFormat idxFmt )
-		{ _indexFormat = (uint32)idxFmt; _newIndexBuf = bufObj; _pendingMask |= PM_INDEXBUF; }
-	void setVertexBuffer( uint32 slot, uint32 vbObj, uint32 offset, uint32 stride )
-		{ ASSERT( slot < 16 ); _vertBufSlots[slot] = RDIVertBufSlot( vbObj, offset, stride );
-	      _pendingMask |= PM_VERTLAYOUT; }
-	void setVertexLayout( uint32 vlObj )
-		{ _newVertLayout = vlObj; }
+// 	void setIndexBuffer( uint32 bufObj, RDIIndexFormat idxFmt )
+// 		{ _indexFormat = (uint32)idxFmt; _newIndexBuf = bufObj; _pendingMask |= PM_INDEXBUF; }
+// 	void setVertexBuffer( uint32 slot, uint32 vbObj, uint32 offset, uint32 stride )
+// 		{ ASSERT( slot < 16 ); _vertBufSlots[slot] = RDIVertBufSlot( vbObj, offset, stride );
+// 	      _pendingMask |= PM_VERTLAYOUT; }
+	void setGeometry( uint32 geoIndex )
+		{ _curGeometryIndex = geoIndex;  _pendingMask |= PM_GEOMETRY; }
+// 	void setVertexLayout( uint32 vlObj )
+// 		{ _newVertLayout = vlObj; }
 	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState )
 		{ ASSERT( slot < 16 ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
 	      _pendingMask |= PM_TEXTURES; }
@@ -1317,23 +1362,13 @@ protected:
 	enum RDIPendingMask
 	{
 		PM_VIEWPORT      = 0x00000001,
-		PM_INDEXBUF      = 0x00000002,
-		PM_VERTLAYOUT    = 0x00000004,
+// 		PM_INDEXBUF      = 0x00000002,
+// 		PM_VERTLAYOUT    = 0x00000004,
 		PM_TEXTURES      = 0x00000008,
 		PM_SCISSOR       = 0x00000010,
-		PM_RENDERSTATES  = 0x00000020
+		PM_RENDERSTATES  = 0x00000020,
+		PM_GEOMETRY		 = 0x00000040 
 	};
-
-protected:
-
-// 	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc ) { return impl().createShaderProgram( vertexShaderSrc, fragmentShaderSrc ); }
-// 	bool linkShaderProgram( uint32 programObj ) { impl().linkShaderProgram( programObj ); }
-// 	void resolveRenderBuffer( uint32 rbObj ) { impl().resolveRenderBuffer( rbObj ); }
-// 
-// 	void checkError() { impl().checkError(); }
-// 	bool applyVertexLayout() { return impl().applyVertexLayout(); }
-// 	void applySamplerState( RDITexture &tex ) { return impl().applySamplerState( tex ); }
-// 	void applyRenderStates() { return impl().applyRenderStates(); }
 
 protected:
 
@@ -1358,18 +1393,18 @@ protected:
 // 	RDIObjects< RDIShader >        _shaders;
 // 	RDIObjects< RDIRenderBuffer >  _rendBufs;
 
-	RDIVertBufSlot        _vertBufSlots[16];
+// 	RDIVertBufSlot        _vertBufSlots[16];
 	RDITexSlot            _texSlots[16];
 	RDIRasterState        _curRasterState, _newRasterState;
 	RDIBlendState         _curBlendState, _newBlendState;
 	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
 	uint32                _prevShaderId, _curShaderId;
-	uint32                _curVertLayout, _newVertLayout;
-	uint32                _curIndexBuf, _newIndexBuf;
-	uint32                _indexFormat;
-	uint32                _activeVertexAttribsMask;
+// 	uint32                _curVertLayout, _newVertLayout;
+// 	uint32                _curIndexBuf, _newIndexBuf;
+//	uint32                _indexFormat;
+//	uint32                _activeVertexAttribsMask;
 	uint32                _pendingMask;
-
+	uint32				  _curGeometryIndex;
 };
 
 }

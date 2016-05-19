@@ -57,8 +57,15 @@ Renderer::~Renderer()
 {
 	releaseShadowRB();
 	_renderDevice->destroyTexture( _defShadowMap );
-	_renderDevice->destroyBuffer( _particleVBO );
+// 	_renderDevice->destroyBuffer( _particleVBO );
 	releaseShaderComb( _defColorShader );
+	
+	_renderDevice->destroyGeometry( _particleGeo );
+	_renderDevice->destroyGeometry( _cubeGeo );
+	_renderDevice->destroyGeometry( _sphereGeo );
+	_renderDevice->destroyGeometry( _coneGeo );
+	_renderDevice->destroyGeometry( _overlayGeo );
+	_renderDevice->destroyGeometry( _FSPolyGeo );
 
 	releaseRenderDevice();
 
@@ -175,7 +182,9 @@ bool Renderer::init( RenderBackendType::List type )
 	_defShadowMap = _renderDevice->createTexture( TextureTypes::Tex2D, 4, 4, 1, TextureFormats::DEPTH, false, false, false, false );
 	_renderDevice->uploadTextureData( _defShadowMap, 0, 0, shadowTex );
 
-	// Create index buffer used for drawing quads
+	// Create index buffer used for drawing overlay quads
+	_overlayGeo = _renderDevice->beginCreatingGeometry( _vlOverlay );
+
 	uint16 *quadIndices = new uint16[QuadIndexBufCount];
 	for( uint32 i = 0; i < QuadIndexBufCount / 6; ++i )
 	{
@@ -185,6 +194,15 @@ bool Renderer::init( RenderBackendType::List type )
 	_quadIdxBuf = _renderDevice->createIndexBuffer( QuadIndexBufCount * sizeof( uint16 ), quadIndices );
 	delete[] quadIndices; quadIndices = 0x0;
 	
+	_overlayBatches.reserve( 64 );
+	_overlayVerts = new OverlayVert[ MaxNumOverlayVerts ];
+	_overlayVB = _renderDevice->createVertexBuffer( MaxNumOverlayVerts * sizeof( OverlayVert ), 0x0 );
+
+	_renderDevice->setGeomVertexParams( _overlayGeo, _overlayVB, 0, 0, sizeof( OverlayVert ) );
+	_renderDevice->setGeomIndexParams( _overlayGeo, _quadIdxBuf, IDXFMT_16 );
+
+	_renderDevice->finishCreatingGeometry( _overlayGeo );
+
 	// Create particle geometry array
 	ParticleVert v0( 0, 0 );
 	ParticleVert v1( 1, 0 );
@@ -199,12 +217,14 @@ bool Renderer::init( RenderBackendType::List type )
 		parVerts[i * 4 + 2] = v2; parVerts[i * 4 + 2].index = (float)i;
 		parVerts[i * 4 + 3] = v3; parVerts[i * 4 + 3].index = (float)i;
 	}
-	_particleVBO = _renderDevice->createVertexBuffer( ParticlesPerBatch * 4 * sizeof( ParticleVert ), ( float * ) parVerts );
-	delete[] parVerts; parVerts = 0x0;
 
-	_overlayBatches.reserve( 64 );
-	_overlayVerts = new OverlayVert[ MaxNumOverlayVerts ];
-	_overlayVB = _renderDevice->createVertexBuffer( MaxNumOverlayVerts * sizeof( OverlayVert ), 0x0 );
+	_particleGeo = _renderDevice->beginCreatingGeometry( _vlParticle );
+	_particleVBO = _renderDevice->createVertexBuffer( ParticlesPerBatch * 4 * sizeof( ParticleVert ), ( float * ) parVerts );
+	_renderDevice->setGeomVertexParams( _particleGeo, _particleVBO, 0, 0, sizeof( ParticleVert ) );
+	_renderDevice->setGeomIndexParams( _particleGeo, _quadIdxBuf, IDXFMT_16 );
+	_renderDevice->finishCreatingGeometry( _particleGeo );
+
+	delete[] parVerts; parVerts = 0x0;
 
 	// Create unit primitives
 	createPrimitives();
@@ -275,6 +295,29 @@ void Renderer::setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projM
 	++_curShaderUpdateStamp;
 }
 
+uint32 Renderer::getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const
+{
+	switch ( vl )
+	{
+		case DefaultVertexLayouts::Position:
+			return _vlPosOnly;
+			break;
+		case DefaultVertexLayouts::Particle:
+			return _vlParticle;
+			break;
+		case DefaultVertexLayouts::Model:
+			return _vlModel;
+			break;
+		case DefaultVertexLayouts::Overlay:
+			return _vlOverlay;
+			break;
+		default:
+			break;
+	}
+
+	return 0;
+}
+
 
 // =================================================================================================
 // Rendering Helper Functions
@@ -291,8 +334,13 @@ void Renderer::createPrimitives()
 		0, 1, 2, 2, 3, 0,   1, 5, 6, 6, 2, 1,   5, 4, 7, 7, 6, 5,
 		4, 0, 3, 3, 7, 4,   3, 2, 6, 6, 7, 3,   4, 5, 1, 1, 0, 4
 	};
+
+	_cubeGeo = _renderDevice->beginCreatingGeometry( _vlPosOnly );
 	_vbCube = _renderDevice->createVertexBuffer( 8 * 3 * sizeof( float ), cubeVerts );
 	_ibCube = _renderDevice->createIndexBuffer( 36 * sizeof( uint16 ), cubeInds );
+	_renderDevice->setGeomVertexParams( _cubeGeo, _vbCube, 0, 0, 12 );
+	_renderDevice->setGeomIndexParams( _cubeGeo, _ibCube, IDXFMT_16 );
+	_renderDevice->finishCreatingGeometry( _cubeGeo );
 
 	// Unit (geodesic) sphere (created by recursively subdividing a base octahedron)
 	Vec3f spVerts[126] = {  // x, y, z
@@ -318,9 +366,14 @@ void Renderer::createPrimitives()
 			spInds[j + 0] = nv - 3; spInds[j + 1] = nv - 2; spInds[j + 2] = nv - 1;
 		}
 	}
+
+	_sphereGeo = _renderDevice->beginCreatingGeometry( _vlPosOnly );
 	_vbSphere = _renderDevice->createVertexBuffer( 126 * sizeof( Vec3f ), spVerts );
 	_ibSphere = _renderDevice->createIndexBuffer( 128 * 3 * sizeof( uint16 ), spInds );
-	
+	_renderDevice->setGeomVertexParams( _sphereGeo, _vbSphere, 0, 0, 12 );
+	_renderDevice->setGeomIndexParams( _sphereGeo, _ibSphere, IDXFMT_16 );
+	_renderDevice->finishCreatingGeometry( _sphereGeo );
+
 	// Unit cone
 	float coneVerts[13 * 3] = {  // x, y, z
 		0.f, 0.f, 0.f,
@@ -335,14 +388,22 @@ void Renderer::createPrimitives()
 		10, 6, 2,   10, 8, 6,   10, 9, 8,   8, 7, 6,   6, 4, 2,   6, 5, 4,   4, 3, 2,
 		2, 12, 10,   2, 1, 12,   12, 11, 10
 	};
+
+	_coneGeo = _renderDevice->beginCreatingGeometry( _vlPosOnly );
 	_vbCone = _renderDevice->createVertexBuffer( 13 * 3 * sizeof( float ), coneVerts );
 	_ibCone = _renderDevice->createIndexBuffer( 22 * 3 * sizeof( uint16 ), coneInds );
+	_renderDevice->setGeomVertexParams( _coneGeo, _vbCone, 0, 0, 12 );
+	_renderDevice->setGeomIndexParams( _coneGeo, _ibCone, IDXFMT_16 );
+	_renderDevice->finishCreatingGeometry( _coneGeo );
 
 	// Fullscreen polygon
 	float fsVerts[3 * 3] = {  // x, y, z
 		0.f, 0.f, 1.f,   2.f, 0.f, 1.f,   0.f, 2.f, 1.f
 	};
+
+	_FSPolyGeo = _renderDevice->beginCreatingGeometry( _vlPosOnly );
 	_vbFSPoly = _renderDevice->createVertexBuffer( 3 * 3 * sizeof( float ), fsVerts );
+	_renderDevice->finishCreatingGeometry( _FSPolyGeo );
 }
 
 
@@ -354,9 +415,10 @@ void Renderer::drawAABB( const Vec3f &bbMin, const Vec3f &bbMax )
 		Matrix4f::ScaleMat( bbMax.x - bbMin.x, bbMax.y - bbMin.y, bbMax.z - bbMin.z );
 	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
 	
-	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
-	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
-	_renderDevice->setVertexLayout( _vlPosOnly );
+	_renderDevice->setGeometry( _cubeGeo );
+// 	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
+// 	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
+// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
 }
@@ -369,10 +431,11 @@ void Renderer::drawSphere( const Vec3f &pos, float radius )
 	Matrix4f mat = Matrix4f::TransMat( pos.x, pos.y, pos.z ) *
 	               Matrix4f::ScaleMat( radius, radius, radius );
 	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
-	
-	_renderDevice->setVertexBuffer( 0, _vbSphere, 0, 12 );
-	_renderDevice->setIndexBuffer( _ibSphere, IDXFMT_16 );
-	_renderDevice->setVertexLayout( _vlPosOnly );
+
+	_renderDevice->setGeometry( _sphereGeo );
+// 	_renderDevice->setVertexBuffer( 0, _vbSphere, 0, 12 );
+// 	_renderDevice->setIndexBuffer( _ibSphere, IDXFMT_16 );
+// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 128 * 3, 0, 126 );
 }
@@ -384,10 +447,11 @@ void Renderer::drawCone( float height, float radius, const Matrix4f &transMat )
 
 	Matrix4f mat = transMat * Matrix4f::ScaleMat( radius, radius, height );
 	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
-	
-	_renderDevice->setVertexBuffer( 0, _vbCone, 0, 12 );
-	_renderDevice->setIndexBuffer( _ibCone, IDXFMT_16 );
-	_renderDevice->setVertexLayout( _vlPosOnly );
+
+	_renderDevice->setGeometry( _coneGeo );
+// 	_renderDevice->setVertexBuffer( 0, _vbCone, 0, 12 );
+// 	_renderDevice->setIndexBuffer( _ibCone, IDXFMT_16 );
+// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 22 * 3, 0, 13 );
 }
@@ -1066,9 +1130,10 @@ void Renderer::drawOccProxies( uint32 list )
 	
 	setShaderComb( &Modules::renderer()._defColorShader );
 	commitGeneralUniforms();
-	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
-	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
-	_renderDevice->setVertexLayout( _vlPosOnly );
+// 	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
+// 	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
+// 	_renderDevice->setVertexLayout( _vlPosOnly );
+	_renderDevice->setGeometry( _cubeGeo );
 
 	// Draw occlusion proxies
 	for( size_t i = 0, s = _occProxies[list].size(); i < s; ++i )
@@ -1144,8 +1209,9 @@ void Renderer::drawOverlays( const string &shaderContext )
 	// Upload overlay vertices
 	_renderDevice->updateBufferData( _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
 
-	_renderDevice->setVertexBuffer( 0, _overlayVB, 0, sizeof( OverlayVert ) );
-	_renderDevice->setIndexBuffer( _quadIdxBuf, IDXFMT_16 );
+// 	_renderDevice->setVertexBuffer( 0, _overlayVB, 0, sizeof( OverlayVert ) );
+// 	_renderDevice->setIndexBuffer( _quadIdxBuf, IDXFMT_16 );
+	_renderDevice->setGeometry( _overlayGeo );
 	ASSERT( QuadIndexBufCount >= MaxNumOverlayVerts * 6 );
 
 	float aspect = (float)_curCamera->_vpWidth / (float)_curCamera->_vpHeight;
@@ -1165,7 +1231,7 @@ void Renderer::drawOverlays( const string &shaderContext )
 				curMatRes = 0x0;
 				continue;
 			}
-			_renderDevice->setVertexLayout( _vlOverlay );
+// 			_renderDevice->setVertexLayout( _vlOverlay );
 			curMatRes = ob.materialRes;
 		}
 		
@@ -1247,9 +1313,10 @@ void Renderer::drawFSQuad( Resource *matRes, const string &shaderContext )
 	
 	if( !setMaterial( (MaterialResource *)matRes, shaderContext ) ) return;
 
-	_renderDevice->setVertexBuffer( 0, _vbFSPoly, 0, 12 );
-	_renderDevice->setIndexBuffer( 0, IDXFMT_16 );
-	_renderDevice->setVertexLayout( _vlPosOnly );
+// 	_renderDevice->setVertexBuffer( 0, _vbFSPoly, 0, 12 );
+// 	_renderDevice->setIndexBuffer( 0, IDXFMT_16 );
+// 	_renderDevice->setVertexLayout( _vlPosOnly );
+	_renderDevice->setGeometry( _FSPolyGeo );
 
 	_renderDevice->draw( PRIM_TRILIST, 0, 3 );
 }
@@ -1618,22 +1685,24 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			curGeoRes = modelNode->getGeometryResource();
 			ASSERT( curGeoRes != 0x0 );
 		
-			// Indices
-			rdi->setIndexBuffer( curGeoRes->getIndexBuf(),
-			                      curGeoRes->_16BitIndices ? IDXFMT_16 : IDXFMT_32 );
+			rdi->setGeometry( curGeoRes->getGeometryInfo() );
 
-			// Vertices
-			uint32 posVBuf = curGeoRes->getPosVBuf();
-			uint32 tanVBuf = curGeoRes->getTanVBuf();
-			uint32 staticVBuf = curGeoRes->getStaticVBuf();
-			
-			rdi->setVertexBuffer( 0, posVBuf, 0, sizeof( Vec3f ) );
-			rdi->setVertexBuffer( 1, tanVBuf, 0, sizeof( VertexDataTan ) );
-			rdi->setVertexBuffer( 2, tanVBuf, sizeof( Vec3f ), sizeof( VertexDataTan ) );
-			rdi->setVertexBuffer( 3, staticVBuf, 0, sizeof( VertexDataStatic ) );
+			// Indices
+// 			rdi->setIndexBuffer( curGeoRes->getIndexBuf(),
+// 			                      curGeoRes->_16BitIndices ? IDXFMT_16 : IDXFMT_32 );
+// 
+// 			// Vertices
+// 			uint32 posVBuf = curGeoRes->getPosVBuf();
+// 			uint32 tanVBuf = curGeoRes->getTanVBuf();
+// 			uint32 staticVBuf = curGeoRes->getStaticVBuf();
+// 			
+// 			rdi->setVertexBuffer( 0, posVBuf, 0, sizeof( Vec3f ) );
+// 			rdi->setVertexBuffer( 1, tanVBuf, 0, sizeof( VertexDataTan ) );
+// 			rdi->setVertexBuffer( 2, tanVBuf, sizeof( Vec3f ), sizeof( VertexDataTan ) );
+// 			rdi->setVertexBuffer( 3, staticVBuf, 0, sizeof( VertexDataStatic ) );
 		}
 
-		rdi->setVertexLayout( Modules::renderer()._vlModel );
+// 		rdi->setVertexLayout( Modules::renderer()._vlModel );
 		
 		ShaderCombination *prevShader = Modules::renderer().getCurShader();
 		
@@ -1730,7 +1799,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 	if( occSet >= 0 )
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
 
-	rdi->setVertexLayout( 0 );
+// 	rdi->setVertexLayout( 0 );
 }
 
 
@@ -1750,8 +1819,9 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
 
 	// Bind particle geometry
-	rdi->setVertexBuffer( 0, Modules::renderer().getParticleVBO(), 0, sizeof( ParticleVert ) );
-	rdi->setIndexBuffer( Modules::renderer().getQuadIdxBuf(), IDXFMT_16 );
+// 	rdi->setVertexBuffer( 0, Modules::renderer().getParticleVBO(), 0, sizeof( ParticleVert ) );
+// 	rdi->setIndexBuffer( Modules::renderer().getQuadIdxBuf(), IDXFMT_16 );
+	rdi->setGeometry( Modules::renderer().getParticleGeometry() );
 	ASSERT( QuadIndexBufCount >= ParticlesPerBatch * 6 );
 
 	// Loop through emitter queue
@@ -1806,7 +1876,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 		}
 
 		// Set vertex layout
-		rdi->setVertexLayout( Modules::renderer()._vlParticle );
+// 		rdi->setVertexLayout( Modules::renderer()._vlParticle );
 		
 		if( queryObj )
 			rdi->beginQuery( queryObj );
@@ -1895,7 +1965,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 	if( occSet >= 0 )
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
 	
-	rdi->setVertexLayout( 0 );
+// 	rdi->setVertexLayout( 0 );
 }
 
 

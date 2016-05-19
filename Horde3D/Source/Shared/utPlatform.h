@@ -139,4 +139,7 @@ namespace StaticAssert
 }
 #define ASSERT_STATIC( exp ) (StaticAssert::FAILED< (exp) != 0 >())
 
+// Misc functions
+#define H3D_UNUSED_VAR( exp ) ( (void) (exp))
+
 #endif // _utPlatform_H_

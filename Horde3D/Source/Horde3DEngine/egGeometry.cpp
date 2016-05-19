@@ -76,11 +76,22 @@ Resource *GeometryResource::clone()
 	memcpy( res->_vertPosData, _vertPosData, _vertCount * sizeof( Vec3f ) );
 	memcpy( res->_vertTanData, _vertTanData, _vertCount * sizeof( VertexDataTan ) );
 	memcpy( res->_vertStaticData, _vertStaticData, _vertCount * sizeof( VertexDataStatic ) );
+
+	res->_geoObj = rdi->beginCreatingGeometry( Modules::renderer().getDefaultVertexLayout( DefaultVertexLayouts::Model ) );
+
 	res->_indexBuf = rdi->createIndexBuffer( _indexCount * (_16BitIndices ? 2 : 4), _indexData );
 	res->_posVBuf = rdi->createVertexBuffer( _vertCount * sizeof( Vec3f ), _vertPosData );
 	res->_tanVBuf = rdi->createVertexBuffer( _vertCount * sizeof( VertexDataTan ), _vertTanData );
 	res->_staticVBuf = rdi->createVertexBuffer( _vertCount * sizeof( VertexDataStatic ), _vertStaticData );
-	
+
+	rdi->setGeomVertexParams( res->_geoObj, res->_posVBuf, 0, 0, sizeof( Vec3f ) );
+	rdi->setGeomVertexParams( res->_geoObj, res->_tanVBuf, 1, 0, sizeof( VertexDataTan ) );
+	rdi->setGeomVertexParams( res->_geoObj, res->_tanVBuf, 2, sizeof( Vec3f ), sizeof( VertexDataTan ) );
+	rdi->setGeomVertexParams( res->_geoObj, res->_staticVBuf, 3, 0, sizeof( VertexDataStatic ) );
+	rdi->setGeomIndexParams( res->_geoObj, res->_indexBuf, _16BitIndices ? IDXFMT_16 : IDXFMT_32 );
+
+	rdi->finishCreatingGeometry( res->_geoObj );
+
 	return res;
 }
 
@@ -98,6 +109,7 @@ void GeometryResource::initDefault()
 	_posVBuf = defVertBuffer;
 	_tanVBuf = defVertBuffer;
 	_staticVBuf = defVertBuffer;
+	_geoObj = 0;
 	_minMorphIndex = 0; _maxMorphIndex = 0;
 	_skelAABB.min = Vec3f( 0, 0, 0 );
 	_skelAABB.max = Vec3f( 0, 0, 0 );
@@ -108,27 +120,32 @@ void GeometryResource::release()
 {
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
-	if( _posVBuf != 0 && _posVBuf != defVertBuffer )
+	if ( _geoObj != 0 )
 	{
-		rdi->destroyBuffer( _posVBuf );
-		_posVBuf = 0;
+		rdi->destroyGeometry( _geoObj );
 	}
-	if( _tanVBuf != 0 && _tanVBuf != defVertBuffer )
-	{
-		rdi->destroyBuffer( _tanVBuf );
-		_tanVBuf = 0;
-	}
-	if( _staticVBuf != 0 && _staticVBuf != defVertBuffer )
-	{
-		rdi->destroyBuffer( _staticVBuf );
-		_staticVBuf = 0;
-	}
-	
-	if( _indexBuf != 0 && _indexBuf != defIndexBuffer )
-	{
-		rdi->destroyBuffer( _indexBuf );
-		_indexBuf = 0;
-	}
+
+// 	if( _posVBuf != 0 && _posVBuf != defVertBuffer )
+// 	{
+// 		rdi->destroyBuffer( _posVBuf );
+// 		_posVBuf = 0;
+// 	}
+// 	if( _tanVBuf != 0 && _tanVBuf != defVertBuffer )
+// 	{
+// 		rdi->destroyBuffer( _tanVBuf );
+// 		_tanVBuf = 0;
+// 	}
+// 	if( _staticVBuf != 0 && _staticVBuf != defVertBuffer )
+// 	{
+// 		rdi->destroyBuffer( _staticVBuf );
+// 		_staticVBuf = 0;
+// 	}
+// 	
+// 	if( _indexBuf != 0 && _indexBuf != defIndexBuffer )
+// 	{
+// 		rdi->destroyBuffer( _indexBuf );
+// 		_indexBuf = 0;
+// 	}
 
 	delete[] _indexData; _indexData = 0x0;
 	delete[] _vertPosData; _vertPosData = 0x0;
@@ -478,6 +495,8 @@ bool GeometryResource::load( const char *data, int size )
 	{
 		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
+		_geoObj = rdi->beginCreatingGeometry( Modules::renderer().getDefaultVertexLayout( DefaultVertexLayouts::Model ) );
+
 		// Upload indices
 		_indexBuf = rdi->createIndexBuffer( _indexCount * (_16BitIndices ? 2 : 4), _indexData );
 		
@@ -485,6 +504,15 @@ bool GeometryResource::load( const char *data, int size )
 		_posVBuf = rdi->createVertexBuffer(_vertCount * sizeof( Vec3f ), _vertPosData );
 		_tanVBuf = rdi->createVertexBuffer( _vertCount * sizeof( VertexDataTan ), _vertTanData );
 		_staticVBuf = rdi->createVertexBuffer( _vertCount * sizeof( VertexDataStatic ), _vertStaticData );
+
+		rdi->setGeomVertexParams( _geoObj, _posVBuf, 0, 0, sizeof( Vec3f ) );
+		rdi->setGeomVertexParams( _geoObj, _tanVBuf, 1, 0, sizeof( VertexDataTan ) );
+		rdi->setGeomVertexParams( _geoObj, _tanVBuf, 2, sizeof( Vec3f ), sizeof( VertexDataTan ) );
+		rdi->setGeomVertexParams( _geoObj, _staticVBuf, 3, 0, sizeof( VertexDataStatic ) );
+
+		rdi->setGeomIndexParams( _geoObj, _indexBuf, _16BitIndices ? IDXFMT_16 : IDXFMT_32 );
+
+		rdi->finishCreatingGeometry( _geoObj );
 	}
 	
 	return true;

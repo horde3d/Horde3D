@@ -59,7 +59,7 @@ namespace glExt
 	extern int  majorVersion, minorVersion;
 }
 
-bool initOpenGLExtensions();
+bool initOpenGLExtensions( bool forceLegacyFuncs );
 
 
 // =================================================================================================
