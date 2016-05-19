@@ -161,12 +161,17 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_curDepthStencilState.hash = _newDepthStencilState.hash = 0;
 // 	_curVertLayout = _newVertLayout = 0;
 // 	_curIndexBuf = _newIndexBuf = 0;
-	_curGeometryIndex = 0;
+	_curGeometryIndex = 1;
 	_defaultFBO = 0;
 	_defaultFBOMultisampled = false;
  	_indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
+
+	// add default geometry for resetting
+	RDIGeometryInfoGL4 defGeom;
+	defGeom.atrribsBinded = true;
+	_vaos.add( defGeom );
 }
 
 
@@ -312,16 +317,18 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 	glBindVertexArray( curVao.vao );
 
 	// bind index buffer, if present
-	if ( _tempGeometry.indexBuf )
+	if ( curVao.indexBuf )
 	{
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _tempGeometry.indexBuf );
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, curVao.indexBuf );
 	}
 
 	// bind vertex buffers
-	for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
-	{
-		glBindBuffer( GL_ARRAY_BUFFER, curVao.vertexBufInfo[ i ].vbObj );
-	}
+// 	for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
+// 	{
+// 		glBindBuffer( GL_ARRAY_BUFFER, curVao.vertexBufInfo[ i ].vbObj );
+// 	}
+
+	glBindVertexArray( 0 );
 }
 
 void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
@@ -1413,7 +1420,9 @@ bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
 	uint32 newVertexAttribMask = 0;
 	
 	if( _curShaderId == 0 ) return false;
-		
+	
+	glBindVertexArray( geo.vao );
+
 	RDIVertexLayout &vl = _vertexLayouts[ geo.layout - 1 ];
 	RDIShaderGL4 &shader = _shaders.getRef( _curShaderId );
 	RDIInputLayoutGL4 &inputLayout = shader.inputLayouts[ geo.layout - 1 ];
@@ -1430,10 +1439,10 @@ bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
 			VertexLayoutAttrib &attrib = vl.attribs[i];
 			const RDIVertBufSlotGL4 &vbSlot = geo.vertexBufInfo[ attrib.vbSlot ];
 				
-// 			ASSERT( _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj != 0 &&
-// 					_buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).type == GL_ARRAY_BUFFER );
-				
-// 			glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( _vertBufSlots[attrib.vbSlot].vbObj ).glObj );
+			ASSERT( _buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj != 0 &&
+					_buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).type == GL_ARRAY_BUFFER );
+					
+			glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj );
 			glVertexAttribPointer( attribIndex, attrib.size, GL_FLOAT, GL_FALSE,
 									vbSlot.stride, (char *)0 + vbSlot.offset + attrib.offset );
 
@@ -1647,6 +1656,8 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 				{
 					if ( !applyVertexLayout(geo) )
 						return false;
+
+					geo.atrribsBinded = true;
 				}
 				else glBindVertexArray( geo.vao );
 
@@ -1668,7 +1679,7 @@ void RenderDeviceGL4::resetStates()
 {
 // 	_curIndexBuf = 1; _newIndexBuf = 0;
 // 	_curVertLayout = 1; _newVertLayout = 0;
-	_curGeometryIndex = 0;
+	_curGeometryIndex = 1;
 	_curRasterState.hash = 0xFFFFFFFF; _newRasterState.hash = 0;
 	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
 	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;

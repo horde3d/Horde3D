@@ -403,6 +403,7 @@ void Renderer::createPrimitives()
 
 	_FSPolyGeo = _renderDevice->beginCreatingGeometry( _vlPosOnly );
 	_vbFSPoly = _renderDevice->createVertexBuffer( 3 * 3 * sizeof( float ), fsVerts );
+	_renderDevice->setGeomVertexParams( _FSPolyGeo, _vbFSPoly, 0, 0, 12 );
 	_renderDevice->finishCreatingGeometry( _FSPolyGeo );
 }
 
