@@ -134,6 +134,7 @@ protected:
 	BoundingBox        _localBBox;
 
 	std::vector< BlockInfo >  _blockTree;
+	uint32 _geometry;
 };
 
 }  // namespace

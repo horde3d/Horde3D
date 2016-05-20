@@ -186,7 +186,7 @@ public:
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	void destroyBuffer( uint32 bufObj );
-	void updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data );
+	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 	uint32 getBufferMem() const { return _bufferMem; }
 
 	// Textures

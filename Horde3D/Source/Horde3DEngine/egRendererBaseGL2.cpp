@@ -398,7 +398,7 @@ void RenderDeviceGL2::destroyBuffer( uint32 bufObj )
 }
 
 
-void RenderDeviceGL2::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data )
+void RenderDeviceGL2::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
 	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );

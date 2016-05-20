@@ -10,7 +10,8 @@
 // *************************************************************************************************
 
 uniform 	vec4 skinMatRows[75*3];
-in		 	vec4 joints, weights;
+layout ( location = 3 ) in vec4 joints;
+layout ( location = 4 ) in vec4 weights;
 
 
 mat4 getJointMat( const int jointIndex )

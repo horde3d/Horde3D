@@ -1208,7 +1208,7 @@ void Renderer::drawOverlays( const string &shaderContext )
 	if( numOverlayVerts == 0 ) return;
 	
 	// Upload overlay vertices
-	_renderDevice->updateBufferData( _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
+	_renderDevice->updateBufferData( _overlayGeo, _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
 
 // 	_renderDevice->setVertexBuffer( 0, _overlayVB, 0, sizeof( OverlayVert ) );
 // 	_renderDevice->setIndexBuffer( _quadIdxBuf, IDXFMT_16 );

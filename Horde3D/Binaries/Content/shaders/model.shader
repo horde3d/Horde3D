@@ -202,12 +202,13 @@ void main( void )
 
 uniform mat4 viewProjMat;
 uniform vec3 viewerPos;
-in vec3 vertPos;
-in vec2 texCoords0;
-in vec3 normal;
+
+layout( location = 0 ) in vec3 vertPos;
+layout( location = 1 ) in vec3 normal;
+layout( location = 5 ) in vec2 texCoords0;
 
 #ifdef _F02_NormalMapping
-	in vec4 tangent;
+	layout ( location = 2 ) in vec4 tangent;
 #endif
 
 out vec4 pos, vsPos;
@@ -354,7 +355,7 @@ void main( void )
 	#define _F02_NormalMapping
 #endif
 
-#include "shaders/utilityLib/fragDeferredWrite.glsl" 
+#include "shaders/utilityLib/fragDeferredWriteGL4.glsl" 
 
 uniform vec3 viewerPos;
 uniform vec4 matDiffuseCol;
@@ -464,11 +465,12 @@ void main( void )
 
 uniform mat4 viewProjMat;
 uniform vec4 lightPos;
-in vec3 vertPos;
+
+layout( location = 0 ) in vec3 vertPos;
 out vec3 lightVec;
 
 #ifdef _F05_AlphaTest
-	in vec2 texCoords0;
+	layout( location = 5 ) in vec2 texCoords0;
 	out vec2 texCoords;
 #endif
 

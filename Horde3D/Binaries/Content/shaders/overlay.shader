@@ -40,11 +40,11 @@ void main( void )
 
 [[VS_OVERLAY_GL4]]
 
-uniform mat4 projMat;
-in vec2 vertPos;
-in vec2 texCoords0;
+layout( location = 0 ) in vec2 vertPos;
+layout( location = 1 ) in vec2 texCoords0;
 out vec2 texCoords;
 
+uniform mat4 projMat;
 void main( void )
 {
 	texCoords = vec2( texCoords0.s, -texCoords0.t ); 

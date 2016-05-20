@@ -322,12 +322,42 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, curVao.indexBuf );
 	}
 
-	// bind vertex buffers
-// 	for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
-// 	{
-// 		glBindBuffer( GL_ARRAY_BUFFER, curVao.vertexBufInfo[ i ].vbObj );
-// 	}
+	uint32 newVertexAttribMask = 0;
 
+	RDIVertexLayout vl = _vertexLayouts[ curVao.layout - 1 ];
+
+	// Set vertex attrib pointers
+	for ( uint32 i = 0; i < vl.numAttribs; ++i )
+	{
+// 		int8 attribIndex = inputLayout.attribIndices[ i ];
+// 		if ( attribIndex >= 0 )
+		{
+			VertexLayoutAttrib &attrib = vl.attribs[ i ];
+			const RDIVertBufSlotGL4 &vbSlot = curVao.vertexBufInfo[ attrib.vbSlot ];
+
+			ASSERT( _buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj != 0 &&
+					_buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj ).type == GL_ARRAY_BUFFER );
+
+			glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj );
+			glVertexAttribPointer( i, attrib.size, GL_FLOAT, GL_FALSE,
+								   vbSlot.stride, ( char * ) 0 + vbSlot.offset + attrib.offset );
+
+			newVertexAttribMask |= 1 << i;
+		}
+	}
+
+
+	for ( uint32 i = 0; i < 16; ++i )
+	{
+		uint32 curBit = 1 << i;
+		if ( ( newVertexAttribMask & curBit ) != ( _activeVertexAttribsMask & curBit ) )
+		{
+			if ( newVertexAttribMask & curBit ) glEnableVertexAttribArray( i );
+			else glDisableVertexAttribArray( i );
+		}
+	}
+
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 	glBindVertexArray( 0 );
 }
 
@@ -410,21 +440,31 @@ void RenderDeviceGL4::destroyBuffer( uint32 bufObj )
 }
 
 
-void RenderDeviceGL4::updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data )
+void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
+	const RDIGeometryInfoGL4 &geo = _vaos.getRef( geoObj );
 	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
 	
+	glBindVertexArray( geo.vao );
+
 	glBindBuffer( buf.type, buf.glObj );
 	
 	if( offset == 0 &&  size == buf.size )
 	{
 		// Replacing the whole buffer can help the driver to avoid pipeline stalls
 		glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
+
+		glBindBuffer( buf.type, 0 );
+		glBindVertexArray( 0 );
+
 		return;
 	}
 
 	glBufferSubData( buf.type, offset, size, data );
+
+	glBindBuffer( buf.type, 0 );
+	glBindVertexArray( 0 );
 }
 
 
@@ -1421,8 +1461,6 @@ bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
 	
 	if( _curShaderId == 0 ) return false;
 	
-	glBindVertexArray( geo.vao );
-
 	RDIVertexLayout &vl = _vertexLayouts[ geo.layout - 1 ];
 	RDIShaderGL4 &shader = _shaders.getRef( _curShaderId );
 	RDIInputLayoutGL4 &inputLayout = shader.inputLayouts[ geo.layout - 1 ];
@@ -1461,6 +1499,8 @@ bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
 		}
 	}
 	_activeVertexAttribsMask = newVertexAttribMask;
+
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
 	return true;
 }
@@ -1652,14 +1692,23 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
 			{
 				RDIGeometryInfoGL4 geo = _vaos.getRef( _curGeometryIndex );
-				if ( !geo.atrribsBinded )
-				{
-					if ( !applyVertexLayout(geo) )
-						return false;
+//  				if ( !geo.atrribsBinded )
+// 				{
+// 					glBindVertexArray( geo.vao );
+// 
+// 					if ( geo.indexBuf )
+// 					{
+// 						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, geo.indexBuf );
+// 					}
+// 
+// 					if ( !applyVertexLayout(geo) )
+// 						return false;
+// 
+// 					geo.atrribsBinded = true;
+// 				}
+// 				else glBindVertexArray( geo.vao );
 
-					geo.atrribsBinded = true;
-				}
-				else glBindVertexArray( geo.vao );
+				glBindVertexArray( geo.vao );
 
 				_indexFormat = geo.indexBuf32Bit;
 // 				_curVertLayout = _newVertLayout;
@@ -1691,7 +1740,8 @@ void RenderDeviceGL4::resetStates()
 	_pendingMask = 0xFFFFFFFF;
 	commitStates();
 
-// 	glBindVertexArray( 0 );
+ 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+	glBindVertexArray( 0 );
 	glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
 }
 

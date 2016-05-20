@@ -86,10 +86,11 @@ void main(void)
 [[VS_TRANSLUCENT_GL4]]
 // =================================================================================================
 
-#include "shaders/utilityLib/vertParticle.glsl"
+#include "shaders/utilityLib/vertParticleGL4.glsl"
 
 uniform mat4 viewProjMat;
-in vec2 texCoords0;
+
+layout( location = 0 ) in vec2 texCoords0;
 out vec4 color;
 out vec2 texCoords;
 

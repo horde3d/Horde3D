@@ -200,7 +200,7 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 			}
 		}
 		
-		rdi->updateBufferData(
+		rdi->updateBufferData( terrain->_geometry,
 			terrain->_vertexBuffer, terrain->getVertexCount() * sizeof( float ) * 3,
 			terrain->getVertexCount() * sizeof( float ), terrain->_heightArray );
 		rdi->drawIndexed( PRIM_TRISTRIP, 0, terrain->getIndexCount(), 0, terrain->getVertexCount() );
@@ -277,11 +277,12 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 		localCamPos = terrain->_absTrans.inverted() * localCamPos;
 		
 		// Bind geometry and apply vertex layout
-		rdi->setIndexBuffer( terrain->_indexBuffer, IDXFMT_16 );
-		rdi->setVertexBuffer( 0, terrain->_vertexBuffer, 0, 12 );
-		rdi->setVertexBuffer( 1, terrain->_vertexBuffer, terrain->getVertexCount() * 12, 4 );
-		rdi->setVertexLayout( vlTerrain );
-	
+// 		rdi->setIndexBuffer( terrain->_indexBuffer, IDXFMT_16 );
+// 		rdi->setVertexBuffer( 0, terrain->_vertexBuffer, 0, 12 );
+// 		rdi->setVertexBuffer( 1, terrain->_vertexBuffer, terrain->getVertexCount() * 12, 4 );
+// 		rdi->setVertexLayout( vlTerrain );
+		rdi->setGeometry( terrain->_geometry );
+
 		// Set uniforms
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
 		if( curShader->uni_worldMat >= 0 )
@@ -304,7 +305,7 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 
 		drawTerrainBlock( terrain, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, localCamPos, frust1, frust2, uni_terBlockParams );
 
-		rdi->setVertexLayout( 0 );
+// 		rdi->setVertexLayout( 0 );
 	}
 }
 
@@ -453,11 +454,14 @@ void TerrainNode::recreateVertexBuffer()
 {
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
-	rdi->destroyBuffer( _vertexBuffer );
-	rdi->destroyBuffer( _indexBuffer );
-	
+// 	rdi->destroyBuffer( _vertexBuffer );
+// 	rdi->destroyBuffer( _indexBuffer );
+	rdi->destroyGeometry( _geometry );
+
+	_geometry = rdi->beginCreatingGeometry( vlTerrain );
+
 	delete[] _heightArray; _heightArray = 0x0;
-	_heightArray = new float[getVertexCount()];
+	_heightArray = new float[ getVertexCount() ];
 	float *posArray = createVertices();
 	_vertexBuffer = rdi->createVertexBuffer( getVertexCount() * sizeof( float ) * 4, posArray );
 	delete[] posArray;
@@ -465,6 +469,12 @@ void TerrainNode::recreateVertexBuffer()
 	uint16 *indices = createIndices();
 	_indexBuffer = rdi->createIndexBuffer( getIndexCount() * sizeof( short ), indices );
 	delete[] indices;
+
+	rdi->setGeomIndexParams( _geometry, _indexBuffer, IDXFMT_16 );
+	rdi->setGeomVertexParams( _geometry, _vertexBuffer, 0, 0, 12 );
+	rdi->setGeomVertexParams( _geometry, _vertexBuffer, 1, getVertexCount() * 12, 4 );
+
+	rdi->finishCreatingGeometry( _geometry );
 }
 
 

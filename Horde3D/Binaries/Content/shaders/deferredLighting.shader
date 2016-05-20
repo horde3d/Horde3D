@@ -101,7 +101,8 @@ void main( void )
 [[VS_FSQUAD_GL4]]
 
 uniform mat4 projMat;
-in vec3 vertPos;
+
+layout( location = 0 ) in vec3 vertPos;
 out vec2 texCoords;
 				
 void main( void )
@@ -128,7 +129,8 @@ void main( void )
 
 uniform mat4 viewProjMat;
 uniform mat4 worldMat;
-in vec3 vertPos;
+
+layout( location = 0 ) in vec3 vertPos;
 out vec4 vpos;
 				
 void main( void )

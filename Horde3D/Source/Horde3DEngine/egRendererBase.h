@@ -565,7 +565,7 @@ private:
 	typedef uint32( *PFN_CREATEVERTEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef uint32( *PFN_CREATEINDEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef void( *PFN_DESTROYBUFFER )( void* const, uint32 bufObj );
-	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 bufObj, uint32 offset, uint32 size, void *data );
+	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 	
 	typedef uint32( *PFN_CALCTEXTURESIZE )( void* const, TextureFormats::List format, int width, int height, int depth );
 	typedef uint32( *PFN_CREATETEXTURE )( void* const, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
@@ -620,7 +620,6 @@ private:
 	PFN_SETGEOMINDEXPARAMS		_pfnSetGeomIndexParams;
 	PFN_FINISHCREATINGGEOMETRY  _pfnFinishCreatingGeometry;
 	PFN_DESTROYGEOMETRY			_pfnDestroyGeometry;
-// 	PFN_CREATEBUFFER			_pfnCreateBuffer;
 	PFN_CREATEVERTEXBUFFER		_pfnCreateVertexBuffer;
 	PFN_CREATEINDEXBUFFER		_pfnCreateIndexBuffer;
 	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
@@ -734,9 +733,9 @@ private:
 	}
 
 	template<typename T>
-	static void              updateBufferData_Invoker( void* const pObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
+	static void              updateBufferData_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 	{
-		static_cast< T* >( pObj )->updateBufferData( bufObj, offset, size, data );
+		static_cast< T* >( pObj )->updateBufferData( geoObj, bufObj, offset, size, data );
 	}
 
 	// textures
@@ -959,7 +958,7 @@ protected:
 		CheckMemberFunction( destroyGeometry, void( T::* )( uint32 ) );
 // 		CheckMemberFunction( createBuffer, void( T::* )( RDIBufferTypes::List, uint32, uint32, const void * ) );
 		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
-		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, void * ) );
+		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
 		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
 		CheckMemberFunction( createTexture, uint32( T::* )( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) );
 		CheckMemberFunction( uploadTextureData, void( T::* )( uint32, int, int, const void * ) );
@@ -1117,9 +1116,9 @@ public:
 	{ 
 		( *_pfnDestroyBuffer )( this, bufObj );
 	}
-	void updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data ) 
+	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data ) 
 	{ 
-		( *_pfnUpdateBufferData )( this, bufObj, offset, size, data );
+		( *_pfnUpdateBufferData )( this, geoObj, bufObj, offset, size, data );
 	}
 	uint32 getBufferMem() const 
 	{ 

@@ -60,7 +60,8 @@ void main(void)
 
 uniform mat4 viewProjMat;
 uniform vec3 viewerPos;
-in vec3 vertPos;
+
+layout( location = 0 ) in vec3 vertPos;
 out vec3 viewVec;
 
 void main(void)
@@ -92,7 +93,7 @@ void main( void )
 [[FS_ATTRIBPASS_GL4]]
 // =================================================================================================
 
-#include "shaders/utilityLib/fragDeferredWrite.glsl"
+#include "shaders/utilityLib/fragDeferredWriteGL4.glsl"
 
 uniform samplerCube albedoMap;
 in vec3 viewVec;

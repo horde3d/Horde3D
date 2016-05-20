@@ -87,7 +87,8 @@ void main( void )
 // =================================================================================================
 
 uniform mat4 projMat;
-in vec3 vertPos;
+
+layout( location = 0 ) in vec3 vertPos;
 out vec2 texCoords;
 				
 void main( void )
