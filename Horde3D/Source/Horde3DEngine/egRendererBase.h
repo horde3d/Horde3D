@@ -273,18 +273,6 @@ struct RDIBufferTypes
 	};
 };
 
-// struct RDIVertBufSlot
-// {
-// 	uint32  vbObj;
-// 	uint32  offset;
-// 	uint32  stride;
-// 
-// 	RDIVertBufSlot() : vbObj( 0 ), offset( 0 ), stride( 0 ) {}
-// 	RDIVertBufSlot( uint32 vbObj, uint32 offset, uint32 stride ) :
-// 		vbObj( vbObj ), offset( offset ), stride( stride ) {}
-// };
-
-
 // ---------------------------------------------------------
 // Textures
 // ---------------------------------------------------------

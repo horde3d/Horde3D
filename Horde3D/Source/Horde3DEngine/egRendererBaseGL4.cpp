@@ -31,7 +31,7 @@ static const char *defaultShaderVS =
 	"#version 330\n"
 	"uniform mat4 viewProjMat;\n"
 	"uniform mat4 worldMat;\n"
-	"in vec3 vertPos;\n"
+	"layout ( location = 0 ) in vec3 vertPos;\n"
 	"void main() {\n"
 	"	gl_Position = viewProjMat * worldMat * vec4( vertPos, 1.0 );\n"
 	"}\n";
@@ -46,7 +46,7 @@ static const char *defaultShaderFS =
 
 static const uint32 indexFormats[ 2 ] = { GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
 
-static const uint32 primitiveTypes[ 2 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP };
+static const uint32 primitiveTypes[ 4 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_LINES, GL_PATCHES };
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 

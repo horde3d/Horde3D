@@ -84,7 +84,7 @@ struct H3DOptions
 		                      (hence more important) are published in the message queue. (Default: 4)
 		MaxNumMessages      - Defines the maximum number of messages that can be stored in the message queue (Default: 512)
 		TrilinearFiltering  - Enables or disables trilinear filtering for textures. (Values: 0, 1; Default: 1)
-		MaxAnisotropy       - Sets the maximum quality for anisotropic filtering. (Values: 1, 2, 4, 8; Default: 1)
+		MaxAnisotropy       - Sets the maximum quality for anisotropic filtering. (Values: 1, 2, 4, 8, 16; Default: 1)
 		TexCompression      - Enables or disables texture compression; only affects textures that are
 		                      loaded after setting the option. (Values: 0, 1; Default: 0)
 		SRGBLinearization   - Eanbles or disables gamma-to-linear-space conversion of input textures that are tagged as sRGB (Values: 0, 1; Default: 0)
