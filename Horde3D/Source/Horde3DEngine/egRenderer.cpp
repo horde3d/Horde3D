@@ -1270,12 +1270,20 @@ void Renderer::bindPipeBuffer( uint32 rbObj, const string &sampler, uint32 bufIn
 		}
 		
 		// Add binding
-		_pipeSamplerBindings.push_back( PipeSamplerBinding() );
-		size_t len = std::min( sampler.length(), (size_t)63 );
-		strncpy_s( _pipeSamplerBindings.back().sampler, 63, sampler.c_str(), len );
-		_pipeSamplerBindings.back().sampler[len] = '\0';
-		_pipeSamplerBindings.back().rbObj = rbObj;
-		_pipeSamplerBindings.back().bufIndex = bufIndex;
+		PipeSamplerBinding binding;
+		size_t len = std::min( sampler.length(), ( size_t ) 63 );
+		strncpy_s( binding.sampler, 63, sampler.c_str(), len );
+		binding.sampler[ len ] = '\0';
+		binding.rbObj = rbObj;
+		binding.bufIndex = bufIndex;
+
+		_pipeSamplerBindings.push_back( binding );
+
+// 		size_t len = std::min( sampler.length(), (size_t)63 );
+// 		strncpy_s( _pipeSamplerBindings.back().sampler, 63, sampler.c_str(), len );
+// 		_pipeSamplerBindings.back().sampler[len] = '\0';
+// 		_pipeSamplerBindings.back().rbObj = rbObj;
+// 		_pipeSamplerBindings.back().bufIndex = bufIndex;
 	}
 }
 
@@ -1735,7 +1743,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			else if( curLod == 3 ) color = Vec4f( 0.5f, 0.5f, 0.25f, 1 );
 			else color = Vec4f( 0.75f, 0.5, 0.25f, 1 );
 
-			// Darken models with skeleton so that bones are more noticable
+			// Darken models with skeleton so that bones are more noticeable
 			if( !modelNode->_jointList.empty() ) color = color * 0.3f;
 
 			rdi->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, &color.x );
