@@ -446,7 +446,7 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
 	
-	glBindVertexArray( geo.vao );
+//	glBindVertexArray( geo.vao );
 
 	glBindBuffer( buf.type, buf.glObj );
 	
@@ -455,16 +455,16 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 		// Replacing the whole buffer can help the driver to avoid pipeline stalls
 		glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
 
-		glBindBuffer( buf.type, 0 );
-		glBindVertexArray( 0 );
+// 		glBindBuffer( buf.type, 0 );
+// 		glBindVertexArray( 0 );
 
 		return;
 	}
 
 	glBufferSubData( buf.type, offset, size, data );
 
-	glBindBuffer( buf.type, 0 );
-	glBindVertexArray( 0 );
+// 	glBindBuffer( buf.type, 0 );
+// 	glBindVertexArray( 0 );
 }
 
 
@@ -1691,7 +1691,7 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		{
 			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
 			{
-				RDIGeometryInfoGL4 geo = _vaos.getRef( _curGeometryIndex );
+				RDIGeometryInfoGL4 &geo = _vaos.getRef( _curGeometryIndex );
 //  				if ( !geo.atrribsBinded )
 // 				{
 // 					glBindVertexArray( geo.vao );
