@@ -800,10 +800,10 @@ bool initOpenGLExtensions( bool forceLegacyFuncs )
 	r &= (glUniformMatrix4x3fv = (PFNGLUNIFORMMATRIX4X3FVPROC) platGetProcAddress( "glUniformMatrix4x3fv" )) != 0x0;
 
 	// GL 3.0 - GL 3.3 
-	if( glExt::majorVersion >= 3 && glExt::minorVersion >= 3 )
+	if( glExt::majorVersion >= 3 )
 	{
 		// GL 3.0
-		r &= ( glGetStringi = (PFNGLGETSTRINGIPROC) platGetProcAddress( "glGetStringi" )) != 0x0;
+		r &= ( glGetStringi = (PFNGLGETSTRINGIPROC) platGetProcAddress( "glGetStringi" )) != nullptr;
 		r &= ( glColorMaski = ( PFNGLCOLORMASKIPROC ) platGetProcAddress( "glColorMaski" ) ) != nullptr;
 		r &= ( glGetBooleani_v = ( PFNGLGETBOOLEANI_VPROC ) platGetProcAddress( "glGetBooleani_v" ) ) != nullptr;
 		r &= ( glGetIntegeri_v = ( PFNGLGETINTEGERI_VPROC ) platGetProcAddress( "glGetIntegeri_v" ) ) != nullptr;
@@ -889,74 +889,82 @@ bool initOpenGLExtensions( bool forceLegacyFuncs )
 		r &= ( glIsVertexArray = ( PFNGLISVERTEXARRAYPROC ) platGetProcAddress( "glIsVertexArray" ) ) != nullptr;
 
 		// GL 3.1
-		r &= ( glDrawArraysInstanced = ( PFNGLDRAWARRAYSINSTANCEDPROC ) platGetProcAddress( "glDrawArraysInstanced" ) ) != nullptr;
-		r &= ( glDrawElementsInstanced = ( PFNGLDRAWELEMENTSINSTANCEDPROC ) platGetProcAddress( "glDrawElementsInstanced" ) ) != nullptr;
-		r &= ( glTexBuffer = ( PFNGLTEXBUFFERPROC ) platGetProcAddress( "glTexBuffer" ) ) != nullptr;
-		r &= ( glPrimitiveRestartIndex = ( PFNGLPRIMITIVERESTARTINDEXPROC ) platGetProcAddress( "glPrimitiveRestartIndex" ) ) != nullptr;
-		r &= ( glCopyBufferSubData = ( PFNGLCOPYBUFFERSUBDATAPROC ) platGetProcAddress( "glCopyBufferSubData" ) ) != nullptr;
-		r &= ( glGetUniformIndices = ( PFNGLGETUNIFORMINDICESPROC ) platGetProcAddress( "glGetUniformIndices" ) ) != nullptr;
-		r &= ( glGetActiveUniformsiv = ( PFNGLGETACTIVEUNIFORMSIVPROC ) platGetProcAddress( "glGetActiveUniformsiv" ) ) != nullptr;
-		r &= ( glGetActiveUniformName = ( PFNGLGETACTIVEUNIFORMNAMEPROC ) platGetProcAddress( "glGetActiveUniformName" ) ) != nullptr;
-		r &= ( glGetUniformBlockIndex = ( PFNGLGETUNIFORMBLOCKINDEXPROC ) platGetProcAddress( "glGetUniformBlockIndex" ) ) != nullptr;
-		r &= ( glGetActiveUniformBlockiv = ( PFNGLGETACTIVEUNIFORMBLOCKIVPROC ) platGetProcAddress( "glGetActiveUniformBlockiv" ) ) != nullptr;
-		r &= ( glGetActiveUniformBlockName = ( PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC ) platGetProcAddress( "glGetActiveUniformBlockName" ) ) != nullptr;
-		r &= ( glUniformBlockBinding = ( PFNGLUNIFORMBLOCKBINDINGPROC ) platGetProcAddress( "glUniformBlockBinding" ) ) != nullptr;
+		if ( glExt::majorVersion * 10 + glExt::minorVersion >= 31 )
+		{
+			r &= ( glDrawArraysInstanced = ( PFNGLDRAWARRAYSINSTANCEDPROC ) platGetProcAddress( "glDrawArraysInstanced" ) ) != nullptr;
+			r &= ( glDrawElementsInstanced = ( PFNGLDRAWELEMENTSINSTANCEDPROC ) platGetProcAddress( "glDrawElementsInstanced" ) ) != nullptr;
+			r &= ( glTexBuffer = ( PFNGLTEXBUFFERPROC ) platGetProcAddress( "glTexBuffer" ) ) != nullptr;
+			r &= ( glPrimitiveRestartIndex = ( PFNGLPRIMITIVERESTARTINDEXPROC ) platGetProcAddress( "glPrimitiveRestartIndex" ) ) != nullptr;
+			r &= ( glCopyBufferSubData = ( PFNGLCOPYBUFFERSUBDATAPROC ) platGetProcAddress( "glCopyBufferSubData" ) ) != nullptr;
+			r &= ( glGetUniformIndices = ( PFNGLGETUNIFORMINDICESPROC ) platGetProcAddress( "glGetUniformIndices" ) ) != nullptr;
+			r &= ( glGetActiveUniformsiv = ( PFNGLGETACTIVEUNIFORMSIVPROC ) platGetProcAddress( "glGetActiveUniformsiv" ) ) != nullptr;
+			r &= ( glGetActiveUniformName = ( PFNGLGETACTIVEUNIFORMNAMEPROC ) platGetProcAddress( "glGetActiveUniformName" ) ) != nullptr;
+			r &= ( glGetUniformBlockIndex = ( PFNGLGETUNIFORMBLOCKINDEXPROC ) platGetProcAddress( "glGetUniformBlockIndex" ) ) != nullptr;
+			r &= ( glGetActiveUniformBlockiv = ( PFNGLGETACTIVEUNIFORMBLOCKIVPROC ) platGetProcAddress( "glGetActiveUniformBlockiv" ) ) != nullptr;
+			r &= ( glGetActiveUniformBlockName = ( PFNGLGETACTIVEUNIFORMBLOCKNAMEPROC ) platGetProcAddress( "glGetActiveUniformBlockName" ) ) != nullptr;
+			r &= ( glUniformBlockBinding = ( PFNGLUNIFORMBLOCKBINDINGPROC ) platGetProcAddress( "glUniformBlockBinding" ) ) != nullptr;
+		}
 
 		// GL 3.2
-		r &= ( glDrawElementsBaseVertex = ( PFNGLDRAWELEMENTSBASEVERTEXPROC ) platGetProcAddress( "glDrawElementsBaseVertex" ) ) != nullptr;
-		r &= ( glDrawRangeElementsBaseVertex = ( PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC ) platGetProcAddress( "glDrawRangeElementsBaseVertex" ) ) != nullptr;
-		r &= ( glDrawElementsInstancedBaseVertex = ( PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC ) platGetProcAddress( "glDrawElementsInstancedBaseVertex" ) ) != nullptr;
-		r &= ( glMultiDrawElementsBaseVertex = ( PFNGLMULTIDRAWELEMENTSBASEVERTEXPROC ) platGetProcAddress( "glMultiDrawElementsBaseVertex" ) ) != nullptr;
-		r &= ( glProvokingVertex = ( PFNGLPROVOKINGVERTEXPROC ) platGetProcAddress( "glProvokingVertex" ) ) != nullptr;
-		r &= ( glFenceSync = ( PFNGLFENCESYNCPROC ) platGetProcAddress( "glFenceSync" ) ) != nullptr;
-		r &= ( glIsSync = ( PFNGLISSYNCPROC ) platGetProcAddress( "glIsSync" ) ) != nullptr;
-		r &= ( glDeleteSync = ( PFNGLDELETESYNCPROC ) platGetProcAddress( "glDeleteSync" ) ) != nullptr;
-		r &= ( glClientWaitSync = ( PFNGLCLIENTWAITSYNCPROC ) platGetProcAddress( "glClientWaitSync" ) ) != nullptr;
-		r &= ( glWaitSync = ( PFNGLWAITSYNCPROC ) platGetProcAddress( "glWaitSync" ) ) != nullptr;
-		r &= ( glGetInteger64v = ( PFNGLGETINTEGER64VPROC ) platGetProcAddress( "glGetInteger64v" ) ) != nullptr;
-		r &= ( glGetSynciv = ( PFNGLGETSYNCIVPROC ) platGetProcAddress( "glGetSynciv" ) ) != nullptr;
-		r &= ( glGetInteger64i_v = ( PFNGLGETINTEGER64I_VPROC ) platGetProcAddress( "glGetInteger64i_v" ) ) != nullptr;
-		r &= ( glGetBufferParameteri64v = ( PFNGLGETBUFFERPARAMETERI64VPROC ) platGetProcAddress( "glGetBufferParameteri64v" ) ) != nullptr;
-		r &= ( glFramebufferTexture = ( PFNGLFRAMEBUFFERTEXTUREPROC ) platGetProcAddress( "glFramebufferTexture" ) ) != nullptr;
-		r &= ( glTexImage2DMultisample = ( PFNGLTEXIMAGE2DMULTISAMPLEPROC ) platGetProcAddress( "glTexImage2DMultisample" ) ) != nullptr;
-		r &= ( glTexImage3DMultisample = ( PFNGLTEXIMAGE3DMULTISAMPLEPROC ) platGetProcAddress( "glTexImage3DMultisample" ) ) != nullptr;
-		r &= ( glGetMultisamplefv = ( PFNGLGETMULTISAMPLEFVPROC ) platGetProcAddress( "glGetMultisamplefv" ) ) != nullptr;
-		r &= ( glSampleMaski = ( PFNGLSAMPLEMASKIPROC ) platGetProcAddress( "glSampleMaski" ) ) != nullptr;
+		if ( glExt::majorVersion * 10 + glExt::minorVersion >= 32 )
+		{
+			r &= ( glDrawElementsBaseVertex = ( PFNGLDRAWELEMENTSBASEVERTEXPROC ) platGetProcAddress( "glDrawElementsBaseVertex" ) ) != nullptr;
+			r &= ( glDrawRangeElementsBaseVertex = ( PFNGLDRAWRANGEELEMENTSBASEVERTEXPROC ) platGetProcAddress( "glDrawRangeElementsBaseVertex" ) ) != nullptr;
+			r &= ( glDrawElementsInstancedBaseVertex = ( PFNGLDRAWELEMENTSINSTANCEDBASEVERTEXPROC ) platGetProcAddress( "glDrawElementsInstancedBaseVertex" ) ) != nullptr;
+			r &= ( glMultiDrawElementsBaseVertex = ( PFNGLMULTIDRAWELEMENTSBASEVERTEXPROC ) platGetProcAddress( "glMultiDrawElementsBaseVertex" ) ) != nullptr;
+			r &= ( glProvokingVertex = ( PFNGLPROVOKINGVERTEXPROC ) platGetProcAddress( "glProvokingVertex" ) ) != nullptr;
+			r &= ( glFenceSync = ( PFNGLFENCESYNCPROC ) platGetProcAddress( "glFenceSync" ) ) != nullptr;
+			r &= ( glIsSync = ( PFNGLISSYNCPROC ) platGetProcAddress( "glIsSync" ) ) != nullptr;
+			r &= ( glDeleteSync = ( PFNGLDELETESYNCPROC ) platGetProcAddress( "glDeleteSync" ) ) != nullptr;
+			r &= ( glClientWaitSync = ( PFNGLCLIENTWAITSYNCPROC ) platGetProcAddress( "glClientWaitSync" ) ) != nullptr;
+			r &= ( glWaitSync = ( PFNGLWAITSYNCPROC ) platGetProcAddress( "glWaitSync" ) ) != nullptr;
+			r &= ( glGetInteger64v = ( PFNGLGETINTEGER64VPROC ) platGetProcAddress( "glGetInteger64v" ) ) != nullptr;
+			r &= ( glGetSynciv = ( PFNGLGETSYNCIVPROC ) platGetProcAddress( "glGetSynciv" ) ) != nullptr;
+			r &= ( glGetInteger64i_v = ( PFNGLGETINTEGER64I_VPROC ) platGetProcAddress( "glGetInteger64i_v" ) ) != nullptr;
+			r &= ( glGetBufferParameteri64v = ( PFNGLGETBUFFERPARAMETERI64VPROC ) platGetProcAddress( "glGetBufferParameteri64v" ) ) != nullptr;
+			r &= ( glFramebufferTexture = ( PFNGLFRAMEBUFFERTEXTUREPROC ) platGetProcAddress( "glFramebufferTexture" ) ) != nullptr;
+			r &= ( glTexImage2DMultisample = ( PFNGLTEXIMAGE2DMULTISAMPLEPROC ) platGetProcAddress( "glTexImage2DMultisample" ) ) != nullptr;
+			r &= ( glTexImage3DMultisample = ( PFNGLTEXIMAGE3DMULTISAMPLEPROC ) platGetProcAddress( "glTexImage3DMultisample" ) ) != nullptr;
+			r &= ( glGetMultisamplefv = ( PFNGLGETMULTISAMPLEFVPROC ) platGetProcAddress( "glGetMultisamplefv" ) ) != nullptr;
+			r &= ( glSampleMaski = ( PFNGLSAMPLEMASKIPROC ) platGetProcAddress( "glSampleMaski" ) ) != nullptr;
+		}
 
 		// GL 3.3
-		r &= ( glBindFragDataLocationIndexed = ( PFNGLBINDFRAGDATALOCATIONINDEXEDPROC ) platGetProcAddress( "glBindFragDataLocationIndexed" ) ) != nullptr;
-		r &= ( glGetFragDataIndex = ( PFNGLGETFRAGDATAINDEXPROC ) platGetProcAddress( "glGetFragDataIndex" ) ) != nullptr;
-		r &= ( glGenSamplers = ( PFNGLGENSAMPLERSPROC ) platGetProcAddress( "glGenSamplers" ) ) != nullptr;
-		r &= ( glDeleteSamplers = ( PFNGLDELETESAMPLERSPROC ) platGetProcAddress( "glDeleteSamplers" ) ) != nullptr;
-		r &= ( glIsSampler = ( PFNGLISSAMPLERPROC ) platGetProcAddress( "glIsSampler" ) ) != nullptr;
-		r &= ( glBindSampler = ( PFNGLBINDSAMPLERPROC ) platGetProcAddress( "glBindSampler" ) ) != nullptr;
-		r &= ( glSamplerParameteri = ( PFNGLSAMPLERPARAMETERIPROC ) platGetProcAddress( "glSamplerParameteri" ) ) != nullptr;
-		r &= ( glSamplerParameteriv = ( PFNGLSAMPLERPARAMETERIVPROC ) platGetProcAddress( "glSamplerParameteriv" ) ) != nullptr;
-		r &= ( glSamplerParameterf = ( PFNGLSAMPLERPARAMETERFPROC ) platGetProcAddress( "glSamplerParameterf" ) ) != nullptr;
-		r &= ( glSamplerParameterfv = ( PFNGLSAMPLERPARAMETERFVPROC ) platGetProcAddress( "glSamplerParameterfv" ) ) != nullptr;
-		r &= ( glSamplerParameterIiv = ( PFNGLSAMPLERPARAMETERIIVPROC ) platGetProcAddress( "glSamplerParameterIiv" ) ) != nullptr;
-		r &= ( glSamplerParameterIuiv = ( PFNGLSAMPLERPARAMETERIUIVPROC ) platGetProcAddress( "glSamplerParameterIuiv" ) ) != nullptr;
-		r &= ( glGetSamplerParameteriv = ( PFNGLGETSAMPLERPARAMETERIVPROC ) platGetProcAddress( "glGetSamplerParameteriv" ) ) != nullptr;
-		r &= ( glGetSamplerParameterIiv = ( PFNGLGETSAMPLERPARAMETERIIVPROC ) platGetProcAddress( "glGetSamplerParameterIiv" ) ) != nullptr;
-		r &= ( glGetSamplerParameterfv = ( PFNGLGETSAMPLERPARAMETERFVPROC ) platGetProcAddress( "glGetSamplerParameterfv" ) ) != nullptr;
-		r &= ( glGetSamplerParameterIuiv = ( PFNGLGETSAMPLERPARAMETERIUIVPROC ) platGetProcAddress( "glGetSamplerParameterIuiv" ) ) != nullptr;
-		r &= ( glQueryCounter = ( PFNGLQUERYCOUNTERPROC ) platGetProcAddress( "glQueryCounter" ) ) != nullptr;
-		r &= ( glGetQueryObjecti64v = ( PFNGLGETQUERYOBJECTI64VPROC ) platGetProcAddress( "glGetQueryObjecti64v" ) ) != nullptr;
-		r &= ( glGetQueryObjectui64v = ( PFNGLGETQUERYOBJECTUI64VPROC ) platGetProcAddress( "glGetQueryObjectui64v" ) ) != nullptr;
-		r &= ( glVertexAttribDivisor = ( PFNGLVERTEXATTRIBDIVISORPROC ) platGetProcAddress( "glVertexAttribDivisor" ) ) != nullptr;
-		r &= ( glVertexAttribP1ui = ( PFNGLVERTEXATTRIBP1UIPROC ) platGetProcAddress( "glVertexAttribP1ui" ) ) != nullptr;
-		r &= ( glVertexAttribP1uiv = ( PFNGLVERTEXATTRIBP1UIVPROC ) platGetProcAddress( "glVertexAttribP1uiv" ) ) != nullptr;
-		r &= ( glVertexAttribP2ui = ( PFNGLVERTEXATTRIBP2UIPROC ) platGetProcAddress( "glVertexAttribP2ui" ) ) != nullptr;
-		r &= ( glVertexAttribP2uiv = ( PFNGLVERTEXATTRIBP2UIVPROC ) platGetProcAddress( "glVertexAttribP2uiv" ) ) != nullptr;
-		r &= ( glVertexAttribP3ui = ( PFNGLVERTEXATTRIBP3UIPROC ) platGetProcAddress( "glVertexAttribP3ui" ) ) != nullptr;
-		r &= ( glVertexAttribP3uiv = ( PFNGLVERTEXATTRIBP3UIVPROC ) platGetProcAddress( "glVertexAttribP3uiv" ) ) != nullptr;
-		r &= ( glVertexAttribP4ui = ( PFNGLVERTEXATTRIBP4UIPROC ) platGetProcAddress( "glVertexAttribP4ui" ) ) != nullptr;
-		r &= ( glVertexAttribP4uiv = ( PFNGLVERTEXATTRIBP4UIVPROC ) platGetProcAddress( "glVertexAttribP4uiv" ) ) != nullptr;
-
+		if ( glExt::majorVersion * 10 + glExt::minorVersion >= 33 )
+		{
+			r &= ( glBindFragDataLocationIndexed = ( PFNGLBINDFRAGDATALOCATIONINDEXEDPROC ) platGetProcAddress( "glBindFragDataLocationIndexed" ) ) != nullptr;
+			r &= ( glGetFragDataIndex = ( PFNGLGETFRAGDATAINDEXPROC ) platGetProcAddress( "glGetFragDataIndex" ) ) != nullptr;
+			r &= ( glGenSamplers = ( PFNGLGENSAMPLERSPROC ) platGetProcAddress( "glGenSamplers" ) ) != nullptr;
+			r &= ( glDeleteSamplers = ( PFNGLDELETESAMPLERSPROC ) platGetProcAddress( "glDeleteSamplers" ) ) != nullptr;
+			r &= ( glIsSampler = ( PFNGLISSAMPLERPROC ) platGetProcAddress( "glIsSampler" ) ) != nullptr;
+			r &= ( glBindSampler = ( PFNGLBINDSAMPLERPROC ) platGetProcAddress( "glBindSampler" ) ) != nullptr;
+			r &= ( glSamplerParameteri = ( PFNGLSAMPLERPARAMETERIPROC ) platGetProcAddress( "glSamplerParameteri" ) ) != nullptr;
+			r &= ( glSamplerParameteriv = ( PFNGLSAMPLERPARAMETERIVPROC ) platGetProcAddress( "glSamplerParameteriv" ) ) != nullptr;
+			r &= ( glSamplerParameterf = ( PFNGLSAMPLERPARAMETERFPROC ) platGetProcAddress( "glSamplerParameterf" ) ) != nullptr;
+			r &= ( glSamplerParameterfv = ( PFNGLSAMPLERPARAMETERFVPROC ) platGetProcAddress( "glSamplerParameterfv" ) ) != nullptr;
+			r &= ( glSamplerParameterIiv = ( PFNGLSAMPLERPARAMETERIIVPROC ) platGetProcAddress( "glSamplerParameterIiv" ) ) != nullptr;
+			r &= ( glSamplerParameterIuiv = ( PFNGLSAMPLERPARAMETERIUIVPROC ) platGetProcAddress( "glSamplerParameterIuiv" ) ) != nullptr;
+			r &= ( glGetSamplerParameteriv = ( PFNGLGETSAMPLERPARAMETERIVPROC ) platGetProcAddress( "glGetSamplerParameteriv" ) ) != nullptr;
+			r &= ( glGetSamplerParameterIiv = ( PFNGLGETSAMPLERPARAMETERIIVPROC ) platGetProcAddress( "glGetSamplerParameterIiv" ) ) != nullptr;
+			r &= ( glGetSamplerParameterfv = ( PFNGLGETSAMPLERPARAMETERFVPROC ) platGetProcAddress( "glGetSamplerParameterfv" ) ) != nullptr;
+			r &= ( glGetSamplerParameterIuiv = ( PFNGLGETSAMPLERPARAMETERIUIVPROC ) platGetProcAddress( "glGetSamplerParameterIuiv" ) ) != nullptr;
+			r &= ( glQueryCounter = ( PFNGLQUERYCOUNTERPROC ) platGetProcAddress( "glQueryCounter" ) ) != nullptr;
+			r &= ( glGetQueryObjecti64v = ( PFNGLGETQUERYOBJECTI64VPROC ) platGetProcAddress( "glGetQueryObjecti64v" ) ) != nullptr;
+			r &= ( glGetQueryObjectui64v = ( PFNGLGETQUERYOBJECTUI64VPROC ) platGetProcAddress( "glGetQueryObjectui64v" ) ) != nullptr;
+			r &= ( glVertexAttribDivisor = ( PFNGLVERTEXATTRIBDIVISORPROC ) platGetProcAddress( "glVertexAttribDivisor" ) ) != nullptr;
+			r &= ( glVertexAttribP1ui = ( PFNGLVERTEXATTRIBP1UIPROC ) platGetProcAddress( "glVertexAttribP1ui" ) ) != nullptr;
+			r &= ( glVertexAttribP1uiv = ( PFNGLVERTEXATTRIBP1UIVPROC ) platGetProcAddress( "glVertexAttribP1uiv" ) ) != nullptr;
+			r &= ( glVertexAttribP2ui = ( PFNGLVERTEXATTRIBP2UIPROC ) platGetProcAddress( "glVertexAttribP2ui" ) ) != nullptr;
+			r &= ( glVertexAttribP2uiv = ( PFNGLVERTEXATTRIBP2UIVPROC ) platGetProcAddress( "glVertexAttribP2uiv" ) ) != nullptr;
+			r &= ( glVertexAttribP3ui = ( PFNGLVERTEXATTRIBP3UIPROC ) platGetProcAddress( "glVertexAttribP3ui" ) ) != nullptr;
+			r &= ( glVertexAttribP3uiv = ( PFNGLVERTEXATTRIBP3UIVPROC ) platGetProcAddress( "glVertexAttribP3uiv" ) ) != nullptr;
+			r &= ( glVertexAttribP4ui = ( PFNGLVERTEXATTRIBP4UIPROC ) platGetProcAddress( "glVertexAttribP4ui" ) ) != nullptr;
+			r &= ( glVertexAttribP4uiv = ( PFNGLVERTEXATTRIBP4UIVPROC ) platGetProcAddress( "glVertexAttribP4uiv" ) ) != nullptr;
+		}
 	}
 	
 	// GL 4.0 - GL 4.4
-	if ( glExt::majorVersion >= 4 && !forceLegacyFuncs )
+	if ( glExt::majorVersion >= 4 )
 	{
 		// GL 4.0
 		r &= ( glMinSampleShading = ( PFNGLMINSAMPLESHADINGPROC ) platGetProcAddress( "glMinSampleShading" ) ) != nullptr;
