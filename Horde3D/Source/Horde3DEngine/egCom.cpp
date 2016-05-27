@@ -41,6 +41,7 @@ EngineConfig::EngineConfig()
 	debugViewMode = false;
 	dumpFailedShaders = false;
 	gatherTimeStats = true;
+	dumpShaderFile = true;
 }
 
 
@@ -76,6 +77,8 @@ float EngineConfig::getOption( EngineOptions::List param )
 		return dumpFailedShaders ? 1.0f : 0.0f;
 	case EngineOptions::GatherTimeStats:
 		return gatherTimeStats ? 1.0f : 0.0f;
+	case EngineOptions::DumpShaderFile:
+		return dumpShaderFile ? 1.0:0.0f;
 	default:
 		Modules::setError( "Invalid param for h3dGetOption" );
 		return Math::NaN;

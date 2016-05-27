@@ -45,7 +45,8 @@ struct EngineOptions
 		WireframeMode,
 		DebugViewMode,
 		DumpFailedShaders,
-		GatherTimeStats
+		GatherTimeStats,
+		DumpShaderFile
 	};
 };
 
@@ -73,6 +74,7 @@ public:
 	bool  debugViewMode;
 	bool  dumpFailedShaders;
 	bool  gatherTimeStats;
+	bool  dumpShaderFile;  // 是否输出shader文件,便于查看
 };
 
 
