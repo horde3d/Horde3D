@@ -18,7 +18,6 @@ set(HORDE3D_SOURCES
 	egParticle.cpp
 	egPipeline.cpp
 	egPrimitives.cpp
-	egRendererBase.cpp
 	egRendererBaseGL2.cpp
 	egRendererBaseGL4.cpp
 	egRenderer.cpp
