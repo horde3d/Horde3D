@@ -21,9 +21,6 @@
 
 namespace Horde3D {
 
-const uint32 MaxNumVertexLayouts = 16;
-
-
 // =================================================================================================
 
 // Using the SFINAE (Substitution Failure Is Not An Error) technique,
@@ -512,6 +509,7 @@ private:
 	CreateMemberFunctionChecker( bindShader );
 	CreateMemberFunctionChecker( getShaderConstLoc );
 	CreateMemberFunctionChecker( getShaderSamplerLoc );
+	CreateMemberFunctionChecker( runComputeShader );
 	CreateMemberFunctionChecker( setShaderConst );
 	CreateMemberFunctionChecker( setShaderSampler );
 	CreateMemberFunctionChecker( getDefaultVSCode );
@@ -569,6 +567,7 @@ private:
 	typedef void( *PFN_BINDSHADER )( void* const, uint32 shaderId );
 	typedef int( *PFN_GETSHADERCONSTLOC )( void* const, uint32 shaderId, const char *name );
 	typedef int( *PFN_GETSHADERSAMPLERLOC )( void* const, uint32 shaderId, const char *name );
+	typedef void( *PFN_RUNCOMPUTESHADER )( void* const, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim );
 	typedef void( *PFN_SETSHADERCONST )( void* const, int loc, RDIShaderConstType type, void *values, uint32 count );
 	typedef void( *PFN_SETSHADERSAMPLER )( void* const, int loc, uint32 texUnit );
 	typedef const char*( *PFN_GETDEFAULTVSCODE )( void* const );
@@ -623,6 +622,7 @@ private:
 	PFN_BINDSHADER				_pfnBindShader;
 	PFN_GETSHADERCONSTLOC		_pfnGetShaderConstLoc;
 	PFN_GETSHADERSAMPLERLOC		_pfnGetShaderSamplerLoc;
+	PFN_RUNCOMPUTESHADER		_pfnRunComputeShader;
 	PFN_SETSHADERCONST			_pfnSetShaderConst;
 	PFN_SETSHADERSAMPLER		_pfnSetShaderSampler;
 	PFN_GETDEFAULTVSCODE		_pfnGetDefaultVSCode;
@@ -797,6 +797,12 @@ private:
 	}
 
 	template<typename T>
+	static void				 runComputeShader_Invoker( void* const pObj, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+	{
+		static_cast< T* >( pObj )->runComputeShader( shaderId, xDim, yDim, zDim );
+	}
+
+	template<typename T>
 	static void				 setShaderConst_Invoker( void* const pObj, int loc, RDIShaderConstType type, void *values, uint32 count )
 	{
 		static_cast< T* >( pObj )->setShaderConst( loc, type, values, count );
@@ -958,6 +964,7 @@ protected:
 		CheckMemberFunction( bindShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( getShaderConstLoc, int( T::* )( uint32, const char * ) );
 		CheckMemberFunction( getShaderSamplerLoc, int( T::* )( uint32, const char * ) );
+		CheckMemberFunction( runComputeShader, void( T::* )( uint32, uint32, uint32, uint32 ) );
 		CheckMemberFunction( setShaderConst, void( T::* )( int, RDIShaderConstType, void *, uint32 ) );
 		CheckMemberFunction( setShaderSampler, void( T::* )( int, uint32 ) );
 		CheckMemberFunction( getDefaultVSCode, const char *( T::* )() );
@@ -1005,6 +1012,7 @@ protected:
 		_pfnBindShader = ( PFN_BINDSHADER ) &bindShader_Invoker < T > ;
 		_pfnGetShaderConstLoc = ( PFN_GETSHADERCONSTLOC ) &getShaderConstLoc_Invoker < T > ;
 		_pfnGetShaderSamplerLoc = ( PFN_GETSHADERSAMPLERLOC ) &getShaderSamplerLoc_Invoker < T > ;
+		_pfnRunComputeShader = ( PFN_RUNCOMPUTESHADER ) &runComputeShader_Invoker < T > ;
 		_pfnSetShaderConst = ( PFN_SETSHADERCONST ) &setShaderConst_Invoker < T > ;
 		_pfnSetShaderSampler = ( PFN_SETSHADERSAMPLER ) &setShaderSampler_Invoker < T > ;
 		_pfnGetDefaultVSCode = ( PFN_GETDEFAULTVSCODE ) &getDefaultVSCode_Invoker < T > ;
@@ -1186,6 +1194,10 @@ public:
 	const char *getDefaultFSCode()  
 	{ 
 		return ( *_pfnGetDefaultFSCode ) ( this ); 
+	}
+	void runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+	{
+		( *_pfnRunComputeShader ) ( this, shaderId, xDim, yDim, zDim );
 	}
 
 	// Renderbuffers

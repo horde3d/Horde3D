@@ -185,7 +185,7 @@ bool Renderer::init( RenderBackendType::List type )
 	// Create index buffer used for drawing overlay quads
 	_overlayGeo = _renderDevice->beginCreatingGeometry( _vlOverlay );
 
-	uint16 *quadIndices = new uint16[QuadIndexBufCount];
+	uint16 *quadIndices = new uint16[ QuadIndexBufCount ];
 	for( uint32 i = 0; i < QuadIndexBufCount / 6; ++i )
 	{
 		quadIndices[i*6+0] = i * 4 + 0; quadIndices[i*6+1] = i * 4 + 1; quadIndices[i*6+2] = i * 4 + 2;
@@ -1573,6 +1573,14 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 	}
 }
 
+void Renderer::dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z )
+{
+	if ( !setMaterial( materialRes, context ) ) return;
+
+	ShaderCombination *curShader = Modules::renderer().getCurShader();
+
+	_renderDevice->runComputeShader( curShader->shaderObj, groups_x, groups_y, groups_z );
+}
 
 // =================================================================================================
 // Scene Node Rendering Functions
@@ -2086,6 +2094,11 @@ void Renderer::render( CameraNode *camNode )
 				drawLightShapes( pc.params[0].getString(), pc.params[1].getBool(), _curCamera->_occSet );
 				break;
 
+			case PipelineCommands::DispatchComputeShader:
+				dispatchCompute( ( ( MaterialResource * ) pc.params[ 0 ].getResource() ), pc.params[ 1 ].getString(), 
+								 pc.params[ 1 ].getInt(), pc.params[ 2 ].getInt() , pc.params[ 3 ].getInt() );
+				break;
+
 			case PipelineCommands::SetUniform:
 				if( pc.params[0].getResource() && pc.params[0].getResource()->getType() == ResourceTypes::Material )
 				{
@@ -2183,5 +2196,6 @@ void Renderer::finishRendering()
 	setMaterial( 0x0, "" );
 	_renderDevice->resetStates();
 }
+
 
 }  // namespace

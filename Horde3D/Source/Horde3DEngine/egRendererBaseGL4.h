@@ -22,7 +22,7 @@
 namespace Horde3D {
 namespace RDI_GL4 {
 
-//const uint32 MaxNumVertexLayouts = 16;
+const uint32 MaxNumVertexLayouts = 32;
 
 
 // =================================================================================================
@@ -211,6 +211,7 @@ public:
 	void setShaderSampler( int loc, uint32 texUnit );
 	const char *getDefaultVSCode();
 	const char *getDefaultFSCode();
+	void runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim );
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
@@ -366,7 +367,7 @@ protected:
 	RDIObjects< RDIRenderBufferGL4 >  _rendBufs;
 	RDIObjects< RDIGeometryInfoGL4 >  _vaos;
 
-	RDIGeometryInfoGL4				  _tempGeometry;
+//	RDIGeometryInfoGL4				  _tempGeometry;
 
 // 	RDIVertBufSlotGL4        _vertBufSlots[16];
 // 	RDITexSlotGL4            _texSlots[16];

@@ -53,6 +53,7 @@ struct PipelineCommands
 		DrawQuad,
 		DoForwardLightLoop,
 		DoDeferredLightLoop,
+		DispatchComputeShader,
 		SetUniform
 	};
 };

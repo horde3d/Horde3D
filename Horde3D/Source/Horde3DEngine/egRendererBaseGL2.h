@@ -26,7 +26,7 @@ namespace Horde3D {
 namespace RDI_GL2 {
 
 
-//const uint32 MaxNumVertexLayouts = 16;
+const uint32 MaxNumVertexLayouts = 16;
 
 
 // =================================================================================================
@@ -248,6 +248,7 @@ public:
 	void setShaderSampler( int loc, uint32 texUnit );
 	const char *getDefaultVSCode();
 	const char *getDefaultFSCode();
+	void runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim );
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,

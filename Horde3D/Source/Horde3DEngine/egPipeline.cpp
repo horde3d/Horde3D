@@ -231,6 +231,26 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			params[0].setString( node1.getAttribute( "context", "" ) );
 			params[1].setBool( _stricmp( node1.getAttribute( "noShadows", "false" ), "true" ) == 0 );
 		}
+		else if ( strcmp( node1.getName(), "DispatchComputeShader" ) == 0 )
+		{
+			if ( !node1.getAttribute( "material" ) ) return "Missing DispatchComputeShader attribute 'material'";
+			if ( !node1.getAttribute( "context" ) ) return "Missing DispatchComputeShader attribute 'context'";
+			if ( !node1.getAttribute( "x" ) ) return "Missing DispatchComputeShader attribute 'x'";
+			if ( !node1.getAttribute( "y" ) ) return "Missing DispatchComputeShader attribute 'y'";
+			if ( !node1.getAttribute( "z" ) ) return "Missing DispatchComputeShader attribute 'z'";
+
+			uint32 matRes = Modules::resMan().addResource(
+				ResourceTypes::Material, node1.getAttribute( "material" ), 0, false );
+
+			stage.commands.push_back( PipelineCommand( PipelineCommands::DispatchComputeShader ) );
+			vector< PipeCmdParam > &params = stage.commands.back().params;
+			params.resize( 5 );
+			params[ 0 ].setResource( Modules::resMan().resolveResHandle( matRes ) );
+			params[ 1 ].setString( node1.getAttribute( "context", "" ) );
+			params[ 2 ].setInt( atoi( node1.getAttribute( "x", "0" ) ) );
+			params[ 3 ].setInt( atoi( node1.getAttribute( "y", "0" ) ) );
+			params[ 4 ].setInt( atoi( node1.getAttribute( "z", "0" ) ) );
+		}
 		else if( strcmp( node1.getName(), "SetUniform" ) == 0 )
 		{
 			if( !node1.getAttribute( "material" ) ) return "Missing SetUniform attribute 'material'";

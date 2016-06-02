@@ -876,6 +876,16 @@ const char *RenderDeviceGL2::getDefaultFSCode()
 }
 
 
+void RenderDeviceGL2::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+{
+	H3D_UNUSED_VAR( shaderId );
+	H3D_UNUSED_VAR( xDim );
+	H3D_UNUSED_VAR( yDim );
+	H3D_UNUSED_VAR( zDim );
+
+	Modules::log().writeError( "Compute shaders are not supported on OpenGL 2 render device." );
+}
+
 // =================================================================================================
 // Renderbuffers
 // =================================================================================================

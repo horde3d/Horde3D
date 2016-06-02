@@ -450,7 +450,7 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 
 	glBindBuffer( buf.type, buf.glObj );
 	
-	if( offset == 0 &&  size == buf.size )
+	if( offset == 0 && size == buf.size )
 	{
 		// Replacing the whole buffer can help the driver to avoid pipeline stalls
 		glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
@@ -460,7 +460,12 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 
 		return;
 	}
+	
+//	void *bufMem = glMapBufferRange( buf.type, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
 
+// 	memcpy( bufMem, data, size );
+// 
+// 	glUnmapBuffer( buf.type );
 	glBufferSubData( buf.type, offset, size, data );
 
 // 	glBindBuffer( buf.type, 0 );
@@ -1071,6 +1076,13 @@ const char *RenderDeviceGL4::getDefaultFSCode()
 	return defaultShaderFS;
 }
 
+
+void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+{
+	bindShader( shaderId );
+
+	glDispatchCompute( xDim, yDim, zDim );
+}
 
 // =================================================================================================
 // Renderbuffers
