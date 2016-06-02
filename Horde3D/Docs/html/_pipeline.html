@@ -27,7 +27,7 @@ Horde is heavily based on shaders which are small programs that are executed on 
 of the hardware pipeline. Horde uses vertex and fragment shaders. Vertex shaders influence directly the geometry
 which is rendered and determine e.g. the position and texture coordinates of the vertices. The fragment shaders
 are used for calculating the pixel colors in the rasterization process. Shader code in Horde is specified in the
-OpenGL Shading Language (GLSL). The engine has a XML based shader format which makes it possible to define different
+OpenGL Shading Language (GLSL). The engine has a text based shader format which makes it possible to define different
 contexts. A context of a Horde shader is defined for a situation in the rendering process where the shader is executed.
 For example, a shader usually has a shadowmap context which is used when shadows are generated and a lighting context
 which is responsible for interactions of an object with light sources. For the rendering process shaders usually
@@ -393,12 +393,13 @@ rendering technique which should be used for the current draw call.</p>
         &lt;Stage id="Lighting"&gt;
             &lt;SwitchTarget target="" /&gt;
             &lt;ClearTarget colBuf0="true" /&gt;
-            &lt;BindBuffer texUnit="8" target="GBUFFER" bufIndex="0" /&gt;
-            &lt;BindBuffer texUnit="9" target="GBUFFER" bufIndex="1" /&gt;
-            &lt;BindBuffer texUnit="10" target="GBUFFER" bufIndex="2" /&gt;
+            &lt;BindBuffer sampler="gbuf0" sourceRT="GBUFFER" bufIndex="0" /&gt;
+            &lt;BindBuffer sampler="gbuf1" sourceRT="GBUFFER" bufIndex="1" /&gt;
+            &lt;BindBuffer sampler="gbuf2" sourceRT="GBUFFER" bufIndex="2" /&gt;
 			
             &lt;DrawQuad material="light.material.xml" context="AMBIENT" /&gt;
             &lt;DoDeferredLightLoop /&gt;
+            &lt;UnbindBuffers /&gt;
         &lt;/Stage&gt;
 		
         &lt;Stage id="Overlays"&gt;
@@ -417,15 +418,15 @@ sections: one FX section and an arbitrary number of named code sections. A secti
 <b>[[<i>id</i>]]</b> where <i>id</i> is a unique identifier used as name of the section. A special identifier is
 <b>FX</b> which introduces an FX section.</p>
 
-<p>Horde3D supports übershaders using static branching (compiler defines) and can automatically compile different
+<p>Horde3D supports Ubershaders using static branching (compiler defines) and can automatically compile different
 shader combinations based on a set of given shader flags. This approach helps to solve a common problem:
 imagine you have one shader that does skinning and one that does parallax mapping. Now you want a shader that does
 both. Usually you would have to create a new shader file which combines the code of the two other shaders. It
 is quite obvious that you can quickly get many permutations of features and that writing different shader
-files for them can become very tedious or even unmanagable. With the help of übershaders, the shader creation workflow can
+files for them can become very tedious or even unmanagable. With the help of Ubershaders, the shader creation workflow can
 be greatly simplified. You just need one shader file where the features are exposed with compiler defines. A feature
 is enabled by setting the corresponding flag (e.g. in a material file). Horde3D can check automatically if a
-desired combination is not yet existing and will compile it on the fly. Please note, even though übershaders are
+desired combination is not yet existing and will compile it on the fly. Please note, even though Ubershaders are
 a powerful feature, they need to be used with care since it is easy to generate a huge number of combinations which
 would take a long time to load.</p>
 
@@ -445,8 +446,40 @@ For example, a uniform could store a minimum and maximum value range. It is sugg
 the form required by CgFX, hence <i>datatype identifier = value;</i> However, this is not a requirement since
 annotations are just skipped by Horde's parser.</p>
 
+<p>It is possible to specify different parameters for specific render interfaces (currently only contexts can be redefined).
+If render interface tag is not found, parameter is shared for all render interfaces. In case of contexts <b>OpenGL 2 
+render device is used</b> by default. </p>
+<p>Supported render interfaces:</p>
+<div class="descbox">
+<table>
+	<tr><td><b>OpenGL2</b> - default render interface (no tag required)</td></tr>
+	<tr><td><b>OpenGL4</b></td></tr>
+</table>
+</div>
+
+<h4>Sample showing use of render interface tag</h4>
+<div class="codebox">
+<pre>
+context AMBIENT
+{
+    VertexShader = compile GLSL VS_GENERAL;
+    PixelShader = compile GLSL FS_AMBIENT;
+}
+
+OpenGL4
+{
+    context AMBIENT
+    {
+        VertexShader = compile GLSL VS_GENERAL_GL4;
+        PixelShader = compile GLSL FS_AMBIENT_GL4;
+    }
+}
+</pre>
+</div>>
+
 <p>The following syntax is supported. Optional elements are put in square brackets and default values are
 highlighted as bold. Alternative values are separated by a slash.</p>
+
 <div class="descbox">
 <table>
 	<tr><td><b>sampler2D</b> / <b>samplerCube</b> [< annotation(s) >] <b>id</b></td></tr>
@@ -489,6 +522,10 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 	<tr><td>{</td></tr>
 	<tr><td>VertexShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
 	<tr><td>PixelShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
+	<tr><td>GeometryShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
+	<tr><td>ComputeShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
+	<tr><td>TessEvalShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
+	<tr><td>TessControlShader <b>= compile GLSL</b> <i>codesection</i> <b>;</b></td></tr>
 	<tr><td>[ ZWriteEnable <b>=</b> false / <b>true</b> <b>;</b> ]</td></tr>
 	<tr><td>[ ZEnable <b>=</b> <b>true</b> / false <b>;</b> ]</td></tr>
 	<tr><td>[ ZFunc <b>=</b> Always / Equal / Less / <b>LessEqual</b> / Greater / GreaterEqual <b>;</b> ]</td></tr>
@@ -502,6 +539,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 <p><b>Remarks:</b></p>
 <ul>
 <li>Shaders reference a code section that must be defined in the same FX file</li>
+<li>Geometry, compute and tesselation shaders are available only for OpenGL4 render interface</li>
 </ul>
 
 
@@ -672,9 +710,9 @@ rendering emitters.</p>
         <td>custom per-instance node data; only available for models</td>
     </tr>
 	<tr>
-        <td><b>uniform vec4 skinMatRows[75*3]</b></td>
+        <td><b>uniform vec4 skinMatRows[i*3]</b></td>
         <td>first three rows of skinning matrices for skeletal animation;
-			fourth row is always <i>(0, 0, 0, 1)</i>; only available for models</td>
+			fourth row is always <i>(0, 0, 0, 1)</i>; only available for models. For OpenGL2 i = 75, for OpenGL4 i = 330.</td>
     </tr>
 </table>
 </div>
