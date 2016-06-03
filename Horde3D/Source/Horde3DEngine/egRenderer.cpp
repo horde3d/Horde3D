@@ -2095,8 +2095,11 @@ void Renderer::render( CameraNode *camNode )
 				break;
 
 			case PipelineCommands::DispatchComputeShader:
-				dispatchCompute( ( ( MaterialResource * ) pc.params[ 0 ].getResource() ), pc.params[ 1 ].getString(), 
-								 pc.params[ 1 ].getInt(), pc.params[ 2 ].getInt() , pc.params[ 3 ].getInt() );
+				if ( pc.params[ 0 ].getResource() && pc.params[ 0 ].getResource()->getType() == ResourceTypes::Material )
+				{
+					dispatchCompute( ( ( MaterialResource * ) pc.params[ 0 ].getResource() ), pc.params[ 1 ].getString(),
+									 pc.params[ 1 ].getInt(), pc.params[ 2 ].getInt(), pc.params[ 3 ].getInt() );
+				}
 				break;
 
 			case PipelineCommands::SetUniform:
