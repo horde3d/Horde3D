@@ -933,7 +933,7 @@ void ShaderResource::preLoadCombination( uint32 combMask )
 }
 
 
-void ShaderResource::compileCombination( ShaderContext &context, ShaderCombination &sc )
+bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombination &sc )
 {
 	uint32 combMask = sc.combMask;
 	
@@ -1101,6 +1101,8 @@ void ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	// Output shader log
 	if( rdi->getShaderLog() != "" )
 		Modules::log().writeInfo( "Shader resource '%s': ShaderLog: %s", _name.c_str(), rdi->getShaderLog().c_str() );
+
+	return compiled;
 }
 
 
@@ -1149,12 +1151,13 @@ void ShaderResource::compileContexts()
 			}
 		}
 			
+		bool combinationsCompileStatus = true;
 		for( size_t j = 0; j < context.shaderCombs.size(); ++j )
 		{
-			compileCombination( context, context.shaderCombs[j] );
+			combinationsCompileStatus &= compileCombination( context, context.shaderCombs[j] );
 		}
 
-		context.compiled = true;
+		context.compiled = combinationsCompileStatus;
 	}
 }
 

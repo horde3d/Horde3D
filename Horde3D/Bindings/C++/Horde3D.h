@@ -64,8 +64,8 @@ struct H3DRenderDevice
 	/* Enum: H3DRenderDevice
 	The available engine Renderer backends.
 
-	OpenGL2				- force OpenGL 2 renderer backend
-	OpenGL4				- use OpenGL 4 as renderer backend
+	OpenGL2				- use OpenGL 2 as renderer backend (can be used to force OpenGL 2 when higher version is undesirable)
+	OpenGL4				- use OpenGL 4 as renderer backend (falls back to OpenGL 2 in case of error)
 	*/
 	enum List
 	{

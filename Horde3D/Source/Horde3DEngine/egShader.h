@@ -246,7 +246,7 @@ private:
 
 	bool parseFXSectionContext( Tokenizer &tok, const char * identifier, int targetRenderBackend );
 
-	void compileCombination( ShaderContext &context, ShaderCombination &sc );
+	bool compileCombination( ShaderContext &context, ShaderCombination &sc );
 	
 private:
 	static std::string            _vertPreamble, _fragPreamble, _geomPreamble, _tessPreamble, _computePreamble;
