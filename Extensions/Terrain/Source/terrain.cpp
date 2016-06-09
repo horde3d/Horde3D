@@ -38,10 +38,31 @@ const char *vsTerrainDebugView =
 	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
 	"}";
 
+const char *vsTerrainDebugViewGL4 =
+	"#version 330\n"
+	"uniform mat4 viewProjMat;\n"
+	"uniform mat4 worldMat;\n"
+	"uniform vec4 terBlockParams;\n"
+	"layout(location = 0) in vec3 vertPos;\n"
+	"layout(location = 1) in float terHeight;\n"
+	"void main() {\n"
+	"	gl_Position = viewProjMat * worldMat *"
+	"		vec4( vertPos.x * terBlockParams.z + terBlockParams.x, terHeight, "
+	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
+	"}";
+
 const char *fsTerrainDebugView =
 	"uniform vec4 color;\n"
 	"void main() {\n"
 	"	gl_FragColor = color;\n"
+	"}\n";
+
+const char *fsTerrainDebugViewGL4 =
+	"#version 330\n"
+	"uniform vec4 color;\n"
+	"out vec4 fragColor;\n"
+	"void main() {\n"
+	"	fragColor = color;\n"
 	"}\n";
 
 uint32 TerrainNode::vlTerrain;
@@ -52,7 +73,7 @@ TerrainNode::TerrainNode( const TerrainNodeTpl &terrainTpl ) :
 	SceneNode( terrainTpl ), _materialRes( terrainTpl.matRes ), _blockSize( terrainTpl.blockSize ),
 	_skirtHeight( terrainTpl.skirtHeight ), _lodThreshold( 1.0f / terrainTpl.meshQuality ),
 	_hmapSize( 0 ), _heightData( 0x0 ), _maxLevel( 0 ), _heightArray( 0x0 ), _vertexBuffer( 0 ),
-	_indexBuffer( 0 )
+	_indexBuffer( 0 ), _geometry( 0 )
 {
 	_renderable = true;
 	if( terrainTpl.hmapRes != 0x0 ) updateHeightData( *terrainTpl.hmapRes );

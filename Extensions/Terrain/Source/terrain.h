@@ -29,6 +29,9 @@ const int SNT_TerrainNode = 100;
 extern const char *vsTerrainDebugView;
 extern const char *fsTerrainDebugView;	
 
+extern const char *vsTerrainDebugViewGL4;
+extern const char *fsTerrainDebugViewGL4;
+
 struct TerrainNodeTpl : public SceneNodeTpl
 {
 	PTextureResource   hmapRes;
