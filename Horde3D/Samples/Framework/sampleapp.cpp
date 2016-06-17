@@ -5,7 +5,7 @@
 //
 // Sample Framework
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -589,8 +589,8 @@ bool SampleApplication::init()
     glfwWindowHint( GLFW_ALPHA_BITS, 8 );
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
- 	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
- 	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
+ 	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+ 	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1 );
 	glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
     if ( _winFullScreen ) {
