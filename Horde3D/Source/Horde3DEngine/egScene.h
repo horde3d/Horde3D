@@ -114,6 +114,9 @@ public:
 	virtual void setParamStr( int param, const char* value );
 
 	virtual uint32 calcLodLevel( const Vec3f &viewPoint ) const;
+	virtual bool checkLodCorrectness( uint32 lodLevel ) const;
+
+	bool checkLodSupport() { return _lodSupported; }
 
 	virtual bool canAttach( SceneNode &parent ) const;
 	void markDirty();
@@ -145,7 +148,12 @@ protected:
 
 protected:
 	Matrix4f                    _relTrans, _absTrans;  // Transformation matrices
+	std::vector< SceneNode * >  _children;  // Child nodes
+	std::string                 _name;
+	std::string                 _attachment;  // User defined data
+	BoundingBox                 _bBox;  // AABB in world space
 	SceneNode                   *_parent;  // Parent node
+
 	int                         _type;
 	NodeHandle                  _handle;
 	uint32                      _sgHandle;  // Spatial graph handle
@@ -154,12 +162,8 @@ protected:
 	bool                        _dirty;  // Does the node need to be updated?
 	bool                        _transformed;
 	bool                        _renderable;
+	bool						_lodSupported;
 
-	BoundingBox                 _bBox;  // AABB in world space
-
-	std::vector< SceneNode * >  _children;  // Child nodes
-	std::string                 _name;
-	std::string                 _attachment;  // User defined data
 
 	friend class SceneManager;
 	friend class SpatialGraph;

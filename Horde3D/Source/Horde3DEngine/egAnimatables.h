@@ -76,6 +76,9 @@ public:
 	int getParamI( int param ) const;
 	void setParamI( int param, int value );
 	bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
+	
+	uint32 calcLodLevel( const Vec3f &viewPoint ) const;
+	bool checkLodCorrectness( uint32 lodLevel ) const;
 
 	void onAttach( SceneNode &parentNode );
 	void onDetach( SceneNode &parentNode );

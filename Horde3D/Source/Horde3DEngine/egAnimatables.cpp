@@ -34,7 +34,8 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 	_parentModel( 0x0 )
 {
 	_renderable = true;
-	
+	_lodSupported = true;
+
 	if( _materialRes != 0x0 )
 		_sortKey = (float)_materialRes->getHandle();
 }
@@ -221,6 +222,18 @@ bool MeshNode::checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec
 	intsPos = _absTrans * nearestIntsPos;
 	
 	return intersection;
+}
+
+
+uint32 MeshNode::calcLodLevel( const Vec3f &viewPoint ) const
+{
+	return _parentModel->calcLodLevel( viewPoint );
+}
+
+
+bool MeshNode::checkLodCorrectness( uint32 lodLevel ) const
+{
+	return _lodLevel == lodLevel;
 }
 
 

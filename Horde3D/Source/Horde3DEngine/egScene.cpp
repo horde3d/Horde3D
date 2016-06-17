@@ -33,7 +33,7 @@ using namespace std;
 SceneNode::SceneNode( const SceneNodeTpl &tpl ) :
 	_parent( 0x0 ), _type( tpl.type ), _handle( 0 ), _sgHandle( 0 ), _flags( 0 ), _sortKey( 0 ),
 	_dirty( true ), _transformed( true ), _renderable( false ),
-	_name( tpl.name ), _attachment( tpl.attachmentString )
+	_name( tpl.name ), _attachment( tpl.attachmentString ), _lodSupported( false )
 {
 	_relTrans = Matrix4f::ScaleMat( tpl.scale.x, tpl.scale.y, tpl.scale.z );
 	_relTrans.rotate( degToRad( tpl.rot.x ), degToRad( tpl.rot.y ), degToRad( tpl.rot.z ) );
@@ -172,6 +172,12 @@ void SceneNode::setParamStr( int param, const char *value )
 uint32 SceneNode::calcLodLevel( const Vec3f &viewPoint ) const
 {
 	return 0;
+}
+
+
+bool SceneNode::checkLodCorrectness( uint32 lodLevel ) const
+{
+	return true;
 }
 
 
@@ -355,10 +361,10 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 			if( !frustum1.cullBox( node->_bBox ) &&
 				(frustum2 == 0x0 || !frustum2->cullBox( node->_bBox )) )
 			{
-				if( node->_type == SceneNodeTypes::Mesh )  // TODO: Generalize and optimize this
+				if( node->_lodSupported )
 				{
-					uint32 curLod = ((MeshNode *)node)->getParentModel()->calcLodLevel( camPos );
-					if( ((MeshNode *)node)->getLodLevel() != curLod ) continue;
+					uint32 curLod = node->calcLodLevel( camPos );
+					if ( !node->checkLodCorrectness( curLod ) ) continue;
 				}
 				
 				float sortKey = 0;
