@@ -3,7 +3,7 @@
 // --------------------------------------
 //		- Deferred shading functions -
 //
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // You may use the following code in projects based on the Horde3D graphics engine.
 //

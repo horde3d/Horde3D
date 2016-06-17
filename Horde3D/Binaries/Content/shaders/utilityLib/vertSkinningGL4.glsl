@@ -3,13 +3,13 @@
 // --------------------------------------
 //		- Skinning functions -
 //
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // You may use the following code in projects based on the Horde3D graphics engine.
 //
 // *************************************************************************************************
 
-uniform 	vec4 skinMatRows[75*3];
+uniform 	vec4 skinMatRows[75*3]; // 330 for modern gpus
 layout ( location = 3 ) in vec4 joints;
 layout ( location = 4 ) in vec4 weights;
 
