@@ -743,7 +743,7 @@ bool SceneManager::getCastRayResult( int index, CastRayResult &crr )
 int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool checkOcclusion, bool calcLod )
 {
 	// Note: This function is a bit hacky with all the hard-coded node types
-	
+	// TODO: Generalize function
 	if( node._dirty ) updateNodes();
 
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();

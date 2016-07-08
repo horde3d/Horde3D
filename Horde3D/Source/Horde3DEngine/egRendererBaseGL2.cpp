@@ -47,8 +47,6 @@ static const uint32 primitiveTypes[ 2 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP };
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 
-static const uint32 bufferTypes[ 3 ] = { GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, 0 };
-
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
@@ -170,6 +168,9 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_indexFormat = (uint32)RDIIndexFormat::IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
+	
+	_maxTexSlots = 16; // for OpenGL 2 there are always 16 texture slots
+// 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
 	// add default geometry for resetting
 	_geometryInfo.add( RDIGeometryInfoGL2() );
@@ -254,6 +255,8 @@ bool RenderDeviceGL2::init()
 	_caps.tesselation = false;
 	_caps.computeShaders = false;
 	_caps.instancing = false;
+	_caps.maxJointCount = 75;
+	_caps.maxTexUnitCount = 16;
 
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
@@ -371,6 +374,48 @@ uint32 RenderDeviceGL2::createIndexBuffer( uint32 size, const void *data )
 	return createBuffer( GL_ELEMENT_ARRAY_BUFFER, size, data );;
 }
 
+uint32 RenderDeviceGL2::createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
+{
+	RDITextureBufferGL2 buf;
+
+	buf.bufObj = createBuffer( GL_TEXTURE_BUFFER_ARB, bufSize, data );
+
+	glGenTextures( 1, &buf.glTexID );
+	glActiveTexture( GL_TEXTURE15 );
+	glBindTexture( GL_TEXTURE_BUFFER_ARB, buf.glTexID );
+
+	switch ( format )
+	{
+		case TextureFormats::BGRA8:
+			buf.glFmt = GL_RGBA8;
+			break;
+		case TextureFormats::RGBA16F:
+			buf.glFmt = GL_RGBA16F_ARB;
+			break;
+		case TextureFormats::RGBA32F:
+			buf.glFmt = GL_RGBA32F_ARB;
+			break;
+		case TextureFormats::R32:
+			buf.glFmt = GL_R32F_ARB;
+			break;
+		case TextureFormats::RG32:
+			buf.glFmt = GL_RG32F_ARB;
+			break;
+		default:
+			ASSERT( 0 );
+			break;
+	};
+
+	// bind texture to buffer
+	glTexBufferARB( GL_TEXTURE_BUFFER_ARB, buf.glFmt, _buffers.getRef( buf.bufObj ).glObj );
+
+	glBindTexture( GL_TEXTURE_BUFFER_ARB, 0 );
+	if ( _texSlots[ 15 ].texObj )
+		glBindTexture( _textures.getRef( _texSlots[ 15 ].texObj ).type, _textures.getRef( _texSlots[ 15 ].texObj ).glObj );
+
+	return _textureBuffs.add( buf );
+}
+
 uint32 RenderDeviceGL2::createBuffer( uint32 bufType, uint32 size, const void *data )
 {
 	RDIBufferGL2 buf;
@@ -397,6 +442,11 @@ void RenderDeviceGL2::destroyBuffer( uint32 bufObj )
 	_buffers.remove( bufObj );
 }
 
+
+void RenderDeviceGL2::destroyTextureBuffer( uint32 bufObj )
+{
+
+}
 
 void RenderDeviceGL2::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
@@ -1534,6 +1584,7 @@ void RenderDeviceGL2::resetStates()
 	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
 	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;
 
+//	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )
 		setTexture( i, 0, 0 );
 

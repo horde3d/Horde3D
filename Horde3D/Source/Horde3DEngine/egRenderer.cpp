@@ -49,6 +49,10 @@ Renderer::Renderer()
 	_vlModel = 0;
 	_vlParticle = 0;
 
+	// reserve memory for occlusion culling proxies
+	_occProxies[ 0 ].reserve( 200 ); // meshes
+	_occProxies[ 1 ].reserve( 100 ); // lights
+
 	_renderDevice = nullptr;
 }
 

@@ -492,7 +492,8 @@ bool ShaderResource::parseFXSection( char *data )
 	const char *intnum = "+-0123456789";
 	const char *floatnum = "+-0123456789.eE";
 
-	bool unitFree[12] = {true, true, true, true, true, true, true, true, true, true, true, true}; 
+	std::vector< uint8 > unitFree( Modules::renderer().getRenderDevice()->getCaps().maxTexUnitCount - 4, true ); // currently I don't understand why marciano excluded 4 texunits, but I'll leave it this way currently 
+//	bool unitFree[12] = {true, true, true, true, true, true, true, true, true, true, true, true}; 
 	Tokenizer tok( data );
 
 	while( tok.hasToken() )
@@ -541,7 +542,7 @@ bool ShaderResource::parseFXSection( char *data )
 			_uniforms.push_back( uniform );
 		}
 		else if( tok.checkToken( "sampler2D", true ) || tok.checkToken( "samplerCube", true ) ||
-		         tok.checkToken( "sampler3D", true ) )
+				 tok.checkToken( "sampler3D", true ) || tok.checkToken( "samplerBuffer", true ) )
 		{
 			ShaderSampler sampler;
 			sampler.sampState = SS_FILTER_TRILINEAR | SS_ANISO8 | SS_ADDR_WRAP;
@@ -561,6 +562,13 @@ bool ShaderResource::parseFXSection( char *data )
 				sampler.type = TextureTypes::Tex3D;
 				sampler.defTex = (TextureResource *)Modules::resMan().findResource( ResourceTypes::Texture, "$Tex3D" );
 			}
+			else if ( tok.checkToken( "samplerBuffer" ) )
+			{
+				sampler.type = TextureTypes::Tex2D;
+				sampler.defTex = ( TextureResource * ) Modules::resMan().findResource( ResourceTypes::Texture, "$Tex2D" );
+				sampler.sampState = SS_FILTER_POINT | SS_ANISO1 | SS_ADDR_CLAMP;
+			}
+
 			sampler.id = tok.getToken( identifier );
 			if( sampler.id == "" ) return raiseError( "FX: Invalid identifier", tok.getLine() );
 
@@ -589,8 +597,8 @@ bool ShaderResource::parseFXSection( char *data )
 					{
 						if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
 						sampler.texUnit = (int)atoi( tok.getToken( intnum ) );
-						if( sampler.texUnit > 11 ) return raiseError( "FX: texUnit exceeds limit", tok.getLine() );
-						if( sampler.texUnit >= 0 ) unitFree[sampler.texUnit] = false;
+						if( sampler.texUnit > ( int ) unitFree.size() - 1/*11*/ ) return raiseError( "FX: texUnit exceeds limit", tok.getLine() );
+						if( sampler.texUnit >= 0 ) unitFree[ sampler.texUnit ] = false;
 					}
 					else if( tok.checkToken( "Address" ) )
 					{
@@ -670,7 +678,7 @@ bool ShaderResource::parseFXSection( char *data )
 	{
 		if( _samplers[i].texUnit < 0 )
 		{	
-			for( uint32 j = 0; j < 12; ++j )
+			for( uint32 j = 0; j < unitFree.size() /*12*/; ++j )
 			{
 				if( unitFree[j] )
 				{

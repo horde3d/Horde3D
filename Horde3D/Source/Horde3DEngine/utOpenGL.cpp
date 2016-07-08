@@ -26,6 +26,7 @@ namespace glExt
 	bool ARB_texture_float = false;
 	bool ARB_texture_non_power_of_two = false;
 	bool ARB_timer_query = false;
+	bool ARB_texture_buffer_object = false;
 
 	int	majorVersion = 1, minorVersion = 0;
 }
@@ -539,6 +540,10 @@ PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC glRenderbufferStorageMultisampleEXT =
 PFNGLQUERYCOUNTERPROC glQueryCounterARB = 0x0;
 PFNGLGETQUERYOBJECTI64VPROC glGetQueryObjecti64vARB = 0x0;
 PFNGLGETQUERYOBJECTUI64VPROC glGetQueryObjectui64vARB = 0x0;
+
+// GL_ARB_texture_buffer_object
+PFNGLTEXBUFFERPROC glTexBufferARB = nullptr;
+
 }  // namespace h3dGL
 
 
@@ -662,6 +667,11 @@ void initLegacyExtensions( bool &r )
 		r &= ( glGetQueryObjectui64vARB = ( PFNGLGETQUERYOBJECTUI64VPROC ) platGetProcAddress( "glGetQueryObjectui64v" ) ) != 0x0;
 	}
 	
+	glExt::ARB_texture_buffer_object = isExtensionSupported( "GL_ARB_texture_buffer_object" ) && isExtensionSupported( "GL_ARB_texture_rg" );
+	if ( glExt::ARB_texture_buffer_object )
+	{
+		r &= ( glTexBufferARB = ( PFNGLTEXBUFFERPROC ) platGetProcAddress( "glTexBuffer" ) ) != 0x0;
+	}
 }
 
 void initModernExtensions( bool &r )

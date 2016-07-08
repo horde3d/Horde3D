@@ -55,6 +55,7 @@ namespace glExt
 	extern bool ARB_texture_float;
 	extern bool ARB_texture_non_power_of_two;
 	extern bool ARB_timer_query;
+	extern bool ARB_texture_buffer_object;
 
 	extern int  majorVersion, minorVersion;
 }
@@ -2774,6 +2775,53 @@ extern PFNGLGETQUERYOBJECTI64VPROC glGetQueryObjecti64vARB;
 extern PFNGLGETQUERYOBJECTUI64VPROC glGetQueryObjectui64vARB;
 
 #endif
+
+#ifndef GL_ARB_texture_buffer_object
+#define GL_ARB_texture_buffer_object 1
+
+#define GL_TEXTURE_BUFFER_ARB						0x8C2A
+#define GL_MAX_TEXTURE_BUFFER_SIZE_ARB				0x8C2B
+#define GL_TEXTURE_BINDING_BUFFER_ARB				0x8C2C
+#define GL_TEXTURE_BUFFER_DATA_STORE_BINDING_ARB    0x8C2D
+#define GL_TEXTURE_BUFFER_FORMAT_ARB                0x8C2E
+
+typedef void ( GLAPIENTRYP PFNGLTEXBUFFERPROC )( GLenum target, GLenum internalformat, GLuint buffer );
+extern PFNGLTEXBUFFERPROC glTexBufferARB;
+
+#endif
+
+#ifndef GL_ARB_texture_rg
+#define GL_ARB_texture_rg 1
+
+#define GL_R8_ARB                      0x8229
+#define GL_R16_ARB                     0x822A
+#define GL_RG8_ARB                     0x822B
+#define GL_RG16_ARB                    0x822C
+#define GL_R16F_ARB                    0x822D
+#define GL_R32F_ARB                    0x822E
+#define GL_RG16F_ARB                   0x822F
+#define GL_RG32F_ARB                   0x8230
+#define GL_R8I_ARB                     0x8231
+#define GL_R8UI_ARB                    0x8232
+#define GL_R16I_ARB                    0x8233
+#define GL_R16UI_ARB                   0x8234
+#define GL_R32I_ARB                    0x8235
+#define GL_R32UI_ARB                   0x8236
+#define GL_RG8I_ARB                    0x8237
+#define GL_RG8UI_ARB                   0x8238
+#define GL_RG16I_ARB                   0x8239
+#define GL_RG16UI_ARB                  0x823A
+#define GL_RG32I_ARB                   0x823B
+#define GL_RG32UI_ARB                  0x823C
+
+#define GL_RED_ARB                     0x1903
+#define GL_RG_ARB                      0x8227
+
+#define GL_COMPRESSED_RED_ARB          0x8225
+#define GL_COMPRESSED_RG_ARB           0x8226
+
+#endif
+
 }  // namespace h3dGL
 
 using namespace h3dGL;

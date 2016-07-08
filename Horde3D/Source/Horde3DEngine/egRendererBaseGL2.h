@@ -146,6 +146,12 @@ struct RDITexSlotGL2
 		texObj( texObj ), samplerState( samplerState ) {}
 };
 
+struct RDITextureBufferGL2
+{
+	uint32  bufObj;
+	uint32  glFmt;
+	uint32	glTexID;
+};
 
 // ---------------------------------------------------------
 // Shaders
@@ -222,7 +228,9 @@ public:
 
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
+	uint32 createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data );
 	void destroyBuffer( uint32 bufObj );
+	void destroyTextureBuffer( uint32 bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 // 	uint32 getBufferMem() const { return _bufferMem; }
 
@@ -397,6 +405,7 @@ protected:
 	RDIVertexLayout						_vertexLayouts[MaxNumVertexLayouts];
 	RDIObjects< RDIBufferGL2 >			_buffers;
 	RDIObjects< RDITextureGL2 >			_textures;
+	RDIObjects< RDITextureBufferGL2 >	_textureBuffs;
 	RDIObjects< RDIShaderGL2 >			_shaders;
 	RDIObjects< RDIRenderBufferGL2 >	_rendBufs;
 	RDIObjects< RDIGeometryInfoGL2 >	_geometryInfo;

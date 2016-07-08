@@ -227,6 +227,8 @@ private:
 
 struct DeviceCaps
 {
+	uint16 maxJointCount;
+	uint16 maxTexUnitCount;
 	bool  texFloat;
 	bool  texNPOT;
 	bool  rtMultisampling;
@@ -266,7 +268,7 @@ struct RDIBufferTypes
 	{
 		VertexBuffer = 0,
 		IndexBuffer,
-		UniformBuffer
+		TextureBuffer
 	};
 };
 
@@ -295,7 +297,9 @@ struct TextureFormats
 		DXT5,
 		RGBA16F,
 		RGBA32F,
-		DEPTH
+		DEPTH,
+		R32,
+		RG32
 	};
 };
 
@@ -462,13 +466,13 @@ enum RDIClearFlags
 
 enum RDIIndexFormat
 {
-	IDXFMT_16,
+	IDXFMT_16 = 0,
 	IDXFMT_32
 };
 
 enum RDIPrimType
 {
-	PRIM_TRILIST,
+	PRIM_TRILIST = 0,
 	PRIM_TRISTRIP,
 	PRIM_LINES,
 	PRIM_PATCHES
@@ -494,7 +498,9 @@ private:
 	CreateMemberFunctionChecker( destroyGeometry );
 	CreateMemberFunctionChecker( createVertexBuffer );
 	CreateMemberFunctionChecker( createIndexBuffer );
+	CreateMemberFunctionChecker( createTextureBuffer );
 	CreateMemberFunctionChecker( destroyBuffer );
+	CreateMemberFunctionChecker( destroyTextureBuffer );
 	CreateMemberFunctionChecker( updateBufferData );
 
 	CreateMemberFunctionChecker( calcTextureSize );
@@ -550,7 +556,9 @@ private:
 
 	typedef uint32( *PFN_CREATEVERTEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef uint32( *PFN_CREATEINDEXBUFFER )( void* const, uint32 size, const void *data );
+	typedef uint32( *PFN_CREATETEXTUREBUFFER )( void* const, TextureFormats::List format, uint32 size, const void *data );
 	typedef void( *PFN_DESTROYBUFFER )( void* const, uint32 bufObj );
+	typedef void( *PFN_DESTROYTEXTUREBUFFER )( void* const, uint32 bufObj );
 	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 	
 	typedef uint32( *PFN_CALCTEXTURESIZE )( void* const, TextureFormats::List format, int width, int height, int depth );
@@ -609,7 +617,9 @@ private:
 	PFN_DESTROYGEOMETRY			_pfnDestroyGeometry;
 	PFN_CREATEVERTEXBUFFER		_pfnCreateVertexBuffer;
 	PFN_CREATEINDEXBUFFER		_pfnCreateIndexBuffer;
+	PFN_CREATETEXTUREBUFFER		_pfnCreateTextureBuffer;
 	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
+	PFN_DESTROYTEXTUREBUFFER	_pfnDestroyTextureBuffer;
 	PFN_UPDATEBUFFERDATA		_pfnUpdateBufferData;
 	PFN_CALCTEXTURESIZE			_pfnCalcTextureSize;
 	PFN_CREATETEXTURE			_pfnCreateTexture;
@@ -685,6 +695,12 @@ private:
 	}
 
 	template<typename T>
+	static uint32            createTextureBuffer_Invoker( void* const pObj, TextureFormats::List format, uint32 bufSize, const void *data )
+	{
+		return static_cast< T* >( pObj )->createTextureBuffer( format, bufSize, data );
+	}
+
+	template<typename T>
 	static void				 setGeomVertexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
 	{
 		static_cast< T* >( pObj )->setGeomVertexParams( geoIndex, vbo, vbSlot, offset, stride );
@@ -718,6 +734,12 @@ private:
 	static void              destroyBuffer_Invoker( void* const pObj, uint32 bufObj )
 	{ 
 		static_cast< T* >( pObj )->destroyBuffer( bufObj ); 
+	}
+
+	template<typename T>
+	static void              destroyTextureBuffer_Invoker( void* const pObj, uint32 bufObj )
+	{
+		static_cast< T* >( pObj )->destroyTextureBuffer( bufObj );
 	}
 
 	template<typename T>
@@ -945,6 +967,7 @@ protected:
 		CheckMemberFunction( beginRendering, void( T::* )() );
 		CheckMemberFunction( createVertexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( createIndexBuffer, uint32( T::* )( uint32, const void* ) );
+		CheckMemberFunction( createTextureBuffer, uint32( T::* )( TextureFormats::List, uint32, const void * ) );
 		CheckMemberFunction( beginCreatingGeometry, uint32( T::* )( uint32 ) );
 		CheckMemberFunction( setGeomVertexParams, void( T::* )( uint32, uint32, uint32, uint32, uint32 ) );
 		CheckMemberFunction( setGeomIndexParams, void( T::* )( uint32, uint32, RDIIndexFormat ) );
@@ -952,6 +975,7 @@ protected:
 		CheckMemberFunction( destroyGeometry, void( T::* )( uint32 ) );
 // 		CheckMemberFunction( createBuffer, void( T::* )( RDIBufferTypes::List, uint32, uint32, const void * ) );
 		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
+		CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
 		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
 		CheckMemberFunction( createTexture, uint32( T::* )( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) );
@@ -994,12 +1018,14 @@ protected:
 		_pfnBeginRendering = ( PFN_BEGINRENDERING ) &beginRendering_Invoker< T >;
 		_pfnCreateVertexBuffer = ( PFN_CREATEVERTEXBUFFER ) &createVertexBuffer_Invoker < T >;
 		_pfnCreateIndexBuffer = ( PFN_CREATEINDEXBUFFER ) &createIndexBuffer_Invoker < T >;
+		_pfnCreateTextureBuffer = ( PFN_CREATETEXTUREBUFFER ) &createTextureBuffer_Invoker < T >;
 		_pfnBeginCreatingGeometry = ( PFN_BEGINCREATINGGEOMETRY ) &beginCreatingGeometry_Invoker < T > ;
 		_pfnSetGeomVertexParams = ( PFN_SETGEOMVERTEXPARAMS ) &setGeomVertexParams_Invoker < T > ;
 		_pfnSetGeomIndexParams = ( PFN_SETGEOMINDEXPARAMS ) &setGeomIndexParams_Invoker < T > ;
 		_pfnFinishCreatingGeometry = ( PFN_FINISHCREATINGGEOMETRY ) &finishCreatingGeometry_Invoker < T > ;
 		_pfnDestroyGeometry = ( PFN_DESTROYGEOMETRY ) &destroyGeometry_Invoker < T > ;
 		_pfnDestroyBuffer = ( PFN_DESTROYBUFFER ) &destroyBuffer_Invoker < T >;
+		_pfnDestroyTextureBuffer = ( PFN_DESTROYTEXTUREBUFFER ) &destroyTextureBuffer_Invoker < T > ;
 		_pfnUpdateBufferData = ( PFN_UPDATEBUFFERDATA ) &updateBufferData_Invoker < T >;
 		_pfnCalcTextureSize = ( PFN_CALCTEXTURESIZE ) &calcTextureSize_Invoker < T >;
 		_pfnCreateTexture = ( PFN_CREATETEXTURE ) &createTexture_Invoker < T >;
@@ -1104,13 +1130,17 @@ public:
 	{ 
 		return ( *_pfnCreateIndexBuffer )( this, size, data );
 	}
-// 	uint32 createUniformBuffer( uint32 size, const void *data )
-// 	{
-// 		return ( *_pfnCreateIndexBuffer )( this, size, data );
-// 	}
+	uint32 createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
+	{
+		return ( *_pfnCreateTextureBuffer )( this, format, bufSize, data );
+	}
 	void destroyBuffer( uint32 bufObj ) 
 	{ 
 		( *_pfnDestroyBuffer )( this, bufObj );
+	}
+	void destroyTextureBuffer( uint32 bufObj )
+	{
+		( *_pfnDestroyTextureBuffer )( this, bufObj );
 	}
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data ) 
 	{ 
@@ -1274,9 +1304,14 @@ public:
 // 	void setVertexLayout( uint32 vlObj )
 // 		{ _newVertLayout = vlObj; }
 	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState )
-		{ ASSERT( slot < 16 ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
+		{ ASSERT( slot < 16/*_maxTexSlots*/ ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
 	      _pendingMask |= PM_TEXTURES; }
-	
+	void setTextureBuffer( uint32 bufObj )
+	{
+		_curTextureBuf = bufObj;
+		_pendingMask |= PM_TEXTUREBUFFER;
+	}
+
 	// Render states
 	void setColorWriteMask( bool enabled )
 		{ _newRasterState.renderTargetWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
@@ -1363,6 +1398,7 @@ protected:
 		PM_VIEWPORT      = 0x00000001,
 // 		PM_INDEXBUF      = 0x00000002,
 // 		PM_VERTLAYOUT    = 0x00000004,
+		PM_TEXTUREBUFFER = 0x00000004,
 		PM_TEXTURES      = 0x00000008,
 		PM_SCISSOR       = 0x00000010,
 		PM_RENDERSTATES  = 0x00000020,
@@ -1393,17 +1429,20 @@ protected:
 // 	RDIObjects< RDIRenderBuffer >  _rendBufs;
 
 // 	RDIVertBufSlot        _vertBufSlots[16];
-	RDITexSlot            _texSlots[16];
-	RDIRasterState        _curRasterState, _newRasterState;
-	RDIBlendState         _curBlendState, _newBlendState;
-	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
-	uint32                _prevShaderId, _curShaderId;
+	RDITexSlot					_texSlots[16];
+// 	std::vector< RDITexSlot >	_texSlots;
+	RDIRasterState				_curRasterState, _newRasterState;
+	RDIBlendState				_curBlendState, _newBlendState;
+	RDIDepthStencilState		_curDepthStencilState, _newDepthStencilState;
+	uint32						_prevShaderId, _curShaderId;
 // 	uint32                _curVertLayout, _newVertLayout;
 // 	uint32                _curIndexBuf, _newIndexBuf;
 //	uint32                _indexFormat;
 //	uint32                _activeVertexAttribsMask;
-	uint32                _pendingMask;
-	uint32				  _curGeometryIndex;
+	uint32						_pendingMask;
+	uint32						_curGeometryIndex;
+	uint32						_curTextureBuf;
+ 	uint32						_maxTexSlots; // specified in inherited render devices
 };
 
 }

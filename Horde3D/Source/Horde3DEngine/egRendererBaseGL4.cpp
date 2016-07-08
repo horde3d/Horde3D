@@ -167,6 +167,9 @@ RenderDeviceGL4::RenderDeviceGL4()
  	_indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
+	
+	_maxTexSlots = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
+// 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
 	// add default geometry for resetting
 	RDIGeometryInfoGL4 defGeom;
@@ -249,6 +252,8 @@ bool RenderDeviceGL4::init()
 	_caps.tesselation = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
 	_caps.computeShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 3;
 	_caps.instancing = true;
+	_caps.maxJointCount = 75; // currently, will be changed soon
+	_caps.maxTexUnitCount = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
@@ -398,31 +403,70 @@ void RenderDeviceGL4::destroyGeometry( uint32 geoObj )
 
 uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
 {
-	RDIBufferGL4 buf;
-
-	buf.type = GL_ARRAY_BUFFER;
-	buf.size = size;
-	glGenBuffers( 1, &buf.glObj );
-	glBindBuffer( buf.type, buf.glObj );
-	glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
-	glBindBuffer( buf.type, 0 );
-	
-	_bufferMem += size;
-	return _buffers.add( buf );
+	return createBuffer( GL_ARRAY_BUFFER, size, data );
 }
 
 
 uint32 RenderDeviceGL4::createIndexBuffer( uint32 size, const void *data )
 {
+	return createBuffer( GL_ELEMENT_ARRAY_BUFFER, size, data );
+}
+
+
+uint32 RenderDeviceGL4::createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
+{
+	RDITextureBufferGL4 buf;
+
+	buf.bufObj = createBuffer( GL_TEXTURE_BUFFER, bufSize, data );
+
+	glGenTextures( 1, &buf.glTexID );
+	glActiveTexture( GL_TEXTURE15 );
+	glBindTexture( GL_TEXTURE_BUFFER, buf.glTexID );
+
+	switch ( format )
+	{
+		case TextureFormats::BGRA8:
+			buf.glFmt = GL_RGBA8;
+			break;
+		case TextureFormats::RGBA16F:
+			buf.glFmt = GL_RGBA16F;
+			break;
+		case TextureFormats::RGBA32F:
+			buf.glFmt = GL_RGBA32F;
+			break;
+		case TextureFormats::R32:
+			buf.glFmt = GL_R32F;
+			break;
+		case TextureFormats::RG32:
+			buf.glFmt = GL_RG32F;
+			break;
+		default:
+			ASSERT( 0 );
+			break;
+	};
+
+	// bind texture to buffer
+	glTexBuffer( GL_TEXTURE_BUFFER, buf.glFmt, _buffers.getRef( buf.bufObj ).glObj );
+
+	glBindTexture( GL_TEXTURE_BUFFER, 0 );
+	if ( _texSlots[ 15 ].texObj )
+		glBindTexture( _textures.getRef( _texSlots[ 15 ].texObj ).type, _textures.getRef( _texSlots[ 15 ].texObj ).glObj );
+
+	return _textureBuffs.add( buf );
+}
+
+
+uint32 RenderDeviceGL4::createBuffer( uint32 bufType, uint32 size, const void *data )
+{
 	RDIBufferGL4 buf;
 
-	buf.type = GL_ELEMENT_ARRAY_BUFFER;
+	buf.type = bufType;
 	buf.size = size;
 	glGenBuffers( 1, &buf.glObj );
 	glBindBuffer( buf.type, buf.glObj );
 	glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
 	glBindBuffer( buf.type, 0 );
-	
+
 	_bufferMem += size;
 	return _buffers.add( buf );
 }
@@ -439,6 +483,18 @@ void RenderDeviceGL4::destroyBuffer( uint32 bufObj )
 	_buffers.remove( bufObj );
 }
 
+
+void RenderDeviceGL4::destroyTextureBuffer( uint32 bufObj )
+{
+	if ( bufObj == 0 ) return;
+
+	RDITextureBufferGL4 &buf = _textureBuffs.getRef( bufObj );
+	destroyBuffer( buf.bufObj );
+
+	glDeleteTextures( 1, &buf.glTexID );
+
+	_textureBuffs.remove( bufObj );
+}
 
 void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
@@ -537,10 +593,10 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 		tex.glFmt = tex.sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
 		break;
 	case TextureFormats::RGBA16F:
-		tex.glFmt = GL_RGBA16F_ARB;
+		tex.glFmt = GL_RGBA16F;
 		break;
 	case TextureFormats::RGBA32F:
-		tex.glFmt = GL_RGBA32F_ARB;
+		tex.glFmt = GL_RGBA32F;
 		break;
 	case TextureFormats::DEPTH:
 		tex.glFmt = _depthFormat;
@@ -1671,7 +1727,7 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		// Bind textures and set sampler state
 		if( mask & PM_TEXTURES )
 		{
-			for( uint32 i = 0; i < 16; ++i )
+			for( uint32 i = 0; i < 16/*_texSlots.size()*/; ++i )
 			{
 				glActiveTexture( GL_TEXTURE0 + i );
 
@@ -1704,21 +1760,6 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
 			{
 				RDIGeometryInfoGL4 &geo = _vaos.getRef( _curGeometryIndex );
-//  				if ( !geo.atrribsBinded )
-// 				{
-// 					glBindVertexArray( geo.vao );
-// 
-// 					if ( geo.indexBuf )
-// 					{
-// 						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, geo.indexBuf );
-// 					}
-// 
-// 					if ( !applyVertexLayout(geo) )
-// 						return false;
-// 
-// 					geo.atrribsBinded = true;
-// 				}
-// 				else glBindVertexArray( geo.vao );
 
 				glBindVertexArray( geo.vao );
 
@@ -1745,6 +1786,7 @@ void RenderDeviceGL4::resetStates()
 	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
 	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;
 
+//	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )
 		setTexture( i, 0, 0 );
 
