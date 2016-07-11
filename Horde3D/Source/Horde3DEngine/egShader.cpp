@@ -492,7 +492,7 @@ bool ShaderResource::parseFXSection( char *data )
 	const char *intnum = "+-0123456789";
 	const char *floatnum = "+-0123456789.eE";
 
-	std::vector< uint8 > unitFree( Modules::renderer().getRenderDevice()->getCaps().maxTexUnitCount - 4, true ); // currently I don't understand why marciano excluded 4 texunits, but I'll leave it this way currently 
+	std::vector< uint8 > unitFree( Modules::renderer().getRenderDevice()->getCaps().maxTexUnitCount - 4, true ); // I don't understand why marciano excluded 4 texunits, but currently I'll leave it this way  
 //	bool unitFree[12] = {true, true, true, true, true, true, true, true, true, true, true, true}; 
 	Tokenizer tok( data );
 
