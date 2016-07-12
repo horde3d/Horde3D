@@ -113,18 +113,19 @@ application-specific data to the shader.</p>
 the graphics card. The basic idea of the Horde3D shader concept is that a model needs to be drawn in different stages
 of the rendering process with different shaders. Generating the shadow map for example requires other shader code than
 calculating the ambient lighting. So in Horde3D a shader resource is a group of programs executed in different contexts.
-A single pair of vertex and fragment program code is called a shader context. The pipeline usually selects the shader
-context that it requires for the current step. The actual shader code of the context that is executed by the graphics
-card is specified in the OpenGL Shading Language.</p>
+A shader context is a group of shader programs, for example, a pair of vertex and fragment programs or a compute shader program. 
+The pipeline usually selects the shader context that it requires for the current step. The actual shader code of the context 
+that is executed by the graphics card is specified in the OpenGL Shading Language.</p>
 
 <p>Code</b>
 <p>A code resource is a plain text file that can contain arbitrary code. Code resources can be referenced by shader
 resources and are usually employed to define shader program fragments in a reusable fashion.</p>
 
 <h4>Texture</h4>
-<p>A texture resource can contain a two-dimensional texture map or a cube map. A 2D texture map simply represents an image.
-2D textures are used by shaders to define the appearance of a surface but they can also encode non-photographic data like
-normals or a lookup table.
+<p>A texture resource can contain a two-dimensional texture map, a three-dimensional texture or a cube map. 
+A 2D texture map simply represents an image. 2D textures are used by shaders to define the appearance of a surface but 
+they can also encode non-photographic data like normals or a lookup table. A 3D texture can be used for creating volumetric
+effects, like fog, fire, clouds, smoke, etc.
 Cube maps are a special form of texture maps which are comprised of a series of six images that correspond to the
 sides of a cube. Cube maps represent the environment around a point. Therefore, it is possible to use a three-dimensional
 vector to look up the texel that lies in the corresponding direction.</p>
@@ -333,15 +334,22 @@ triangles and calculate the final color of the pixels in the frame buffer. In th
 could only be configured to a very limited degree (fixed function pipeline). Later generations of graphics hardware
 have a programmable pipeline that enables to control particular stages by using software instructions.</p>
 
-<p>There are three types of shaders to configure the stages of the graphics hardware: vertex, geometry and fragment shaders.</p>
+<p>There are five types of shaders to configure the stages of the graphics hardware: vertex, geometry, tesselation control, 
+tesselation evaluation and fragment shaders. Compute shaders are standalone type of shaders that are not part of a traditional
+graphics pipeline.</p>
 
 <p>A vertex shader is executed for each vertex of the input data. Its main task is to transform the original 3D position
 and calculate a 2D screen space coordinate. A vertex shader can also manipualate other vertex attributes like the color
 or texture coordinates and hand the results to the next stage but it cannot create or remove any vertices.</p>
 
 <p>Geometry shaders can create new primitives like triangles or lines and are executed after vertex shaders. They are
-especially useful to implement some algorithms like shadow volumes completely on the GPU. This type of shader is not yet
-supported by Horde3D.</p>
+especially useful to implement some algorithms like shadow volumes completely on the GPU.</p>
+
+<p>Tesselation shaders are used to modify the detalization of the geometry. They can be used to implement mesh subdivision algorithms
+that are used in terrain and virtual planets rendering entirely on GPU.</p>
+
+<p>Compute shaders are generally used for tasks not directly related to drawing triangles and pixels. For example, some projects use compute shaders 
+for AI.</p>
 
 <p>Finally, a fragment shader (also known as pixel shader) calculates the color and depth value of each single pixel in
 the output buffer. Since nowadays most lighting operations are done per-pixel and no more per-vertex, fragment shaders

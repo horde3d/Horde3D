@@ -18,8 +18,7 @@ you have to create an application that opens a window which can be used for rend
 is a pretty standard task and if you are a novice and have problems with that on your platform
 use google to find one of the numerous good tutorials on the net or have a look at the samples
 that come with the Horde3D SDK. The next step is to initialize an OpenGL context for our rendering
-window. You can do this manually or use the Horde3D Utility Library to make your life easier. After
-that is done we can finally get to the engine related part.
+window. After that is done we can finally get to the engine related part.
 </p>
 
 <br />
@@ -41,7 +40,7 @@ that is done we can finally get to the engine related part.
     <i>// Add model resource</i>
     <b>H3DRes</b> modelRes = h3dAddResource( H3DResTypes::SceneGraph, <em>"character.scene.xml"</em>, 0 );
     <i>// Add animation resource</i>
-    <b>H3DRes</b> animRes = h3dAddResource( H3DResTypes::Animation, <em>"walk.anim.xml"</em>, 0 );
+    <b>H3DRes</b> animRes = h3dAddResource( H3DResTypes::Animation, <em>"walk.anim"</em>, 0 );
     <i>// Load added resources</i>
     h3dutLoadResourcesFromDisk( <em>""</em> );
     

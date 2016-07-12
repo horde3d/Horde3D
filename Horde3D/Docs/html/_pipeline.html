@@ -24,11 +24,15 @@ the usage of different rendering algorithms.
 <h2>System Overview</h2>
 <p>
 Horde is heavily based on shaders which are small programs that are executed on the graphics card at different stages
-of the hardware pipeline. Horde uses vertex and fragment shaders. Vertex shaders influence directly the geometry
-which is rendered and determine e.g. the position and texture coordinates of the vertices. The fragment shaders
-are used for calculating the pixel colors in the rasterization process. Shader code in Horde is specified in the
-OpenGL Shading Language (GLSL). The engine has a text based shader format which makes it possible to define different
-contexts. A context of a Horde shader is defined for a situation in the rendering process where the shader is executed.
+of the hardware pipeline. Horde supports vertex, fragment, geometry, tesselation and compute shaders. Vertex shaders influence 
+directly the geometry which is rendered and determine e.g. the position and texture coordinates of the vertices. 
+The fragment shaders are used for calculating the pixel colors in the rasterization process. Geometry shaders are used 
+for modifying geometry in shaders, for example, procedurally creating a line. Tesselation shaders can be used for dynamic
+level of detail (LOD) of geometry objects based on the camera position. Compute shaders are used for async computing that
+may even be not related to rendering - some projects use compute shaders for ai processing.
+Shader code in Horde is specified in the OpenGL Shading Language (GLSL). The engine has a text based shader format 
+which makes it possible to define different contexts. A context of a Horde shader is defined for a situation in the 
+rendering process where the shader is executed. 
 For example, a shader usually has a shadowmap context which is used when shadows are generated and a lighting context
 which is responsible for interactions of an object with light sources. For the rendering process shaders usually
 require some input data. This consists on the one hand of the geometric data of a model like the vertex positions,
@@ -43,7 +47,7 @@ assigned to that shader.
 <h2>Lighting and Shadows</h2>
 
 <p>Horde supports basically two different approaches for lighting namely forward and deferred shading. Forward shading
-is the standard technique that is currently used in most applications. With this technique the geometry is rendered
+is the standard technique that is used in many applications. With this technique the geometry is rendered
 once for each light source using a special fragment shader that calculates the light contribution. The disadvantage here
 is of course that the geometry has to be drawn several times which can result in poor performance in scenes with 
 many polygons and light sources. Deferred shading in contrast does the lighting as a post processing step. The idea
@@ -437,8 +441,8 @@ uniforms referenced in hardware shaders are declared in the FX section so that t
 Horde3D material system.
 <br />
 The Horde3D FX syntax is similar to that of CgFX. Standard C++ block and single line comments are supported.
-All keywords and enums are case insensitive. However, identifiers like the name of a context are not case
-insensitive. Identifiers may only use alphanumeric characters and the underscore. Floating point numbers
+All keywords and enums are case insensitive. However, identifiers like the name of a context are case
+sensitive. Identifiers may only use alphanumeric characters and the underscore. Floating point numbers
 may not contain any whitespace.
 <br />
 Elements can optionally store meta information as annotations. This is useful for better tool support.
@@ -482,7 +486,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 
 <div class="descbox">
 <table>
-	<tr><td><b>sampler2D</b> / <b>samplerCube</b> [< annotation(s) >] <b>id</b></td></tr>
+	<tr><td><b>sampler2D</b> / <b>samplerCube</b> / <b>sampler3D</b> [< annotation(s) >] <b>id</b></td></tr>
 	<tr><td>[ <b>=</b> sampler_state {</td></tr>
 	<tr><td>[ Texture <b>=</b> <b>"</b><i>TextureResName</i><b>"</b> <b>;</b> ]</td></tr>
 	<tr><td>[ TexUnit <b>=</b> <b>-1</b> / 0 / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 <b>;</b> ]</td></tr>
@@ -497,7 +501,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 <ul>
 <li>The specified sampler type (2d, cube) and the bound texture resource type have to match</li>
 <li><i>Texture</i> defines a default texture that is used if no texture map is specified in a material; the initial value for sampler2D is
-    <i>$Tex2D</i> (white default texture) and <i>$TexCube</i> (default cube map with black faces) for samplerCube</li>
+    <i>$Tex2D</i> (white default texture), <i>$Tex3D</i> (white default texture) is for sampler3D and <i>$TexCube</i> (default cube map with black faces) for samplerCube</li>
 <li><i>TexUnit</i> defines the texture unit used by the sampler; use -1 for automatic assignment</li>
 <li>Aliasing for texture units is possible, meaning samplers can share the same texture unit if
     they are not used in the same shader context</li>
@@ -712,7 +716,7 @@ rendering emitters.</p>
 	<tr>
         <td><b>uniform vec4 skinMatRows[i*3]</b></td>
         <td>first three rows of skinning matrices for skeletal animation;
-			fourth row is always <i>(0, 0, 0, 1)</i>; only available for models. For OpenGL2 i = 75, for OpenGL4 i = 330.</td>
+			fourth row is always <i>(0, 0, 0, 1)</i>; only available for models. Currently, for OpenGL2 i = 75, for OpenGL4 i = 330.</td>
     </tr>
 </table>
 </div>
@@ -746,14 +750,15 @@ rendering emitters.</p>
 </div>
 
 <h4>General vertex attributes</h4>
+<p> Attribute keywords vary in different render interfaces. In OpenGL 2 it is <b>attribute</b>, in OpenGL 4 it is <b>in</b>.</p>
 <div class="descbox">
 <table>
     <tr>
-        <td><b>attribute vec3 vertPos</b></td>
+        <td><b>attribute/in vec3 vertPos</b></td>
         <td>vertex position</td>
     </tr>
 	<tr>
-        <td><b>attribute vec2 texCoords0</b></td>
+        <td><b>attribute/in vec2 texCoords0</b></td>
         <td>first set of texture mapping coordinates</td>
     </tr>
 </table>
@@ -763,23 +768,23 @@ rendering emitters.</p>
 <div class="descbox">
 <table>
     <tr>
-        <td><b>attribute vec2 texCoords1</b></td>
+        <td><b>attribute/in vec2 texCoords1</b></td>
         <td>second set of texture mapping coordinates</td>
     </tr>
     <tr>
-        <td><b>attribute vec3 normal</b></td>
+        <td><b>attribute/in vec3 normal</b></td>
         <td>normal vector of vertex</td>
     </tr>
     <tr>
-        <td><b>attribute vec4 tangent</b></td>
+        <td><b>attribute/in vec4 tangent</b></td>
         <td>tangent vector of vertex in xyz; handedness multiplicator (1.0, -1.0) of bitangent in w</td>
     </tr>
     <tr>
-        <td><b>attribute vec4 joints</b></td>
+        <td><b>attribute/in vec4 joints</b></td>
         <td>four joint indices referencing to skinning matrices</td>
     </tr>
     <tr>
-        <td><b>attribute vec4 weights</b></td>
+        <td><b>attribute/in vec4 weights</b></td>
         <td>four vertex weights for the four joint indices</td>
     </tr>
 </table>
@@ -789,7 +794,7 @@ rendering emitters.</p>
 <div class="descbox">
 <table>
 	<tr>
-        <td><b>attribute float parIdx</b></td>
+        <td><b>attribute/in float parIdx</b></td>
         <td>index of current particle in position, size and color arrays</td>
     </tr>
 </table>
