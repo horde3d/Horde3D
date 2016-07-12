@@ -9,7 +9,7 @@
 //
 // *************************************************************************************************
 
-uniform 	vec4 skinMatRows[75*3]; // 330 for modern gpus
+uniform 	vec4 skinMatRows[330*3]; // 330 for modern gpus
 layout ( location = 3 ) in vec4 joints;
 layout ( location = 4 ) in vec4 weights;
 
