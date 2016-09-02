@@ -108,6 +108,8 @@ bool Renderer::init( RenderBackendType::List type )
 {
 	if ( _renderDevice == nullptr ) _renderDevice = createRenderDevice( type );
 
+	if ( !_renderDevice ) return false;
+
 	// Init Render Device Interface
 	if( !_renderDevice->init() ) 
 	{
@@ -258,19 +260,19 @@ void Renderer::initStates()
 
 RenderDeviceInterface *Renderer::createRenderDevice( int type )
 {
-	if ( type == RenderBackendType::OpenGL4 )
+	switch ( type )
 	{
-		return new RDI_GL4::RenderDeviceGL4();
-	}
-
-	if ( type == RenderBackendType::OpenGL2 )
-	{
-		return new RDI_GL2::RenderDeviceGL2();
-	}
-
-	if ( type == RenderBackendType::OpenGLES )
-	{
-
+		case RenderBackendType::OpenGL4 :
+		{
+			return new RDI_GL4::RenderDeviceGL4();
+		}
+		case RenderBackendType::OpenGL2 :
+		{
+			return new RDI_GL2::RenderDeviceGL2();
+		}
+		default:
+			Modules::log().writeError( "Incorrect render interface type or type not specified. Renderer cannot be initialized." );
+			break;
 	}
 
 	return nullptr;
