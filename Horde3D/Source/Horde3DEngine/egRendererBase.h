@@ -227,15 +227,15 @@ private:
 
 struct DeviceCaps
 {
-	uint16 maxJointCount;
-	uint16 maxTexUnitCount;
-	bool  texFloat;
-	bool  texNPOT;
-	bool  rtMultisampling;
-	bool  geometryShaders;
-	bool  tesselation;
-	bool  computeShaders;
-	bool  instancing;
+	uint16	maxJointCount;
+	uint16	maxTexUnitCount;
+	bool	texFloat;
+	bool	texNPOT;
+	bool	rtMultisampling;
+	bool	geometryShaders;
+	bool	tesselation;
+	bool	computeShaders;
+	bool	instancing;
 };
 
 
@@ -499,6 +499,7 @@ private:
 	CreateMemberFunctionChecker( createVertexBuffer );
 	CreateMemberFunctionChecker( createIndexBuffer );
 	CreateMemberFunctionChecker( createTextureBuffer );
+	CreateMemberFunctionChecker( createShaderStorageBuffer );
 	CreateMemberFunctionChecker( destroyBuffer );
 	CreateMemberFunctionChecker( destroyTextureBuffer );
 	CreateMemberFunctionChecker( updateBufferData );
@@ -557,6 +558,7 @@ private:
 	typedef uint32( *PFN_CREATEVERTEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef uint32( *PFN_CREATEINDEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef uint32( *PFN_CREATETEXTUREBUFFER )( void* const, TextureFormats::List format, uint32 size, const void *data );
+	typedef uint32( *PFN_CREATESHADERSTORAGEBUFFER )( void* const, uint32 size, const void *data );
 	typedef void( *PFN_DESTROYBUFFER )( void* const, uint32 bufObj );
 	typedef void( *PFN_DESTROYTEXTUREBUFFER )( void* const, uint32 bufObj );
 	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
@@ -618,6 +620,7 @@ private:
 	PFN_CREATEVERTEXBUFFER		_pfnCreateVertexBuffer;
 	PFN_CREATEINDEXBUFFER		_pfnCreateIndexBuffer;
 	PFN_CREATETEXTUREBUFFER		_pfnCreateTextureBuffer;
+	PFN_CREATESHADERSTORAGEBUFFER _pfnCreateShaderStorageBuffer;
 	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
 	PFN_DESTROYTEXTUREBUFFER	_pfnDestroyTextureBuffer;
 	PFN_UPDATEBUFFERDATA		_pfnUpdateBufferData;
@@ -698,6 +701,12 @@ private:
 	static uint32            createTextureBuffer_Invoker( void* const pObj, TextureFormats::List format, uint32 bufSize, const void *data )
 	{
 		return static_cast< T* >( pObj )->createTextureBuffer( format, bufSize, data );
+	}
+
+	template<typename T>
+	static uint32            createShaderStorageBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	{
+		return static_cast< T* >( pObj )->createShaderStorageBuffer( size, data );
 	}
 
 	template<typename T>
@@ -968,12 +977,12 @@ protected:
 		CheckMemberFunction( createVertexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( createIndexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( createTextureBuffer, uint32( T::* )( TextureFormats::List, uint32, const void * ) );
+		CheckMemberFunction( createShaderStorageBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( beginCreatingGeometry, uint32( T::* )( uint32 ) );
 		CheckMemberFunction( setGeomVertexParams, void( T::* )( uint32, uint32, uint32, uint32, uint32 ) );
 		CheckMemberFunction( setGeomIndexParams, void( T::* )( uint32, uint32, RDIIndexFormat ) );
 		CheckMemberFunction( finishCreatingGeometry, void( T::* )( uint32 ) );
 		CheckMemberFunction( destroyGeometry, void( T::* )( uint32 ) );
-// 		CheckMemberFunction( createBuffer, void( T::* )( RDIBufferTypes::List, uint32, uint32, const void * ) );
 		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
@@ -1019,6 +1028,7 @@ protected:
 		_pfnCreateVertexBuffer = ( PFN_CREATEVERTEXBUFFER ) &createVertexBuffer_Invoker < T >;
 		_pfnCreateIndexBuffer = ( PFN_CREATEINDEXBUFFER ) &createIndexBuffer_Invoker < T >;
 		_pfnCreateTextureBuffer = ( PFN_CREATETEXTUREBUFFER ) &createTextureBuffer_Invoker < T >;
+		_pfnCreateShaderStorageBuffer = ( PFN_CREATESHADERSTORAGEBUFFER ) &createShaderStorageBuffer_Invoker < T >;
 		_pfnBeginCreatingGeometry = ( PFN_BEGINCREATINGGEOMETRY ) &beginCreatingGeometry_Invoker < T > ;
 		_pfnSetGeomVertexParams = ( PFN_SETGEOMVERTEXPARAMS ) &setGeomVertexParams_Invoker < T > ;
 		_pfnSetGeomIndexParams = ( PFN_SETGEOMINDEXPARAMS ) &setGeomIndexParams_Invoker < T > ;
@@ -1133,6 +1143,10 @@ public:
 	uint32 createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
 	{
 		return ( *_pfnCreateTextureBuffer )( this, format, bufSize, data );
+	}
+	uint32 createShaderStorageBuffer( uint32 size, const void *data )
+	{
+		return ( *_pfnCreateShaderStorageBuffer )( this, size, data );
 	}
 	void destroyBuffer( uint32 bufObj ) 
 	{ 

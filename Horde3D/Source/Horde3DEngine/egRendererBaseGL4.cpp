@@ -413,6 +413,19 @@ uint32 RenderDeviceGL4::createIndexBuffer( uint32 size, const void *data )
 }
 
 
+uint32 RenderDeviceGL4::createShaderStorageBuffer( uint32 size, const void *data )
+{
+	if ( _caps.computeShaders )
+		return createBuffer( GL_SHADER_STORAGE_BUFFER, size, data );
+	else
+	{
+		Modules::log().writeError( "Shader storage buffers are not supported on this OpenGL 4 device." );
+		
+		return 0;
+	}
+}
+
+
 uint32 RenderDeviceGL4::createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
 {
 	RDITextureBufferGL4 buf;

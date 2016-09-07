@@ -66,6 +66,49 @@ private:
 
 
 // =================================================================================================
+// Compute Buffer Resource
+// =================================================================================================
+
+class ComputeBufferResource : public Resource
+{
+public:
+	static Resource *factoryFunc( const std::string &name, int flags )
+	{
+		return new ComputeBufferResource( name, flags );
+	}
+
+	static uint32 calcCombMask( const std::vector< std::string > &flags );
+
+	ComputeBufferResource( const std::string &name, int flags );
+	~ComputeBufferResource();
+
+	void initDefault();
+	void release();
+	bool load( const char *data, int size );
+
+// 	int getElemCount( int elem ) const;
+// 	int getElemParamI( int elem, int elemIdx, int param ) const;
+// 	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
+// 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
+// 	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
+
+	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
+	void unmapStream();
+private:
+	static unsigned char	*_mappedData;
+	
+	uint32					_dataSize;
+	uint32					_bufferID;
+
+	bool					_writeRequested;
+
+
+	friend class Renderer;
+};
+
+typedef SmartResPtr< ComputeBufferResource > PComputeBufferResource;
+
+// =================================================================================================
 // Shader Resource
 // =================================================================================================
 

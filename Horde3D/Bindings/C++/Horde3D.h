@@ -172,6 +172,7 @@ struct H3DResTypes
 		Texture         - Texture map
 		ParticleEffect  - Particle configuration
 		Pipeline        - Rendering pipeline
+		ComputeBuffer   - buffer with arbitrary data that can be accessed and modified by compute shaders
 	*/
 	enum List
 	{
@@ -184,7 +185,8 @@ struct H3DResTypes
 		Shader,
 		Texture,
 		ParticleEffect,
-		Pipeline
+		Pipeline,
+		ComputeBuffer
 	};
 };
 

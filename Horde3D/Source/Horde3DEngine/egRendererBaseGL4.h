@@ -192,6 +192,7 @@ public:
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	uint32 createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data );
+	uint32 createShaderStorageBuffer( uint32 size, const void *data );
 	void destroyBuffer( uint32 bufObj );
 	void destroyTextureBuffer( uint32 bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );

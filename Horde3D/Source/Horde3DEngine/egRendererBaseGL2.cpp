@@ -416,6 +416,16 @@ uint32 RenderDeviceGL2::createTextureBuffer( TextureFormats::List format, uint32
 	return _textureBuffs.add( buf );
 }
 
+uint32 RenderDeviceGL2::createShaderStorageBuffer( uint32 size, const void *data )
+{
+	H3D_UNUSED_VAR( size );
+	H3D_UNUSED_VAR( data );
+
+	Modules::log().writeError( "Shader storage buffers are not supported on OpenGL 2 devices." );
+
+	return 0;
+}
+
 uint32 RenderDeviceGL2::createBuffer( uint32 bufType, uint32 size, const void *data )
 {
 	RDIBufferGL2 buf;

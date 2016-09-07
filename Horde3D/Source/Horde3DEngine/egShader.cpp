@@ -263,6 +263,82 @@ void CodeResource::updateShaders()
 
 
 // =================================================================================================
+// Compute Buffer Resource
+// =================================================================================================
+
+unsigned char *ComputeBufferResource::_mappedData = nullptr;
+
+ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) : Resource( ResourceTypes::ComputeBuffer, name, flags ),
+	_dataSize( 0 ), _writeRequested( false ), _bufferID( 0 )
+{
+	initDefault();
+}
+
+ComputeBufferResource::~ComputeBufferResource()
+{
+	release();
+}
+
+void ComputeBufferResource::initDefault()
+{
+
+}
+
+void ComputeBufferResource::release()
+{
+
+}
+
+bool ComputeBufferResource::load( const char *data, int size )
+{
+	if ( !Resource::load( data, size ) ) return false;
+
+	return true;
+}
+
+void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool read, bool write )
+{
+	if ( ( read || write ) && _mappedData == 0x0 )
+	{
+		if ( elem == TextureResData::ImageElem && stream == TextureResData::ImgPixelStream &&
+			elemIdx < getElemCount( elem ) )
+		{
+			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+			_mappedData = Modules::renderer().useScratchBuf( _dataSize );
+
+			if ( read )
+			{
+// 				int slice = elemIdx / ( getMipCount() + 1 );
+// 				int mipLevel = elemIdx % ( getMipCount() + 1 );
+// 				rdi->getTextureData( _texObject, slice, mipLevel, _mappedData );
+			}
+
+			if ( write )
+				_writeRequested = true;
+			else
+				_writeRequested = false;
+
+			return _mappedData;
+		}
+	}
+
+	return Resource::mapStream( elem, elemIdx, stream, read, write );
+}
+
+void ComputeBufferResource::unmapStream()
+{
+	if ( _mappedData != nullptr && _writeRequested )
+	{
+		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+		
+		rdi->updateBufferData( 0, _bufferID, 0, _dataSize, _mappedData );
+
+		_mappedData = nullptr;
+	}
+}
+
+// =================================================================================================
 // Shader Resource
 // =================================================================================================
 

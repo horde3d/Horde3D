@@ -39,7 +39,8 @@ struct ResourceTypes
 		Shader,
 		Texture,
 		ParticleEffect,
-		Pipeline
+		Pipeline,
+		ComputeBuffer
 	};
 };
 
