@@ -290,7 +290,7 @@ void Renderer::releaseRenderDevice()
 void Renderer::setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat )
 {
 	// Note: The viewing matrices should be set before a material is set, otherwise the general
-	//       uniforms need to be commited manually
+	//       uniforms need to be committed manually
 	
 	_viewMat = viewMat;
 	_viewMatInv = viewMat.inverted();
