@@ -49,6 +49,13 @@ Renderer::Renderer()
 	_vlModel = 0;
 	_vlParticle = 0;
 
+	_particleGeo = 0;
+	_cubeGeo = 0;
+	_sphereGeo = 0;
+	_coneGeo = 0;
+	_overlayGeo = 0;
+	_FSPolyGeo = 0;
+
 	// reserve memory for occlusion culling proxies
 	_occProxies[ 0 ].reserve( 200 ); // meshes
 	_occProxies[ 1 ].reserve( 100 ); // lights
@@ -59,19 +66,23 @@ Renderer::Renderer()
 
 Renderer::~Renderer()
 {
-	releaseShadowRB();
-	_renderDevice->destroyTexture( _defShadowMap );
-// 	_renderDevice->destroyBuffer( _particleVBO );
-	releaseShaderComb( _defColorShader );
-	
-	_renderDevice->destroyGeometry( _particleGeo );
-	_renderDevice->destroyGeometry( _cubeGeo );
-	_renderDevice->destroyGeometry( _sphereGeo );
-	_renderDevice->destroyGeometry( _coneGeo );
-	_renderDevice->destroyGeometry( _overlayGeo );
-	_renderDevice->destroyGeometry( _FSPolyGeo );
+	if ( _renderDevice )
+	{
+		releaseShadowRB();
+		_renderDevice->destroyTexture( _defShadowMap );
+		// 	_renderDevice->destroyBuffer( _particleVBO );
+		releaseShaderComb( _defColorShader );
 
-	releaseRenderDevice();
+		_renderDevice->destroyGeometry( _particleGeo );
+		_renderDevice->destroyGeometry( _cubeGeo );
+		_renderDevice->destroyGeometry( _sphereGeo );
+		_renderDevice->destroyGeometry( _coneGeo );
+		_renderDevice->destroyGeometry( _overlayGeo );
+		_renderDevice->destroyGeometry( _FSPolyGeo );
+
+		releaseRenderDevice();
+	}
+	
 
 	delete[] _scratchBuf;
 	delete[] _overlayVerts;
