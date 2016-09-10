@@ -432,6 +432,20 @@ struct H3DPipeRes
 	};
 };
 
+struct H3DComputeBufRes
+{
+	/* Enum: H3DComputeBufRes
+	The available ComputeBuffer resource accessors.
+
+	ComputeBufElem    - General compute buffer configuration
+	DataSizeI		  - Size of the buffer
+	*/
+	enum List
+	{
+		ComputeBufElem = 1000,
+		DataSizeI
+	};
+};
 
 struct H3DNodeTypes
 {

@@ -82,7 +82,6 @@ Renderer::~Renderer()
 
 		releaseRenderDevice();
 	}
-	
 
 	delete[] _scratchBuf;
 	delete[] _overlayVerts;

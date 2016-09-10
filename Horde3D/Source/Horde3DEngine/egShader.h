@@ -68,6 +68,15 @@ private:
 // =================================================================================================
 // Compute Buffer Resource
 // =================================================================================================
+struct ComputeBufferResData
+{
+	enum List
+	{
+		ComputeBufElem = 1000,
+		DataSizeI,
+		UseAsVertexBufferI
+	};
+};
 
 class ComputeBufferResource : public Resource
 {
@@ -87,8 +96,9 @@ public:
 	bool load( const char *data, int size );
 
 // 	int getElemCount( int elem ) const;
-// 	int getElemParamI( int elem, int elemIdx, int param ) const;
-// 	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
+ 	int getElemParamI( int elem, int elemIdx, int param ) const;
+	void setElemParamI( int elem, int elemIdx, int param, int value );
+	// 	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 // 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
 // 	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 

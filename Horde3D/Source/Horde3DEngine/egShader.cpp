@@ -274,34 +274,87 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 	initDefault();
 }
 
+
 ComputeBufferResource::~ComputeBufferResource()
 {
 	release();
 }
 
+
 void ComputeBufferResource::initDefault()
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
+	if ( rdi->getCaps().computeShaders )
+	{
+		_bufferID = rdi->createShaderStorageBuffer( _dataSize, nullptr );
+	}
 }
+
 
 void ComputeBufferResource::release()
 {
-
+	if ( _bufferID )
+	{
+		Modules::renderer().getRenderDevice()->destroyBuffer( _bufferID );
+	}
 }
+
 
 bool ComputeBufferResource::load( const char *data, int size )
 {
 	if ( !Resource::load( data, size ) ) return false;
 
+	// currently not implemented
+
 	return true;
 }
+
+
+int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) const
+{
+	switch ( elem )
+	{
+		case ComputeBufferResData::ComputeBufElem:
+			{
+				switch ( param )
+				{
+					case ComputeBufferResData::DataSizeI:
+						return _dataSize;
+						break;
+				}
+			}
+			break;
+	}
+
+	return Resource::getElemParamI( elem, elemIdx, param );
+}
+
+
+void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int value )
+{
+	switch ( elem )
+	{
+		case ComputeBufferResData::ComputeBufElem:
+		{
+			switch ( param )
+			{
+				case ComputeBufferResData::DataSizeI:
+					_dataSize = value;
+					break;
+			}
+		}
+	}
+
+	return Resource::setElemParamI( elem, elemIdx, param, value );
+}
+
 
 void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool read, bool write )
 {
 	if ( ( read || write ) && _mappedData == 0x0 )
 	{
-		if ( elem == TextureResData::ImageElem && stream == TextureResData::ImgPixelStream &&
-			elemIdx < getElemCount( elem ) )
+		if ( elem == ComputeBufferResData::ComputeBufElem )
 		{
 			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
@@ -326,9 +379,10 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 	return Resource::mapStream( elem, elemIdx, stream, read, write );
 }
 
+
 void ComputeBufferResource::unmapStream()
 {
-	if ( _mappedData != nullptr && _writeRequested )
+	if ( _bufferID != 0 && _mappedData != nullptr && _writeRequested )
 	{
 		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 		

@@ -43,7 +43,7 @@ static const char *defaultShaderFS =
 
 static const uint32 indexFormats[ 2 ] = { GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
 
-static const uint32 primitiveTypes[ 2 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP };
+static const uint32 primitiveTypes[ 4 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_LINES, GL_POINTS };
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 

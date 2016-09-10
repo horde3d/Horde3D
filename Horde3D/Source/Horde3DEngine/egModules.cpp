@@ -96,6 +96,9 @@ bool Modules::init( int backendType )
 		ParticleEffectResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Pipeline, "Pipeline", 0x0, 0x0,
 		PipelineResource::factoryFunc );
+	resMan().registerResType( ResourceTypes::ComputeBuffer, "ComputeBuffer", 0x0, 0x0,
+		ComputeBufferResource::factoryFunc );
+
 
 	// Register node types
 	sceneMan().registerNodeType( SceneNodeTypes::Group, "Group",
