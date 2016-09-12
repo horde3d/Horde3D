@@ -1045,7 +1045,7 @@ protected:
 		_pfnUpdateTextureData = ( PFN_UPDATETEXTUREDATA ) &updateTextureData_Invoker < T >;
 		_pfnGetTextureData = ( PFN_GETTEXTUREDATA ) &getTextureData_Invoker < T >;
 		_pfnCreateShader = ( PFN_CREATESHADER ) &createShader_Invoker < T >;
-		_pfnDestroyShader = ( PFN_DESTROYSHADER ) &destroyTexture_Invoker < T > ;
+		_pfnDestroyShader = ( PFN_DESTROYSHADER ) &destroyShader_Invoker < T > ;
 		_pfnBindShader = ( PFN_BINDSHADER ) &bindShader_Invoker < T > ;
 		_pfnGetShaderConstLoc = ( PFN_GETSHADERCONSTLOC ) &getShaderConstLoc_Invoker < T > ;
 		_pfnGetShaderSamplerLoc = ( PFN_GETSHADERSAMPLERLOC ) &getShaderSamplerLoc_Invoker < T > ;
