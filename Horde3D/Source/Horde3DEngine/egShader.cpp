@@ -909,7 +909,7 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 			else if ( tok.checkToken( "false" ) || tok.checkToken( "1" ) ) context.alphaToCoverage = false;
 			else return raiseError( "FX: invalid bool value", tok.getLine() );
 		}
-		else if ( tok.checkToken( "TessellationPatchVertices" ) )
+		else if ( tok.checkToken( "TessPatchVertices" ) )
 		{
 			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
 			uint32 patchVerts = ( uint32 ) atoi( tok.getToken( intnum ) );

@@ -479,7 +479,7 @@ OpenGL4
     }
 }
 </pre>
-</div>>
+</div>
 
 <p>The following syntax is supported. Optional elements are put in square brackets and default values are
 highlighted as bold. Alternative values are separated by a slash.</p>
@@ -536,6 +536,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 	<tr><td>[ BlendMode <b>=</b> <b>Replace</b> / Blend / Add / AddBlended / Mult <b>;</b> ]</td></tr>
 	<tr><td>[ CullMode <b>=</b> <b>Back</b> / Front / None <b>;</b> ]</td></tr>
 	<tr><td>[ AlphaToCoverage <b>=</b> <b>false</b> / true <b>;</b> ]</td></tr>
+	<tr><td>[ TessPatchVertices <b>=</b> <b>1</b> / .. / 32 <b>;</b> ]</td></tr>
 	<tr><td>}</td></tr>
 	</td>
 </table>
@@ -544,6 +545,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 <ul>
 <li>Shaders reference a code section that must be defined in the same FX file</li>
 <li>Geometry, compute and tesselation shaders are available only for OpenGL4 render interface</li>
+<li>TessPatchVertices - number of vertices per patch. Available only for OpenGL4 render interface.</li>
 </ul>
 
 
