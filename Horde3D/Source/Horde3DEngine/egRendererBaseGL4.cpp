@@ -167,7 +167,8 @@ RenderDeviceGL4::RenderDeviceGL4()
  	_indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
-	
+	_tessPatchVerts = _lastTessPatchVertsValue = 0;
+
 	_maxTexSlots = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
@@ -1692,6 +1693,14 @@ void RenderDeviceGL4::applyRenderStates()
 		}
 		
 		_curDepthStencilState.hash = _newDepthStencilState.hash;
+	}
+
+	// Number of vertices in patch. Used in tesselation.
+	if ( _tessPatchVerts != _lastTessPatchVertsValue )
+	{
+		glPatchParameteri( GL_PATCH_VERTICES, _tessPatchVerts );
+
+		_lastTessPatchVertsValue = _tessPatchVerts;
 	}
 }
 

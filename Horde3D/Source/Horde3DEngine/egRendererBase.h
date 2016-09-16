@@ -1370,6 +1370,8 @@ public:
 		{ _newDepthStencilState.depthFunc = depthFunc; _pendingMask |= PM_RENDERSTATES; }
 	void getDepthFunc( RDIDepthFunc &depthFunc ) const
 		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
+	void setTessPatchVertices( uint16 verts )
+		{ _tessPatchVerts = verts; _pendingMask |= PM_RENDERSTATES; }
 
 	bool commitStates( uint32 filter = 0xFFFFFFFF ) 
 	{
@@ -1458,6 +1460,8 @@ protected:
 	uint32						_curGeometryIndex;
 	uint32						_curTextureBuf;
  	uint32						_maxTexSlots; // specified in inherited render devices
+
+	uint16						_tessPatchVerts; // number of vertices in patch. Used for tesselation.
 };
 
 }

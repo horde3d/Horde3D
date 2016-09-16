@@ -683,6 +683,9 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 
 		// Configure alpha-to-coverage
 		_renderDevice->setAlphaToCoverage( context->alphaToCoverage && Modules::config().sampleCount > 0 );
+
+		// Configure how many vertices form a patch in tesselation shader
+		if ( context->tessVerticesInPatchCount > 1 ) _renderDevice->setTessPatchVertices( context->tessVerticesInPatchCount );
 	}
 
 	// Setup texture samplers

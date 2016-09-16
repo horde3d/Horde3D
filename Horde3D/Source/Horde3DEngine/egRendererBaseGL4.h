@@ -333,6 +333,8 @@ protected:
  	uint32                _indexFormat;
  	uint32                _activeVertexAttribsMask;
 // 	uint32                _pendingMask;
+
+	uint16				  _lastTessPatchVertsValue;
 };
 
 } // namespace RDI_GL4

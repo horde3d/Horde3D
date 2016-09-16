@@ -168,7 +168,8 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_indexFormat = (uint32)RDIIndexFormat::IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
-	
+	_tessPatchVerts = 0;
+
 	_maxTexSlots = 16; // for OpenGL 2 there are always 16 texture slots
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 

@@ -73,8 +73,15 @@ struct ComputeBufferResData
 	enum List
 	{
 		ComputeBufElem = 1000,
-		DataSizeI,
-		UseAsVertexBufferI
+		DrawTypeElem,
+		DrawParamsElem,
+		CompBufDataSizeI,
+		CompBufUseAsVertexBufferI,
+		DrawTypeLinesI,
+		DrawTypePointsI,
+		DrawTypeTrianglesI,
+		DrawParamsSizeI,
+		DrawParamsOffsetI
 	};
 };
 
@@ -105,13 +112,13 @@ public:
 	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
 	void unmapStream();
 private:
-	static unsigned char	*_mappedData;
+	uint8					*_data;
 	
 	uint32					_dataSize;
 	uint32					_bufferID;
 
 	bool					_writeRequested;
-
+	bool					_mapped;
 
 	friend class Renderer;
 };
@@ -213,6 +220,7 @@ struct ShaderContext
 	BlendModes::List                  blendMode;
 	TestModes::List                   depthFunc;
 	CullModes::List                   cullMode;
+	uint16							  tessVerticesInPatchCount;
 	bool                              depthTest;
 	bool                              writeDepth;
 	bool                              alphaToCoverage;
@@ -225,7 +233,7 @@ struct ShaderContext
 
 	ShaderContext() :
 		blendMode( BlendModes::Replace ), depthFunc( TestModes::LessEqual ),
-		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ),
+		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ), tessVerticesInPatchCount( 1 ),
 		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false )
 	{
 	}

@@ -266,10 +266,8 @@ void CodeResource::updateShaders()
 // Compute Buffer Resource
 // =================================================================================================
 
-unsigned char *ComputeBufferResource::_mappedData = nullptr;
-
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) : Resource( ResourceTypes::ComputeBuffer, name, flags ),
-	_dataSize( 0 ), _writeRequested( false ), _bufferID( 0 )
+	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( nullptr ), _mapped( false )
 {
 	initDefault();
 }
@@ -288,6 +286,7 @@ void ComputeBufferResource::initDefault()
 	if ( rdi->getCaps().computeShaders )
 	{
 		_bufferID = rdi->createShaderStorageBuffer( _dataSize, nullptr );
+		_data = new uint8[ _dataSize ];
 	}
 }
 
@@ -297,6 +296,7 @@ void ComputeBufferResource::release()
 	if ( _bufferID )
 	{
 		Modules::renderer().getRenderDevice()->destroyBuffer( _bufferID );
+		delete _data; _data = nullptr;
 	}
 }
 
@@ -340,6 +340,12 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 			switch ( param )
 			{
 				case ComputeBufferResData::DataSizeI:
+					if ( _dataSize < value )
+					{
+						delete _data;
+						_data = new uint8[ value ];
+					}
+
 					_dataSize = value;
 					break;
 			}
@@ -352,13 +358,13 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 
 void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool read, bool write )
 {
-	if ( ( read || write ) && _mappedData == 0x0 )
+	if ( ( read || write ) && !mapped )
 	{
 		if ( elem == ComputeBufferResData::ComputeBufElem )
 		{
 			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
-			_mappedData = Modules::renderer().useScratchBuf( _dataSize );
+// 			_mappedData = Modules::renderer().useScratchBuf( _dataSize );
 
 			if ( read )
 			{
@@ -372,7 +378,9 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 			else
 				_writeRequested = false;
 
-			return _mappedData;
+			_mapped = true;
+
+			return _data;
 		}
 	}
 
@@ -382,14 +390,14 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 
 void ComputeBufferResource::unmapStream()
 {
-	if ( _bufferID != 0 && _mappedData != nullptr && _writeRequested )
+	if ( _bufferID != 0 && _writeRequested )
 	{
 		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 		
-		rdi->updateBufferData( 0, _bufferID, 0, _dataSize, _mappedData );
-
-		_mappedData = nullptr;
+		rdi->updateBufferData( 0, _bufferID, 0, _dataSize, _data );
 	}
+
+	_mapped = false;
 }
 
 // =================================================================================================
@@ -831,6 +839,9 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 	ShaderContext context;
 	_tmpCodeVS = _tmpCodeFS = _tmpCodeGS = _tmpCodeCS = _tmpCodeTSCtl = _tmpCodeTSEval = "";
 	
+	const char *intnum = "+-0123456789";
+	const char *floatnum = "+-0123456789.eE";
+
 	bool geometryShaderAvailable, computeShaderAvailable, tessControlShaderAvailable, tessEvalShaderAvailable;
 	geometryShaderAvailable = computeShaderAvailable = tessControlShaderAvailable = tessEvalShaderAvailable = false;
 
@@ -897,6 +908,13 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 			if ( tok.checkToken( "true" ) || tok.checkToken( "1" ) ) context.alphaToCoverage = true;
 			else if ( tok.checkToken( "false" ) || tok.checkToken( "1" ) ) context.alphaToCoverage = false;
 			else return raiseError( "FX: invalid bool value", tok.getLine() );
+		}
+		else if ( tok.checkToken( "TessellationPatchVertices" ) )
+		{
+			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+			uint32 patchVerts = ( uint32 ) atoi( tok.getToken( intnum ) );
+			if ( patchVerts < 1 ) context.tessVerticesInPatchCount = 1;
+			else context.tessVerticesInPatchCount = patchVerts;
 		}
 		else if ( tok.checkToken( "VertexShader" ) )
 		{

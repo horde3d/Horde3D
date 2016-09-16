@@ -438,12 +438,28 @@ struct H3DComputeBufRes
 	The available ComputeBuffer resource accessors.
 
 	ComputeBufElem    - General compute buffer configuration
-	DataSizeI		  - Size of the buffer
+	DrawTypeElem	  - Specifies how to draw buffer data
+	DrawParamsElem	  - Specifies parameters for shader bindings
+	CompBufDataSizeI  - Size of the buffer
+	CompBufUseAsVertexBufferI - Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0.
+	DrawTypeLinesI	  - Data in this buffer should be drawn as lines
+	DrawTypePointsI	  - Data in this buffer should be drawn as points
+	DrawTypeTrianglesI - Data in this buffer should be drawn as triangles. Note: buffer is drawn without indices.
+	DrawParamsSizeI	  - Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3.
+	DrawParamsOffsetI - Specifies the offset of parameter in the buffer (in bytes). Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) - 12.
 	*/
 	enum List
 	{
 		ComputeBufElem = 1000,
-		DataSizeI
+		DrawTypeElem,
+		DrawParamsElem,
+		CompBufDataSizeI,
+		CompBufUseAsVertexBufferI,
+		DrawTypeLinesI,
+		DrawTypePointsI,
+		DrawTypeTrianglesI,
+		DrawParamsSizeI,
+		DrawParamsOffsetI
 	};
 };
 
