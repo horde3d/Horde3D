@@ -77,13 +77,13 @@ struct ComputeBufferResData
 		DrawParamsElem,
 		CompBufDataSizeI,
 		CompBufUseAsVertexBufferI,
-		DrawTypeLinesI,
-		DrawTypePointsI,
-		DrawTypeTrianglesI,
+		DataDrawTypeI,
+		DrawParamsNameStr,
 		DrawParamsSizeI,
 		DrawParamsOffsetI
 	};
 };
+
 
 class ComputeBufferResource : public Resource
 {
@@ -93,7 +93,7 @@ public:
 		return new ComputeBufferResource( name, flags );
 	}
 
-	static uint32 calcCombMask( const std::vector< std::string > &flags );
+	Resource *clone();
 
 	ComputeBufferResource( const std::string &name, int flags );
 	~ComputeBufferResource();
@@ -108,17 +108,31 @@ public:
 	// 	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 // 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
 // 	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
+	void setElemParamStr( int elem, int elemIdx, int param, const char *value );
 
 	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
 	void unmapStream();
+
+protected:
+	
+	bool createGeometry();
+
 private:
+
+	std::vector< VertexLayoutAttrib > _dataParams;  /* Vertex binding parameters, if buffer is used for drawing. */ 
 	uint8					*_data;
 	
 	uint32					_dataSize;
 	uint32					_bufferID;
+	uint32					_geoID;
+
+	uint16					_drawType;
+	uint16					_vertexLayout;
 
 	bool					_writeRequested;
 	bool					_mapped;
+	bool					_geometryParamsSet;
+	uint8					_useAsVertexBuf;
 
 	friend class Renderer;
 };
