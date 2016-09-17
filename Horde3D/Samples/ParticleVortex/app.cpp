@@ -19,9 +19,15 @@
 #include "Horde3DUtils.h"
 #include <math.h>
 #include <iomanip>
+#include <random>
 
 using namespace std;
 
+struct ParticleData
+{
+	float position[ 3 ];
+	float velocity[ 3 ];
+};
 
 ParticleVortexSample::ParticleVortexSample( int argc, char** argv ) :
     SampleApplication( argc, argv, "Particle vortex - Horde3D Sample" )
@@ -41,13 +47,59 @@ bool ParticleVortexSample::initResources()
 	// Shader for deferred shading
 	H3DRes lightMatRes = h3dAddResource( H3DResTypes::Material, "materials/light.material.xml", 0 );
 
-    // Environment
-	H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/platform/platform.scene.xml", 0 );
+    // Shader that contains geometry and compute shaders for particles
+	H3DRes computeMatRes = h3dAddResource( H3DResTypes::Material, "materials/compute.material.xml", 0 );
 
-    // Skybox
-	H3DRes skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skybox.scene.xml", 0 );
+	// 2. Specify compute buffer parameters
 
-    // 2. Load resources
+	// Create compute buffer 
+	H3DRes compBuf = h3dAddResource( H3DResTypes::ComputeBuffer, "CompBuf", 0 );
+
+	// Generate random position data for particles
+	size_t particlesCount = 1000000;
+	ParticleData *compData = new ParticleData[ particlesCount ];
+
+	std::random_device rd;
+	std::mt19937 gen( rd() );
+	std::uniform_real_distribution<> dis( -30, 30 );
+
+	for ( size_t i = 0; i < particlesCount; ++i )
+	{
+		compData[ i ].position[ 0 ] = dis( gen );
+		compData[ i ].position[ 1 ] = dis( gen );
+		compData[ i ].position[ 2 ] = dis( gen );
+
+		compData[ i ].velocity[ 0 ] = 0.f;
+		compData[ i ].velocity[ 1 ] = 0.f;
+		compData[ i ].velocity[ 2 ] = 0.f;
+	}
+
+	// Set size of the compute buffer
+	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufDataSizeI, particlesCount * sizeof( ParticleData ) );
+
+	// Mark that compute buffer will be used for rendering as a vertex buffer
+	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufUseAsVertexBufferI, 1 );
+
+	// Set preferred draw type (for this example we draw with points - 2)
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawTypeElem, 0, H3DComputeBufRes::DataDrawTypeI, 2 );
+
+	// Set vertex binding parameters.
+	// Name - name of the parameter. Used for binding parameter to shader variable.
+	// Size - number of components (3 float for particle position, so 3), 
+	// Offset - number of bytes. For second parameter it is 12, because the first parameter had 3 floats (12 bytes)
+	h3dSetResParamStr( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsNameStr, "position" );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsSizeI, 3 );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsOffsetI, 0 );
+	h3dSetResParamStr( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsNameStr, "velocity" );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsSizeI, 3 );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsOffsetI, 12 );
+
+	// Fill compute buffer with generated data
+	void *data = h3dMapResStream( compBuf, H3DComputeBufRes::ComputeBufElem, 0, 0, false, true );
+	memcpy( data, compData, particlesCount * sizeof( ParticleData ) );
+	h3dUnmapResStream( compBuf );
+
+    // 3. Load resources
 
     if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
     {
@@ -55,20 +107,11 @@ bool ParticleVortexSample::initResources()
         return false;
     }
 
-    // 3. Add scene nodes
+    // 4. Add scene nodes
 
 	// Add camera
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 	//h3dSetNodeParamI( _cam, H3DCamera::OccCullingI, 1 );
-
-    // Add environment
-	H3DNode env = h3dAddNodes( H3DRootNode, envRes );
-    h3dSetNodeTransform( env, 0, 0, 0, 0, 0, 0, 0.23f, 0.23f, 0.23f );
-
-    // Add skybox
-	H3DNode sky = h3dAddNodes( H3DRootNode, skyBoxRes );
-	h3dSetNodeTransform( sky, 0, 0, 0, 0, 0, 0, 210, 50, 210 );
-	h3dSetNodeFlags( sky, H3DNodeFlags::NoCastShadow, true );
 
     // Add light source
 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
@@ -82,18 +125,12 @@ bool ParticleVortexSample::initResources()
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
 
-    _crowdSim = new CrowdSim( getResourcePath() );
-	_crowdSim->init();
-
 	return true;
 }
 
 
 void ParticleVortexSample::releaseResources()
 {
-    delete _crowdSim;
-    _crowdSim = 0x0;
-
     SampleApplication::releaseResources();
 }
 
@@ -104,6 +141,6 @@ void ParticleVortexSample::update()
 
     if( !checkFlag( SampleApplication::FreezeMode ) )
 	{
-        _crowdSim->update( getFPS() );
-    }
+
+	}
 }
