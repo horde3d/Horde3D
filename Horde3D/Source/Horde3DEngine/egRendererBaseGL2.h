@@ -68,24 +68,6 @@ private:
 // };
 // 
 // 
-// ---------------------------------------------------------
-// Vertex layout
-// ---------------------------------------------------------
-
-struct VertexLayoutAttribGL2
-{
-	std::string  semanticName;
-	uint32       vbSlot;
-	uint32       size;
-	uint32       offset;
-};
-
-struct RDIVertexLayoutGL2
-{
-	uint32              numAttribs;
-	VertexLayoutAttribGL2  attribs[16];
-};
-
 
 // ---------------------------------------------------------
 // Buffers

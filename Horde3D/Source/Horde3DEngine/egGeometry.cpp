@@ -67,6 +67,7 @@ Resource *GeometryResource::clone()
 
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
+	// TODO: Check if elemcpy_le should be used
 	// Make a deep copy of the data
 	res->_indexData = new char[_indexCount * (_16BitIndices ? 2 : 4)];
 	res->_vertPosData = new Vec3f[_vertCount];
