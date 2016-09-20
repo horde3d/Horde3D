@@ -45,7 +45,8 @@ struct SceneNodeTypes
 		Joint,
 		Light,
 		Camera,
-		Emitter
+		Emitter,
+		Compute
 	};
 };
 

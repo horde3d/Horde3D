@@ -15,7 +15,7 @@
 
 #include "egPrerequisites.h"
 #include "egResource.h"
-#include "egTexture.h"
+#include "egScene.h"
 #include "egRendererBase.h"
 
 namespace Horde3D {
@@ -93,6 +93,34 @@ private:
 };
 
 typedef SmartResPtr< ComputeBufferResource > PComputeBufferResource;
+
+
+// =================================================================================================
+// Compute Node
+// =================================================================================================
+
+struct ComputeNodeTpl : public SceneNodeTpl
+{
+	ComputeNodeTpl( const std::string &name ) :
+		SceneNodeTpl( SceneNodeTypes::Compute, name )
+	{
+	}
+};
+
+class ComputeNode : public SceneNode
+{
+public:
+
+	static SceneNodeTpl *parsingFunc( std::map< std::string, std::string > &attribs );
+	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
+
+	friend class Renderer;
+	friend class SceneManager;
+
+protected:
+
+	ComputeNode( const ComputeNodeTpl &computeTpl );
+};
 
 } // namespace
 

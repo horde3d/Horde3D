@@ -3,7 +3,11 @@
 #include "egRenderer.h"
 #include "egCom.h"
 
+#include <map>
+
 namespace Horde3D {
+
+using namespace std;
 
 // =================================================================================================
 // Compute Buffer Resource
@@ -354,6 +358,33 @@ void ComputeBufferResource::unmapStream()
 	}
 
 	_mapped = false;
+}
+
+
+// =================================================================================================
+// Compute Node
+// =================================================================================================
+
+ComputeNode::ComputeNode( const ComputeNodeTpl &computeTpl ) : SceneNode( computeTpl )
+{
+
+}
+
+
+SceneNodeTpl *ComputeNode::parsingFunc( map< string, string > &attribs )
+{
+	map< string, string >::iterator itr;
+	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "" );
+
+	return computeTpl;
+}
+
+
+SceneNode *ComputeNode::factoryFunc( const SceneNodeTpl &nodeTpl )
+{
+	if ( nodeTpl.type != SceneNodeTypes::Compute ) return nullptr;
+
+	return new ComputeNode( *( ComputeNodeTpl * ) &nodeTpl );
 }
 
 } // namespace
