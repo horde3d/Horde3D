@@ -145,7 +145,8 @@ struct EngineStats
 		ShadowsGPUTime,
 		ParticleGPUTime,
 		TextureVMem,
-		GeometryVMem
+		GeometryVMem,
+		ComputeGPUTime
 	};
 };
 
@@ -179,6 +180,7 @@ protected:
 	GPUTimer  *_defLightsGPUTimer;
 	GPUTimer  *_shadowsGPUTimer;
 	GPUTimer  *_particleGPUTimer;
+	GPUTimer  *_computeGPUTimer;
 
 	friend class ProfSample;
 };

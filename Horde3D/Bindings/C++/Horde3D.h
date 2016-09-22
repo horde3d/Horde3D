@@ -137,7 +137,8 @@ struct H3DStats
 		ShadowsGPUTime    - GPU time in ms spent for generating shadow maps
 		ParticleGPUTime   - GPU time in ms spent for drawing particles
 		TextureVMem       - Estimated amount of video memory used by textures (in Mb)
-		GeometryVMem      - Estimated amount of video memory used by geometry (in Mb)
+		GeometryVMem      - Estimated amount of video memory used by geometry (in Mb),
+		ComputeGPUTime	  - GPU time in ms spent for processing compute shaders
 	*/
 	enum List
 	{
