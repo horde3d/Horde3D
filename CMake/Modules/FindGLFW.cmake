@@ -88,10 +88,21 @@ IF(GLFW_LIBRARY)
     # But for non-OSX systems, I will use the CMake Threads package.
     # In fact, there seems to be a problem if I used the Threads package
     # and try using this line, so I'm just skipping it entirely for OS X.
-    IF(NOT APPLE)
-    FIND_PACKAGE(Threads)
-    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-    ENDIF(NOT APPLE)
+    IF(UNIX AND NOT APPLE)
+		FIND_PACKAGE(Threads)
+		SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    
+		if ( CMAKE_DL_LIBS )
+			SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${CMAKE_DL_LIBS})
+		endif()
+			
+		find_library(RT_LIBRARY rt)
+		mark_as_advanced(RT_LIBRARY)
+		if (RT_LIBRARY)
+			SET( GLFW_LIBRARIES ${GLFW_LIBRARIES} ${RT_LIBRARY} )
+		endif()
+		
+	ENDIF(NOT APPLE)
 
     # For OS X, GLFW uses Cocoa as a backend so it must link to Cocoa.
     IF(APPLE OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
