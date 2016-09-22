@@ -19,6 +19,7 @@
 #include "egCamera.h"
 #include "egParticle.h"
 #include "egTexture.h"
+#include "egCompute.h"
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -116,6 +117,15 @@ DLLEXP void h3dRelease()
 {
 	Modules::release();
 	initialized = false;
+}
+
+
+DLLEXP void h3dDispatchCompute( int materialRes, const char *context, int groupX, int groupY, int groupZ )
+{
+	Resource *res = Modules::resMan().resolveResHandle( materialRes );
+	APIFUNC_VALIDATE_RES_TYPE( res, ResourceTypes::Material, "h3dDispatchCompute", APIFUNC_RET_VOID );
+
+	Modules::renderer().dispatchCompute( ( MaterialResource * ) res, safeStr( context, 0 ), groupX, groupY, groupZ );
 }
 
 
@@ -934,6 +944,21 @@ DLLEXP bool h3dHasEmitterFinished( NodeHandle emitterNode )
 	return ((EmitterNode *)sn)->hasFinished();
 }
 
+
+DLLEXP NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResHandle materialRes, ResHandle compBufferRes )
+{
+	SceneNode *parentNode = Modules::sceneMan().resolveNodeHandle( parent );
+	APIFUNC_VALIDATE_NODE( parentNode, "h3dAddComputeNode", 0 );
+	Resource *matRes = Modules::resMan().resolveResHandle( materialRes );
+	APIFUNC_VALIDATE_RES_TYPE( matRes, ResourceTypes::Material, "h3dAddComputeNode", 0 );
+	Resource *cbRes = Modules::resMan().resolveResHandle( compBufferRes );
+	APIFUNC_VALIDATE_RES_TYPE( cbRes, ResourceTypes::ComputeBuffer, "h3dAddComputeNode", 0 );
+
+	ComputeNodeTpl tpl( safeStr( name, 0 ), ( ComputeBufferResource * ) cbRes, ( MaterialResource * ) matRes );
+
+	SceneNode *sn = Modules::sceneMan().findType( SceneNodeTypes::Compute )->factoryFunc( tpl );
+	return Modules::sceneMan().addNode( sn, *parentNode );
+}
 
 // =================================================================================================
 // DLL entry point

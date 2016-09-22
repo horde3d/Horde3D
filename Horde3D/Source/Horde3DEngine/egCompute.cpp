@@ -367,16 +367,23 @@ void ComputeBufferResource::unmapStream()
 
 ComputeNode::ComputeNode( const ComputeNodeTpl &computeTpl ) : SceneNode( computeTpl )
 {
+	_compBufferRes = computeTpl.compBufRes;
+	_materialRes = computeTpl.matRes;
+}
+
+
+ComputeNode::~ComputeNode()
+{
 
 }
 
 
 SceneNodeTpl *ComputeNode::parsingFunc( map< string, string > &attribs )
 {
-	map< string, string >::iterator itr;
-	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "" );
+// 	map< string, string >::iterator itr;
+// 	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "", nullptr, nullptr );
 
-	return computeTpl;
+	return nullptr;
 }
 
 

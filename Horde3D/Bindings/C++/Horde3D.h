@@ -475,6 +475,7 @@ struct H3DNodeTypes
 		Light      - Light source
 		Camera     - Camera giving view on scene
 		Emitter    - Particle system emitter
+		Compute	   - Compute node, necessary for drawing compute results
 	*/
 	enum List
 	{
@@ -485,7 +486,8 @@ struct H3DNodeTypes
 		Joint,
 		Light,
 		Camera,
-		Emitter
+		Emitter,
+		Compute
 	};
 };
 
@@ -790,6 +792,26 @@ DLL bool h3dInit( H3DRenderDevice::List deviceType );
 */
 DLL void h3dRelease();
 
+/* Function: h3dDispatchCompute
+		Asynchronous processing of arbitrary data on GPU.
+
+	Details:
+		This function is used for processing data on GPU via compute shaders. Compute shaders are commonly used in 
+		tiled rendering, particles generation, image compression/decompression, some even use them for AI calculation. 
+		Calculation results can be stored in a texture or a buffer. 
+		Data in buffers can also be used for rendering via Compute Buffer Resource.
+
+	Parameters:
+		materialRes  - material that specifies the shader used and various input parameters for compute shader
+		context		 - specifies the shader program that will be executed (one shader file may contain a large number of compute shader programs)
+		groupX		 - number of work groups in X dimension [1,65535]
+		groupY		 - number of work groups in Y dimension [1,65535]
+		groupZ		 - number of work groups in Z dimension [1,65535]
+
+	Returns:
+		nothing
+*/
+DLL void h3dDispatchCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
 
 /* Function: h3dRender
 		Main rendering function.
@@ -2239,3 +2261,23 @@ DLL void h3dUpdateEmitter( H3DNode emitterNode, float timeDelta );
 		true if Emitter will no more emit any particles, otherwise or in case of failure false
 */
 DLL bool h3dHasEmitterFinished( H3DNode emitterNode );
+
+
+/* Group: Compute-specific scene graph functions */
+/* Function: h3dAddComputeNode
+		Adds a Compute node to the scene.
+
+	Details:
+		This function creates a new Compute node and attaches it to the specified parent node.
+		Compute node is used for drawing results of compute shader work. 
+
+	Parameters:
+		parent             - handle to parent node to which the new node will be attached
+		name               - name of the node
+		materialRes        - handle to Material resource used for rendering
+		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
+
+	Returns:
+		handle to the created node or 0 in case of failure
+*/
+DLL H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes );

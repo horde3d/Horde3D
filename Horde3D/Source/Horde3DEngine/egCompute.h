@@ -101,10 +101,14 @@ typedef SmartResPtr< ComputeBufferResource > PComputeBufferResource;
 
 struct ComputeNodeTpl : public SceneNodeTpl
 {
-	ComputeNodeTpl( const std::string &name ) :
-		SceneNodeTpl( SceneNodeTypes::Compute, name )
+	PMaterialResource		matRes;
+	PComputeBufferResource  compBufRes;
+
+	ComputeNodeTpl( const std::string &name, ComputeBufferResource *computeBufferRes, MaterialResource *materialRes ) :
+		SceneNodeTpl( SceneNodeTypes::Compute, name ), compBufRes( computeBufferRes ), matRes( materialRes )
 	{
 	}
+
 };
 
 class ComputeNode : public SceneNode
@@ -120,6 +124,13 @@ public:
 protected:
 
 	ComputeNode( const ComputeNodeTpl &computeTpl );
+	~ComputeNode();
+
+protected:
+
+	PMaterialResource		_materialRes;
+	PComputeBufferResource	_compBufferRes;
+
 };
 
 } // namespace

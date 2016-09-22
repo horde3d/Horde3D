@@ -23,6 +23,7 @@
 #include "egRenderer.h"
 #include "egPipeline.h"
 #include "egExtensions.h"
+#include "egCompute.h"
 
 // Extensions
 #ifdef CMAKE
@@ -115,11 +116,14 @@ bool Modules::init( int backendType )
 		CameraNode::parsingFunc, CameraNode::factoryFunc );
 	sceneMan().registerNodeType( SceneNodeTypes::Emitter, "Emitter",
 		EmitterNode::parsingFunc, EmitterNode::factoryFunc );
+	sceneMan().registerNodeType( SceneNodeTypes::Compute, "Compute",
+		ComputeNode::parsingFunc, ComputeNode::factoryFunc );
 
 	// Register render functions
 	renderer().registerRenderFunc( SceneNodeTypes::Mesh, Renderer::drawMeshes );
 	renderer().registerRenderFunc( SceneNodeTypes::Emitter, Renderer::drawParticles );
-	
+	renderer().registerRenderFunc( SceneNodeTypes::Compute, Renderer::drawComputeResults );
+
 	// Install extensions
 	installExtensions();
 
