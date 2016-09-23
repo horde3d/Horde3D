@@ -29,8 +29,10 @@ protected:
     void releaseResources();
 
     void update();
-	
+
 private:
+	H3DNode _compNode;
+	H3DRes	_computeMatRes;
 };
 
 #endif // _app_H_

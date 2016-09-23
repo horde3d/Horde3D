@@ -48,7 +48,7 @@ bool ParticleVortexSample::initResources()
 	H3DRes lightMatRes = h3dAddResource( H3DResTypes::Material, "materials/light.material.xml", 0 );
 
     // Shader that contains geometry and compute shaders for particles
-	H3DRes computeMatRes = h3dAddResource( H3DResTypes::Material, "materials/compute.material.xml", 0 );
+	_computeMatRes = h3dAddResource( H3DResTypes::Material, "materials/compute.material.xml", 0 );
 
 	// 2. Specify compute buffer parameters
 
@@ -83,6 +83,9 @@ bool ParticleVortexSample::initResources()
 	// Set preferred draw type (for this example we draw with points - 2)
 	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawTypeElem, 0, H3DComputeBufRes::DataDrawTypeI, 2 );
 
+	// Set number of elements to draw (for this example we draw 1000000 points)
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsElementsCountI, 1000000 );
+
 	// Set vertex binding parameters.
 	// Name - name of the parameter. Used for binding parameter to shader variable.
 	// Size - number of components (3 float for particle position, so 3), 
@@ -113,17 +116,20 @@ bool ParticleVortexSample::initResources()
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 	//h3dSetNodeParamI( _cam, H3DCamera::OccCullingI, 1 );
 
+	// In order to draw the results of compute buffer we need a compute node
+	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", _computeMatRes, compBuf );
+
     // Add light source
-	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
-	h3dSetNodeTransform( light, 0, 20, 50, -30, 0, 0, 1, 1, 1 );
-	h3dSetNodeParamF( light, H3DLight::RadiusF, 0, 200 );
-	h3dSetNodeParamF( light, H3DLight::FovF, 0, 90 );
-	h3dSetNodeParamI( light, H3DLight::ShadowMapCountI, 3 );
-	h3dSetNodeParamF( light, H3DLight::ShadowSplitLambdaF, 0, 0.9f );
-	h3dSetNodeParamF( light, H3DLight::ShadowMapBiasF, 0, 0.001f );
-	h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 0.9f );
-	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
-	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
+// 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
+// 	h3dSetNodeTransform( light, 0, 20, 50, -30, 0, 0, 1, 1, 1 );
+// 	h3dSetNodeParamF( light, H3DLight::RadiusF, 0, 200 );
+// 	h3dSetNodeParamF( light, H3DLight::FovF, 0, 90 );
+// 	h3dSetNodeParamI( light, H3DLight::ShadowMapCountI, 3 );
+// 	h3dSetNodeParamF( light, H3DLight::ShadowSplitLambdaF, 0, 0.9f );
+// 	h3dSetNodeParamF( light, H3DLight::ShadowMapBiasF, 0, 0.001f );
+// 	h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 0.9f );
+// 	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
+// 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
 
 	return true;
 }
