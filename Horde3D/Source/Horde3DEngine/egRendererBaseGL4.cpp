@@ -27,6 +27,7 @@ namespace RDI_GL4 {
 #	define CHECK_GL_ERROR
 #endif
 
+// Debug shaders
 static const char *defaultShaderVS =
 	"#version 330\n"
 	"uniform mat4 viewProjMat;\n"
@@ -44,11 +45,14 @@ static const char *defaultShaderFS =
 	"	fragColor = color;\n"
 	"}\n";
 
+// Bindings for RDI types to GL
 static const uint32 indexFormats[ 2 ] = { GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
 
 static const uint32 primitiveTypes[ 5 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_LINES, GL_POINTS, GL_PATCHES };
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
+
+static const uint32 memoryBarrierType[ 3 ] = { GL_BUFFER_UPDATE_BARRIER_BIT, GL_ELEMENT_ARRAY_BARRIER_BIT, GL_SHADER_IMAGE_ACCESS_BARRIER_BIT };
 
 // =================================================================================================
 // GPUTimer
@@ -1790,6 +1794,13 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 				_prevShaderId = _curShaderId;
 				_pendingMask &= ~PM_GEOMETRY;
 			}
+		}
+
+		// Place memory barriers
+		if ( mask & PM_BARRIER )
+		{
+			glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers ] );
+			_pendingMask &= ~PM_BARRIER;
 		}
 
 		CHECK_GL_ERROR

@@ -479,6 +479,12 @@ enum RDIPrimType
 	PRIM_PATCHES,
 };
 
+enum RDIDrawBarriers
+{
+	VertexBufferBarrier = 0,	// Wait till vertex buffer is updated by shaders
+	IndexBufferBarrier,			// Wait till index buffer is updated by shaders
+	ImageBarrier				// Wait till image is updated by shaders
+};
 
 class RenderDeviceInterface
 {
@@ -1372,6 +1378,8 @@ public:
 		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
 	void setTessPatchVertices( uint16 verts )
 		{ _tessPatchVerts = verts; _pendingMask |= PM_RENDERSTATES; }
+	void setMemoryBarrier( RDIDrawBarriers barrier )
+		{ _memBarriers = barrier; _pendingMask |= PM_BARRIER; }
 
 	bool commitStates( uint32 filter = 0xFFFFFFFF ) 
 	{
@@ -1419,38 +1427,32 @@ protected:
 		PM_TEXTURES      = 0x00000008,
 		PM_SCISSOR       = 0x00000010,
 		PM_RENDERSTATES  = 0x00000020,
-		PM_GEOMETRY		 = 0x00000040 
+		PM_GEOMETRY		 = 0x00000040,
+		PM_BARRIER		 = 0x00000080
 	};
 
 protected:
 
-	DeviceCaps    _caps;
-	
-	uint32        _depthFormat;
-	int           _vpX, _vpY, _vpWidth, _vpHeight;
-	int           _scX, _scY, _scWidth, _scHeight;
-	int           _fbWidth, _fbHeight;
-	std::string   _shaderLog;
-	uint32        _curRendBuf;
-	int           _outputBufferIndex;  // Left and right eye for stereo rendering
-	uint32        _textureMem, _bufferMem;
+	DeviceCaps					_caps;
 
-	int                            _defaultFBO;
-    bool                           _defaultFBOMultisampled;
-
-	uint32                         _numVertexLayouts;
-// 	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
-// 	RDIObjects< RDIBuffer >        _buffers;
-// 	RDIObjects< RDITexture >       _textures;
-// 	RDIObjects< RDIShader >        _shaders;
-// 	RDIObjects< RDIRenderBuffer >  _rendBufs;
-
-// 	RDIVertBufSlot        _vertBufSlots[16];
-	RDITexSlot					_texSlots[16];
-// 	std::vector< RDITexSlot >	_texSlots;
+	RDITexSlot					_texSlots[ 16 ];
+	// 	std::vector< RDITexSlot >	_texSlots;
 	RDIRasterState				_curRasterState, _newRasterState;
 	RDIBlendState				_curBlendState, _newBlendState;
 	RDIDepthStencilState		_curDepthStencilState, _newDepthStencilState;
+	RDIDrawBarriers				_memBarriers;
+
+	std::string					_shaderLog;
+	uint32						_depthFormat;
+	int							_vpX, _vpY, _vpWidth, _vpHeight;
+	int							_scX, _scY, _scWidth, _scHeight;
+	int							_fbWidth, _fbHeight;
+	uint32						_curRendBuf;
+	int							_outputBufferIndex;  // Left and right eye for stereo rendering
+	uint32						_textureMem, _bufferMem;
+
+	uint32                      _numVertexLayouts;
+
 	uint32						_prevShaderId, _curShaderId;
 // 	uint32                _curVertLayout, _newVertLayout;
 // 	uint32                _curIndexBuf, _newIndexBuf;
@@ -1461,7 +1463,11 @@ protected:
 	uint32						_curTextureBuf;
  	uint32						_maxTexSlots; // specified in inherited render devices
 
-	uint16						_tessPatchVerts; // number of vertices in patch. Used for tesselation.
+	uint32						_tessPatchVerts; // number of vertices in patch. Used for tesselation.
+
+	int							_defaultFBO;
+	bool                        _defaultFBOMultisampled;
+
 };
 
 }

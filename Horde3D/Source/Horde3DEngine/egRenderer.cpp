@@ -2079,13 +2079,13 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
 			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
 		}
 		
-		// Wait for completion of compute operation
+		// Wait for completion of compute operation (writing to buffer)
+		rdi->setMemoryBarrier( RDIDrawBarriers::VertexBufferBarrier );
 
 		// Render
 		rdi->draw( drawType, 0, compNode->_compBufferRes->_numElements );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
-		Modules::stats().incStat( EngineStats::TriCount, compNode->_compBufferRes->_numElements );
-
+		Modules::stats().incStat( EngineStats::TriCount, ( float ) compNode->_compBufferRes->_numElements );
 	}
 
 	timer->endQuery();
