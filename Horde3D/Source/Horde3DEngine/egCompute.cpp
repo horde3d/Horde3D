@@ -338,15 +338,13 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 
 			if ( read )
 			{
-				// 				int slice = elemIdx / ( getMipCount() + 1 );
-				// 				int mipLevel = elemIdx % ( getMipCount() + 1 );
-				// 				rdi->getTextureData( _texObject, slice, mipLevel, _mappedData );
+				// currently reading back is not supported
+				_writeRequested = false;
+				return nullptr;
 			}
 
 			if ( write )
 				_writeRequested = true;
-			else
-				_writeRequested = false;
 
 			_mapped = true;
 
