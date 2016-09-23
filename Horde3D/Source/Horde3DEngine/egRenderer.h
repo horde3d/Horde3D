@@ -176,9 +176,13 @@ public:
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
+	static void drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass, 
+									bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 	void render( CameraNode *camNode );
 	void finalizeFrame();
+
+	void dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z );
 
 	uint32 getFrameID() const { return _frameID; }
 	ShaderCombination *getCurShader() const { return _curShader; }
@@ -215,8 +219,6 @@ protected:
 	void drawRenderables( const std::string &shaderContext, const std::string &theClass, bool debugView,
 		const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 	
-	void dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z );
-
 	void renderDebugView();
 	void finishRendering();
 

@@ -18,6 +18,7 @@
 #include "egRendererBaseGL2.h"
 #include "egRendererBaseGL4.h"
 #include "egCom.h"
+#include "egCompute.h"
 #include <cstring>
 
 #include "utDebug.h"
@@ -1598,7 +1599,12 @@ void Renderer::dispatchCompute( MaterialResource *materialRes, const std::string
 
 	ShaderCombination *curShader = Modules::renderer().getCurShader();
 
+	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::ComputeGPUTime );
+	if ( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
+
 	_renderDevice->runComputeShader( curShader->shaderObj, groups_x, groups_y, groups_z );
+
+	timer->endQuery();
 }
 
 // =================================================================================================
@@ -2004,6 +2010,87 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 // 	rdi->setVertexLayout( 0 );
 }
 
+
+void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
+								   bool debugView, const Frustum *frust1, const Frustum * /*frust2*/, RenderingOrder::List /*order*/,
+								   int occSet )
+{
+	if ( frust1 == 0x0 ) return;
+
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+	if ( !rdi->getCaps().computeShaders ) return; 
+
+	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
+
+	MaterialResource *curMatRes = nullptr;
+	ShaderCombination *curShader = nullptr;
+
+	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::ComputeGPUTime );
+	if ( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
+
+	// Loop over compute node queue
+	for ( size_t i = firstItem; i <= lastItem; ++i )
+	{
+		ComputeNode *compNode = ( ComputeNode * ) renderQueue[ i ].node;
+
+		// Sanity check
+		if ( !compNode->_compBufferRes->_useAsVertexBuf || !compNode->_compBufferRes->_geometryParamsSet || 
+			 compNode->_compBufferRes->_numElements == 0 || compNode->_materialRes->isOfClass( theClass ) )
+			continue;
+
+		// Specify drawing type
+		RDIPrimType drawType;
+		switch ( compNode->_compBufferRes->_drawType )
+		{
+			case 0: // Triangles
+				drawType = PRIM_TRILIST;
+				break;
+			case 1: // Lines
+				drawType = PRIM_LINES;
+				break;
+			case 2: // Points
+				drawType = PRIM_POINTS;
+				break;
+			default:
+				break;
+		}
+
+		// Set material
+		if ( curMatRes != compNode->_materialRes )
+		{
+			if ( !Modules::renderer().setMaterial( compNode->_materialRes, shaderContext ) ) continue;
+			curMatRes = compNode->_materialRes;
+		}
+
+		// Set compute buffer to act like vertex buffer
+		rdi->setGeometry( compNode->_compBufferRes->_geoID );
+
+		curShader = Modules::renderer().getCurShader();
+
+		// Set uniforms
+		// World transformation
+		if ( curShader->uni_worldMat >= 0 )
+		{
+			rdi->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &compNode->_absTrans.x[ 0 ] );
+		}
+		if ( curShader->uni_nodeId >= 0 )
+		{
+			float id = ( float ) compNode->getHandle();
+			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+		}
+		
+		// Wait for completion of compute operation
+
+		// Render
+		rdi->draw( drawType, 0, compNode->_compBufferRes->_numElements );
+		Modules::stats().incStat( EngineStats::BatchCount, 1 );
+		Modules::stats().incStat( EngineStats::TriCount, compNode->_compBufferRes->_numElements );
+
+	}
+
+	timer->endQuery();
+
+}
 
 // =================================================================================================
 // Main Rendering Functions

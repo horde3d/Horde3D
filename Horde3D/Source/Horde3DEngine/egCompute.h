@@ -32,10 +32,11 @@ struct ComputeBufferResData
 		DrawParamsElem,
 		CompBufDataSizeI,
 		CompBufUseAsVertexBufferI,
-		DataDrawTypeI,
+		DataDrawTypeI, // possible values: 0 - Triangles, 1 - Lines, 2 - Points
 		DrawParamsNameStr,
 		DrawParamsSizeI,
-		DrawParamsOffsetI
+		DrawParamsOffsetI,
+		DrawParamsElementsCountI
 	};
 };
 
@@ -80,8 +81,9 @@ private:
 	uint32					_dataSize;
 	uint32					_bufferID;
 	uint32					_geoID;
+	uint32					_numElements;
 
-	uint16					_drawType;
+	int16					_drawType;
 	uint16					_vertexLayout;
 
 	bool					_writeRequested;

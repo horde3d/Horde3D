@@ -14,7 +14,8 @@ using namespace std;
 // =================================================================================================
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) : Resource( ResourceTypes::ComputeBuffer, name, flags ),
-_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( nullptr ), _mapped( false )
+	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( nullptr ), _mapped( false ), _numElements( 0 ), _useAsVertexBuf( false ),
+	_vertexLayout( 0 ), _drawType( -1 ), _geoID( 0 ), _geometryParamsSet( false )
 {
 	initDefault();
 }
@@ -79,6 +80,7 @@ Resource *ComputeBufferResource::clone()
 	res->_vertexLayout = _vertexLayout;
 	res->_useAsVertexBuf = _useAsVertexBuf;
 	res->_dataParams = _dataParams;
+	res->_numElements = _numElements;
 	res->_geometryParamsSet = _geometryParamsSet;
 
 	if ( _useAsVertexBuf && _geometryParamsSet )
@@ -166,7 +168,17 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 
 			break;
 		}
-
+		
+		case ComputeBufferResData::DrawParamsElem:
+		{
+			switch ( param )
+			{
+				case ComputeBufferResData::DrawParamsElementsCountI:
+					return _numElements;
+				default:
+					break;
+			}
+		}
 	}
 
 	return Resource::getElemParamI( elem, elemIdx, param );
@@ -255,6 +267,10 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 						_dataParams.at( elemIdx ).offset = value;
 					}
 
+					break;
+
+				case ComputeBufferResData::DrawParamsElementsCountI:
+					_numElements = value;
 					break;
 
 				default:
