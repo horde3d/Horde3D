@@ -125,6 +125,12 @@ DLLEXP void h3dDispatchCompute( int materialRes, const char *context, int groupX
 	Resource *res = Modules::resMan().resolveResHandle( materialRes );
 	APIFUNC_VALIDATE_RES_TYPE( res, ResourceTypes::Material, "h3dDispatchCompute", APIFUNC_RET_VOID );
 
+	if ( groupX <= 0 || groupY <= 0 || groupZ <= 0 )
+	{
+		Modules::log().writeError( "Invalid group values in h3dDispatchCompute" );
+		return;
+	}
+
 	Modules::renderer().dispatchCompute( ( MaterialResource * ) res, safeStr( context, 0 ), groupX, groupY, groupZ );
 }
 
