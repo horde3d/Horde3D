@@ -481,7 +481,8 @@ enum RDIPrimType
 
 enum RDIDrawBarriers
 {
-	VertexBufferBarrier = 0,	// Wait till vertex buffer is updated by shaders
+	NotSet = 0,
+	VertexBufferBarrier,	// Wait till vertex buffer is updated by shaders
 	IndexBufferBarrier,			// Wait till index buffer is updated by shaders
 	ImageBarrier				// Wait till image is updated by shaders
 };

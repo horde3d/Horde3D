@@ -172,6 +172,7 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 	_tessPatchVerts = _lastTessPatchVertsValue = 0;
+	_memBarriers = RDIDrawBarriers::NotSet;
 
 	_maxTexSlots = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
@@ -1799,7 +1800,7 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		// Place memory barriers
 		if ( mask & PM_BARRIER )
 		{
-			glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers ] );
+			if ( _memBarriers != RDIDrawBarriers::NotSet ) glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers - 1 ] );
 			_pendingMask &= ~PM_BARRIER;
 		}
 
@@ -1818,6 +1819,8 @@ void RenderDeviceGL4::resetStates()
 	_curRasterState.hash = 0xFFFFFFFF; _newRasterState.hash = 0;
 	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
 	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;
+
+	_memBarriers = RDIDrawBarriers::NotSet;
 
 //	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )
