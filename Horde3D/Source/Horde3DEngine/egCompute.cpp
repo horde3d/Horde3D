@@ -33,6 +33,7 @@ void ComputeBufferResource::initDefault()
 
 	if ( rdi->getCaps().computeShaders )
 	{
+		if ( _bufferID > 0 ) rdi->destroyBuffer( _bufferID );
 		_bufferID = rdi->createShaderStorageBuffer( _dataSize, nullptr );
 		_data = new uint8[ _dataSize ];
 	}
@@ -196,14 +197,17 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					if ( _dataSize < ( uint32 ) value )
 					{
 						delete[] _data;
-						_data = new uint8[ value ];
+
+						_dataSize = value;
+						initDefault();
 					}
-					_dataSize = value;
-					break;
+					else _dataSize = value;
+	
+					return;
 
 				case ComputeBufferResData::CompBufUseAsVertexBufferI:
 					_useAsVertexBuf = value;
-					break;
+					return;
 			}
 			break;
 
@@ -218,7 +222,7 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					}
 
 					_drawType = value;
-					break;
+					return;
 				default:
 					break;
 			}
@@ -228,6 +232,7 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 		{
 			VertexLayoutAttrib params;
 			params.vbSlot = 0; // always zero because only one buffer can be specified at a time
+			params.offset = params.size = 0;
 
 			switch ( param )
 			{
@@ -248,7 +253,7 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 						_dataParams.at( elemIdx ).size = value;
 					}
 
-					break;
+					return;
 
 				case ComputeBufferResData::DrawParamsOffsetI:
 					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
@@ -267,11 +272,11 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 						_dataParams.at( elemIdx ).offset = value;
 					}
 
-					break;
+					return;
 
 				case ComputeBufferResData::DrawParamsElementsCountI:
 					_numElements = value;
-					break;
+					return;
 
 				default:
 					break;
@@ -296,6 +301,7 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 				{
 					VertexLayoutAttrib params;
 					params.vbSlot = 0; // always zero because only one buffer can be specified at a time
+					params.offset = params.size = 0;
 
 					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
 					{
@@ -313,7 +319,7 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 						_dataParams.at( elemIdx ).semanticName = value;
 					}
 
-					break;
+					return;
 				}
 				default:
 					break;

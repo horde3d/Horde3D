@@ -346,10 +346,12 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 			VertexLayoutAttrib &attrib = vl.attribs[ i ];
 			const RDIVertBufSlotGL4 &vbSlot = curVao.vertexBufInfo[ attrib.vbSlot ];
 
-			ASSERT( _buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj != 0 &&
-					_buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj ).type == GL_ARRAY_BUFFER );
+			RDIBufferGL4 &buf = _buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj );
+			ASSERT( buf.glObj != 0 &&
+					buf.type == GL_ARRAY_BUFFER ||
+					buf.type == GL_SHADER_STORAGE_BUFFER ); // special case for compute buffer
 
-			glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj );
+			glBindBuffer( GL_ARRAY_BUFFER, buf.glObj );
 			glVertexAttribPointer( i, attrib.size, GL_FLOAT, GL_FALSE,
 								   vbSlot.stride, ( char * ) 0 + vbSlot.offset + attrib.offset );
 
