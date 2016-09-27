@@ -327,7 +327,7 @@ protected:
 // 	RDIRasterState        _curRasterState, _newRasterState;
 // 	RDIBlendState         _curBlendState, _newBlendState;
 // 	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
-	uint32                _prevShaderId, _curShaderId;
+//	uint32                _prevShaderId, _curShaderId;
 // 	uint32                _curVertLayout, _newVertLayout;
 // 	uint32                _curIndexBuf, _newIndexBuf;
  	uint32                _indexFormat;
