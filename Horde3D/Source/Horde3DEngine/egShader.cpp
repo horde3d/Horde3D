@@ -704,8 +704,10 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 	const char *intnum = "+-0123456789";
 	const char *floatnum = "+-0123456789.eE";
 
-	bool geometryShaderAvailable, computeShaderAvailable, tessControlShaderAvailable, tessEvalShaderAvailable;
-	geometryShaderAvailable = computeShaderAvailable = tessControlShaderAvailable = tessEvalShaderAvailable = false;
+	bool vertexShaderAvailable, fragmentShaderAvailable, geometryShaderAvailable, computeShaderAvailable, 
+		 tessControlShaderAvailable, tessEvalShaderAvailable;
+	vertexShaderAvailable = fragmentShaderAvailable = geometryShaderAvailable = computeShaderAvailable = 
+		tessControlShaderAvailable = tessEvalShaderAvailable = false;
 
 	context.id = tok.getToken( identifier );
 	if ( context.id == "" ) return raiseError( "FX: Invalid identifier", tok.getLine() );
@@ -784,6 +786,8 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
 			_tmpCodeVS = tok.getToken( identifier );
 			if ( _tmpCodeVS == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+
+			vertexShaderAvailable = true;
 		}
 		else if ( tok.checkToken( "GeometryShader" ) )
 		{
@@ -809,6 +813,8 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 				return raiseError( "FX: expected '= compile GLSL'", tok.getLine() );
 			_tmpCodeFS = tok.getToken( identifier );
 			if ( _tmpCodeFS == "" ) return raiseError( "FX: Invalid name", tok.getLine() );
+
+			fragmentShaderAvailable = true;
 		}
 		else if ( tok.checkToken( "TessControlShader" ) )
 		{
@@ -844,9 +850,15 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 		if ( _codeSections[ i ].getName() == _tmpCodeTSEval ) context.tessEvalCodeIdx = i;
 	}
 
+	// Check that compute shader, if available, is not in the same context with other shaders
+	if ( computeShaderAvailable && ( vertexShaderAvailable || fragmentShaderAvailable || geometryShaderAvailable || tessEvalShaderAvailable ) )
+	{
+		return raiseError( "FX: Compute shader and other types of shaders are detected in context '" + context.id + "'. This is not supported" );
+	}
+
 	if ( !computeShaderAvailable ) 
 	{
-		// compute shader is a standalone type of shader and is not directly attached to any geometry object, hence it is not a part of VS-GS-FS shader pipeline
+		// Compute shader is a standalone type of shader and is not directly attached to any geometry object, hence it is not a part of VS-GS-FS shader pipeline
 		if ( context.vertCodeIdx < 0 )
 			return raiseError( "FX: Vertex shader referenced by context '" + context.id + "' not found" );
 		if ( context.fragCodeIdx < 0 )
@@ -864,7 +876,7 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 			return raiseError( "FX: Compute shader referenced by context '" + context.id + "' not found" );
 	}
 
-	// skip contexts that are intended for other render interfaces
+	// Skip contexts that are intended for other render interfaces
 	if ( Modules::renderer().getRenderDeviceType() == targetRenderBackend )
 	{
 		_contexts.push_back( context );
