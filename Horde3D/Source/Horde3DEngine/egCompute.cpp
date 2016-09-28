@@ -13,11 +13,14 @@ using namespace std;
 // Compute Buffer Resource
 // =================================================================================================
 
-ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) : Resource( ResourceTypes::ComputeBuffer, name, flags ),
+ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) : 
+	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ),
 	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( nullptr ), _mapped( false ), _numElements( 0 ), _useAsVertexBuf( false ),
 	_vertexLayout( 0 ), _drawType( -1 ), _geoID( 0 ), _geometryParamsSet( false )
 {
 	initDefault();
+
+	_loaded = true;
 }
 
 
@@ -54,7 +57,7 @@ void ComputeBufferResource::release()
 
 bool ComputeBufferResource::load( const char *data, int size )
 {
-	if ( !Resource::load( data, size ) ) return false;
+//	if ( !Resource::load( data, size ) ) return false;
 
 	// currently not implemented
 
@@ -389,6 +392,11 @@ ComputeNode::ComputeNode( const ComputeNodeTpl &computeTpl ) : SceneNode( comput
 {
 	_compBufferRes = computeTpl.compBufRes;
 	_materialRes = computeTpl.matRes;
+
+	_renderable = true;
+
+	_localBBox.min = Vec3f( 0, 0, 0 );
+	_localBBox.max = Vec3f( 1, 1, 1 );
 }
 
 
@@ -412,6 +420,12 @@ SceneNode *ComputeNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 	if ( nodeTpl.type != SceneNodeTypes::Compute ) return nullptr;
 
 	return new ComputeNode( *( ComputeNodeTpl * ) &nodeTpl );
+}
+
+void ComputeNode::onPostUpdate()
+{
+	_bBox = _localBBox;
+	_bBox.transform( _absTrans );
 }
 
 } // namespace

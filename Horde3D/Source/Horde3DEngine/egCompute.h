@@ -120,6 +120,8 @@ public:
 	static SceneNodeTpl *parsingFunc( std::map< std::string, std::string > &attribs );
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
 
+	void onPostUpdate();
+
 	friend class Renderer;
 	friend class SceneManager;
 
@@ -129,6 +131,8 @@ protected:
 	~ComputeNode();
 
 protected:
+
+	BoundingBox				_localBBox;
 
 	PMaterialResource		_materialRes;
 	PComputeBufferResource	_compBufferRes;

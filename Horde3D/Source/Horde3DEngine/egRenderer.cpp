@@ -2035,8 +2035,22 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
 
 		// Sanity check
 		if ( !compNode->_compBufferRes->_useAsVertexBuf || !compNode->_compBufferRes->_geometryParamsSet || 
-			 compNode->_compBufferRes->_numElements == 0 || compNode->_materialRes->isOfClass( theClass ) )
+			 compNode->_compBufferRes->_numElements == 0 || !compNode->_materialRes->isOfClass( theClass ) )
 			continue;
+
+		if ( debugView )
+		{
+			// render AABB
+			Modules::renderer().setShaderComb( &Modules::renderer()._defColorShader );
+			Modules::renderer().commitGeneralUniforms();
+
+			Vec4f color = Vec4f( 1.f, 1.f, 1.f, 1 );
+			rdi->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, &color.x );
+
+			Modules::renderer().drawAABB( compNode->_bBox.min, compNode->_bBox.max );
+
+			continue;
+		}
 
 		// Specify drawing type
 		RDIPrimType drawType;
