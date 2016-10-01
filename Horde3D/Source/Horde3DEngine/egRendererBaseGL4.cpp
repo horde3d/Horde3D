@@ -848,7 +848,7 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 	// Geometry shader
 	if ( geometryShaderSrc )
 	{
-		uint32 gs = glCreateShader( GL_GEOMETRY_SHADER );
+		gs = glCreateShader( GL_GEOMETRY_SHADER );
 		glShaderSource( gs, 1, &geometryShaderSrc, 0x0 );
 		glCompileShader( gs );
 		glGetShaderiv( gs, GL_COMPILE_STATUS, &status );
