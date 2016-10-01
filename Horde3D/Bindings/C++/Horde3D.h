@@ -173,7 +173,7 @@ struct H3DResTypes
 		Texture         - Texture map
 		ParticleEffect  - Particle configuration
 		Pipeline        - Rendering pipeline
-		ComputeBuffer   - buffer with arbitrary data that can be accessed and modified by compute shaders
+		ComputeBuffer   - Buffer with arbitrary data that can be accessed and modified by compute shaders
 	*/
 	enum List
 	{
@@ -442,13 +442,13 @@ struct H3DComputeBufRes
 	DrawTypeElem				- Specifies how to draw buffer data
 	DrawParamsElem				- Specifies parameters for shader bindings
 	CompBufDataSizeI			- Size of the buffer
-	CompBufUseAsVertexBufferI	- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0.
-	DataDrawTypeI				- Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points.
+	CompBufUseAsVertexBufferI	- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
+	DataDrawTypeI				- Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
 	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data) [write-only]
-	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3. [write-only]
-	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes). 
-								  Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) - 12. [write-only]
-	DrawParamsElementsCountI	- Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10).
+	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3 [write-only]
+	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
+	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12 [write-only]
+	DrawParamsElementsCountI	- Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
 
 	*/
 	enum List
