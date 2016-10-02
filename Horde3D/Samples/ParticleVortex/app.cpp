@@ -35,6 +35,8 @@ ParticleVortexSample::ParticleVortexSample( int argc, char** argv ) :
 {
     _x = 15; _y = 3; _z = 20;
     _rx = -10; _ry = 60;
+
+	_animTime = 0;
 }
 
 
@@ -65,15 +67,18 @@ bool ParticleVortexSample::initResources()
 	std::mt19937 gen( rd() );
 	std::uniform_real_distribution<> dis( -30, 30 );
 
+	float angle = 0;
 	for ( size_t i = 0; i < particlesCount; ++i )
 	{
 		compData[ i ].position[ 0 ] = ( float ) dis( gen );
 		compData[ i ].position[ 1 ] = ( float ) dis( gen );
 		compData[ i ].position[ 2 ] = ( float ) dis( gen );
 
-		compData[ i ].velocity[ 0 ] = 0.f;
+		angle = -( float ) atan2f( compData[ i ].position[ 0 ], compData[ i ].position[ 2 ] );
+
+		compData[ i ].velocity[ 0 ] = cosf( angle );
 		compData[ i ].velocity[ 1 ] = 0.f;
-		compData[ i ].velocity[ 2 ] = 0.f;
+		compData[ i ].velocity[ 2 ] = sinf( angle ) * 5;
 	}
 
 	// Set size of the compute buffer
@@ -128,6 +133,9 @@ bool ParticleVortexSample::initResources()
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 1, 30.0f ); // y
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 2, 30.0f ); // z
 
+	// Set material uniforms that will not be changed during runtime
+	h3dSetMaterialUniform( _computeMatRes, "maxParticles", particlesCount, 0, 0, 0 );
+
     // Add light source
 // 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
 // 	h3dSetNodeTransform( light, 0, 20, 50, -30, 0, 0, 1, 1, 1 );
@@ -153,9 +161,26 @@ void ParticleVortexSample::releaseResources()
 void ParticleVortexSample::update()
 {
     SampleApplication::update();
+	float frame_time = 1.0f / getFPS();
 
     if( !checkFlag( SampleApplication::FreezeMode ) )
 	{
+		// Calculate animation time in seconds
+		_animTime += frame_time / 1000.0f;
 
+		// Set animation time
+		h3dSetMaterialUniform( _computeMatRes, "deltaTime", _animTime, 0, 0, 0 );
+
+		// Set attractor point
+		float angle = ( float ) _animTime * 0.5f;
+
+		float attractorX = cosf( angle );
+		float attractorY = cosf( angle ) * sinf( angle );
+		float attractorZ = sinf( angle );
+
+		h3dSetMaterialUniform( _computeMatRes, "attractor", attractorX * 2, attractorY * 2, attractorZ * 2, 0 );
+
+		// Perform computing
+//		h3dDispatchCompute( _computeMatRes, "Compute", 100, 100, 1 );
 	}
 }

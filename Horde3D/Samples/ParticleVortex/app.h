@@ -33,6 +33,7 @@ protected:
 private:
 	H3DNode _compNode;
 	H3DRes	_computeMatRes;
+	float _animTime;
 };
 
 #endif // _app_H_

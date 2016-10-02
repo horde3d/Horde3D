@@ -43,13 +43,17 @@ layout (location = 1) in vec3 partVelocity;
 //uniform mat4 projMat;
 uniform mat4 viewProjMat;
 
+out vec3 partColor;
+
 void main( void )
 {
 //	vec4 viewPos = vec4( partPosition, 1 ) * viewMat;
 //	gl_Position = viewPos * projMat;
 
 	vec4 pos = calcWorldPos( vec4( partPosition, 1 ) );
-//	partTexCoords = vec2( 0, 0 );
+	
+	float speed = length( partVelocity );
+	partColor = vec3( mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.5, 0.1), speed * 0.1 ) );
 	
 	gl_Position = pos;//viewProjMat * pos;
 }
@@ -65,11 +69,16 @@ layout(points) in;
 layout (triangle_strip) out;
 layout(max_vertices = 4) out;
  
+in vec3 partColor;
+ 
 out vec2 vertTexCoords;
+out vec3 color;
  
 void main()
 {
-//    vec4 P = gl_in[0].gl_Position;
+// create billboards from points
+	color = partColor;
+	
 	float particle_size = 0.1;
 	
 	vec3 up = vec3( viewMat[0][1], viewMat[1][1], viewMat[2][1] );
@@ -101,32 +110,7 @@ void main()
 	EmitVertex();  
 	  
 	EndPrimitive();
-  
-	// a: left-bottom 
-	// vec2 va = P.xy + vec2(-0.5, -0.5) * particle_size;
-	// gl_Position = projMat * vec4(va, P.zw);
-	// vertTexCoords = vec2(0.0, 0.0);
-	// EmitVertex();  
-	  
-	// // b: left-top
-	// vec2 vb = P.xy + vec2(-0.5, 0.5) * particle_size;
-	// gl_Position = projMat * vec4(vb, P.zw);
-	// vertTexCoords = vec2(0.0, 1.0);
-	// EmitVertex();  
-	  
-	// // d: right-bottom
-	// vec2 vd = P.xy + vec2(0.5, -0.5) * particle_size;
-	// gl_Position = projMat * vec4(vd, P.zw);
-	// vertTexCoords = vec2(1.0, 0.0);
-	// EmitVertex();  
-
-	// // c: right-top
-	// vec2 vc = P.xy + vec2(0.5, 0.5) * particle_size;
-	// gl_Position = projMat * vec4(vc, P.zw);
-	// vertTexCoords = vec2(1.0, 1.0);
-	// EmitVertex();  
-
-	// EndPrimitive();  
+    
 }
 
 
@@ -136,10 +120,12 @@ void main()
 uniform sampler2D albedoMap;
 
 in vec2 vertTexCoords;
+in vec3 color;
+
 out vec4 fragColor;
 
 void main()
 {
 	vec4 texColor = texture( albedoMap, vec2( vertTexCoords.s, -vertTexCoords.t ) );
-	fragColor = texColor;
+	fragColor = vec4( color * texColor.rgb, texColor.a );
 }
