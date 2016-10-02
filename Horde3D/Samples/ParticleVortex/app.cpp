@@ -116,10 +116,17 @@ bool ParticleVortexSample::initResources()
 
 	// Add camera
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
-	//h3dSetNodeParamI( _cam, H3DCamera::OccCullingI, 1 );
 
 	// In order to draw the results of compute buffer we need a compute node
 	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", _computeMatRes, compBuf );
+
+	// Set node AABB size because currently there is no way to do it otherwise
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 0, -30.0f ); // x
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 1, -30.0f ); // y
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 2, -30.0f ); // z
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 0, 30.0f ); // x
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 1, 30.0f ); // y
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 2, 30.0f ); // z
 
     // Add light source
 // 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
