@@ -462,7 +462,7 @@ struct H3DComputeBufRes
 		DrawParamsNameStr,
 		DrawParamsSizeI,
 		DrawParamsOffsetI,
-		DrawParamsElementsCountI,
+		DrawParamsElementsCountI
 	};
 };
 
@@ -697,6 +697,24 @@ struct H3DEmitter
 	};
 };
 
+struct H3DComputeNode
+{
+	/*	Enum: H3DComputeNode
+	The available compute node parameters.
+
+	MatResI        - Material resource used for rendering
+	CompBufResI    - Compute buffer resource that is used as data storage
+	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
+	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+	*/
+	enum List
+	{
+		MatResI = 800,
+		CompBufResI,
+		AABBMinF,
+		AABBMaxF
+	};
+};
 
 struct H3DModelUpdateFlags
 {

@@ -100,6 +100,16 @@ typedef SmartResPtr< ComputeBufferResource > PComputeBufferResource;
 // =================================================================================================
 // Compute Node
 // =================================================================================================
+struct ComputeNodeParams
+{
+	enum List
+	{
+		MatResI = 800,
+		CompBufResI,
+		AABBMinF,
+		AABBMaxF
+	};
+};
 
 struct ComputeNodeTpl : public SceneNodeTpl
 {
@@ -121,6 +131,11 @@ public:
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
 
 	void onPostUpdate();
+
+	int getParamI( int param ) const;
+	void setParamI( int param, int value );
+	float getParamF( int param, int compIdx ) const;
+	void setParamF( int param, int compIdx, float value );
 
 	friend class Renderer;
 	friend class SceneManager;

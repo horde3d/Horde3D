@@ -422,10 +422,117 @@ SceneNode *ComputeNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 	return new ComputeNode( *( ComputeNodeTpl * ) &nodeTpl );
 }
 
+
 void ComputeNode::onPostUpdate()
 {
 	_bBox = _localBBox;
 	_bBox.transform( _absTrans );
+}
+
+
+int ComputeNode::getParamI( int param ) const
+{
+	switch ( param )
+	{
+		case ComputeNodeParams::CompBufResI:
+			if ( _compBufferRes ) return _compBufferRes->getHandle();
+			else return 0;
+		case ComputeNodeParams::MatResI:
+			if ( _materialRes ) return _materialRes->getHandle();
+			else return 0;
+		default:
+			break;
+	}
+
+	return SceneNode::getParamI( param );
+}
+
+
+void ComputeNode::setParamI( int param, int value )
+{
+	Resource *res;
+	
+	switch ( param )
+	{
+		case ComputeNodeParams::CompBufResI:
+			res = Modules::resMan().resolveResHandle( value );
+			if ( res == 0x0 || res->getType() == ResourceTypes::ComputeBuffer )
+				_compBufferRes = ( ComputeBufferResource * ) res;
+			else
+				Modules::setError( "Invalid handle in h3dSetNodeParamI for H3DComputeNode::CompBufResI" );
+			return;
+		case ComputeNodeParams::MatResI:
+			res = Modules::resMan().resolveResHandle( value );
+			if ( res == 0x0 || res->getType() == ResourceTypes::Material )
+				_materialRes = ( MaterialResource * ) res;
+			else
+				Modules::setError( "Invalid handle in h3dSetNodeParamI for H3DComputeNode::MatResI" );
+			return;
+		default:
+			break;
+	}
+
+	return SceneNode::setParamI( param, value );
+}
+
+
+float ComputeNode::getParamF( int param, int compIdx ) const
+{
+	switch ( param )
+	{
+		case ComputeNodeParams::AABBMinF:
+			if ( compIdx < 0 || compIdx > 2 ) 
+			{
+				Modules::setError( "Invalid compIdx specified in h3dGetNodeParamF for H3DComputeNode::AABBMinF" );
+				return Math::NaN;
+			}
+			
+			return _localBBox.min[ compIdx ];
+		case ComputeNodeParams::AABBMaxF:
+			if ( compIdx < 0 || compIdx > 2 )
+			{
+				Modules::setError( "Invalid compIdx specified in h3dGetNodeParamF for H3DComputeNode::AABBMaxF" );
+				return Math::NaN;
+			}
+
+			return _localBBox.max[ compIdx ];
+		default:
+			break;
+	}
+
+	return SceneNode::getParamF( param, compIdx );
+}
+
+
+void ComputeNode::setParamF( int param, int compIdx, float value )
+{
+	switch ( param )
+	{
+		case ComputeNodeParams::AABBMinF:
+			if ( compIdx < 0 || compIdx > 2 )
+			{
+				Modules::setError( "Invalid compIdx specified in h3dSetNodeParamF for H3DComputeNode::AABBMinF" );
+				return;
+			}
+
+			_localBBox.min[ compIdx ] = value;
+			markDirty();
+	
+			return;
+		case ComputeNodeParams::AABBMaxF:
+			if ( compIdx < 0 || compIdx > 2 )
+			{
+				Modules::setError( "Invalid compIdx specified in h3dSetNodeParamF for H3DComputeNode::AABBMaxF" );
+				return;
+			}
+
+			_localBBox.max[ compIdx ] = value;
+			markDirty();
+
+			return;
+		default:
+			break;
+	}
 }
 
 } // namespace
