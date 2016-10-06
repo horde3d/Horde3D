@@ -102,7 +102,7 @@ IF(GLFW_LIBRARY)
 			SET( GLFW_LIBRARIES ${GLFW_LIBRARIES} ${RT_LIBRARY} )
 		endif()
 		
-	ENDIF(NOT APPLE)
+	ENDIF(UNIX AND NOT APPLE)
 
     # For OS X, GLFW uses Cocoa as a backend so it must link to Cocoa.
     IF(APPLE OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -122,13 +122,14 @@ IF(GLFW_LIBRARY)
     SET(GLFW_LIBRARIES ${MINGW32_LIBRARY} ${GLFW_LIBRARIES})
     ENDIF(MINGW)
     
-    # For Unix, GLFW should be linked to X11-releated libraries.
+    # For Unix, GLFW should be linked to X11-related libraries.
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    FIND_LIBRARY(X11_LIBRARY X11)
-    FIND_LIBRARY(Xrandr_LIBRARY Xrandr)
-    FIND_LIBRARY(Xxf86vm_LIBRARY Xxf86vm)
-    FIND_LIBRARY(Xi_LIBRARY Xi)
-    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${X11_LIBRARY} ${Xrandr_LIBRARY} ${Xxf86vm_LIBRARY} ${Xi_LIBRARY})
+    FIND_PACKAGE(X11 REQUIRED)
+	# FIND_LIBRARY(X11_LIBRARY X11)
+    # FIND_LIBRARY(Xrandr_LIBRARY Xrandr)
+    # FIND_LIBRARY(Xxf86vm_LIBRARY Xxf86vm)
+    # FIND_LIBRARY(Xi_LIBRARY Xi)
+    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${X11_X11_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinput_LIB})
     ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     # Set the final string here so the GUI reflects the final state.
