@@ -4,6 +4,7 @@
 #include "egCom.h"
 
 #include <map>
+#include <memory.h>
 
 namespace Horde3D {
 
@@ -327,6 +328,7 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 				default:
 					break;
 			}
+
 		default:
 			break;
 	}

@@ -129,7 +129,7 @@ IF(GLFW_LIBRARY)
     # FIND_LIBRARY(Xrandr_LIBRARY Xrandr)
     # FIND_LIBRARY(Xxf86vm_LIBRARY Xxf86vm)
     # FIND_LIBRARY(Xi_LIBRARY Xi)
-    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${X11_X11_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinput_LIB})
+    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${X11_X11_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinput_LIB} ${X11_Xinerama_LIB} ${X11_Xcursor_LIB})
     ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     # Set the final string here so the GUI reflects the final state.

@@ -2153,7 +2153,7 @@ extern PFNGLDRAWTRANSFORMFEEDBACKSTREAMINSTANCEDPROC glDrawTransformFeedbackStre
 #ifndef GL_VERSION_4_3
 #define GL_VERSION_4_3 1
 
-typedef void ( APIENTRY  *GLDEBUGPROC )( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam );
+//typedef void ( APIENTRY  *GLDEBUGPROC )( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam );
 #define GL_NUM_SHADING_LANGUAGE_VERSIONS  0x82E9
 #define GL_VERTEX_ATTRIB_ARRAY_LONG       0x874E
 #define GL_COMPRESSED_RGB8_ETC2           0x9274
