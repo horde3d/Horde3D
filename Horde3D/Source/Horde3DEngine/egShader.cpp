@@ -385,7 +385,8 @@ protected:
 string ShaderResource::_vertPreamble = "";
 string ShaderResource::_fragPreamble = "";
 string ShaderResource::_geomPreamble = "";
-string ShaderResource::_tessPreamble = "";
+string ShaderResource::_tessCtlPreamble = "";
+string ShaderResource::_tessEvalPreamble = "";
 string ShaderResource::_computePreamble = "";
 bool ShaderResource::_defaultPreambleSet = false;
 
