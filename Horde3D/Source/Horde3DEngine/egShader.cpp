@@ -410,22 +410,31 @@ ShaderResource::~ShaderResource()
 }
 
 
-void ShaderResource::initDefault()
+void ShaderResource::initializationFunc()
 {
-	if ( !_defaultPreambleSet )
+	// specify default version preamble for shaders
+	switch ( Modules::renderer().getRenderDeviceType() )
 	{
-		// specify default version preamble for shaders
-		if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGL4 )
+		case RenderBackendType::OpenGL4:
 		{
 			_vertPreamble = "#version 330\r\n";
 			_fragPreamble = "#version 330\r\n";
 			_geomPreamble = "#version 330\r\n";
-			_tessPreamble = "#version 410\r\n";
+			_tessCtlPreamble = "#version 410\r\n";
+			_tessEvalPreamble = "#version 410\r\n";
 			_computePreamble = "#version 430\r\n";
 		}
-
-		_defaultPreambleSet = true;
+		default:
+			break;
 	}
+
+	//	_defaultPreambleSet = true;
+}
+
+
+void ShaderResource::initDefault()
+{
+	
 }
 
 
@@ -972,7 +981,8 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	_tmpCodeFS = _fragPreamble;
 	_tmpCodeGS = _geomPreamble;
 	_tmpCodeCS = _computePreamble;
-	_tmpCodeTSCtl = _tmpCodeTSEval = _tessPreamble;
+	_tmpCodeTSCtl = _tessCtlPreamble;
+	_tmpCodeTSEval = _tessEvalPreamble;
 
 	// Insert defines for flags
 	if( combMask != 0 )

@@ -209,17 +209,25 @@ public:
 	static Resource *factoryFunc( const std::string &name, int flags )
 		{ return new ShaderResource( name, flags ); }
 
-	static void setPreambles( const std::string &vertPreamble, const std::string &fragPreamble )
-		{ _vertPreamble = vertPreamble; _fragPreamble = fragPreamble; }
+	static void setPreambles( const std::string &vertPreamble, const std::string &fragPreamble, const std::string &geomPreamble,
+							  const std::string &tessCtlPreamble, const std::string &tessEvalPreamble, const std::string &computePreamble )
+	{
+		_vertPreamble = vertPreamble; _fragPreamble = fragPreamble; 
+		_geomPreamble = geomPreamble; 
+		_tessCtlPreamble = tessCtlPreamble; _tessEvalPreamble = tessEvalPreamble; 
+		_computePreamble = computePreamble;
+	}
 
 	static uint32 calcCombMask( const std::vector< std::string > &flags );
 	
 	ShaderResource( const std::string &name, int flags );
 	~ShaderResource();
 	
+	static void initializationFunc();
 	void initDefault();
 	void release();
 	bool load( const char *data, int size );
+
 	void preLoadCombination( uint32 combMask );
 	void compileContexts();
 	ShaderCombination *getCombination( ShaderContext &context, uint32 combMask );
@@ -250,7 +258,7 @@ private:
 	bool compileCombination( ShaderContext &context, ShaderCombination &sc );
 	
 private:
-	static std::string            _vertPreamble, _fragPreamble, _geomPreamble, _tessPreamble, _computePreamble;
+	static std::string            _vertPreamble, _fragPreamble, _geomPreamble, _tessCtlPreamble, _tessEvalPreamble, _computePreamble;
 	static std::string            _tmpCodeVS, _tmpCodeFS, _tmpCodeGS, _tmpCodeCS, _tmpCodeTSCtl, _tmpCodeTSEval;
 	static bool					  _defaultPreambleSet;
 

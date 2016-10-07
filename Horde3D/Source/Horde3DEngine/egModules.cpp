@@ -89,7 +89,7 @@ bool Modules::init( int backendType )
 		MaterialResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Code, "Code", 0x0, 0x0,
 		CodeResource::factoryFunc );
-	resMan().registerResType( ResourceTypes::Shader, "Shader", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::Shader, "Shader", ShaderResource::initializationFunc, 0x0,
 		ShaderResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Texture, "Texture", TextureResource::initializationFunc,
 		TextureResource::releaseFunc, TextureResource::factoryFunc );

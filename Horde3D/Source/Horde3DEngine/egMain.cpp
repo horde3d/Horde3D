@@ -66,7 +66,7 @@ using namespace std;
 bool initialized;
 const char *emptyCString = "";
 std::string emptyString = emptyCString;
-std::string strPool[4];  // String pool for avoiding memory allocations of temporary string objects
+std::string strPool[ 8 ];  // String pool for avoiding memory allocations of temporary string objects
 
 
 inline const string &safeStr( const char *str, int index )
@@ -420,9 +420,11 @@ DLLEXP ResHandle h3dCreateTexture( const char *name, int width, int height, int 
 }
 
 
-DLLEXP void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble )
+DLLEXP void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble, 
+								   const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble )
 {
-	ShaderResource::setPreambles( safeStr( vertPreamble, 0 ), safeStr( fragPreamble, 1 ) );
+	ShaderResource::setPreambles( safeStr( vertPreamble, 0 ), safeStr( fragPreamble, 1 ), safeStr( geomPreamble, 2 ), 
+								  safeStr( tessControlPreamble, 3 ), safeStr( tessEvalPreamble, 4 ), safeStr( computePreamble, 5 ) );
 }
 
 

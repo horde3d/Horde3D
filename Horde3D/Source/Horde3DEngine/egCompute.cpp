@@ -290,7 +290,7 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 		}
 	}
 
-	return Resource::setElemParamI( elem, elemIdx, param, value );
+	Resource::setElemParamI( elem, elemIdx, param, value );
 }
 
 
@@ -333,7 +333,7 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 			break;
 	}
 
-	return Resource::setElemParamStr( elem, elemIdx, param, value );
+	Resource::setElemParamStr( elem, elemIdx, param, value );
 }
 
 
@@ -474,7 +474,7 @@ void ComputeNode::setParamI( int param, int value )
 			break;
 	}
 
-	return SceneNode::setParamI( param, value );
+	SceneNode::setParamI( param, value );
 }
 
 
@@ -535,6 +535,8 @@ void ComputeNode::setParamF( int param, int compIdx, float value )
 		default:
 			break;
 	}
+	
+	SceneNode::setParamF( param, compIdx, value );
 }
 
 } // namespace
