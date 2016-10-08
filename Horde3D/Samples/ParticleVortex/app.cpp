@@ -52,6 +52,7 @@ bool ParticleVortexSample::initResources()
 
     // Shader that contains geometry and compute shaders for particles
 	_computeMatRes = h3dAddResource( H3DResTypes::Material, "materials/compute.material.xml", 0 );
+	H3DRes computeDrawMatRes = h3dAddResource( H3DResTypes::Material, "materials/computeDraw.material.xml", 0 );
 
 	// 2. Specify compute buffer parameters
 
@@ -123,7 +124,7 @@ bool ParticleVortexSample::initResources()
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 
 	// In order to draw the results of compute buffer we need a compute node
-	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", _computeMatRes, compBuf );
+	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", computeDrawMatRes, compBuf );
 
 	// Set node AABB size because currently there is no way to do it otherwise
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 0, -30.0f ); // x

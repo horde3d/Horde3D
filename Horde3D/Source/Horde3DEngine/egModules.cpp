@@ -23,7 +23,9 @@
 #include "egRenderer.h"
 #include "egPipeline.h"
 #include "egExtensions.h"
-#include "egCompute.h"
+#include "egComputeBuffer.h"
+#include "egComputeNode.h"
+
 
 // Extensions
 #ifdef CMAKE
