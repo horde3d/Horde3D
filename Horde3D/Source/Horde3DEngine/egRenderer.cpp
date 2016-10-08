@@ -18,7 +18,7 @@
 #include "egRendererBaseGL2.h"
 #include "egRendererBaseGL4.h"
 #include "egCom.h"
-#include "egCompute.h"
+#include "egComputeNode.h"
 #include <cstring>
 
 #include "utDebug.h"
@@ -2207,19 +2207,11 @@ void Renderer::render( CameraNode *camNode )
 			case PipelineCommands::DoForwardLightLoop:
 				drawLightGeometry( pc.params[0].getString(), pc.params[1].getString(),
 				                   pc.params[2].getBool(), (RenderingOrder::List)pc.params[3].getInt(),
-					_curCamera->_occSet );
+								   _curCamera->_occSet );
 				break;
 
 			case PipelineCommands::DoDeferredLightLoop:
 				drawLightShapes( pc.params[0].getString(), pc.params[1].getBool(), _curCamera->_occSet );
-				break;
-
-			case PipelineCommands::DispatchComputeShader:
-				if ( pc.params[ 0 ].getResource() && pc.params[ 0 ].getResource()->getType() == ResourceTypes::Material )
-				{
-					dispatchCompute( ( ( MaterialResource * ) pc.params[ 0 ].getResource() ), pc.params[ 1 ].getString(),
-									 pc.params[ 1 ].getInt(), pc.params[ 2 ].getInt(), pc.params[ 3 ].getInt() );
-				}
 				break;
 
 			case PipelineCommands::SetUniform:
