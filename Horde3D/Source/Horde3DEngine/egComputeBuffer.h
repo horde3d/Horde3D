@@ -10,12 +10,11 @@
 //
 // *************************************************************************************************
 
-#ifndef _egCompute_H_
-#define _egCompute_H_
+#ifndef _egComputeBuffer_H_
+#define _egComputeBuffer_H_
 
 #include "egPrerequisites.h"
 #include "egResource.h"
-#include "egScene.h"
 #include "egRendererBase.h"
 
 namespace Horde3D {
@@ -96,64 +95,7 @@ private:
 
 typedef SmartResPtr< ComputeBufferResource > PComputeBufferResource;
 
-
-// =================================================================================================
-// Compute Node
-// =================================================================================================
-struct ComputeNodeParams
-{
-	enum List
-	{
-		MatResI = 800,
-		CompBufResI,
-		AABBMinF,
-		AABBMaxF
-	};
-};
-
-struct ComputeNodeTpl : public SceneNodeTpl
-{
-	PMaterialResource		matRes;
-	PComputeBufferResource  compBufRes;
-
-	ComputeNodeTpl( const std::string &name, ComputeBufferResource *computeBufferRes, MaterialResource *materialRes ) :
-		SceneNodeTpl( SceneNodeTypes::Compute, name ), compBufRes( computeBufferRes ), matRes( materialRes )
-	{
-	}
-
-};
-
-class ComputeNode : public SceneNode
-{
-public:
-
-	static SceneNodeTpl *parsingFunc( std::map< std::string, std::string > &attribs );
-	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
-
-	void onPostUpdate();
-
-	int getParamI( int param ) const;
-	void setParamI( int param, int value );
-	float getParamF( int param, int compIdx ) const;
-	void setParamF( int param, int compIdx, float value );
-
-	friend class Renderer;
-	friend class SceneManager;
-
-protected:
-
-	ComputeNode( const ComputeNodeTpl &computeTpl );
-	~ComputeNode();
-
-protected:
-
-	BoundingBox				_localBBox;
-
-	PMaterialResource		_materialRes;
-	PComputeBufferResource	_compBufferRes;
-
-};
-
 } // namespace
 
-#endif // _egCompute_H
+#endif // _egComputeBuffer_H_
+
