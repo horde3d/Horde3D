@@ -8,7 +8,8 @@ set(HORDE3D_SOURCES
 	egAnimation.cpp
 	egCamera.cpp
 	egCom.cpp
-	egCompute.cpp
+	egComputeNode.cpp
+	egComputeBuffer.cpp
 	egExtensions.cpp
 	egGeometry.cpp
 	egLight.cpp
@@ -34,7 +35,8 @@ set(HORDE3D_SOURCES
 	egAnimation.h
 	egCamera.h
 	egCom.h
-	egCompute.h
+	egComputeNode.h
+	egComputeBuffer.h
 	egExtensions.h
 	egGeometry.h
 	egLight.h
