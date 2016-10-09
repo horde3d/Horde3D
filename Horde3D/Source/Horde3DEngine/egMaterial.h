@@ -17,7 +17,7 @@
 #include "egResource.h"
 #include "egShader.h"
 #include "egTexture.h"
-
+#include "egComputeBuffer.h"
 
 namespace Horde3D {
 
@@ -43,6 +43,13 @@ struct MaterialResData
 };
 
 // =================================================================================================
+
+struct MatBuffer
+{
+	std::string				name;
+	PComputeBufferResource  compBufRes;
+};
+
 
 struct MatSampler
 {
@@ -99,6 +106,7 @@ private:
 	PShaderResource             _shaderRes;
 	uint32                      _combMask;
 	std::string                 _class;
+	std::vector< MatBuffer >	_buffers;
 	std::vector< MatSampler >   _samplers;
 	std::vector< MatUniform >   _uniforms;
 	std::vector< std::string >  _shaderFlags;

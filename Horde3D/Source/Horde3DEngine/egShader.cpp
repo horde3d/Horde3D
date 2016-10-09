@@ -551,6 +551,20 @@ bool ShaderResource::parseFXSection( char *data )
 
 			_uniforms.push_back( uniform );
 		}
+		else if ( tok.checkToken( "buffer" ) )
+		{
+			ShaderBuffer buffer;
+			buffer.id = tok.getToken( identifier );
+			if ( buffer.id == "" ) return raiseError( "FX: Invalid identifier", tok.getLine() );
+
+			// Skip annotations
+			if ( tok.checkToken( "<" ) )
+				if ( !tok.seekToken( ">" ) ) return raiseError( "FX: expected '>'", tok.getLine() );
+
+			if ( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
+
+			_buffers.push_back( buffer );
+		}
 		else if( tok.checkToken( "sampler2D", true ) || tok.checkToken( "samplerCube", true ) ||
 				 tok.checkToken( "sampler3D", true ) || tok.checkToken( "samplerBuffer", true ) )
 		{
@@ -1128,6 +1142,14 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 				rdi->setShaderSampler( samplerLoc, _samplers[i].texUnit );
 		}
 		
+		// Find buffers in compiled shader
+		sc.customBuffers.reserve( _buffers.size() );
+		for ( uint32 i = 0; i < _buffers.size(); ++i )
+		{
+			int bufferLoc = rdi->getShaderBufferLoc( sc.shaderObj, _buffers[ i ].id.c_str() );
+			sc.customBuffers.push_back( bufferLoc );
+		}
+
 		// Find uniforms in compiled shader
 		sc.customUniforms.reserve( _uniforms.size() );
 		for( uint32 i = 0; i < _uniforms.size(); ++i )

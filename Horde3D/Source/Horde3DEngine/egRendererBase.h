@@ -524,6 +524,7 @@ private:
 	CreateMemberFunctionChecker( bindShader );
 	CreateMemberFunctionChecker( getShaderConstLoc );
 	CreateMemberFunctionChecker( getShaderSamplerLoc );
+	CreateMemberFunctionChecker( getShaderBufferLoc );
 	CreateMemberFunctionChecker( runComputeShader );
 	CreateMemberFunctionChecker( setShaderConst );
 	CreateMemberFunctionChecker( setShaderSampler );
@@ -550,6 +551,8 @@ private:
 	CreateMemberFunctionChecker( clear );
 	CreateMemberFunctionChecker( draw );
 	CreateMemberFunctionChecker( drawIndexed );
+
+	CreateMemberFunctionChecker( setStorageBuffer );
 
 	// Typedefs
 	typedef bool( *PFN_INIT )( void* const );
@@ -585,6 +588,7 @@ private:
 	typedef void( *PFN_BINDSHADER )( void* const, uint32 shaderId );
 	typedef int( *PFN_GETSHADERCONSTLOC )( void* const, uint32 shaderId, const char *name );
 	typedef int( *PFN_GETSHADERSAMPLERLOC )( void* const, uint32 shaderId, const char *name );
+	typedef int( *PFN_GETSHADERBUFFERLOC )( void* const, uint32 shaderId, const char *name );
 	typedef void( *PFN_RUNCOMPUTESHADER )( void* const, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim );
 	typedef void( *PFN_SETSHADERCONST )( void* const, int loc, RDIShaderConstType type, void *values, uint32 count );
 	typedef void( *PFN_SETSHADERSAMPLER )( void* const, int loc, uint32 texUnit );
@@ -615,11 +619,16 @@ private:
 	typedef void( *PFN_DRAW )( void* const, RDIPrimType primType, uint32 firstVert, uint32 numVerts );
 	typedef void( *PFN_DRAWINDEXED )( void* const, RDIPrimType primType, uint32 firstIndex, uint32 numIndices, uint32 firstVert, uint32 numVerts );
 
+	typedef bool( *PFN_SETSTORAGEBUFFER )( void* const, uint8 slot, uint32 bufObj  );
+
 	// pointers to functions
+	// general
 	PFN_INIT					_pfnInit;
 	PFN_INITSTATES				_pfnInitStates;
 	PFN_REGISTERVERTEXLAYOUT	_pfnRegisterVertexLayout;
 	PFN_BEGINRENDERING			_pfnBeginRendering;
+
+	// geometry
 	PFN_BEGINCREATINGGEOMETRY	_pfnBeginCreatingGeometry;
 	PFN_SETGEOMVERTEXPARAMS		_pfnSetGeomVertexParams;
 	PFN_SETGEOMINDEXPARAMS		_pfnSetGeomIndexParams;
@@ -632,40 +641,57 @@ private:
 	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
 	PFN_DESTROYTEXTUREBUFFER	_pfnDestroyTextureBuffer;
 	PFN_UPDATEBUFFERDATA		_pfnUpdateBufferData;
+	
+	// textures
 	PFN_CALCTEXTURESIZE			_pfnCalcTextureSize;
 	PFN_CREATETEXTURE			_pfnCreateTexture;
 	PFN_UPLOADTEXTUREDATA		_pfnUploadTextureData;
 	PFN_DESTROYTEXTURE			_pfnDestroyTexture;
 	PFN_UPDATETEXTUREDATA		_pfnUpdateTextureData;
 	PFN_GETTEXTUREDATA			_pfnGetTextureData;
+
+	// shaders
 	PFN_CREATESHADER			_pfnCreateShader;
 	PFN_DESTROYSHADER			_pfnDestroyShader;
 	PFN_BINDSHADER				_pfnBindShader;
 	PFN_GETSHADERCONSTLOC		_pfnGetShaderConstLoc;
 	PFN_GETSHADERSAMPLERLOC		_pfnGetShaderSamplerLoc;
+	PFN_GETSHADERBUFFERLOC		_pfnGetShaderBufferLoc;
 	PFN_RUNCOMPUTESHADER		_pfnRunComputeShader;
 	PFN_SETSHADERCONST			_pfnSetShaderConst;
 	PFN_SETSHADERSAMPLER		_pfnSetShaderSampler;
 	PFN_GETDEFAULTVSCODE		_pfnGetDefaultVSCode;
 	PFN_GETDEFAULTFSCODE		_pfnGetDefaultFSCode;
+
+	// render bufs
 	PFN_CREATERENDERBUFFER		_pfnCreateRenderBuffer;
 	PFN_DESTROYRENDERBUFFER		_pfnDestroyRenderBuffer;
 	PFN_GETRENDERBUFFERTEX		_pfnGetRenderBufferTex;
 	PFN_SETRENDERBUFFER			_pfnSetRenderBuffer;
 	PFN_GETRENDERBUFFERDATA		_pfnGetRenderBufferData;
 	PFN_GETRENDERBUFFERDIMENSIONS _pfnGetRenderBufferDimensions;
+
+	// queries
 	PFN_CREATEOCCLUSIONQUERY	_pfnCreateOcclusionQuery;
 	PFN_DESTROYQUERY			_pfnDestroyQuery;
 	PFN_BEGINQUERY				_pfnBeginQuery;
 	PFN_ENDQUERY				_pfnEndQuery;
 	PFN_GETQUERYRESULT			_pfnGetQueryResult;
+
 	PFN_CREATEGPUTIMER			_pfnCreateGPUTimer;
+
+	// states handling
 	PFN_COMMITSTATES			_pfnCommitStates;
 	PFN_RESETSTATES				_pfnResetStates;
 	PFN_CLEAR					_pfnClear;
+
+	// drawing
 	PFN_DRAW					_pfnDraw;
 	PFN_DRAWINDEXED				_pfnDrawIndexed;
 	
+	// commands
+	PFN_SETSTORAGEBUFFER		_pfnSetStorageBuffer;
+
 	// invoker functions
 	// main funcs
 	template<typename T>
@@ -836,6 +862,12 @@ private:
 	}
 
 	template<typename T>
+	static int				 getShaderBufferLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
+	{
+		return static_cast< T* >( pObj )->getShaderBufferLoc( shaderId, name );
+	}
+
+	template<typename T>
 	static void				 runComputeShader_Invoker( void* const pObj, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
 	{
 		static_cast< T* >( pObj )->runComputeShader( shaderId, xDim, yDim, zDim );
@@ -973,6 +1005,12 @@ private:
 		static_cast< T* >( pObj )->drawIndexed( primType, firstIndex, numIndices, firstVert, numVerts );
 	}
 
+	template<typename T>
+	static void				 setStorageBuffer_Invoker( void* const pObj, uint8 slot, uint32 bufObj )
+	{
+		static_cast< T* >( pObj )->setStorageBuffer( slot, bufObj );
+	}
+
 protected:
 
 	template< typename T > void initRDIFunctions()
@@ -982,6 +1020,7 @@ protected:
 		CheckMemberFunction( init, bool( T::* )() );
 		CheckMemberFunction( registerVertexLayout, uint32( T::* )( uint32, VertexLayoutAttrib * ) );
 		CheckMemberFunction( beginRendering, void( T::* )() );
+
 		CheckMemberFunction( createVertexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( createIndexBuffer, uint32( T::* )( uint32, const void* ) );
 		CheckMemberFunction( createTextureBuffer, uint32( T::* )( TextureFormats::List, uint32, const void * ) );
@@ -994,45 +1033,55 @@ protected:
 		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
+		
 		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
 		CheckMemberFunction( createTexture, uint32( T::* )( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) );
 		CheckMemberFunction( uploadTextureData, void( T::* )( uint32, int, int, const void * ) );
 		CheckMemberFunction( destroyTexture, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateTextureData, void( T::* )( uint32, int, int, const void * ) );
 		CheckMemberFunction( getTextureData, bool( T::* )( uint32, int, int, void * ) );
+	
 		CheckMemberFunction( createShader, uint32( T::* )( const char *, const char *, const char *, const char *, const char *, const char * ) );
 		CheckMemberFunction( destroyShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( bindShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( getShaderConstLoc, int( T::* )( uint32, const char * ) );
 		CheckMemberFunction( getShaderSamplerLoc, int( T::* )( uint32, const char * ) );
+		CheckMemberFunction( getShaderBufferLoc, int( T::* )( uint32, const char * ) );
 		CheckMemberFunction( runComputeShader, void( T::* )( uint32, uint32, uint32, uint32 ) );
 		CheckMemberFunction( setShaderConst, void( T::* )( int, RDIShaderConstType, void *, uint32 ) );
 		CheckMemberFunction( setShaderSampler, void( T::* )( int, uint32 ) );
 		CheckMemberFunction( getDefaultVSCode, const char *( T::* )() );
 		CheckMemberFunction( getDefaultFSCode, const char *( T::* )() );
+
 		CheckMemberFunction( createRenderBuffer, uint32( T::* )( uint32, uint32, TextureFormats::List, bool, uint32, uint32 ) );
 		CheckMemberFunction( destroyRenderBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( getRenderBufferTex, uint32( T::* )( uint32, uint32 ) );
 		CheckMemberFunction( setRenderBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( getRenderBufferData, bool( T::* )( uint32, int, int *, int *, int *, void *, int ) );
 		CheckMemberFunction( getRenderBufferDimensions, void( T::* )( uint32, int *, int * ) );
+
 		CheckMemberFunction( createOcclusionQuery, uint32( T::* )() );
 		CheckMemberFunction( destroyQuery, void( T::* )( uint32 ) );
 		CheckMemberFunction( beginQuery, void( T::* )( uint32 ) );
 		CheckMemberFunction( endQuery, void( T::* )( uint32 ) );
 		CheckMemberFunction( getQueryResult, uint32( T::* )( uint32 ) );
+
 		CheckMemberFunction( createGPUTimer, GPUTimer *( T::* )() );
+
 		CheckMemberFunction( commitStates, bool( T::* )( uint32 ) );
 		CheckMemberFunction( resetStates, void( T::* )() );
 		CheckMemberFunction( clear, void( T::* )( uint32, float *, float ) );
 		CheckMemberFunction( draw, void( T::* )( RDIPrimType, uint32, uint32 ) );
 		CheckMemberFunction( drawIndexed, void( T::* )( RDIPrimType, uint32, uint32, uint32, uint32 ) );
 
+		CheckMemberFunction( setStorageBuffer, void( T::* )( uint8, uint32 ) );
+
 		// create pointer to implementation
 		_pfnInit = ( PFN_INIT ) &init_Invoker< T > ;
 		_pfnInitStates = ( PFN_INITSTATES ) &initStates_Invoker< T >;
 		_pfnRegisterVertexLayout = ( PFN_REGISTERVERTEXLAYOUT ) &registerVertexLayout_Invoker< T >;
 		_pfnBeginRendering = ( PFN_BEGINRENDERING ) &beginRendering_Invoker< T >;
+
 		_pfnCreateVertexBuffer = ( PFN_CREATEVERTEXBUFFER ) &createVertexBuffer_Invoker < T >;
 		_pfnCreateIndexBuffer = ( PFN_CREATEINDEXBUFFER ) &createIndexBuffer_Invoker < T >;
 		_pfnCreateTextureBuffer = ( PFN_CREATETEXTUREBUFFER ) &createTextureBuffer_Invoker < T >;
@@ -1045,39 +1094,48 @@ protected:
 		_pfnDestroyBuffer = ( PFN_DESTROYBUFFER ) &destroyBuffer_Invoker < T >;
 		_pfnDestroyTextureBuffer = ( PFN_DESTROYTEXTUREBUFFER ) &destroyTextureBuffer_Invoker < T > ;
 		_pfnUpdateBufferData = ( PFN_UPDATEBUFFERDATA ) &updateBufferData_Invoker < T >;
+
 		_pfnCalcTextureSize = ( PFN_CALCTEXTURESIZE ) &calcTextureSize_Invoker < T >;
 		_pfnCreateTexture = ( PFN_CREATETEXTURE ) &createTexture_Invoker < T >;
 		_pfnUploadTextureData = ( PFN_UPLOADTEXTUREDATA ) &uploadTextureData_Invoker < T >;
 		_pfnDestroyTexture = ( PFN_DESTROYTEXTURE ) &destroyTexture_Invoker < T >;
 		_pfnUpdateTextureData = ( PFN_UPDATETEXTUREDATA ) &updateTextureData_Invoker < T >;
 		_pfnGetTextureData = ( PFN_GETTEXTUREDATA ) &getTextureData_Invoker < T >;
+
 		_pfnCreateShader = ( PFN_CREATESHADER ) &createShader_Invoker < T >;
 		_pfnDestroyShader = ( PFN_DESTROYSHADER ) &destroyShader_Invoker < T > ;
 		_pfnBindShader = ( PFN_BINDSHADER ) &bindShader_Invoker < T > ;
 		_pfnGetShaderConstLoc = ( PFN_GETSHADERCONSTLOC ) &getShaderConstLoc_Invoker < T > ;
 		_pfnGetShaderSamplerLoc = ( PFN_GETSHADERSAMPLERLOC ) &getShaderSamplerLoc_Invoker < T > ;
+		_pfnGetShaderBufferLoc = ( PFN_GETSHADERBUFFERLOC ) &getShaderBufferLoc_Invoker < T >;
 		_pfnRunComputeShader = ( PFN_RUNCOMPUTESHADER ) &runComputeShader_Invoker < T > ;
 		_pfnSetShaderConst = ( PFN_SETSHADERCONST ) &setShaderConst_Invoker < T > ;
 		_pfnSetShaderSampler = ( PFN_SETSHADERSAMPLER ) &setShaderSampler_Invoker < T > ;
 		_pfnGetDefaultVSCode = ( PFN_GETDEFAULTVSCODE ) &getDefaultVSCode_Invoker < T > ;
 		_pfnGetDefaultFSCode = ( PFN_GETDEFAULTFSCODE ) &getDefaultFSCode_Invoker < T > ;
+
 		_pfnCreateRenderBuffer = ( PFN_CREATERENDERBUFFER ) &createRenderBuffer_Invoker < T > ;
 		_pfnDestroyRenderBuffer = ( PFN_DESTROYRENDERBUFFER ) &destroyRenderBuffer_Invoker < T > ;
 		_pfnGetRenderBufferTex = ( PFN_GETRENDERBUFFERTEX ) &getRenderBufferTex_Invoker < T > ;
 		_pfnSetRenderBuffer = ( PFN_SETRENDERBUFFER ) &setRenderBuffer_Invoker < T > ;
 		_pfnGetRenderBufferData = ( PFN_GETRENDERBUFFERDATA ) &getRenderBufferData_Invoker < T > ;
 		_pfnGetRenderBufferDimensions = ( PFN_GETRENDERBUFFERDIMENSIONS ) &getRenderBufferDimensions_Invoker < T >;
+
 		_pfnCreateOcclusionQuery = ( PFN_CREATEOCCLUSIONQUERY ) &createOcclusionQuery_Invoker < T > ;
 		_pfnDestroyQuery = ( PFN_DESTROYQUERY ) &destroyQuery_Invoker < T > ;
 		_pfnBeginQuery = ( PFN_BEGINQUERY ) &beginQuery_Invoker < T > ;
 		_pfnEndQuery = ( PFN_ENDQUERY ) &endQuery_Invoker < T > ;
 		_pfnGetQueryResult = ( PFN_GETQUERYRESULT ) &getQueryResult_Invoker < T > ;
+
 		_pfnCreateGPUTimer = ( PFN_CREATEGPUTIMER ) &createGPUTimer_Invoker < T > ;
+
 		_pfnCommitStates = ( PFN_COMMITSTATES ) &commitStates_Invoker < T > ;
 		_pfnResetStates = ( PFN_RESETSTATES ) &resetStates_Invoker < T > ;
 		_pfnClear = ( PFN_CLEAR ) &clear_Invoker < T > ;
 		_pfnDraw = ( PFN_DRAW ) &draw_Invoker < T > ;
 		_pfnDrawIndexed = ( PFN_DRAWINDEXED ) &drawIndexed_Invoker < T > ;
+
+		_pfnSetStorageBuffer = ( PFN_SETSTORAGEBUFFER ) &setStorageBuffer_Invoker< T >;
 	}
 
 // -----------------------------------------------------------------------------
@@ -1231,6 +1289,10 @@ public:
 	{ 
 		return ( *_pfnGetShaderSamplerLoc )( this, shaderId, name ); 
 	}
+	int getShaderBufferLoc( uint32 shaderId, const char *name )
+	{
+		return ( *_pfnGetShaderBufferLoc )( this, shaderId, name );
+	}
 	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 ) 
 	{
 		( *_pfnSetShaderConst )( this, loc, type, values, count );
@@ -1316,23 +1378,17 @@ public:
 		{ _vpX = x; _vpY = y; _vpWidth = width; _vpHeight = height; _pendingMask |= PM_VIEWPORT; }
 	void setScissorRect( int x, int y, int width, int height )
 		{ _scX = x; _scY = y; _scWidth = width; _scHeight = height; _pendingMask |= PM_SCISSOR; }
-// 	void setIndexBuffer( uint32 bufObj, RDIIndexFormat idxFmt )
-// 		{ _indexFormat = (uint32)idxFmt; _newIndexBuf = bufObj; _pendingMask |= PM_INDEXBUF; }
-// 	void setVertexBuffer( uint32 slot, uint32 vbObj, uint32 offset, uint32 stride )
-// 		{ ASSERT( slot < 16 ); _vertBufSlots[slot] = RDIVertBufSlot( vbObj, offset, stride );
-// 	      _pendingMask |= PM_VERTLAYOUT; }
 	void setGeometry( uint32 geoIndex )
 		{ _curGeometryIndex = geoIndex;  _pendingMask |= PM_GEOMETRY; }
-// 	void setVertexLayout( uint32 vlObj )
-// 		{ _newVertLayout = vlObj; }
 	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState )
 		{ ASSERT( slot < 16/*_maxTexSlots*/ ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
 	      _pendingMask |= PM_TEXTURES; }
-	void setTextureBuffer( uint32 bufObj )
-	{
-		_curTextureBuf = bufObj;
-		_pendingMask |= PM_TEXTUREBUFFER;
-	}
+// 	void setTextureBuffer( uint32 bufObj )
+// 	{	_curTextureBuf = bufObj; _pendingMask |= PM_TEXTUREBUFFER; }
+	void setMemoryBarrier( RDIDrawBarriers barrier )
+	{	_memBarriers = barrier; _pendingMask |= PM_BARRIER; }
+	void setStorageBuffer( uint8 slot, uint32 bufObj )
+	{	( *_pfnSetStorageBuffer )( this, slot, bufObj ); }
 
 	// Render states
 	void setColorWriteMask( bool enabled )
@@ -1379,8 +1435,6 @@ public:
 		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
 	void setTessPatchVertices( uint16 verts )
 		{ _tessPatchVerts = verts; _pendingMask |= PM_RENDERSTATES; }
-	void setMemoryBarrier( RDIDrawBarriers barrier )
-		{ _memBarriers = barrier; _pendingMask |= PM_BARRIER; }
 
 	bool commitStates( uint32 filter = 0xFFFFFFFF ) 
 	{
@@ -1429,7 +1483,8 @@ protected:
 		PM_SCISSOR       = 0x00000010,
 		PM_RENDERSTATES  = 0x00000020,
 		PM_GEOMETRY		 = 0x00000040,
-		PM_BARRIER		 = 0x00000080
+		PM_BARRIER		 = 0x00000080,
+		PM_COMPUTE		 = 0x00000100
 	};
 
 protected:
@@ -1443,6 +1498,8 @@ protected:
 	RDIDepthStencilState		_curDepthStencilState, _newDepthStencilState;
 	RDIDrawBarriers				_memBarriers;
 
+	// 8 ssbo
+
 	std::string					_shaderLog;
 	uint32						_depthFormat;
 	int							_vpX, _vpY, _vpWidth, _vpHeight;
@@ -1455,13 +1512,9 @@ protected:
 	uint32                      _numVertexLayouts;
 
 	uint32						_prevShaderId, _curShaderId;
-// 	uint32                _curVertLayout, _newVertLayout;
-// 	uint32                _curIndexBuf, _newIndexBuf;
-//	uint32                _indexFormat;
-//	uint32                _activeVertexAttribsMask;
 	uint32						_pendingMask;
 	uint32						_curGeometryIndex;
-	uint32						_curTextureBuf;
+//	uint32						_curTextureBuf;
  	uint32						_maxTexSlots; // specified in inherited render devices
 
 	uint32						_tessPatchVerts; // number of vertices in patch. Used for tesselation.

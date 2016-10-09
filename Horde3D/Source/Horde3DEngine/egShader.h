@@ -17,7 +17,8 @@
 #include "egResource.h"
 #include "egTexture.h"
 #include <set>
-
+#include <vector>
+#include <string>
 
 namespace Horde3D {
 
@@ -142,6 +143,7 @@ struct ShaderCombination
 
 	std::vector< int >  customSamplers;
 	std::vector< int >  customUniforms;
+	std::vector< int >  customBuffers;
 
 
 	ShaderCombination() :
@@ -180,6 +182,10 @@ struct ShaderContext
 };
 
 // =================================================================================================
+struct ShaderBuffer
+{
+	std::string            id;
+};
 
 struct ShaderSampler
 {
@@ -265,6 +271,7 @@ private:
 	std::vector< ShaderContext >  _contexts;
 	std::vector< ShaderSampler >  _samplers;
 	std::vector< ShaderUniform >  _uniforms;
+	std::vector< ShaderBuffer >   _buffers;
 	std::vector< CodeResource >   _codeSections;
 	std::set< uint32 >            _preLoadList;
 

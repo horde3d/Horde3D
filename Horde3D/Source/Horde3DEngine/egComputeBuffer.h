@@ -58,6 +58,8 @@ public:
 	bool load( const char *data, int size );
 
 	// 	int getElemCount( int elem ) const;
+	uint32 getBufferObject() { return _bufferID; }
+
 	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void setElemParamI( int elem, int elemIdx, int param, int value );
 	// 	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;

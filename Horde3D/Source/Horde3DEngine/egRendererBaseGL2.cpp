@@ -893,6 +893,12 @@ int RenderDeviceGL2::getShaderSamplerLoc( uint32 shaderId, const char *name )
 }
 
 
+int RenderDeviceGL2::getShaderBufferLoc( uint32 shaderId, const char *name )
+{
+	// Not supported on OpenGL 2
+	return -1;
+}
+
 void RenderDeviceGL2::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
 {
 	switch( type )

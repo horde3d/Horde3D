@@ -42,6 +42,7 @@ Renderer::Renderer()
 	_curShader = 0x0;
 	_curRenderTarget = 0x0;
 	_curShaderUpdateStamp = 1;
+	_curStageMatLink = nullptr;
 	_maxAnisoMask = 0;
 	_smSize = 0;
 	_shadowRB = 0;
@@ -794,6 +795,31 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 				_renderDevice->setShaderConst( _curShader->customUniforms[i], CONST_FLOAT4, unifData );
 				break;
 			}
+		}
+	}
+
+	// Set custom buffers
+	for ( size_t i = 0; i < shaderRes->_buffers.size(); ++i )
+	{
+		if ( _curShader->customBuffers[ i ] < 0 ) continue;
+		
+		ComputeBufferResource *buf = nullptr;
+
+		// Find buffer in material
+		for ( size_t j = 0; j < materialRes->_buffers.size(); ++j )
+		{
+			MatBuffer &matBuffer = materialRes->_buffers[ j ];
+
+			if ( matBuffer.name == shaderRes->_buffers[ i ].id )
+			{
+				buf = matBuffer.compBufRes;
+				break;
+			}
+		}
+
+		if ( buf )
+		{
+			_renderDevice->setStorageBuffer( i, buf->_bufferID );
 		}
 	}
 

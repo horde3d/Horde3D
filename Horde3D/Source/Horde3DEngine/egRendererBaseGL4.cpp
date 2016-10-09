@@ -173,6 +173,9 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_pendingMask = 0;
 	_tessPatchVerts = _lastTessPatchVertsValue = 0;
 	_memBarriers = RDIDrawBarriers::NotSet;
+	
+	_maxComputeBufferAttachments = 8;
+	_storageBufs.reserve( _maxComputeBufferAttachments );
 
 	_maxTexSlots = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
@@ -261,6 +264,9 @@ bool RenderDeviceGL4::init()
 	_caps.maxJointCount = 75; // currently, will be changed soon
 	_caps.maxTexUnitCount = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 
+	// Find maximum number of storage buffers in compute shader
+	glGetIntegeri_v( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, 0, (GLint *) &_maxComputeBufferAttachments );
+	
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
 	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
@@ -1110,6 +1116,13 @@ int RenderDeviceGL4::getShaderSamplerLoc( uint32 shaderId, const char *name )
 }
 
 
+int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
+{
+	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+	return glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
+}
+
+
 void RenderDeviceGL4::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
 {
 	switch( type )
@@ -1158,7 +1171,8 @@ void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 {
 	bindShader( shaderId );
 
-	glDispatchCompute( xDim, yDim, zDim );
+	if ( commitStates() )
+		glDispatchCompute( xDim, yDim, zDim );
 }
 
 // =================================================================================================
@@ -1712,6 +1726,15 @@ void RenderDeviceGL4::applyRenderStates()
 }
 
 
+void RenderDeviceGL4::setStorageBuffer( uint8 slot, uint32 bufObj )
+{
+	ASSERT( slot < _maxComputeBufferAttachments && _storageBufs.size() < _maxComputeBufferAttachments );
+
+	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+	_storageBufs.push_back( RDIShaderStorageGL4( slot, buf.glObj ) );
+}
+
+
 bool RenderDeviceGL4::commitStates( uint32 filter )
 {
 	if( _pendingMask & filter )
@@ -1806,6 +1829,15 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 			_pendingMask &= ~PM_BARRIER;
 		}
 
+		// Bind storage buffers
+		if ( mask & PM_COMPUTE )
+		{
+			for ( size_t i = 0; i < _storageBufs.size(); ++i )
+			{
+				glBindBufferBase( GL_SHADER_STORAGE_BUFFER, _storageBufs[ i ].slot, _storageBufs[ i ].oglObject );
+			}
+		}
+
 		CHECK_GL_ERROR
 	}
 
@@ -1827,6 +1859,8 @@ void RenderDeviceGL4::resetStates()
 //	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )
 		setTexture( i, 0, 0 );
+
+	_storageBufs.clear();
 
 	setColorWriteMask( true );
 	_pendingMask = 0xFFFFFFFF;

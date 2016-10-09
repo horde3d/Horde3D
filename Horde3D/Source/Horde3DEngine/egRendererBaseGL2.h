@@ -235,6 +235,7 @@ public:
 	std::string getShaderLog() const { return _shaderLog; }
 	int getShaderConstLoc( uint32 shaderId, const char *name );
 	int getShaderSamplerLoc( uint32 shaderId, const char *name );
+	int getShaderBufferLoc( uint32 shaderId, const char *name );
 	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 );
 	void setShaderSampler( int loc, uint32 texUnit );
 	const char *getDefaultVSCode();
@@ -264,66 +265,7 @@ public:
 // -----------------------------------------------------------------------------
 // Commands
 // -----------------------------------------------------------------------------
-	
-// 	void setViewport( int x, int y, int width, int height )
-// 		{ _vpX = x; _vpY = y; _vpWidth = width; _vpHeight = height; _pendingMask |= PM_VIEWPORT; }
-// 	void setScissorRect( int x, int y, int width, int height )
-// 		{ _scX = x; _scY = y; _scWidth = width; _scHeight = height; _pendingMask |= PM_SCISSOR; }
-// 	void setIndexBuffer( uint32 bufObj, RDIIndexFormat idxFmt )
-// 		{ _indexFormat = (uint32)idxFmt; _newIndexBuf = bufObj; _pendingMask |= PM_INDEXBUF; }
-// 	void setVertexBuffer( uint32 slot, uint32 vbObj, uint32 offset, uint32 stride )
-// 		{ ASSERT( slot < 16 ); _vertBufSlots[slot] = RDIVertBufSlot( vbObj, offset, stride );
-// 	      _pendingMask |= PM_VERTLAYOUT; }
-// 	void setVertexLayout( uint32 vlObj )
-// 		{ _newVertLayout = vlObj; }
-// 	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState )
-// 		{ ASSERT( slot < 16 ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
-// 	      _pendingMask |= PM_TEXTURES; }
-// 	
-// 	// Render states
-// 	void setColorWriteMask( bool enabled )
-// 		{ _newRasterState.renderTargetWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
-// 	void getColorWriteMask( bool &enabled ) const
-// 		{ enabled = _newRasterState.renderTargetWriteMask; }
-// 	void setFillMode( RDIFillMode fillMode )
-// 		{ _newRasterState.fillMode = fillMode; _pendingMask |= PM_RENDERSTATES; }
-// 	void getFillMode( RDIFillMode &fillMode ) const
-// 		{ fillMode = (RDIFillMode)_newRasterState.fillMode; }
-// 	void setCullMode( RDICullMode cullMode )
-// 		{ _newRasterState.cullMode = cullMode; _pendingMask |= PM_RENDERSTATES; }
-// 	void getCullMode( RDICullMode &cullMode ) const
-// 		{ cullMode = (RDICullMode)_newRasterState.cullMode; }
-// 	void setScissorTest( bool enabled )
-// 		{ _newRasterState.scissorEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-// 	void getScissorTest( bool &enabled ) const
-// 		{ enabled = _newRasterState.scissorEnable; }
-// 	void setMulisampling( bool enabled )
-// 		{ _newRasterState.multisampleEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-// 	void getMulisampling( bool &enabled ) const
-// 		{ enabled = _newRasterState.multisampleEnable; }
-// 	void setAlphaToCoverage( bool enabled )
-// 		{ _newBlendState.alphaToCoverageEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-// 	void getAlphaToCoverage( bool &enabled ) const
-// 		{ enabled = _newBlendState.alphaToCoverageEnable; }
-// 	void setBlendMode( bool enabled, RDIBlendFunc srcBlendFunc = BS_BLEND_ZERO, RDIBlendFunc destBlendFunc = BS_BLEND_ZERO )
-// 		{ _newBlendState.blendEnable = enabled; _newBlendState.srcBlendFunc = srcBlendFunc;
-// 		  _newBlendState.destBlendFunc = destBlendFunc; _pendingMask |= PM_RENDERSTATES; }
-// 	void getBlendMode( bool &enabled, RDIBlendFunc &srcBlendFunc, RDIBlendFunc &destBlendFunc ) const
-// 		{ enabled = _newBlendState.blendEnable; srcBlendFunc = (RDIBlendFunc)_newBlendState.srcBlendFunc;
-// 		  destBlendFunc = (RDIBlendFunc)_newBlendState.destBlendFunc; }
-// 	void setDepthMask( bool enabled )
-// 		{ _newDepthStencilState.depthWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
-// 	void getDepthMask( bool &enabled ) const
-// 		{ enabled = _newDepthStencilState.depthWriteMask; }
-// 	void setDepthTest( bool enabled )
-// 		{ _newDepthStencilState.depthEnable = enabled; _pendingMask |= PM_RENDERSTATES; }
-// 	void getDepthTest( bool &enabled ) const
-// 		{ enabled = _newDepthStencilState.depthEnable; }
-// 	void setDepthFunc( RDIDepthFunc depthFunc )
-// 		{ _newDepthStencilState.depthFunc = depthFunc; _pendingMask |= PM_RENDERSTATES; }
-// 	void getDepthFunc( RDIDepthFunc &depthFunc ) const
-// 		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
-
+	void setStorageBuffer( uint8 slot, uint32 bufObj ) { /* Not supported */ }
 	bool commitStates( uint32 filter = 0xFFFFFFFF );
 	void resetStates();
 	

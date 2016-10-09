@@ -24,7 +24,6 @@ namespace Horde3D {
 
 using namespace std;
 
-
 MaterialResource::MaterialResource( const string &name, int flags ) :
 	Resource( ResourceTypes::Material, name, flags )
 {
@@ -62,7 +61,9 @@ void MaterialResource::release()
 	_shaderRes = 0x0;
 	_matLink = 0x0;
 	for( uint32 i = 0; i < _samplers.size(); ++i ) _samplers[i].texRes = 0x0;
+// 	for ( uint32 i = 0; i < _buffers.size(); ++i ) _buffers[ i ].compBufRes = nullptr;
 
+	_buffers.clear();
 	_samplers.clear();
 	_uniforms.clear();
 	_shaderFlags.clear();
@@ -190,6 +191,25 @@ bool MaterialResource::load( const char *data, int size )
 		node1 = node1.getNextSibling( "Uniform" );
 	}
 	
+	// Data (compute/texture) buffers
+	node1 = rootNode.getFirstChild( "DataBuffer" );
+	while ( !node1.isEmpty() )
+	{
+		if ( node1.getAttribute( "name" ) == 0x0 ) return raiseError( "Missing DataBuffer attribute 'name'" );
+		if ( node1.getAttribute( "source" ) == 0x0 ) return raiseError( "Missing DataBuffer attribute 'source'" );
+
+		MatBuffer buf;
+		buf.name = node1.getAttribute( "name" );
+
+		uint32 compBuffer = Modules::resMan().addResource(
+			ResourceTypes::ComputeBuffer, node1.getAttribute( "source" ), 0, false );
+		buf.compBufRes = ( ComputeBufferResource * ) Modules::resMan().resolveResHandle( compBuffer );
+
+		_buffers.push_back( buf );
+
+		node1 = node1.getNextSibling( "DataBuffer" );
+	}
+
 	return true;
 }
 

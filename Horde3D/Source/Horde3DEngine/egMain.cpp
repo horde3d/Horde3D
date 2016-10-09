@@ -19,7 +19,8 @@
 #include "egCamera.h"
 #include "egParticle.h"
 #include "egTexture.h"
-#include "egCompute.h"
+#include "egComputeBuffer.h"
+#include "egComputeNode.h"
 #include <cstdlib>
 #include <cstring>
 #include <string>

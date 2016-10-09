@@ -89,6 +89,17 @@ struct RDIGeometryInfoGL4
 	RDIGeometryInfoGL4() : vao( 0 ), indexBuf( 0 ), layout( 0 ), indexBuf32Bit( false ), atrribsBinded( false ) {}
 };
 
+struct RDIShaderStorageGL4
+{
+	uint32 oglObject;
+	uint8 slot;
+
+	RDIShaderStorageGL4( uint32 glObj, uint8 targetSlot ) : oglObject( glObj ), slot( targetSlot )
+	{
+
+	}
+};
+
 // ---------------------------------------------------------
 // Textures
 // ---------------------------------------------------------
@@ -216,6 +227,7 @@ public:
 	std::string getShaderLog() const { return _shaderLog; }
 	int getShaderConstLoc( uint32 shaderId, const char *name );
 	int getShaderSamplerLoc( uint32 shaderId, const char *name );
+	int getShaderBufferLoc( uint32 shaderId, const char *name );
 	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 );
 	void setShaderSampler( int loc, uint32 texUnit );
 	const char *getDefaultVSCode();
@@ -248,6 +260,7 @@ public:
 // -----------------------------------------------------------------------------
 // Commands
 // -----------------------------------------------------------------------------
+	void setStorageBuffer( uint8 slot, uint32 bufObj );
 
 	bool commitStates( uint32 filter = 0xFFFFFFFF );
 	void resetStates();
@@ -297,21 +310,6 @@ protected:
 
 protected:
 
-// 	DeviceCaps    _caps;
-// 	
-// 	uint32        _depthFormat;
-// 	int           _vpX, _vpY, _vpWidth, _vpHeight;
-// 	int           _scX, _scY, _scWidth, _scHeight;
-// 	int           _fbWidth, _fbHeight;
-// 	std::string   _shaderLog;
-// 	uint32        _curRendBuf;
-// 	int           _outputBufferIndex;  // Left and right eye for stereo rendering
-// 	uint32        _textureMem, _bufferMem;
-// 
-// 	int                            _defaultFBO;
-//     bool                           _defaultFBOMultisampled;
-
-//	uint32							  _numVertexLayouts;
 	RDIVertexLayout		              _vertexLayouts[MaxNumVertexLayouts];
 	RDIObjects< RDIBufferGL4 >        _buffers;
 	RDIObjects< RDITextureGL4 >       _textures;
@@ -319,22 +317,13 @@ protected:
 	RDIObjects< RDIShaderGL4 >        _shaders;
 	RDIObjects< RDIRenderBufferGL4 >  _rendBufs;
 	RDIObjects< RDIGeometryInfoGL4 >  _vaos;
+	std::vector< RDIShaderStorageGL4 > _storageBufs;
 
-//	RDIGeometryInfoGL4				  _tempGeometry;
-
-// 	RDIVertBufSlotGL4        _vertBufSlots[16];
-// 	RDITexSlotGL4            _texSlots[16];
-// 	RDIRasterState        _curRasterState, _newRasterState;
-// 	RDIBlendState         _curBlendState, _newBlendState;
-// 	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
-//	uint32                _prevShaderId, _curShaderId;
-// 	uint32                _curVertLayout, _newVertLayout;
-// 	uint32                _curIndexBuf, _newIndexBuf;
  	uint32                _indexFormat;
  	uint32                _activeVertexAttribsMask;
-// 	uint32                _pendingMask;
 
 	uint16				  _lastTessPatchVertsValue;
+	uint16				  _maxComputeBufferAttachments;
 };
 
 } // namespace RDI_GL4
