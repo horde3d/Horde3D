@@ -94,7 +94,7 @@ struct RDIShaderStorageGL4
 	uint32 oglObject;
 	uint8 slot;
 
-	RDIShaderStorageGL4( uint32 glObj, uint8 targetSlot ) : oglObject( glObj ), slot( targetSlot )
+	RDIShaderStorageGL4( uint8 targetSlot, uint32 glObj ) : oglObject( glObj ), slot( targetSlot )
 	{
 
 	}

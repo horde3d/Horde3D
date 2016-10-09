@@ -1171,7 +1171,7 @@ void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 {
 	bindShader( shaderId );
 
-	if ( commitStates() )
+	if ( commitStates( ~PM_GEOMETRY ) )
 		glDispatchCompute( xDim, yDim, zDim );
 }
 
@@ -1836,6 +1836,8 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 			{
 				glBindBufferBase( GL_SHADER_STORAGE_BUFFER, _storageBufs[ i ].slot, _storageBufs[ i ].oglObject );
 			}
+
+			_pendingMask &= ~PM_COMPUTE;
 		}
 
 		CHECK_GL_ERROR
