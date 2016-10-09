@@ -398,6 +398,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 	static float defLightsGPUTime = 0;
 	static float shadowsGPUTime = 0;
 	static float particleGPUTime = 0;
+	static float computeGPUTime = 0;
 
 	// Calculate FPS
 	float curFrameTime = h3dGetStat( H3DStats::FrameTime, true );
@@ -415,6 +416,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 		defLightsGPUTime = h3dGetStat( H3DStats::DefLightsGPUTime, true );
 		shadowsGPUTime = h3dGetStat( H3DStats::ShadowsGPUTime, true );
 		particleGPUTime = h3dGetStat( H3DStats::ParticleGPUTime, true );
+		computeGPUTime = h3dGetStat( H3DStats::ComputeGPUTime, true );
 		timer = 0;
 	}
 	else
@@ -506,6 +508,11 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 		text.str( "" );
 		text << particleGPUTime << "ms";
 		addInfoBoxRow( "Particles", text.str().c_str() );
+
+		// Compute
+		text.str( "" );
+		text << computeGPUTime << "ms";
+		addInfoBoxRow( "Compute", text.str().c_str() );
 	}
 }
 

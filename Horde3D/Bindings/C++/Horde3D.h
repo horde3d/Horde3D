@@ -154,7 +154,8 @@ struct H3DStats
 		ShadowsGPUTime,
 		ParticleGPUTime,
 		TextureVMem,
-		GeometryVMem
+		GeometryVMem,
+		ComputeGPUTime
 	};
 };
 
