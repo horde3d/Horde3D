@@ -3,5 +3,5 @@
 	<DataBuffer name="ParticleData" source="CompBuf" />
 	<Uniform name="deltaTime" a="0" />
 	<Uniform name="attractor" a="0" b="0" c="0" d="0" />
-	<Uniform name="maxParticles" a="1000" />
+	<Uniform name="totalParticles" a="1000" />
 </Material>

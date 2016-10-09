@@ -135,7 +135,7 @@ bool ParticleVortexSample::initResources()
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 2, 30.0f ); // z
 
 	// Set material uniforms that will not be changed during runtime
-	h3dSetMaterialUniform( _computeMatRes, "maxParticles", particlesCount, 0, 0, 0 );
+	h3dSetMaterialUniform( _computeMatRes, "totalParticles", ( float ) particlesCount, 0, 0, 0 );
 
     // Add light source
 // 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
@@ -148,6 +148,12 @@ bool ParticleVortexSample::initResources()
 // 	h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 0.9f );
 // 	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
 // 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
+
+	// Calculate number of groups for compute shader
+	int numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
+	double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
+	root = ceil( root );
+	_computeGroupX = _computeGroupY = ( unsigned int ) root;
 
 	return true;
 }
@@ -167,7 +173,7 @@ void ParticleVortexSample::update()
     if( !checkFlag( SampleApplication::FreezeMode ) )
 	{
 		// Calculate animation time in seconds
-		_animTime += frame_time / 1000.0f;
+		_animTime += frame_time;
 
 		// Set animation time
 		h3dSetMaterialUniform( _computeMatRes, "deltaTime", _animTime, 0, 0, 0 );
@@ -182,6 +188,6 @@ void ParticleVortexSample::update()
 		h3dSetMaterialUniform( _computeMatRes, "attractor", attractorX * 2, attractorY * 2, attractorZ * 2, 0 );
 
 		// Perform computing
-//		h3dDispatchCompute( _computeMatRes, "Compute", 100, 100, 1 );
+		h3dDispatchCompute( _computeMatRes, "COMPUTE", _computeGroupX, _computeGroupY, 1 );
 	}
 }

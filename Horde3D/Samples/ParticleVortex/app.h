@@ -34,6 +34,8 @@ private:
 	H3DNode _compNode;
 	H3DRes	_computeMatRes;
 	float _animTime;
+	unsigned int _computeGroupX;
+	unsigned int _computeGroupY;
 };
 
 #endif // _app_H_

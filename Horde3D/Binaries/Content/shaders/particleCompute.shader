@@ -8,15 +8,21 @@ sampler2D albedoMap = sampler_state
 	MaxAnisotropy = 1;
 };
 
+// Buffers
+buffer ParticleData;
+
+// Uniforms
+float maxParticles = 1000;
+float deltaTime = 0;
+float4 attractor;
+
 // Contexts
-
-
 OpenGL4
 {
-	// context COMPUTE
-	// {
-		// ComputeShader = compile GLSL CS_PARTICLESOLVER;
-	// }
+	context COMPUTE
+	{
+		ComputeShader = compile GLSL CS_PARTICLESOLVER;
+	}
 	
 	context AMBIENT
 	{
@@ -32,6 +38,59 @@ OpenGL4
 [[CS_PARTICLESOLVER]]
 // =================================================================================================
 
+uniform float totalParticles;
+uniform float deltaTime;
+uniform vec4 attractor;
+
+struct Particle
+{
+	vec3 position;
+	vec3 velocity;
+};
+
+const int maxThreadsInGroup = 1024;
+const int maxProcessedParticles = 5000000;
+ 
+layout (std430, binding=0) buffer ParticleData
+{ 
+	Particle particlesBuf[];
+};
+
+layout(local_size_x = 32, local_size_y = 32) in;
+
+/////////////////////
+vec3 calculate(vec3 anchor, vec3 position)
+{
+	vec3 direction = anchor - position;
+	float dist = length(direction);
+	direction /= dist;
+
+	return direction * max(0.01, (1 / (dist * dist)));
+}
+
+void main()
+{
+//	uint index = groupID.x * THREAD_GROUP_TOTAL + groupID.y * GroupDim * THREAD_GROUP_TOTAL + groupIndex; 
+	uint index = gl_WorkGroupID.x * maxThreadsInGroup + gl_WorkGroupID.y * gl_NumWorkGroups.x * maxThreadsInGroup + gl_LocalInvocationIndex; 
+
+	if(index >= totalParticles)
+		return;
+
+	Particle particle = particlesBuf[ index ];
+
+	vec3 position = particle.position;//particlesBuf[ index ].position;
+	vec3 velocity = particle.velocity;//particlesBuf[ index ].velocity;
+
+	velocity += calculate( attractor.xyz, position );
+	velocity += calculate( -attractor.xyz, position );
+	
+	particle.position = position + velocity * deltaTime;;
+	particle.velocity = velocity;
+	// particlesBuf[ index ].position = position + velocity * deltaTime;
+	//particlesBuf[ index ].velocity = velocity;
+
+	particlesBuf[index] = particle;
+}
 
 [[VS_GENERAL_GL4]]
 // =================================================================================================
@@ -53,7 +112,7 @@ void main( void )
 	vec4 pos = calcWorldPos( vec4( partPosition, 1 ) );
 	
 	float speed = length( partVelocity );
-	partColor = vec3( mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.5, 0.1), speed * 0.1 ) );
+	partColor = mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.5, 0.1), speed * 0.1 );
 	
 	gl_Position = pos;//viewProjMat * pos;
 }
@@ -69,7 +128,7 @@ layout(points) in;
 layout (triangle_strip) out;
 layout(max_vertices = 4) out;
  
-in vec3 partColor;
+in vec3 partColor[];
  
 out vec2 vertTexCoords;
 out vec3 color;
@@ -77,7 +136,7 @@ out vec3 color;
 void main()
 {
 // create billboards from points
-	color = partColor;
+	color = partColor[0];
 	
 	float particle_size = 0.1;
 	
