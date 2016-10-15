@@ -26,15 +26,16 @@ using namespace std;
 
 struct ParticleData
 {
-	float position[ 3 ];
-	float velocity[ 3 ];
+	// Thanks to OpenGL implementations bad support for vec3 in buffers, passed to glsl, padding is required
+	float position[ /*3*/ 4 ]; 
+	float velocity[ /*3*/ 4 ];
 };
 
 ParticleVortexSample::ParticleVortexSample( int argc, char** argv ) :
     SampleApplication( argc, argv, "Particle vortex - Horde3D Sample" )
 {
-    _x = 15; _y = 3; _z = 20;
-    _rx = -10; _ry = 60;
+    _x = 125; _y = 25; _z = 85;
+    _rx = -10; _ry = 55;
 
 	_animTime = 0;
 }
@@ -61,8 +62,7 @@ bool ParticleVortexSample::initResources()
 
 	// Generate random position data for particles
 	size_t particlesCount = 1000000;
-	std::unique_ptr< ParticleData[] > compData = std::make_unique< ParticleData[] >( particlesCount ); //( new ParticleData[ particlesCount ] );
-//	ParticleData *compData = new ParticleData[ particlesCount ];
+	std::unique_ptr< ParticleData[] > compData = std::make_unique< ParticleData[] >( particlesCount );
 
 	std::random_device rd;
 	std::mt19937 gen( rd() );
@@ -74,12 +74,14 @@ bool ParticleVortexSample::initResources()
 		compData[ i ].position[ 0 ] = ( float ) dis( gen );
 		compData[ i ].position[ 1 ] = ( float ) dis( gen );
 		compData[ i ].position[ 2 ] = ( float ) dis( gen );
+		compData[ i ].position[ 3 ] = 1.0f; // padding
 
 		angle = -( float ) atan2f( compData[ i ].position[ 0 ], compData[ i ].position[ 2 ] );
 
 		compData[ i ].velocity[ 0 ] = cosf( angle );
 		compData[ i ].velocity[ 1 ] = 0.f;
 		compData[ i ].velocity[ 2 ] = sinf( angle ) * 5;
+		compData[ i ].velocity[ 3 ] = 0.0f; // padding
 	}
 
 	// Set size of the compute buffer
@@ -96,14 +98,14 @@ bool ParticleVortexSample::initResources()
 
 	// Set vertex binding parameters.
 	// Name - name of the parameter. Used for binding parameter to shader variable.
-	// Size - number of components (3 float for particle position, so 3), 
-	// Offset - number of bytes. For second parameter it is 12, because the first parameter had 3 floats (12 bytes)
+	// Size - number of components (4 float for particle position, so 4), 
+	// Offset - number of bytes. For second parameter it is 16, because the first parameter had 4 floats (16 bytes)
 	h3dSetResParamStr( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsNameStr, "partPosition" );
-	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsSizeI, 3 );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsSizeI, /*3*/ 4 );
 	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsOffsetI, 0 );
 	h3dSetResParamStr( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsNameStr, "partVelocity" );
-	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsSizeI, 3 );
-	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsOffsetI, 12 );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsSizeI, /*3*/ 4 );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 1, H3DComputeBufRes::DrawParamsOffsetI, /*12*/ 16 );
 
 	// Fill compute buffer with generated data
 	void *data = h3dMapResStream( compBuf, H3DComputeBufRes::ComputeBufElem, 0, 0, false, true );
@@ -188,6 +190,13 @@ void ParticleVortexSample::update()
 		h3dSetMaterialUniform( _computeMatRes, "attractor", attractorX * 2, attractorY * 2, attractorZ * 2, 0 );
 
 		// Perform computing
-		h3dDispatchCompute( _computeMatRes, "COMPUTE", _computeGroupX, _computeGroupY, 1 );
+		h3dDispatchCompute( _computeMatRes, "COMPUTE", _computeGroupX /*1024*/, _computeGroupY /*1*/, 1 );
+
+		if ( isKeyDown( GLFW_KEY_1 ) )
+		{
+// 			h3dMapResStream( h3dGetNodeParamI( _compNode, H3DComputeNode::CompBufResI ), H3DComputeBufRes::ComputeBufElem, 0, 0, false, true );
+// 			h3dUnmapResStream( h3dGetNodeParamI( _compNode, H3DComputeNode::CompBufResI ) );
+			int a = 1;
+		}
 	}
 }

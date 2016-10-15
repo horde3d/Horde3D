@@ -12,9 +12,9 @@ sampler2D albedoMap = sampler_state
 buffer ParticleData;
 
 // Uniforms
-float maxParticles = 1000;
+float totalParticles = 1000;
 float deltaTime = 0;
-float4 attractor;
+float4 attractor = {0.0, 0.0, 0.0, 0.0};
 
 // Contexts
 OpenGL4
@@ -44,17 +44,17 @@ uniform vec4 attractor;
 
 struct Particle
 {
-	vec3 position;
-	vec3 velocity;
+	vec4 position;
+	vec4 velocity;
 };
 
 const int maxThreadsInGroup = 1024;
 const int maxProcessedParticles = 5000000;
  
-layout (std430, binding=0) buffer ParticleData
+layout (std430, binding = 1) buffer ParticleData
 { 
 	Particle particlesBuf[];
-};
+} data;
 
 layout(local_size_x = 32, local_size_y = 32) in;
 
@@ -65,39 +65,36 @@ vec3 calculate(vec3 anchor, vec3 position)
 	float dist = length(direction);
 	direction /= dist;
 
-	return direction * max(0.01, (1 / (dist * dist)));
+	return direction * max(0.01, (1.0 / (dist * dist)));
 }
 
 void main()
 {
-//	uint index = groupID.x * THREAD_GROUP_TOTAL + groupID.y * GroupDim * THREAD_GROUP_TOTAL + groupIndex; 
 	uint index = gl_WorkGroupID.x * maxThreadsInGroup + gl_WorkGroupID.y * gl_NumWorkGroups.x * maxThreadsInGroup + gl_LocalInvocationIndex; 
 
-	if(index >= totalParticles)
+	if( index >= totalParticles ) 
 		return;
 
-	Particle particle = particlesBuf[ index ];
+	Particle particle = data.particlesBuf[ index ];
 
-	vec3 position = particle.position;//particlesBuf[ index ].position;
-	vec3 velocity = particle.velocity;//particlesBuf[ index ].velocity;
+	vec4 position = particle.position; 
+	vec4 velocity = particle.velocity; 
 
-	velocity += calculate( attractor.xyz, position );
-	velocity += calculate( -attractor.xyz, position );
+	velocity += vec4( calculate( attractor.xyz, position.xyz ), 0 );
+	velocity += vec4( calculate( -attractor.xyz, position.xyz ), 0 ) ;
 	
-	particle.position = position + velocity * deltaTime;;
+	particle.position = position + velocity * deltaTime;
 	particle.velocity = velocity;
-	// particlesBuf[ index ].position = position + velocity * deltaTime;
-	//particlesBuf[ index ].velocity = velocity;
 
-	particlesBuf[index] = particle;
+	data.particlesBuf[index] = particle;
 }
 
 [[VS_GENERAL_GL4]]
 // =================================================================================================
 #include "shaders/utilityLib/vertCommon.glsl"
 
-layout (location = 0) in vec3 partPosition;
-layout (location = 1) in vec3 partVelocity;
+layout (location = 0) in vec4 partPosition;
+layout (location = 1) in vec4 partVelocity;
 
 //uniform mat4 projMat;
 uniform mat4 viewProjMat;
@@ -106,20 +103,16 @@ out vec3 partColor;
 
 void main( void )
 {
-//	vec4 viewPos = vec4( partPosition, 1 ) * viewMat;
-//	gl_Position = viewPos * projMat;
-
-	vec4 pos = calcWorldPos( vec4( partPosition, 1 ) );
+	vec4 pos = calcWorldPos( partPosition );
 	
-	float speed = length( partVelocity );
-	partColor = mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.5, 0.1), speed * 0.1 );
+	float speed = length( partVelocity.xyz );
+	partColor = mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.5, 0.1), speed );
 	
-	gl_Position = pos;//viewProjMat * pos;
+	gl_Position = pos;
 }
 
 [[GS_TRIANGULATE_GL4]]
 // =================================================================================================
-uniform mat4 projMat;
 uniform mat4 viewMat;
 uniform mat4 viewProjMat;
 uniform vec3 viewerPos;
@@ -186,5 +179,5 @@ out vec4 fragColor;
 void main()
 {
 	vec4 texColor = texture( albedoMap, vec2( vertTexCoords.s, -vertTexCoords.t ) );
-	fragColor = vec4( color * texColor.rgb, texColor.a );
+	fragColor = vec4( color * texColor.xyz, texColor.a );
 }
