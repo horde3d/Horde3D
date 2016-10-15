@@ -31,8 +31,19 @@ struct ParticleData
 	float velocity[ /*3*/ 4 ];
 };
 
+void normalize( float &x, float &y, float &z )
+{
+	// Calculate length
+	float length = sqrtf( x * x + y * y + z * z );
+	float invLength = 1.0f / length;
+
+	x *= invLength;
+	y *= invLength;
+	z *= invLength;
+}
+
 ParticleVortexSample::ParticleVortexSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Particle vortex - Horde3D Sample" )
+    SampleApplication( argc, argv, "Particle vortex - Horde3D Sample", 45.0f, 0.1f, 5000.0f )
 {
     _x = 125; _y = 25; _z = 85;
     _rx = -10; _ry = 55;
@@ -66,21 +77,29 @@ bool ParticleVortexSample::initResources()
 
 	std::random_device rd;
 	std::mt19937 gen( rd() );
-	std::uniform_real_distribution<> dis( -30, 30 );
+	std::uniform_real_distribution<> dis3( -3, 3 );
+	std::uniform_real_distribution<> dis10( -10, 10 );
+	std::uniform_real_distribution<> dis30( -30, 30 );
+	std::uniform_real_distribution<> dis100( 0, 100 );
 
 	float angle = 0;
 	for ( size_t i = 0; i < particlesCount; ++i )
 	{
-		compData[ i ].position[ 0 ] = ( float ) dis( gen );
-		compData[ i ].position[ 1 ] = ( float ) dis( gen );
-		compData[ i ].position[ 2 ] = ( float ) dis( gen );
+		compData[ i ].position[ 0 ] = ( float ) dis10( gen );
+		compData[ i ].position[ 1 ] = ( float ) dis3( gen );
+		compData[ i ].position[ 2 ] = ( float ) dis30( gen );
 		compData[ i ].position[ 3 ] = 1.0f; // padding
+
+		normalize( compData[ i ].position[ 0 ], compData[ i ].position[ 1 ], compData[ i ].position[ 2 ] );
+		compData[ i ].position[ 0 ] *= ( float ) dis100( gen );
+		compData[ i ].position[ 1 ] *= ( float ) dis100( gen );
+		compData[ i ].position[ 2 ] *= ( float ) dis100( gen );
 
 		angle = -( float ) atan2f( compData[ i ].position[ 0 ], compData[ i ].position[ 2 ] );
 
 		compData[ i ].velocity[ 0 ] = cosf( angle );
 		compData[ i ].velocity[ 1 ] = 0.f;
-		compData[ i ].velocity[ 2 ] = sinf( angle ) * 5;
+		compData[ i ].velocity[ 2 ] = sinf( angle ) * 5.f;
 		compData[ i ].velocity[ 3 ] = 0.0f; // padding
 	}
 
@@ -178,7 +197,7 @@ void ParticleVortexSample::update()
 		_animTime += frame_time;
 
 		// Set animation time
-		h3dSetMaterialUniform( _computeMatRes, "deltaTime", _animTime, 0, 0, 0 );
+		h3dSetMaterialUniform( _computeMatRes, "deltaTime", 1.0f / H3D_FPS_REFERENCE, 0, 0, 0 );
 
 		// Set attractor point
 		float angle = ( float ) _animTime * 0.5f;
@@ -191,12 +210,5 @@ void ParticleVortexSample::update()
 
 		// Perform computing
 		h3dDispatchCompute( _computeMatRes, "COMPUTE", _computeGroupX /*1024*/, _computeGroupY /*1*/, 1 );
-
-		if ( isKeyDown( GLFW_KEY_1 ) )
-		{
-// 			h3dMapResStream( h3dGetNodeParamI( _compNode, H3DComputeNode::CompBufResI ), H3DComputeBufRes::ComputeBufElem, 0, 0, false, true );
-// 			h3dUnmapResStream( h3dGetNodeParamI( _compNode, H3DComputeNode::CompBufResI ) );
-			int a = 1;
-		}
 	}
 }

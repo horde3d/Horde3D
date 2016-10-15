@@ -106,7 +106,7 @@ void main( void )
 	vec4 pos = calcWorldPos( partPosition );
 	
 	float speed = length( partVelocity.xyz );
-	partColor = mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.5, 0.1), speed );
+	partColor = mix(vec3(0.1, 0.5, 1.0), vec3(1.0, 0.5, 0.1), speed * 0.1 );
 	
 	gl_Position = pos;
 }

@@ -620,7 +620,7 @@ bool SampleApplication::init()
     glfwSetInputMode( _winHandle, GLFW_STICKY_KEYS, GL_TRUE );
 	
 	// Disable vertical synchronization
-    glfwSwapInterval(0);
+    glfwSwapInterval( 0 );
 
 	// Set listeners
     glfwSetWindowCloseCallback( _winHandle, windowCloseListener );
