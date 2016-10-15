@@ -819,7 +819,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 
 		if ( buf )
 		{
-			_renderDevice->setStorageBuffer( i, buf->_bufferID );
+			_renderDevice->setStorageBuffer( _curShader->customBuffers[ i ], buf->_bufferID );
 		}
 	}
 

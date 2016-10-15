@@ -52,7 +52,7 @@ static const uint32 primitiveTypes[ 5 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 
-static const uint32 memoryBarrierType[ 3 ] = { GL_BUFFER_UPDATE_BARRIER_BIT, GL_ELEMENT_ARRAY_BARRIER_BIT, GL_SHADER_IMAGE_ACCESS_BARRIER_BIT };
+static const uint32 memoryBarrierType[ 3 ] = { GL_BUFFER_UPDATE_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT, GL_ELEMENT_ARRAY_BARRIER_BIT, GL_SHADER_IMAGE_ACCESS_BARRIER_BIT };
 
 // =================================================================================================
 // GPUTimer
@@ -544,7 +544,8 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 		return;
 	}
 	
-//	void *bufMem = glMapBufferRange( buf.type, offset, size, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+
+//	float *bufMem = (float *) glMapBufferRange( buf.type, offset, size, GL_MAP_READ_BIT );
 
 // 	memcpy( bufMem, data, size );
 // 
@@ -1119,7 +1120,13 @@ int RenderDeviceGL4::getShaderSamplerLoc( uint32 shaderId, const char *name )
 int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
 {
 	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
-	return glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
+	int idx = glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
+	
+	int val = 0;
+	const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
+	glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, nullptr, &val );
+
+	return idx != -1 ? val : -1;
 }
 
 
@@ -1732,6 +1739,8 @@ void RenderDeviceGL4::setStorageBuffer( uint8 slot, uint32 bufObj )
 
 	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
 	_storageBufs.push_back( RDIShaderStorageGL4( slot, buf.glObj ) );
+
+	_pendingMask |= PM_COMPUTE;
 }
 
 
