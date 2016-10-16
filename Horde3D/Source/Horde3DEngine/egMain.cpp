@@ -121,7 +121,7 @@ DLLEXP void h3dRelease()
 }
 
 
-DLLEXP void h3dDispatchCompute( int materialRes, const char *context, int groupX, int groupY, int groupZ )
+DLLEXP void h3dCompute( int materialRes, const char *context, int groupX, int groupY, int groupZ )
 {
 	Resource *res = Modules::resMan().resolveResHandle( materialRes );
 	APIFUNC_VALIDATE_RES_TYPE( res, ResourceTypes::Material, "h3dDispatchCompute", APIFUNC_RET_VOID );

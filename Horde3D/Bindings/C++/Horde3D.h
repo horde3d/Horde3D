@@ -815,7 +815,7 @@ DLL bool h3dInit( H3DRenderDevice::List deviceType );
 */
 DLL void h3dRelease();
 
-/* Function: h3dDispatchCompute
+/* Function: h3dCompute
 		Asynchronous processing of arbitrary data on GPU.
 
 	Details:
@@ -834,7 +834,7 @@ DLL void h3dRelease();
 	Returns:
 		nothing
 */
-DLL void h3dDispatchCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
+DLL void h3dCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
 
 /* Function: h3dRender
 		Main rendering function.
