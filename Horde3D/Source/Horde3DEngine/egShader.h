@@ -194,10 +194,10 @@ struct ShaderSampler
 	PTextureResource       defTex;
 	int                    texUnit;
 	uint32                 sampState;
-
+	uint32				   usage;
 
 	ShaderSampler() :
-		texUnit( -1 ), sampState( 0 ), type( TextureTypes::Tex2D )
+		texUnit( -1 ), sampState( 0 ), type( TextureTypes::Tex2D ), usage( 0 )
 	{
 	}
 };

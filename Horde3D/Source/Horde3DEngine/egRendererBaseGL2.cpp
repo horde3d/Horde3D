@@ -1198,7 +1198,7 @@ void RenderDeviceGL2::setRenderBuffer( uint32 rbObj )
 	else
 	{
 		// Unbind all textures to make sure that no FBO attachment is bound any more
-		for( uint32 i = 0; i < 16; ++i ) setTexture( i, 0, 0 );
+		for( uint32 i = 0; i < 16; ++i ) setTexture( i, 0, 0, 0 );
 		commitStates( PM_TEXTURES );
 		
 		RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
@@ -1603,7 +1603,7 @@ void RenderDeviceGL2::resetStates()
 
 //	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )
-		setTexture( i, 0, 0 );
+		setTexture( i, 0, 0, 0 );
 
 	setColorWriteMask( true );
 	_pendingMask = 0xFFFFFFFF;

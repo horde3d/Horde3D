@@ -17,7 +17,6 @@
 
 #include "utDebug.h"
 
-
 namespace Horde3D {
 namespace RDI_GL4 {
 
@@ -177,7 +176,7 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_maxComputeBufferAttachments = 8;
 	_storageBufs.reserve( _maxComputeBufferAttachments );
 
-	_maxTexSlots = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
+	_maxTexSlots = 32; // texture units per stage
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
 	// add default geometry for resetting
@@ -592,7 +591,7 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	if( !_caps.texNPOT )
 	{
 		// Check if texture is NPOT
-		if( (width & (width-1)) != 0 || (height & (height-1)) != 0 )
+		if ( ( width & ( width - 1 ) ) != 0 || ( height & ( height - 1 ) ) != 0 )
 			Modules::log().writeWarning( "Texture has non-power-of-two dimensions although NPOT is not supported by GPU" );
 	}
 	
@@ -1429,7 +1428,7 @@ void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
 	else
 	{
 		// Unbind all textures to make sure that no FBO attachment is bound any more
-		for( uint32 i = 0; i < 16; ++i ) setTexture( i, 0, 0 );
+		for( uint32 i = 0; i < 16; ++i ) setTexture( i, 0, 0, 0 );
 		commitStates( PM_TEXTURES );
 		
 		RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
@@ -1792,7 +1791,19 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 			{
 				glActiveTexture( GL_TEXTURE0 + i );
 
-				if( _texSlots[i].texObj != 0 )
+				if ( _texSlots[ i ].usage != TextureUsage::Texture && _texSlots[ i ].texObj != 0 )
+				{
+					if ( i >= MaxComputeImages ) continue;
+
+					RDITextureGL4 &tex = _textures.getRef( _texSlots[ i ].texObj );
+					uint32 access[ 3 ] = { GL_READ_ONLY, GL_WRITE_ONLY, GL_READ_WRITE };
+
+					glBindImageTexture( i, tex.glObj, 0, false, 0, access[ _texSlots[ i ].usage - 1 ], tex.glFmt );
+					glBindTexture( GL_TEXTURE_CUBE_MAP, 0 ); // as image units are different from texture units - clear binded texture units
+					glBindTexture( GL_TEXTURE_3D, 0 );
+					glBindTexture( GL_TEXTURE_2D, 0 );
+				}
+				else if( _texSlots[i].texObj != 0 )
 				{
 					RDITextureGL4 &tex = _textures.getRef( _texSlots[i].texObj );
 					glBindTexture( tex.type, tex.glObj );
@@ -1869,7 +1880,7 @@ void RenderDeviceGL4::resetStates()
 
 //	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )
-		setTexture( i, 0, 0 );
+		setTexture( i, 0, 0, 0 );
 
 	_storageBufs.clear();
 

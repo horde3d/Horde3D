@@ -566,10 +566,11 @@ bool ShaderResource::parseFXSection( char *data )
 			_buffers.push_back( buffer );
 		}
 		else if( tok.checkToken( "sampler2D", true ) || tok.checkToken( "samplerCube", true ) ||
-				 tok.checkToken( "sampler3D", true ) || tok.checkToken( "samplerBuffer", true ) )
+				 tok.checkToken( "sampler3D", true ) /*|| tok.checkToken( "samplerBuffer", true )*/ )
 		{
 			ShaderSampler sampler;
 			sampler.sampState = SS_FILTER_TRILINEAR | SS_ANISO8 | SS_ADDR_WRAP;
+			sampler.usage = TextureUsage::Texture;
 
 			if( tok.checkToken( "sampler2D" ) )
 			{	
@@ -586,12 +587,12 @@ bool ShaderResource::parseFXSection( char *data )
 				sampler.type = TextureTypes::Tex3D;
 				sampler.defTex = (TextureResource *)Modules::resMan().findResource( ResourceTypes::Texture, "$Tex3D" );
 			}
-			else if ( tok.checkToken( "samplerBuffer" ) )
-			{
-				sampler.type = TextureTypes::Tex2D;
-				sampler.defTex = ( TextureResource * ) Modules::resMan().findResource( ResourceTypes::Texture, "$Tex2D" );
-				sampler.sampState = SS_FILTER_POINT | SS_ANISO1 | SS_ADDR_CLAMP;
-			}
+// 			else if ( tok.checkToken( "samplerBuffer" ) )
+// 			{
+// 				sampler.type = TextureTypes::Tex2D;
+// 				sampler.defTex = ( TextureResource * ) Modules::resMan().findResource( ResourceTypes::Texture, "$Tex2D" );
+// 				sampler.sampState = SS_FILTER_POINT | SS_ANISO1 | SS_ADDR_CLAMP;
+// 			}
 
 			sampler.id = tok.getToken( identifier );
 			if( sampler.id == "" ) return raiseError( "FX: Invalid identifier", tok.getLine() );
@@ -651,6 +652,20 @@ bool ShaderResource::parseFXSection( char *data )
 						else if( maxAniso <= 4 ) sampler.sampState |= SS_ANISO4;
 						else if( maxAniso <= 8 ) sampler.sampState |= SS_ANISO8;
 						else sampler.sampState |= SS_ANISO16;
+					}
+					else if ( tok.checkToken( "Usage" ) )
+					{
+						if ( sampler.type != TextureTypes::Tex2D )
+							return raiseError( "FX: invalid sampler type is used as compute image, only sampler2D is supported", tok.getLine() );
+						if ( !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
+							return raiseError( "FX: using texture as compute image is not supported on this version of render interface", tok.getLine() );
+
+						if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
+						if ( tok.checkToken( "Texture" ) ) sampler.usage = TextureUsage::Texture;
+						else if ( tok.checkToken( "ComputeImageRO" ) ) sampler.usage = TextureUsage::ComputeImageRO;
+						else if ( tok.checkToken( "ComputeImageWO" ) ) sampler.usage = TextureUsage::ComputeImageWO;
+						else if ( tok.checkToken( "ComputeImageRW" ) ) sampler.usage = TextureUsage::ComputeImageRW;
+						else return raiseError( "FX: invalid enum value", tok.getLine() );
 					}
 					else
 						return raiseError( "FX: unexpected token", tok.getLine() );

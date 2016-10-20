@@ -262,15 +262,15 @@ struct RDIVertexLayout
 // Buffers
 // ---------------------------------------------------------
 
-struct RDIBufferTypes
-{
-	enum List
-	{
-		VertexBuffer = 0,
-		IndexBuffer,
-		TextureBuffer
-	};
-};
+// struct RDIBufferTypes
+// {
+// 	enum List
+// 	{
+// 		VertexBuffer = 0,
+// 		IndexBuffer,
+// 		TextureBuffer
+// 	};
+// };
 
 // ---------------------------------------------------------
 // Textures
@@ -303,14 +303,26 @@ struct TextureFormats
 	};
 };
 
+struct TextureUsage
+{
+	enum List
+	{
+		Texture = 0,
+		ComputeImageRO, // read-only image
+		ComputeImageWO, // write-only image
+		ComputeImageRW  // read-write image
+	};
+};
+
 struct RDITexSlot
 {
 	uint32  texObj;
 	uint32  samplerState;
+	uint32  usage;
 
-	RDITexSlot() : texObj( 0 ), samplerState( 0 ) {}
-	RDITexSlot( uint32 texObj, uint32 samplerState ) :
-		texObj( texObj ), samplerState( samplerState ) {}
+	RDITexSlot() : texObj( 0 ), samplerState( 0 ), usage( 0 ) {}
+	RDITexSlot( uint32 texObj, uint32 samplerState, uint32 usage ) :
+		texObj( texObj ), samplerState( samplerState ), usage( usage ) {}
 };
 
 
@@ -1380,8 +1392,8 @@ public:
 		{ _scX = x; _scY = y; _scWidth = width; _scHeight = height; _pendingMask |= PM_SCISSOR; }
 	void setGeometry( uint32 geoIndex )
 		{ _curGeometryIndex = geoIndex;  _pendingMask |= PM_GEOMETRY; }
-	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState )
-		{ ASSERT( slot < 16/*_maxTexSlots*/ ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
+	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState, uint16 usage )
+		{ ASSERT( slot < 16/*_maxTexSlots*/ ); _texSlots[slot] = RDITexSlot( texObj, samplerState, usage );
 	      _pendingMask |= PM_TEXTURES; }
 // 	void setTextureBuffer( uint32 bufObj )
 // 	{	_curTextureBuf = bufObj; _pendingMask |= PM_TEXTUREBUFFER; }

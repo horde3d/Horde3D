@@ -718,6 +718,9 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		if( (sampState & SS_ANISO_MASK) > _maxAnisoMask )
 			sampState = (sampState & ~SS_ANISO_MASK) | _maxAnisoMask;
 
+		// specify how texture is used (as texture or as read/write buffer)
+		uint32 usage = shaderRes->_samplers[ i ].usage;
+
 		// Bind texture
 		if( texRes != 0x0 )
 		{
@@ -727,21 +730,21 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 			{
 				if( texRes->getRBObject() == 0 )
 				{
-					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState );
+					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState, usage);
 				}
 				else if( texRes->getRBObject() != _renderDevice->_curRendBuf )
 				{
 					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit,
-					                  _renderDevice->getRenderBufferTex( texRes->getRBObject(), 0 ), sampState );
+					                  _renderDevice->getRenderBufferTex( texRes->getRBObject(), 0 ), sampState, 0 );
 				}
 				else  // Trying to bind active render buffer as texture
 				{
-					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, TextureResource::defTex2DObject, 0 );
+					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, TextureResource::defTex2DObject, 0, 0 );
 				}
 			}
 			else
 			{
-				_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState );
+				_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, texRes->getTexObject(), sampState, usage );
 			}
 		}
 
@@ -753,7 +756,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 				if( strcmp( _pipeSamplerBindings[j].sampler, sampler.id.c_str() ) == 0 )
 				{
 					_renderDevice->setTexture( shaderRes->_samplers[i].texUnit, _renderDevice->getRenderBufferTex(
-						_pipeSamplerBindings[j].rbObj, _pipeSamplerBindings[j].bufIndex ), sampState );
+						_pipeSamplerBindings[j].rbObj, _pipeSamplerBindings[j].bufIndex ), sampState, usage );
 
 					break;
 				}
@@ -890,12 +893,12 @@ void Renderer::setupShadowMap( bool noShadows )
 	// Bind shadow map
 	if( !noShadows && _curLight->_shadowMapCount > 0 )
 	{
-		_renderDevice->setTexture( 12, _renderDevice->getRenderBufferTex( _shadowRB, 32 ), sampState );
+		_renderDevice->setTexture( 12, _renderDevice->getRenderBufferTex( _shadowRB, 32 ), sampState, TextureUsage::Texture );
 		_smSize = (float)Modules::config().shadowMapSize;
 	}
 	else
 	{
-		_renderDevice->setTexture( 12, _defShadowMap, sampState );
+		_renderDevice->setTexture( 12, _defShadowMap, sampState, TextureUsage::Texture );
 		_smSize = 4;
 	}
 }
