@@ -932,7 +932,9 @@ bool ShaderResource::load( const char *data, int size )
 	const char *pData = data;
 	const char *eof = data + size;
 	char *fxCode = 0x0;
-	
+	std::vector< std::string > tempCodeSections;
+	tempCodeSections.reserve( 16 );
+
 	while( pData < eof )
 	{
 		if( pData < eof-1 && *pData == '[' && *(pData+1) == '[' )
@@ -956,8 +958,13 @@ bool ShaderResource::load( const char *data, int size )
 			    *sectionNameStart == 'F' && *(sectionNameStart+1) == 'X' )
 			{
 				// FX section
-				if( fxCode != 0x0 ) return raiseError( "More than one FX section" );
-				fxCode = new char[sectionContentEnd - sectionContentStart + 1];
+				if ( fxCode != 0x0 )
+				{
+					delete[] fxCode; fxCode = nullptr; 
+					return raiseError( "More than one FX section" );
+				}
+
+				fxCode = new char[ sectionContentEnd - sectionContentStart + 1 ];
 				memcpy( fxCode, sectionContentStart, sectionContentEnd - sectionContentStart );
 				fxCode[sectionContentEnd - sectionContentStart] = '\0';
 			}
@@ -966,8 +973,9 @@ bool ShaderResource::load( const char *data, int size )
 				// Add section as private code resource which is not managed by resource manager
 				_tmpCodeVS.assign( sectionNameStart, sectionNameEnd );
 				_codeSections.push_back( CodeResource( _tmpCodeVS, 0 ) );
-				_tmpCodeVS.assign( sectionContentStart, sectionContentEnd );
-				_codeSections.back().load( _tmpCodeVS.c_str(), (uint32)_tmpCodeVS.length() );
+ 				_tmpCodeVS.assign( sectionContentStart, sectionContentEnd );
+				tempCodeSections.push_back( _tmpCodeVS );
+				// 				_codeSections.back().load( _tmpCodeVS.c_str(), (uint32)_tmpCodeVS.length() );
 			}
 		}
 		else
@@ -978,6 +986,28 @@ bool ShaderResource::load( const char *data, int size )
 	bool result = parseFXSection( fxCode );
 	delete[] fxCode; fxCode = 0x0;
 	if( !result ) return false;
+
+	// Load only code sections that are required for contexts
+	for ( size_t i = 0; i < _contexts.size(); ++i )
+	{
+		ShaderContext &ctx = _contexts[ i ];
+		for ( size_t codeItr = 0; codeItr < _codeSections.size(); ++codeItr )
+		{
+			if ( ctx.vertCodeIdx == codeItr || ctx.fragCodeIdx == codeItr || ctx.geomCodeIdx == codeItr ||
+				 ctx.tessCtlCodeIdx == codeItr || ctx.tessEvalCodeIdx == codeItr || ctx.computeCodeIdx == codeItr )
+			{
+				_codeSections[ codeItr ].load( tempCodeSections[ codeItr ].c_str(), ( uint32 ) tempCodeSections[ codeItr ].length() );
+			}
+		}
+	}
+	
+// 	// Remove unneeded code sections !!!Shader index remap is needed for each context, crash otherwise
+// 	int counter = ( int ) _codeSections.size() - 1;
+// 	while ( counter >= 0 )
+// 	{
+// 		if ( !_codeSections[ counter ].isLoaded() ) _codeSections.erase( _codeSections.begin() + counter );
+// 		counter--;
+// 	}
 
 	compileContexts();
 	
