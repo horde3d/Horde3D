@@ -1028,7 +1028,7 @@ uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *f
 	if( programObj == 0 ) return 0;
 	if( !linkShaderProgram( programObj ) ) return 0;
 
-	int loc = glGetFragDataLocation( programObj, "fragColor" );
+//	int loc = glGetFragDataLocation( programObj, "fragColor" );
 
 	uint32 shaderId = _shaders.add( RDIShaderGL4() );
 	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
