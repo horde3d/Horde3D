@@ -1777,6 +1777,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 		
 		ShaderCombination *prevShader = Modules::renderer().getCurShader();
 		
+		RDIPrimType drawType = PRIM_TRILIST;
+
 		if( !debugView )
 		{
 			if( !meshNode->getMaterialRes()->isOfClass( theClass ) ) continue;
@@ -1791,6 +1793,9 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 				}
 				curMatRes = meshNode->getMaterialRes();
 			}
+
+			// Change draw type for tessellatable models
+			if ( meshNode->getTessellationStatus() == 1 ) drawType = PRIM_PATCHES;
 		}
 		else
 		{
@@ -1857,7 +1862,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			rdi->beginQuery( queryObj );
 		
 		// Render
-		rdi->drawIndexed( PRIM_TRILIST, meshNode->getBatchStart(), meshNode->getBatchCount(),
+		rdi->drawIndexed( drawType, meshNode->getBatchStart(), meshNode->getBatchCount(),
 		                   meshNode->getVertRStart(), meshNode->getVertREnd() - meshNode->getVertRStart() + 1 );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
 		Modules::stats().incStat( EngineStats::TriCount, meshNode->getBatchCount() / 3.0f );

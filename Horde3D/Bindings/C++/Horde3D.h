@@ -574,6 +574,7 @@ struct H3DMesh
 		VertREndI    - Last vertex in Geometry resource of parent Model node [read-only]
 		LodLevelI    - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
 		               the model's current LOD level which is calculated based on the LOD distances (default: 0)
+		TessellatableI - specify if mesh can be tessellated (default: 0)
 	*/
 	enum List
 	{
@@ -582,7 +583,8 @@ struct H3DMesh
 		BatchCountI,
 		VertRStartI,
 		VertREndI,
-		LodLevelI
+		LodLevelI,
+		TessellatableI
 	};
 };
 

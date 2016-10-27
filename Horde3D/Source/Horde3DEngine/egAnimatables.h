@@ -38,7 +38,8 @@ struct MeshNodeParams
 		BatchCountI,
 		VertRStartI,
 		VertREndI,
-		LodLevelI
+		LodLevelI,
+		TessellatableI
 	};
 };
 
@@ -50,11 +51,12 @@ struct MeshNodeTpl : public SceneNodeTpl
 	uint32             batchStart, batchCount;
 	uint32             vertRStart, vertREnd;
 	uint32             lodLevel;
+	uint32			   tessellatable;
 
 	MeshNodeTpl( const std::string &name, MaterialResource *materialRes, uint32 batchStart,
 	             uint32 batchCount, uint32 vertRStart, uint32 vertREnd ) :
 		SceneNodeTpl( SceneNodeTypes::Mesh, name ), matRes( materialRes ), batchStart( batchStart ),
-		batchCount( batchCount ), vertRStart( vertRStart ), vertREnd( vertREnd ), lodLevel( 0 )
+		batchCount( batchCount ), vertRStart( vertRStart ), vertREnd( vertREnd ), lodLevel( 0 ), tessellatable( 0 )
 	{
 	}
 };
@@ -90,6 +92,7 @@ public:
 	uint32 getVertRStart() const { return _vertRStart; }
 	uint32 getVertREnd() const { return _vertREnd; }
 	uint32 getLodLevel() const { return _lodLevel; }
+	uint32 getTessellationStatus() const { return _tessellatable; }
 	ModelNode *getParentModel() const { return _parentModel; }
 
 protected:
@@ -101,6 +104,7 @@ protected:
 	uint32              _batchStart, _batchCount;
 	uint32              _vertRStart, _vertREnd;
 	uint32              _lodLevel;
+	uint32				_tessellatable;
 	
 	ModelNode           *_parentModel;
 	BoundingBox         _localBBox;

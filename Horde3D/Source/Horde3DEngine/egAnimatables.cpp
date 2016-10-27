@@ -31,7 +31,7 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 	SceneNode( meshTpl ),
 	_materialRes( meshTpl.matRes ), _batchStart( meshTpl.batchStart ), _batchCount( meshTpl.batchCount ),
 	_vertRStart( meshTpl.vertRStart ), _vertREnd( meshTpl.vertREnd ), _lodLevel( meshTpl.lodLevel ),
-	_parentModel( 0x0 )
+	_parentModel( 0x0 ), _tessellatable( meshTpl.tessellatable )
 {
 	_renderable = true;
 	_lodSupported = true;
@@ -84,6 +84,13 @@ SceneNodeTpl *MeshNode::parsingFunc( map< string, string > &attribs )
 
 	itr = attribs.find( "lodLevel" );
 	if( itr != attribs.end() ) meshTpl->lodLevel = atoi( itr->second.c_str() );
+
+	itr = attribs.find( "tessellatable" );
+	if ( itr != attribs.end() )
+	{
+		if ( itr->second == "true" || itr->second == "1" ) meshTpl->tessellatable = 1;
+		else meshTpl->tessellatable = 0;
+	}
 
 	if( !result )
 	{
