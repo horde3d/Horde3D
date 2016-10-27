@@ -44,7 +44,8 @@ bool KnightSample::initResources()
         return false;
 
 	// 1. Add resources
-	
+	h3dSetOption( H3DOptions::FastAnimation, 0 );
+
 	// Environment
     H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/sphere/sphere.scene.xml", 0 );
 
