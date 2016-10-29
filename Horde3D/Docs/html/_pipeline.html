@@ -461,7 +461,7 @@ render device is used</b> by default. </p>
 </table>
 </div>
 
-<h4>Sample showing use of render interface tag</h4>
+<h4>Sample: using different shaders for various render interfaces</h4>
 <div class="codebox">
 <pre>
 context AMBIENT
@@ -493,18 +493,21 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 	<tr><td>[ Address <b>=</b> <b>Wrap</b> / Clamp <b>;</b> ]</td></tr>
 	<tr><td>[ Filter <b>=</b> None / Bilinear / <b>Trilinear</b> <b>;</b> ]</td></tr>
 	<tr><td>[ MaxAnisotropy <b>=</b> 1 / 2 / 4 / <b>8</b> / 16 <b>;</b> ]</td></tr>
+	<tr><td>[ Usage <b>=</b> <b>Texture</b> / ComputeImageRO / ComputeImageWO / ComputeImageRW <b>;</b> ]</td></tr>
 	<tr><td>} ] <b>;</b></td></tr>
 </table>
 </div>
 
 <p><b>Remarks:</b></p>
 <ul>
-<li>The specified sampler type (2d, cube) and the bound texture resource type have to match</li>
+<li>The specified sampler type (2d, 3d, cube) and the bound texture resource type have to match</li>
 <li><i>Texture</i> defines a default texture that is used if no texture map is specified in a material; the initial value for sampler2D is
     <i>$Tex2D</i> (white default texture), <i>$Tex3D</i> (white default texture) is for sampler3D and <i>$TexCube</i> (default cube map with black faces) for samplerCube</li>
 <li><i>TexUnit</i> defines the texture unit used by the sampler; use -1 for automatic assignment</li>
 <li>Aliasing for texture units is possible, meaning samplers can share the same texture unit if
     they are not used in the same shader context</li>
+<li>Texture can be set to act as a storage via Usage parameter. Can be used in compute and fragment shaders only. <b>Up to 8</b> textures can be used for compute purposes simultaneously. 
+	Available in OpenGL 4 render interface.</li>
 </ul>
 
 <div class="descbox">
@@ -518,6 +521,17 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 <ul>
 <li>Declares and optionally initializes a uniform</li>
 <li>The default value for each component is 0.0</li>
+</ul>
+
+<div class="descbox">
+<table>
+	<tr><td><b>buffer</b> [< annotation(s) >] <b>id</b><b>;</b></td></tr>
+</table>
+</div>
+
+<p><b>Remarks:</b></p>
+<ul>
+<li>Declares a buffer that can be used for reading and writing (specified in code section). Used primarily for compute shaders</li>
 </ul>
 
 <div class="descbox">
@@ -544,8 +558,10 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 <p><b>Remarks:</b></p>
 <ul>
 <li>Shaders reference a code section that must be defined in the same FX file</li>
+<li>Context can contain either vertex, pixel, geometry, tesselation shaders or compute shader</li>
+<li>Geometry and tesselation steps are optional</li>
 <li>Geometry, compute and tesselation shaders are available only for OpenGL4 render interface</li>
-<li>TessPatchVertices - number of vertices per patch. Available only for OpenGL4 render interface.</li>
+<li>TessPatchVertices - number of vertices per patch. Used for tesselation. Available only for OpenGL4 render interface.</li>
 </ul>
 
 
