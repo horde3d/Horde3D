@@ -28,14 +28,15 @@ protected:
     bool initResources();
     void releaseResources();
 
+	void keyEventHandler( int key, int scancode, int action, int mods );
+
     void update();
 
 private:
-	H3DNode _compNode;
-	H3DRes	_computeMatRes;
 	float _animTime;
-	unsigned int _computeGroupX;
-	unsigned int _computeGroupY;
+	unsigned int _tessInner;
+	unsigned int _tessOuter;
+
 	H3DNode _model;
 };
 

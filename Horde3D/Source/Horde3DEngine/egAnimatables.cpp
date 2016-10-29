@@ -149,6 +149,8 @@ int MeshNode::getParamI( int param ) const
 		return _vertREnd;
 	case MeshNodeParams::LodLevelI:
 		return _lodLevel;
+	case MeshNodeParams::TessellatableI:
+		return _tessellatable;
 	}
 
 	return SceneNode::getParamI( param );
@@ -175,6 +177,9 @@ void MeshNode::setParamI( int param, int value )
 		return;
 	case MeshNodeParams::LodLevelI:
 		_lodLevel = value;
+		return;
+	case MeshNodeParams::TessellatableI:
+		_tessellatable = value;
 		return;
 	}
 
