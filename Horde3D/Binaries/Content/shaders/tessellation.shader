@@ -22,6 +22,19 @@ float4 matAmbientCol <
 // Contexts
 OpenGL4
 {
+/*	context LIGHTING
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		GeometryShader = compile GLSL GS_WIREFRAME_GL4;
+		TessControlShader = compile GLSL TS_CONTROL_GL4;
+		TessEvalShader = compile GLSL TS_EVAL_GL4;
+		PixelShader = compile GLSL FS_LIGHTING_GL4;
+	
+		ZWriteEnable = false;
+		BlendMode = Add;
+		TessPatchVertices = 16;
+	}
+	*/
 	context AMBIENT
 	{
 		VertexShader = compile GLSL VS_GENERAL_GL4;
@@ -30,7 +43,7 @@ OpenGL4
 		TessEvalShader = compile GLSL TS_EVAL_GL4;
 		PixelShader = compile GLSL FS_AMBIENT_GL4;
 		
-		TessPatchVertices = 16;
+		TessPatchVertices = 3;
 	}
 }
 
@@ -101,6 +114,7 @@ void main()
 // =================================================================================================
 
 uniform mat3 worldNormalMat;
+uniform mat4 viewMat;
 
 layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
@@ -109,38 +123,75 @@ in vec3 patchDistance[3];
 out vec3 facetNormal;
 out vec3 patchDistanceGS;
 out vec3 triDistance;
+out vec4 vertPosGS;
 
 void main()
 {
     vec3 A = evalPos[2].xyz - evalPos[0].xyz;
     vec3 B = evalPos[1].xyz - evalPos[0].xyz;
-    facetNormal = worldNormalMat * normalize(cross(A, B));
+	mat4 transposedMat = transpose( viewMat );
+	
+    facetNormal = /*mat3( transposedMat )*/ worldNormalMat * normalize(cross(A, B));
     
     patchDistanceGS = patchDistance[0];
     triDistance = vec3(1, 0, 0);
+	vertPosGS = gl_in[0].gl_Position;
     gl_Position = gl_in[0].gl_Position; EmitVertex();
 
     patchDistanceGS = patchDistance[1];
     triDistance = vec3(0, 1, 0);
+	vertPosGS = gl_in[1].gl_Position;
     gl_Position = gl_in[1].gl_Position; EmitVertex();
 
     patchDistanceGS = patchDistance[2];
     triDistance = vec3(0, 0, 1);
+	vertPosGS = gl_in[2].gl_Position;
     gl_Position = gl_in[2].gl_Position; EmitVertex();
 
     EndPrimitive();
 }
 
+[[FS_LIGHTING_GL4]]
+// =================================================================================================
+
+#include "shaders/utilityLib/fragLightingGL4.glsl" 
+
+uniform vec4 matDiffuseCol;
+uniform vec4 matSpecParams;
+uniform vec4 matAmbientCol;
+uniform mat4 viewMat;
+
+in vec4 vertPosGS;
+in vec2 texCoords;
+
+in vec3 facetNormal;
+
+out vec4 fragColor;
+
+void main( void )
+{
+	vec3 N = normalize( facetNormal );
+    float df = abs( dot( N, lightPos.xyz ) );
+    vec3 albedo = matAmbientCol.rgb + df * matDiffuseCol.rgb;
+
+	vec3 newPos = vertPosGS.xyz;
+	vec4 vsPos = viewMat * vertPosGS;
+	
+	fragColor.rgb = calcPhongSpotLight( newPos, N, albedo.rgb, matSpecParams.rgb,
+										matSpecParams.a, -vsPos.z, 0.3 );
+}
 
 [[FS_AMBIENT_GL4]]
 // =================================================================================================
 in vec3 facetNormal;
 in vec3 triDistance;
 in vec3 patchDistanceGS;
+in vec4 vertPosGS;
 
 uniform vec4 lightPos;
 uniform vec4 matDiffuseCol;
 uniform vec4 matAmbientCol;
+uniform vec3 viewerPos;
 
 out vec4 fragColor;
 
@@ -155,8 +206,8 @@ float amplify(float d, float scale, float offset)
 void main()
 {
     vec3 N = normalize( facetNormal );
-    float df = abs( dot( N, vec3( 1, 1, 1 ) /*lightPos.xyz */) );
-    vec3 color = matAmbientCol.rgb + df * matDiffuseCol.rgb;
+    float df = abs( dot( N, /*vec3( 1, 1, 1 )*/ viewerPos.xyz ) );
+    vec3 color = matAmbientCol.rgb + /*df * */ matDiffuseCol.rgb;
 
     float d1 = min( min( triDistance.x, triDistance.y ), triDistance.z );
     float d2 = min( min( patchDistanceGS.x, patchDistanceGS.y ), patchDistanceGS.z );
