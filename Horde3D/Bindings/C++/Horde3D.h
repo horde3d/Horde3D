@@ -480,7 +480,7 @@ struct H3DNodeTypes
 		Light      - Light source
 		Camera     - Camera giving view on scene
 		Emitter    - Particle system emitter
-		Compute	   - Compute node, necessary for drawing compute results
+		Compute	   - Compute node, used for drawing compute results
 	*/
 	enum List
 	{
@@ -1420,15 +1420,22 @@ DLL H3DRes h3dCreateTexture( const char *name, int width, int height, int fmt, i
 		is used when a shader is compiled, so changing it will not affect any shaders that are already
 		compiled. The preamble is useful for setting platform-specific defines that can be employed for
 		creating several shader code paths, e.g. for supporting different hardware capabilities.
+		Based on render device requirements, engine may internally set shader preambles. OpenGL 4 render device
+		sets shader preambles to specify minimum version, required to compile a shader program of required type.
 	
 	Parameters:
 		vertPreamble  - preamble text of vertex shaders (default: empty string)
 		fragPreamble  - preamble text of fragment shaders (default: empty string)
-		
+		geomPreamble  - preamble text of geometry shaders (default: empty string)
+		tessControlPreamble - preamble text of tessellation control shaders (default: empty string)
+		tessEvalPreamble - preamble text of tessellation evaluation shaders (default: empty string)
+		computePreamble - preamble text of compute shaders (default: empty string)
+
 	Returns:
 		nothing
 */
-DLL void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble );
+DLL void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble,
+								const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble );
 
 /* Function: h3dSetMaterialUniform
 		Sets a shader uniform of a Material resource.
