@@ -193,8 +193,11 @@ bool GeometryResource::load( const char *data, int size )
 	uint32 count;
 	pData = elemcpy_le(&count, (uint32*)(pData), 1);
 
-	if( count > 75 )
-		Modules::log().writeWarning( "Geometry resource '%s': Model has more than 75 joints; this may cause defective behavior", _name.c_str() );
+	if ( count > Modules::renderer().getRenderDevice()->getCaps().maxJointCount )
+	{
+		Modules::log().writeWarning( "Geometry resource '%s': Model has more than %d joints; this may cause defective behavior", _name.c_str(),
+									  Modules::renderer().getRenderDevice()->getCaps().maxJointCount );
+	}
 
 	_joints.resize( count );
 	for( uint32 i = 0; i < count; ++i )
