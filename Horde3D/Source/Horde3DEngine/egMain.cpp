@@ -50,9 +50,9 @@ static void __ValidatePlatform__()
         unsigned char  bytes[4];
     } e;
     e.u32 = 0xAABBCCDD;
-#ifdef PLATFORM_LITTLE_ENDIAN
+#if defined( PLATFORM_LITTLE_ENDIAN )
     ASSERT(e.bytes[0] == 0xDD && e.bytes[1] == 0xCC && e.bytes[2] == 0xBB && e.bytes[3] == 0xAA);
-#elif PLATFORM_BIG_ENDIAN
+#elif defined( PLATFORM_BIG_ENDIAN )
     ASSERT(e.bytes[3] == 0xDD && e.bytes[2] == 0xCC && e.bytes[1] == 0xBB && e.bytes[0] == 0xAA);
 #else
 #   error Unknown endianess
