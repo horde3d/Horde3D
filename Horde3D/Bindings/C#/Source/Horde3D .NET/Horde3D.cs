@@ -3,7 +3,7 @@
 // h3d .NET wrapper
 // ----------------------------------
 // Copyright (C) 2007 Martin Burkhard
-// Copyright (C) 2009 Volker Wiendl
+// Copyright (C) 2009-2016 Volker Wiendl and Horde3D team
 //
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
@@ -27,6 +27,18 @@ namespace Horde3DNET
         {
             get { return _rootNode; }
         }
+
+        /// <summary>
+        /// Enum: H3DRenderDevice
+        /// The available engine Renderer backends.
+        /// OpenGL2	- use OpenGL 2 as renderer backend (can be used to force OpenGL 2 when higher version is undesirable)
+        /// OpenGL4	- use OpenGL 4 as renderer backend (falls back to OpenGL 2 in case of error)
+        /// </summary>
+        public enum H3DRenderDevice
+        {
+            OpenGL2 = 2,
+            OpenGL4 = 4
+        };
 
         /// <summary>
         /// Enum: H3DOptions
@@ -87,6 +99,7 @@ namespace Horde3DNET
        ///    ParticleGPUTime   - GPU time in ms spent for drawing particles
        ///    TextureVMem       - Estimated amount of video memory used by textures (in Mb)
        ///    GeometryVMem      - Estimated amount of video memory used by geometry (in Mb)
+       ///    ComputeGPUTime    - GPU time in ms spent for processing compute shaders
        /// </summary>
         public enum H3DStats
         {
@@ -102,7 +115,8 @@ namespace Horde3DNET
             ShadowsGPUTime,
             ParticleGPUTime,
             TextureVMem,
-            GeometryVMem
+            GeometryVMem,
+            ComputeGPUTime
         }
 
         /// <summary>
@@ -118,6 +132,7 @@ namespace Horde3DNET
         ///       Texture         - Texture map
         ///       ParticleEffect  - Particle configuration
         ///       Pipeline        - Rendering pipeline
+        ///       ComputeBuffer   - Buffer with arbitrary data that can be accessed and modified by compute shaders
         /// </summary>
         public enum H3DResTypes
         {
@@ -130,7 +145,8 @@ namespace Horde3DNET
             Shader,
             Texture,
             ParticleEffect,
-            Pipeline
+            Pipeline,
+            ComputeBuffer
         }
 
         /// <summary>
@@ -353,6 +369,37 @@ namespace Horde3DNET
         }
 
         /// <summary>
+        ///  Enum: H3DComputeBufRes
+        ///        The available ComputeBuffer resource accessors.
+        ///        
+        /// ComputeBufElem				- General compute buffer configuration
+        ///	DrawTypeElem				- Specifies how to draw buffer data
+        ///	DrawParamsElem				- Specifies parameters for shader bindings
+        ///	CompBufDataSizeI			- Size of the buffer
+        ///	CompBufUseAsVertexBufferI	- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
+        ///	DataDrawTypeI				- Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
+        ///	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data) [write-only]
+        ///	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3 [write-only]
+        ///	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
+        ///	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12 [write-only]
+        ///	DrawParamsElementsCountI	- Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
+
+        /// </summary>
+        public enum H3DComputeBufRes
+        {
+            ComputeBufElem = 1000,
+            DrawTypeElem,
+            DrawParamsElem,
+            CompBufDataSizeI,
+            CompBufUseAsVertexBufferI,
+            DataDrawTypeI,
+            DrawParamsNameStr,
+            DrawParamsSizeI,
+            DrawParamsOffsetI,
+            DrawParamsElementsCountI
+        }
+
+        /// <summary>
         /// Enum: H3DNodeTypes
         ///    The available scene node types.
 
@@ -364,6 +411,7 @@ namespace Horde3DNET
         /// Light      - Light source
         /// Camera     - Camera giving view on scene
         /// Emitter    - Particle system emitter
+        /// Compute	   - Compute node, used for drawing compute results
         /// </summary>
         public enum H3DNodeTypes
         {
@@ -374,7 +422,8 @@ namespace Horde3DNET
             Joint,
             Light,
             Camera,
-            Emitter
+            Emitter,
+            Compute
         }
 
         /// <summary>
@@ -447,6 +496,7 @@ namespace Horde3DNET
         /// VertREndI    - Last vertex in Geometry resource of parent Model node [read-only]
         /// LodLevelI    - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
         ///                the model's current LOD level which is calculated based on the LOD distances (default: 0)
+        /// TessellatableI - specify if mesh can be tessellated (default: 0)
         /// </summary>
         public enum H3DMesh
         {
@@ -455,7 +505,8 @@ namespace Horde3DNET
             BatchCountI,
             VertRStartI,
             VertREndI,
-            LodLevelI
+            LodLevelI,
+            TessellatableI
         }
 
         /// <summary>
@@ -549,7 +600,6 @@ namespace Horde3DNET
         /// SpreadAngleF   - Angle of cone for random emission direction (default: 0.0)
         /// ForceF3        - Force vector XYZ applied to particles (default: 0.0, 0.0, 0.0)
         /// </summary>
-
         public enum H3DEmitter
         {
             MatResI = 700,
@@ -560,6 +610,23 @@ namespace Horde3DNET
             EmissionRateF,
             SpreadAngleF,
             ForceF3
+        }
+
+        /// <summary>
+        /// Enum: H3DComputeNode
+        ///    The available compute node parameters.
+
+        /// MatResI        - Material resource used for rendering
+        ///	CompBufResI    - Compute buffer resource that is used as data storage
+        ///	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
+        ///	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+        /// </summary>
+        public enum H3DComputeNode
+        {
+            MatResI = 800,
+            CompBufResI,
+            AABBMinF,
+            AABBMaxF
         }
 
         /// <summary>
@@ -576,7 +643,7 @@ namespace Horde3DNET
         };
 
 
-        // --- Basic funtions ---
+        // --- Basic functions ---
         /// <summary>
         /// This function returns a string containing the current version of h3d.
         /// </summary>
@@ -599,15 +666,15 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// Checks if an error occured.
+        /// Checks if an error occurred.
         /// </summary>
         /// <remarks>
-        /// This function checks if an error occured in a previous API function call. If an error
+        /// This function checks if an error occurred in a previous API function call. If an error
         /// flag is set, the function resets the flag and returns true. The function will solely
         /// report errors that originate from a violated precondition, like an invalid parameter
         /// that is passed to an API function. Errors that happen during the execution of a function,
         /// for example failure of initializing the engine due to a missing hardware feature, can
-        /// be catched by checking the return value of the corresponding API function.
+        /// be caught by checking the return value of the corresponding API function.
         /// More information about the error can be retrieved by checking the message queue,
         /// provided that the message level is set accordingly.
         /// </remarks>        
@@ -623,13 +690,14 @@ namespace Horde3DNET
 		/// the engine the calling application must provide a valid OpenGL context. The function can be
 		/// called several times on different rendering contexts in order to initialize them.
         /// </summary>
+        /// <param name="deviceType">type of the render device</param>
         /// <returns>true in case of success, otherwise false</returns>
-        public static bool init()
+        public static bool init( h3d.H3DRenderDevice deviceType )
         {
             if (getVersionString() != Resources.VersionString)
                 throw new LibraryIncompatibleException(Resources.LibraryIncompatibleExceptionString);
 
-            return NativeMethodsEngine.h3dInit();
+            return NativeMethodsEngine.h3dInit( (int) deviceType );
         }
 
         /// <summary>
@@ -642,7 +710,17 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        ///    Gets the current viewport parameters.
+        /// Asynchronous processing of arbitrary data on GPU.
+        /// </summary>
+        /// <param name="materialRes">material that specifies the shader used and various input parameters for compute shader</param>
+        /// <param name="context">specifies the shader program that will be executed (one shader file may contain a large number of compute shader programs)</param>
+        /// <param name="groupX">number of work groups in X dimension [1,65535]</param>
+        /// <param name="groupY">number of work groups in Y dimension [1,65535]</param>
+        /// <param name="groupZ">number of work groups in Z dimension [1,65535]</param>
+        public static void compute(int materialRes, string context, int groupX, int groupY, int groupZ)
+        {
+            NativeMethodsEngine.h3dCompute(materialRes, context, groupX, groupY, groupZ);
+        }
 
         /// <summary>
         /// This is the main function of the engine. 
@@ -1153,9 +1231,14 @@ namespace Horde3DNET
         /// creating several shader code paths, e.g. for supporting different hardware capabilities.
         /// <param name="vertPreamble">preamble text of vertex shaders (default: empty string)</param>
         /// <param name="fragPreamble">preamble text of fragment shaders (default: empty string)</param>
-        public static void setShaderPreambles(string vertPreamble, string fragPreamble)
+        /// <param name="geomPreamble">preamble text of geometry shaders (default: empty string)</param>
+        /// <param name="tessControlPreamble">preamble text of tessellation control shaders (default: empty string)</param>
+        /// <param name="tessEvalPreamble">preamble text of tessellation evaluation shaders (default: empty string)</param>
+        /// <param name="computePreamble">preamble text of compute shaders (default: empty string)</param>
+        public static void setShaderPreambles(string vertPreamble, string fragPreamble, string geomPreamble, 
+                                              string tessControlPreamble, string tessEvalPreamble, string computePreamble)
         {
-            NativeMethodsEngine.h3dSetShaderPreambles(vertPreamble, fragPreamble);
+            NativeMethodsEngine.h3dSetShaderPreambles(vertPreamble, fragPreamble, geomPreamble, tessControlPreamble, tessEvalPreamble, computePreamble);
         }
 
         // Material specific
@@ -1207,12 +1290,38 @@ namespace Horde3DNET
         /// <param name="compCount">pointer to variable where the number of components will be stored (can be NULL)</param>
         /// <param name="dataBuffer">pointer to float array where the pixel data will be stored (can be NULL)</param>
         /// <param name="bufferSize">size of dataBuffer array in bytes</param>
-        /// <returns></returns>
-        //public static bool getPipelineRenderTargetData(int pipelineRes, string targetName, int bufIndex,
-        //    out int width, out int height, out int compCount, float[] dataBuffer, int bufferSize)
-        //{
-            
-        //}
+        /// <returns>true if specified render target could be found, otherwise false</returns>
+        public static bool getRenderTargetData(int pipelineRes, string targetName, int bufIndex,
+            out int width, out int height, out int compCount, float[] dataBuffer, int bufferSize)
+        {
+            if ( dataBuffer == null )
+            {
+                return NativeMethodsEngine.h3dGetRenderTargetData(pipelineRes, targetName, bufIndex, out width, 
+                                                                  out height, out compCount, IntPtr.Zero, bufferSize);
+            }
+            else 
+            {
+                // allocate memory for resource data
+                IntPtr ptr = Marshal.AllocHGlobal(bufferSize + 1);
+
+                // copy byte data into allocated memory
+//                Marshal.Copy(dataBuffer, 0, ptr, bufferSize);
+
+                // terminate data block
+                Marshal.WriteByte(ptr, bufferSize, 0x00);
+
+                // load resource
+                bool result = NativeMethodsEngine.h3dGetRenderTargetData(pipelineRes, targetName, bufIndex, out width, 
+                                                                  out height, out compCount, ptr, bufferSize);
+                // copy data
+                Marshal.PtrToStructure(ptr, dataBuffer);
+
+                // free previously allocated memory
+                Marshal.FreeHGlobal(ptr);
+
+                return result;
+            }
+        }
 
         // SceneGraph functions
         /// <summary>
@@ -1853,6 +1962,22 @@ namespace Horde3DNET
         public static bool hasEmitterFinished(int emitterNode)
         {
             return NativeMethodsEngine.h3dHasEmitterFinished(emitterNode);
+        }
+
+        // Compute-specific
+        /// <summary>
+        /// This function adds a Compute node to the scene.
+        /// </summary>
+        /// <param name="parent">handle to parent node to which the new node will be attached</param>
+        /// <param name="name">name of the node</param>
+        /// <param name="matRes">handle to material resource used for rendering</param>
+        /// <param name="compBufferRes">handle to ComputeBuffer resource that is used as vertex storage</param>
+        /// <returns>handle to the created node or 0 in case of failure</returns>
+        public static int addComputeNode(int parent, string name, int matRes, int compBufRes)
+        {
+            if (name == null) throw new ArgumentNullException("name", Resources.StringNullExceptionString);
+
+            return (int)NativeMethodsEngine.h3dAddComputeNode(parent, name, matRes, compBufRes);
         }
     }
 
