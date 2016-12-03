@@ -42,7 +42,7 @@
 
 namespace Horde3D {
 
-const char *Modules::versionString = "Horde3D 1.0.0 Beta5";
+const char *Modules::versionString = "Horde3D 1.0.0";
 
 bool                   Modules::_errorFlag = false;
 EngineConfig           *Modules::_engineConfig = 0x0;
