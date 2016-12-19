@@ -43,7 +43,7 @@ void normalize( float &x, float &y, float &z )
 }
 
 ParticleVortexSample::ParticleVortexSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Particle vortex - Horde3D Sample", 45.0f, 0.1f, 5000.0f )
+    SampleApplication( argc, argv, "Particle vortex - Horde3D Sample", H3DRenderDevice::OpenGL4, 45.0f, 0.1f, 5000.0f )
 {
     _x = 125; _y = 25; _z = 85;
     _rx = -10; _ry = 55;

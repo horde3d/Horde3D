@@ -37,6 +37,8 @@ private:
 	unsigned int _tessInner;
 	unsigned int _tessOuter;
 
+	float _rotation;
+
 	H3DNode _model;
 };
 

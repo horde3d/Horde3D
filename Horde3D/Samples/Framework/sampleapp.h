@@ -48,6 +48,7 @@ public:
     SampleApplication(
             int argc, char** argv,
             const char* title = "Horde3D Sample",
+			int renderer = H3DRenderDevice::OpenGL4,
             float fov = 45.0f, float near_plane = 0.1f, float far_plane = 1000.0f,
             int width = 1024, int height = 576,
             bool fullscreen = false, bool show_cursor = false,
@@ -98,7 +99,7 @@ public:
     void setTitle( const char* title );
     void setHelpPanel( int num_rows, char** column1, char** column2 = 0);
 	void toggleFullScreen();
-    void setPipeline( int pipline );
+    void setPipeline( int pipeline );
     void setSampleCount( int sampleCount );
     void enableDebugViewMode( bool enabled );
     void enableWireframeMode( bool enabled );
@@ -151,6 +152,7 @@ protected:
     H3DRes       _pipelineRes[3];
     H3DRes       _fontMatRes, _panelMatRes, _logoMatRes;
     H3DNode      _cam;
+	int			 _renderInterface;
 
 private:
 	bool         _initialized;

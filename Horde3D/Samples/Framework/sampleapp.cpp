@@ -71,6 +71,7 @@ bool checkForBenchmarkOption( int argc, char** argv )
 
 SampleApplication::SampleApplication(int argc, char** argv,
         const char* title,
+		int renderer,
         float fov, float near_plane, float far_plane,
         int width, int height,
         bool fullscreen, bool show_cursor,
@@ -79,6 +80,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _rx(-10), _ry(60),
     _velocity(0.1f),
 	_helpRows(12), _helpLabels(0), _helpValues(0),
+	_renderInterface( renderer ),
     _curPipeline(0),
     _cam(0),
     _initialized(false),
@@ -589,9 +591,13 @@ bool SampleApplication::init()
     glfwWindowHint( GLFW_ALPHA_BITS, 8 );
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
- 	glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
- 	glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
-	glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
+
+	if ( _renderInterface == H3DRenderDevice::OpenGL4 )
+	{
+		glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
+		glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+	}
 
     if ( _winFullScreen ) {
         const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
@@ -633,7 +639,7 @@ bool SampleApplication::init()
     showCursor( _winShowCursor );
     
 	// Initialize engine
-	if( !h3dInit( H3DRenderDevice::OpenGL4 ) )
+	if( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
 		std::cout << "Unable to initialize engine" << std::endl;
 		

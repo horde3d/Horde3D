@@ -88,13 +88,14 @@ bool createIcosahedron()
 
 
 TessellatorSample::TessellatorSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Tessellator - Horde3D Sample", 45.0f, 0.1f, 1000.0f )
+    SampleApplication( argc, argv, "Tessellator - Horde3D Sample" )
 {
     _x = 125; _y = 25; _z = 85;
     _rx = -10; _ry = 55;
 
 	_animTime = 0;
 	_tessInner = _tessOuter = 1;
+	_rotation = 0;
 }
 
 
@@ -137,16 +138,17 @@ bool TessellatorSample::initResources()
 	h3dSetNodeParamI( mesh, H3DMesh::TessellatableI, 1 ); // Set mesh to use tessellation
 
     // Add light source
-	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
-	h3dSetNodeTransform( light, 0, 20, 50, -30, 0, 0, 1, 1, 1 );
-	h3dSetNodeParamF( light, H3DLight::RadiusF, 0, 200 );
-	h3dSetNodeParamF( light, H3DLight::FovF, 0, 90 );
+	H3DNode light = h3dAddLightNode( _cam, "Light1", lightMatRes, "LIGHTING", "" );
+//  	h3dSetNodeTransform( light, 125, 25, 85, -10, 55, 0, 1, 1, 1 );
+	h3dSetNodeParamF( light, H3DLight::RadiusF, 0, 1000 );
+	h3dSetNodeParamF( light, H3DLight::FovF, 0, 75 );
 	h3dSetNodeParamI( light, H3DLight::ShadowMapCountI, 3 );
 	h3dSetNodeParamF( light, H3DLight::ShadowSplitLambdaF, 0, 0.9f );
 	h3dSetNodeParamF( light, H3DLight::ShadowMapBiasF, 0, 0.001f );
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 0.9f );
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
+	h3dSetNodeParamF( light, H3DLight::ColorMultiplierF, 0, 1.0f );
 
 	return true;
 }
@@ -195,6 +197,9 @@ void TessellatorSample::update()
 	{
 		// Calculate animation time in seconds
 		_animTime += frame_time;
+
+		_rotation += 0.05f;
+		h3dSetNodeTransform( _model, 0, 0, 0, _rotation, 0, 0, 1, 1, 1 );
 
 // 		Set animation time
 // 				h3dSetMaterialUniform( _computeMatRes, "deltaTime", 1.0f / H3D_FPS_REFERENCE, 0, 0, 0 );
