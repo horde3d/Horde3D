@@ -492,7 +492,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 		addInfoBoxRow( "Particles", text.str().c_str() );
 
 		// GPU time
-        beginInfoBox( 0.03f, 0.65f, 0.32f, 3, "GPU Time", fontMaterialRes, panelMaterialRes );
+        beginInfoBox( 0.03f, 0.65f, 0.32f, 4, "GPU Time", fontMaterialRes, panelMaterialRes );
 
 		// Forward and deferred lights
 		text.str( "" );
