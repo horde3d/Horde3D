@@ -322,6 +322,8 @@ uint32 RenderDeviceGL4::beginCreatingGeometry( uint32 vlObj )
 	glGenVertexArrays( 1, &vaoID );
 	vao.vao = vaoID;
 
+//	glBindVertexArray( vaoID );
+
 	return _vaos.add( vao );
 }
 
@@ -330,13 +332,7 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 	ASSERT( geoObj > 0 )
 	
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
-	glBindVertexArray( curVao.vao );
-
-	// bind index buffer, if present
-	if ( curVao.indexBuf )
-	{
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, curVao.indexBuf );
-	}
+  	glBindVertexArray( curVao.vao );
 
 	uint32 newVertexAttribMask = 0;
 
@@ -364,7 +360,6 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 		}
 	}
 
-
 	for ( uint32 i = 0; i < 16; ++i )
 	{
 		uint32 curBit = 1 << i;
@@ -375,8 +370,16 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 		}
 	}
 
-	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+	// bind index buffer, if present
+	if ( curVao.indexBuf )
+	{
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, curVao.indexBuf );
+	}
+
+	// unbind buffers and vao
 	glBindVertexArray( 0 );
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
 
 void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )

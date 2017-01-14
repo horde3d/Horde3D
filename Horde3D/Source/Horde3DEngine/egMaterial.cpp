@@ -16,6 +16,7 @@
 #include "egCom.h"
 #include "utXML.h"
 #include <cstring>
+#include <algorithm>
 
 #include "utDebug.h"
 
@@ -234,39 +235,40 @@ bool MaterialResource::setUniform( const string &name, float a, float b, float c
 
 bool MaterialResource::isOfClass( const string &theClass ) const
 {
-	static string theClass2;
-	
-	if( theClass != "" )
-	{
-		if( theClass[0]	!= '~' )
-		{
-			if( _class.find( theClass, 0 ) != 0 ) return false;
-			if( _class.length() > theClass.length() && _class[theClass.length()] != '.' ) return false;
-		}
-		else	// Not operator
-		{
-			theClass2 = theClass.substr( 1, theClass.length() - 1);
-			
-			if( _class.find( theClass2, 0 ) == 0 )
-			{
-				if( _class.length() == theClass2.length() )
-				{
-					return false;
-				}
-				else
-				{
-					if( _class[theClass2.length()] == '.' ) return false;
-				}
-			}
-		}
-	}
-	else
-	{
-		// Special name which is hidden when drawing objects of "all classes"
-		if( _class == "_DEBUG_" ) return false;
-	}
-
-	return true;
+// 	static string theClass2;
+// 	
+// 	if( theClass != "" )
+// 	{
+// 		if( theClass[0]	!= '~' )
+// 		{
+// 			if( _class.find( theClass, 0 ) != 0 ) return false;
+// 			if( _class.length() > theClass.length() && _class[theClass.length()] != '.' ) return false;
+// 		}
+// 		else	// Not operator
+// 		{
+// 			theClass2 = theClass.substr( 1, theClass.length() - 1);
+// 			
+// 			if( _class.find( theClass2, 0 ) == 0 )
+// 			{
+// 				if( _class.length() == theClass2.length() )
+// 				{
+// 					return false;
+// 				}
+// 				else
+// 				{
+// 					if( _class[theClass2.length()] == '.' ) return false;
+// 				}
+// 			}
+// 		}
+// 	}
+// 	else
+// 	{
+// 		// Special name which is hidden when drawing objects of "all classes"
+// 		if( _class == "_DEBUG_" ) return false;
+// 	}
+// 
+// 	return true;
+	return MaterialClassDatabase::isOfClass();
 }
 
 
@@ -476,5 +478,74 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 	
 	Resource::setElemParamStr( elem, elemIdx, param, value );
 }
+
+// =================================================================================================
+// MaterialClassDatabase
+// =================================================================================================
+std::vector< MaterialHierarchy > MaterialClassDatabase::_matHierarchy;
+std::vector< std::string > MaterialClassDatabase::_classes;
+
+int MaterialClassDatabase::registerClass( const std::string &matClass )
+{
+	// Check level count (number of dots) in a class
+	int numberOfLevels = std::count( matClass.begin(), matClass.end(), '.' );
+	if ( numberOfLevels > H3D_MATERIAL_HIERARCHY_LEVELS )
+	{
+		Modules::setError( "Number of hierarchy levels in material class exceed the maximum value. Material class cannot be registered." );
+		return 0;
+	}
+
+	bool exclusion = false;
+	if ( !matClass.empty() && matClass[ 0 ] == '~' )
+		exclusion = true;
+
+	// TODO: implement hashing
+
+	// Try to find class in the database
+	if ( numberOfLevels > 0 )
+	{
+	} 
+	else
+	{
+		for ( size_t i = 0; i < _classes.size(); ++i )
+		{
+			if ( _classes[ i ] == matClass )
+			{
+				return i;
+			}
+		}
+	}
+}
+
+bool MaterialClassDatabase::isOfClass( int requestedMaterialClass, int currentMaterialClass )
+{
+	if ( requestedMaterialClass == 0 || ( requestedMaterialClass == currentMaterialClass ) )
+		return true;
+
+	// Check if index is negative - class exclusion is required
+	bool exclusion = false;
+	if ( requestedMaterialClass < 0 ) 
+	{
+		exclusion = true;
+		requestedMaterialClass *= -1;
+	}
+
+	ASSERT( requestedMaterialClass < _matHierarchy.size() );
+
+	MaterialHierarchy &hierarchy = _matHierarchy[ ( size_t ) currentMaterialClass ];
+
+	// Check if requested class is part of the hierarchy of the current class
+	for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
+	{
+		if ( hierarchy.value[ i ].index == requestedMaterialClass )
+		{
+			if ( exclusion ) return false;
+			else return true;
+		}
+	}
+
+	return false;
+}
+
 
 }  // namespace

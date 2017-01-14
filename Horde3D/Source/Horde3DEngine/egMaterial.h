@@ -70,6 +70,28 @@ struct MatUniform
 	}
 };
 
+struct MaterialClass
+{
+	std::string	 name;
+	uint32		 index = 0;
+};
+
+typedef struct MaterialHierarchy { MaterialClass value[ H3D_MATERIAL_HIERARCHY_LEVELS ]; } MaterialHierarchy;
+
+class MaterialClassDatabase
+{
+public:
+	static int registerClass( const std::string &matClass );
+
+	static bool isOfClass( int requestedMaterialClass, int currentMaterialClass );
+
+private:
+
+
+	static std::vector< MaterialHierarchy > _matHierarchy;
+	static std::vector< std::string > _classes;
+};
+
 // =================================================================================================
 
 class MaterialResource;
