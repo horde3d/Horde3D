@@ -660,24 +660,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		}
 		
 		// Configure blending
-		switch( context->blendMode )
-		{
-		case BlendModes::Replace:
-			_renderDevice->setBlendMode( false );
-			break;
-		case BlendModes::Blend:
-			_renderDevice->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_INV_SRC_ALPHA );
-			break;
-		case BlendModes::Add:
-			_renderDevice->setBlendMode( true, BS_BLEND_ONE, BS_BLEND_ONE );
-			break;
-		case BlendModes::AddBlended:
-			_renderDevice->setBlendMode( true, BS_BLEND_SRC_ALPHA, BS_BLEND_ONE );
-			break;
-		case BlendModes::Mult:
-			_renderDevice->setBlendMode( true, BS_BLEND_DEST_COLOR, BS_BLEND_ZERO );
-			break;
-		}
+		_renderDevice->setBlendMode( context->blendingEnabled, ( RDIBlendFunc ) context->blendStateSrc, ( RDIBlendFunc ) context->blendStateDst );
 
 		// Configure depth test
 		_renderDevice->setDepthTest( context->depthTest );
