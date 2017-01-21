@@ -72,24 +72,26 @@ struct MatUniform
 
 struct MaterialClass
 {
-	std::string	 name;
-	uint32		 index = 0;
+	char		name[ 64 ];
+	uint32		index = 0;
 };
 
 typedef struct MaterialHierarchy { MaterialClass value[ H3D_MATERIAL_HIERARCHY_LEVELS ]; } MaterialHierarchy;
 
-class MaterialClassDatabase
+class MaterialClassCollection
 {
 public:
-	static int registerClass( const std::string &matClass );
+	static void init();
+	static void release();
 
-	static bool isOfClass( int requestedMaterialClass, int currentMaterialClass );
+	static int addClass( const std::string &matClass );
+	static void clear();
+
+	inline static bool isOfClass( int requestedMaterialClass, int currentMaterialClass );
 
 private:
-
-
 	static std::vector< MaterialHierarchy > _matHierarchy;
-	static std::vector< std::string > _classes;
+// 	static std::vector< std::string > _classes;
 };
 
 // =================================================================================================
@@ -103,6 +105,9 @@ public:
 	static Resource *factoryFunc( const std::string &name, int flags )
 		{ return new MaterialResource( name, flags ); }
 	
+	static void initializationFunc();
+	static void releaseFunc();
+
 	MaterialResource( const std::string &name, int flags );
 	~MaterialResource();
 	Resource *clone();

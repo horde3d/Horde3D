@@ -155,6 +155,7 @@ DLLEXP void h3dClear()
 {
 	Modules::sceneMan().removeNode( Modules::sceneMan().getRootNode() );
 	Modules::resMan().clear();
+	MaterialClassCollection::clear();
 }
 
 

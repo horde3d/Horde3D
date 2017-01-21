@@ -18,7 +18,6 @@
 #include "egScene.h"
 #include "egLight.h"
 #include "egCamera.h"
-#include "egResource.h"
 #include "egRendererBase.h"
 #include "egRenderer.h"
 #include "egPipeline.h"
@@ -87,8 +86,8 @@ bool Modules::init( int backendType )
 		GeometryResource::releaseFunc, GeometryResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Animation, "Animation", 0x0, 0x0,
 		AnimationResource::factoryFunc );
-	resMan().registerResType( ResourceTypes::Material, "Material", 0x0, 0x0,
-		MaterialResource::factoryFunc );
+	resMan().registerResType( ResourceTypes::Material, "Material", MaterialResource::initializationFunc, 
+		MaterialResource::releaseFunc, MaterialResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Code, "Code", 0x0, 0x0,
 		CodeResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Shader, "Shader", ShaderResource::initializationFunc, 0x0,

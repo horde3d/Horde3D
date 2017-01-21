@@ -25,6 +25,18 @@ namespace Horde3D {
 
 using namespace std;
 
+void MaterialResource::initializationFunc()
+{
+	MaterialClassCollection::init();
+}
+
+
+void MaterialResource::releaseFunc()
+{
+	MaterialClassCollection::release();
+}
+
+
 MaterialResource::MaterialResource( const string &name, int flags ) :
 	Resource( ResourceTypes::Material, name, flags )
 {
@@ -235,40 +247,7 @@ bool MaterialResource::setUniform( const string &name, float a, float b, float c
 
 bool MaterialResource::isOfClass( const string &theClass ) const
 {
-// 	static string theClass2;
-// 	
-// 	if( theClass != "" )
-// 	{
-// 		if( theClass[0]	!= '~' )
-// 		{
-// 			if( _class.find( theClass, 0 ) != 0 ) return false;
-// 			if( _class.length() > theClass.length() && _class[theClass.length()] != '.' ) return false;
-// 		}
-// 		else	// Not operator
-// 		{
-// 			theClass2 = theClass.substr( 1, theClass.length() - 1);
-// 			
-// 			if( _class.find( theClass2, 0 ) == 0 )
-// 			{
-// 				if( _class.length() == theClass2.length() )
-// 				{
-// 					return false;
-// 				}
-// 				else
-// 				{
-// 					if( _class[theClass2.length()] == '.' ) return false;
-// 				}
-// 			}
-// 		}
-// 	}
-// 	else
-// 	{
-// 		// Special name which is hidden when drawing objects of "all classes"
-// 		if( _class == "_DEBUG_" ) return false;
-// 	}
-// 
-// 	return true;
-	return MaterialClassDatabase::isOfClass();
+	return MaterialClassCollection::isOfClass();
 }
 
 
@@ -482,42 +461,118 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 // =================================================================================================
 // MaterialClassDatabase
 // =================================================================================================
-std::vector< MaterialHierarchy > MaterialClassDatabase::_matHierarchy;
-std::vector< std::string > MaterialClassDatabase::_classes;
+std::vector< MaterialHierarchy > MaterialClassCollection::_matHierarchy;
+//std::vector< std::string > MaterialClassCollection::_classes;
 
-int MaterialClassDatabase::registerClass( const std::string &matClass )
+void MaterialClassCollection::init()
 {
-	// Check level count (number of dots) in a class
-	int numberOfLevels = std::count( matClass.begin(), matClass.end(), '.' );
+	_matHierarchy.reserve( 50 );
+	addClass( "" ); // add default class
+}
+
+
+void MaterialClassCollection::release()
+{
+	_matHierarchy.clear();
+}
+
+
+void MaterialClassCollection::clear()
+{
+	_matHierarchy.clear();
+	addClass( "" ); // add default class
+}
+
+
+int MaterialClassCollection::addClass( const std::string &matClass )
+{
+	// Check level count (number of dots + 1) in a class
+	int numberOfLevels = std::count( matClass.begin(), matClass.end(), '.' ) + 1;
 	if ( numberOfLevels > H3D_MATERIAL_HIERARCHY_LEVELS )
 	{
 		Modules::setError( "Number of hierarchy levels in material class exceed the maximum value. Material class cannot be registered." );
 		return 0;
 	}
 
-	bool exclusion = false;
+	bool inversed = false;
 	if ( !matClass.empty() && matClass[ 0 ] == '~' )
-		exclusion = true;
+		inversed = true;
 
 	// TODO: implement hashing
 
-	// Try to find class in the database
-	if ( numberOfLevels > 0 )
+	// Split material class levels to separate strings
+	char tmpStrings[ H3D_MATERIAL_HIERARCHY_LEVELS ][ 64 ];
+	int lastDotPosition = 0;
+
+	for ( size_t i = 0; i < numberOfLevels; ++i )
 	{
-	} 
-	else
+		int dotPos = matClass.find( '.', lastDotPosition );
+		strcpy( tmpStrings[ i ], matClass.substr( lastDotPosition, dotPos ).c_str() );
+
+		lastDotPosition = dotPos + 1;
+	}
+
+	// Try to find class in the collection
+	bool exactMatch = true;
+	int partialMatchIds[ H3D_MATERIAL_HIERARCHY_LEVELS ] = {};
+	for ( size_t i = 0; i < _matHierarchy.size(); i++ )
 	{
-		for ( size_t i = 0; i < _classes.size(); ++i )
+		MaterialHierarchy &hierarchy = _matHierarchy[ i ];
+
+		for ( size_t j = 0; j < H3D_MATERIAL_HIERARCHY_LEVELS; j++ )
 		{
-			if ( _classes[ i ] == matClass )
+			if ( strcmp( hierarchy.value[ j ].name, tmpStrings[ j ] ) != 0 )
 			{
-				return i;
+				exactMatch = false;
+				break;
+			}
+			else
+			{
+				// save partial matches in order to save time if new class record would be created
+				partialMatchIds[ j ] = hierarchy.value[ j ].index;
 			}
 		}
+
+		if ( exactMatch )
+		{
+			return inversed ? i * -1 : i; // minus in index indicates that class should be excluded from processing
+		}
+		else exactMatch = true; // reset flag for next iteration
 	}
+
+	// Class is not found - create new record
+	// Hierarchy is created for each level
+	for ( size_t levels = 0; levels < numberOfLevels; ++levels )
+	{
+		if ( partialMatchIds[ levels ] != 0 ) 
+		{
+			continue;
+		}
+
+		MaterialHierarchy hierarchy;
+
+		for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
+		{
+			strcpy( hierarchy.value[ i ].name, tmpStrings[ i ] );
+
+			if ( partialMatchIds[ i ] != 0 ) hierarchy.value[ i ].index = partialMatchIds[ i ];
+			else
+			{
+				if ( i < numberOfLevels ) hierarchy.value[ i ].index = _matHierarchy.size();
+				else hierarchy.value[ i ].index = 0; // iterator is greater than the number of levels in the class, so use default class for later hierarchy levels
+			}
+		}
+
+		_matHierarchy.push_back( hierarchy );
+	}
+
+	int result = inversed ? ( _matHierarchy.size() - 1 ) * -1 : _matHierarchy.size() - 1;
+	return result;
+	
 }
 
-bool MaterialClassDatabase::isOfClass( int requestedMaterialClass, int currentMaterialClass )
+
+bool MaterialClassCollection::isOfClass( int requestedMaterialClass, int currentMaterialClass )
 {
 	if ( requestedMaterialClass == 0 || ( requestedMaterialClass == currentMaterialClass ) )
 		return true;
@@ -547,5 +602,39 @@ bool MaterialClassDatabase::isOfClass( int requestedMaterialClass, int currentMa
 	return false;
 }
 
+
+// 	static string theClass2;
+// 	
+// 	if( theClass != "" )
+// 	{
+// 		if( theClass[0]	!= '~' )
+// 		{
+// 			if( _class.find( theClass, 0 ) != 0 ) return false;
+// 			if( _class.length() > theClass.length() && _class[theClass.length()] != '.' ) return false;
+// 		}
+// 		else	// Not operator
+// 		{
+// 			theClass2 = theClass.substr( 1, theClass.length() - 1);
+// 			
+// 			if( _class.find( theClass2, 0 ) == 0 )
+// 			{
+// 				if( _class.length() == theClass2.length() )
+// 				{
+// 					return false;
+// 				}
+// 				else
+// 				{
+// 					if( _class[theClass2.length()] == '.' ) return false;
+// 				}
+// 			}
+// 		}
+// 	}
+// 	else
+// 	{
+// 		// Special name which is hidden when drawing objects of "all classes"
+// 		if( _class == "_DEBUG_" ) return false;
+// 	}
+// 
+// 	return true;
 
 }  // namespace
