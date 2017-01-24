@@ -92,11 +92,16 @@ struct BlendModes
 {
 	enum List
 	{
-		Replace,
-		Blend,
-		Add,
-		AddBlended,
-		Mult
+		Zero = 0,
+		One,
+		SrcAlpha,
+		OneMinusSrcAlpha,
+		DestAlpha,
+		OneMinusDestAlpha,
+		DestColor,
+		SrcColor,
+		OneMinusDestColor,
+		OneMinusSrcColor
 	};
 };
 
@@ -159,13 +164,15 @@ struct ShaderContext
 	uint32                            flagMask;
 	
 	// RenderConfig
-	BlendModes::List                  blendMode;
+	BlendModes::List                  blendStateSrc;
+	BlendModes::List				  blendStateDst;
 	TestModes::List                   depthFunc;
 	CullModes::List                   cullMode;
 	uint16							  tessVerticesInPatchCount;
 	bool                              depthTest;
 	bool                              writeDepth;
 	bool                              alphaToCoverage;
+	bool							  blendingEnabled;
 	
 	// Shaders
 	std::vector< ShaderCombination >  shaderCombs;
@@ -174,9 +181,10 @@ struct ShaderContext
 
 
 	ShaderContext() :
-		blendMode( BlendModes::Replace ), depthFunc( TestModes::LessEqual ),
+		blendStateSrc( BlendModes::Zero ), blendStateDst( BlendModes::Zero ), depthFunc( TestModes::LessEqual ),
 		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ), tessVerticesInPatchCount( 1 ),
-		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false )
+		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false ),
+		blendingEnabled( false )
 	{
 	}
 };

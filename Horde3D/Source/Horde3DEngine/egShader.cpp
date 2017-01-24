@@ -790,11 +790,59 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 		else if ( tok.checkToken( "BlendMode" ) )
 		{
 			if ( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
-			if ( tok.checkToken( "Replace" ) ) context.blendMode = BlendModes::Replace;
-			else if ( tok.checkToken( "Blend" ) ) context.blendMode = BlendModes::Blend;
-			else if ( tok.checkToken( "Add" ) ) context.blendMode = BlendModes::Add;
-			else if ( tok.checkToken( "AddBlended" ) ) context.blendMode = BlendModes::AddBlended;
-			else if ( tok.checkToken( "Mult" ) ) context.blendMode = BlendModes::Mult;
+			if ( tok.checkToken( "Replace" ) )
+			{
+				context.blendingEnabled = false;
+				context.blendStateSrc = BlendModes::Zero;
+				context.blendStateDst = BlendModes::Zero;
+			}
+			else if ( tok.checkToken( "Blend" ) )
+			{
+				context.blendingEnabled = true; 
+				context.blendStateSrc = BlendModes::SrcAlpha;
+				context.blendStateDst = BlendModes::OneMinusSrcAlpha;
+			}
+			else if ( tok.checkToken( "Add" ) )
+			{
+				context.blendingEnabled = true;
+				context.blendStateSrc = BlendModes::One;
+				context.blendStateDst = BlendModes::One;
+			}
+			else if ( tok.checkToken( "AddBlended" ) )
+			{
+				context.blendingEnabled = true;
+				context.blendStateSrc = BlendModes::SrcAlpha;
+				context.blendStateDst = BlendModes::One;
+			}
+			else if ( tok.checkToken( "Mult" ) )
+			{
+				context.blendingEnabled = true;
+				context.blendStateSrc = BlendModes::DestColor;
+				context.blendStateDst = BlendModes::Zero;
+			}
+			else if ( tok.checkToken( "{" ) )
+			{
+				context.blendingEnabled = true; 
+
+				for ( unsigned int i = 0; i < 2; ++i )
+				{
+					if ( tok.checkToken( "Zero" ) ) i == 0 ? context.blendStateSrc = BlendModes::Zero : context.blendStateDst = BlendModes::Zero;
+					else if ( tok.checkToken( "One" ) ) i == 0 ? context.blendStateSrc = BlendModes::One : context.blendStateDst = BlendModes::One;
+					else if ( tok.checkToken( "SrcAlpha" ) ) i == 0 ? context.blendStateSrc = BlendModes::SrcAlpha : context.blendStateDst = BlendModes::SrcAlpha;
+					else if ( tok.checkToken( "OneMinusSrcAlpha" ) ) i == 0 ? context.blendStateSrc = BlendModes::OneMinusSrcAlpha : context.blendStateDst = BlendModes::OneMinusSrcAlpha; 
+					else if ( tok.checkToken( "DestAlpha" ) ) i == 0 ? context.blendStateSrc = BlendModes::DestAlpha : context.blendStateDst = BlendModes::DestAlpha;
+					else if ( tok.checkToken( "OneMinusDestAlpha" ) ) i == 0 ? context.blendStateSrc = BlendModes::OneMinusDestAlpha : context.blendStateDst = BlendModes::OneMinusDestAlpha;
+					else if ( tok.checkToken( "DestColor" ) ) i == 0 ? context.blendStateSrc = BlendModes::DestColor : context.blendStateDst = BlendModes::DestColor;
+					else if ( tok.checkToken( "SrcColor" ) ) i == 0 ? context.blendStateSrc = BlendModes::SrcColor : context.blendStateDst = BlendModes::SrcColor;
+					else if ( tok.checkToken( "OneMinusDestColor" ) ) i == 0 ? context.blendStateSrc = BlendModes::OneMinusDestColor : context.blendStateDst = BlendModes::OneMinusDestColor;
+					else if ( tok.checkToken( "OneMinusSrcColor" ) ) i == 0 ? context.blendStateSrc = BlendModes::OneMinusSrcColor : context.blendStateDst = BlendModes::OneMinusSrcColor;
+					else return raiseError( "FX: invalid value", tok.getLine() );
+
+					if ( i == 0 && !tok.checkToken( "," ) ) return raiseError( "FX: expected ','", tok.getLine() );
+				}
+
+				if ( !tok.checkToken( "}" ) ) return raiseError( "FX: expected '}'", tok.getLine() );
+			}
 			else return raiseError( "FX: invalid enum value", tok.getLine() );
 		}
 		else if ( tok.checkToken( "CullMode" ) )

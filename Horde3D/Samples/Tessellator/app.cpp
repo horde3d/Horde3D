@@ -28,46 +28,64 @@ using namespace std;
 bool createIcosahedron()
 {
 	// Create vertex and index data
-	std::array< unsigned int, 60 > faces = {
-		2, 1, 0,
-		3, 2, 0,
-		4, 3, 0,
-		5, 4, 0,
-		1, 5, 0,
+	float phi = ( 1.0f / ( ( 1.0f + sqrt( 5.0f ) ) / 2.0f ) );
 
-		11, 6, 7,
-		11, 7, 8,
-		11, 8, 9,
-		11, 9, 10,
-		11, 10, 6,
+	std::array< float, 12 * 3 > vertPos = {
+		-phi, 1.0f, 0.0f, phi, 1.0f, 0.0f, -phi, -1.0f, 0.0f, phi, -1.0f, 0.0f,
+		0.0f, -phi, 1.0f, 0.0f, phi, 1.0f, 0.0f, -phi, -1.0f, 0.0f, phi, -1.0f,
+		1.0f, 0.0f, -phi, 1.0f, 0.0f, phi, -1.0f, 0.0f, -phi, -1.0f, 0.0f, phi };
 
-		1, 2, 6,
-		2, 3, 7,
-		3, 4, 8,
-		4, 5, 9,
-		5, 1, 10,
+	std::array< float, 60 * 2 > texCoords = {
+		0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,
 
-		2, 7, 6,
-		3, 8, 7,
-		4, 9, 8,
-		5, 10, 9,
-		1, 6, 10 };
+		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
 
-	std::array< float, 12 * 3 > vertData = {
-		0.000f, 0.000f, 1.000f,
-		0.894f, 0.000f, 0.447f,
-		0.276f, 0.851f, 0.447f,
-		-0.724f, 0.526f, 0.447f,
-		-0.724f, -0.526f, 0.447f,
-		0.276f, -0.851f, 0.447f,
-		0.724f, 0.526f, -0.447f,
-		-0.276f, 0.851f, -0.447f,
-		-0.894f, 0.000f, -0.447f,
-		-0.276f, -0.851f, -0.447f,
-		0.724f, -0.526f, -0.447f,
-		0.000f, 0.000f, -1.000f };
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
+		1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 0.0f,
 
-	int geo = h3dutCreateGeometryRes( "icosa", 12, faces.size(), vertData.data(), faces.data(), nullptr, nullptr, nullptr, nullptr, nullptr );
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+		1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+
+	std::array< uint32_t, 60 > indices = {
+		0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,
+		5, 11, 4, 1, 5, 9, 7, 1, 8, 10, 7, 6, 11, 10, 2,
+		3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9,
+		4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1 };
+
+	std::array< float, 12 * 3 > normals;
+
+	// calculate normals
+// 	for ( size_t i = 0; i < 12; ++i )
+// 	{
+// 		const uint32_t index0 = indices[ i * 3 + 0 ];
+// 		const uint32_t index1 = indices[ i * 3 + 1 ];
+// 		const uint32_t index2 = indices[ i * 3 + 2 ];
+// 
+// 		const vec3 &v0 = ( *positions )[ index0 ];
+// 		const vec3 &v1 = ( *positions )[ index1 ];
+// 		const vec3 &v2 = ( *positions )[ index2 ];
+// 
+// 		vec3 e0 = v1 - v0;
+// 		vec3 e1 = v2 - v0;
+// 
+// 		( *normals )[ index0 ] = ( *normals )[ index1 ] = ( *normals )[ index2 ] = normalize( cross( e0, e1 ) );
+// 	}
+
+	int geo = h3dutCreateGeometryRes( "icosa", 12, indices.size(), vertPos.data(), indices.data(), nullptr, nullptr, nullptr, nullptr, nullptr );
 	if ( geo == 0 ) return false;
 
 	// Create material 
