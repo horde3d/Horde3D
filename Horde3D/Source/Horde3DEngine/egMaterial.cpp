@@ -65,7 +65,7 @@ void MaterialResource::initDefault()
 	_shaderRes = 0x0;
 	_combMask = 0;
 	_matLink = 0x0;
-	_class = "";
+	_classID = 0;
 }
 
 
@@ -74,7 +74,6 @@ void MaterialResource::release()
 	_shaderRes = 0x0;
 	_matLink = 0x0;
 	for( uint32 i = 0; i < _samplers.size(); ++i ) _samplers[i].texRes = 0x0;
-// 	for ( uint32 i = 0; i < _buffers.size(); ++i ) _buffers[ i ].compBufRes = nullptr;
 
 	_buffers.clear();
 	_samplers.clear();
@@ -112,7 +111,7 @@ bool MaterialResource::load( const char *data, int size )
 		return raiseError( "Not a material resource file" );
 
 	// Class
-    _class = rootNode.getAttribute( "class", "" );
+    _classID = MaterialClassCollection::addClass( rootNode.getAttribute( "class", "" ) );
 
 	// Link
 	if( strcmp( rootNode.getAttribute( "link", "" ), "" ) != 0 )
@@ -245,9 +244,9 @@ bool MaterialResource::setUniform( const string &name, float a, float b, float c
 }
 
 
-bool MaterialResource::isOfClass( const string &theClass ) const
+bool MaterialResource::isOfClass( int theClassID ) const
 {
-	return MaterialClassCollection::isOfClass();
+	return MaterialClassCollection::isOfClass( theClassID, _classID );
 }
 
 
@@ -412,7 +411,7 @@ const char *MaterialResource::getElemParamStr( int elem, int elemIdx, int param 
 		switch( param )
 		{
 		case MaterialResData::MatClassStr:
-			return _class.c_str();
+			return MaterialClassCollection::getClassString( _classID );
 		}
 		break;
 	case MaterialResData::SamplerElem:
@@ -449,7 +448,7 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 		switch( param )
 		{
 		case MaterialResData::MatClassStr:
-			_class = value;
+			_classID = MaterialClassCollection::addClass( std::string( value ) );
 			return;
 		}
 		break;
@@ -462,12 +461,20 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 // MaterialClassDatabase
 // =================================================================================================
 std::vector< MaterialHierarchy > MaterialClassCollection::_matHierarchy;
+
+std::string MaterialClassCollection::_returnedClassString;
+
+const int numberOfCharactersInClass = 64;
 //std::vector< std::string > MaterialClassCollection::_classes;
 
 void MaterialClassCollection::init()
 {
 	_matHierarchy.reserve( 50 );
-	addClass( "" ); // add default class
+	_returnedClassString.reserve( 512 );
+
+	// add default class
+	MaterialHierarchy hierarchy;
+	_matHierarchy.push_back( std::move( hierarchy ) );
 }
 
 
@@ -480,14 +487,19 @@ void MaterialClassCollection::release()
 void MaterialClassCollection::clear()
 {
 	_matHierarchy.clear();
-	addClass( "" ); // add default class
+	
+	// add default class
+	MaterialHierarchy hierarchy;
+	_matHierarchy.push_back( std::move( hierarchy ) );
 }
 
 
 int MaterialClassCollection::addClass( const std::string &matClass )
 {
+	if ( matClass.empty() ) return 0; // Most common case - return default class
+
 	// Check level count (number of dots + 1) in a class
-	int numberOfLevels = std::count( matClass.begin(), matClass.end(), '.' ) + 1;
+	size_t numberOfLevels = ( size_t ) std::count( matClass.begin(), matClass.end(), '.' ) + 1;
 	if ( numberOfLevels > H3D_MATERIAL_HIERARCHY_LEVELS )
 	{
 		Modules::setError( "Number of hierarchy levels in material class exceed the maximum value. Material class cannot be registered." );
@@ -495,19 +507,28 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 	}
 
 	bool inversed = false;
-	if ( !matClass.empty() && matClass[ 0 ] == '~' )
-		inversed = true;
+	if ( !matClass.empty() && matClass[ 0 ] == '~' ) inversed = true; 
 
 	// TODO: implement hashing
 
 	// Split material class levels to separate strings
-	char tmpStrings[ H3D_MATERIAL_HIERARCHY_LEVELS ][ 64 ];
+	char tmpStrings[ H3D_MATERIAL_HIERARCHY_LEVELS ][ numberOfCharactersInClass ] = { '\0' };
+	std::string subString; subString.reserve( 256 );
 	int lastDotPosition = 0;
 
 	for ( size_t i = 0; i < numberOfLevels; ++i )
 	{
 		int dotPos = matClass.find( '.', lastDotPosition );
-		strcpy( tmpStrings[ i ], matClass.substr( lastDotPosition, dotPos ).c_str() );
+		if ( i == 0 && inversed ) lastDotPosition = 1; // handle case with ~ character present. It should be removed from the final string
+		
+		subString = matClass.substr( lastDotPosition, dotPos );
+		if ( subString.length() > numberOfCharactersInClass - 1 )
+		{
+			// Truncate string
+			subString.erase( numberOfCharactersInClass - 1, subString.length() - numberOfCharactersInClass - 1 );
+		}
+		
+		strcpy( tmpStrings[ i ], subString.c_str() );
 
 		lastDotPosition = dotPos + 1;
 	}
@@ -568,9 +589,35 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 
 	int result = inversed ? ( _matHierarchy.size() - 1 ) * -1 : _matHierarchy.size() - 1;
 	return result;
-	
 }
 
+
+const char * MaterialClassCollection::getClassString( int currentMaterialClass )
+{
+	if ( currentMaterialClass < 0 ) currentMaterialClass *= -1;
+
+	ASSERT( ( size_t ) currentMaterialClass < _matHierarchy.size() )
+
+	_returnedClassString.clear();
+
+	// Combine different hierarchy levels to one string
+	MaterialHierarchy &hierarchy = _matHierarchy[ currentMaterialClass ];
+	bool previousStepSuccessful = false;
+
+	for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
+	{
+		if ( !strcmp( hierarchy.value[ i ].name, "" ) == 0 )
+		{
+			if ( previousStepSuccessful ) _returnedClassString.append( "." );
+
+			_returnedClassString.append( hierarchy.value[ i ].name );
+			previousStepSuccessful = true;
+		}
+		else previousStepSuccessful = false;
+	}
+
+	return _returnedClassString.c_str();
+}
 
 bool MaterialClassCollection::isOfClass( int requestedMaterialClass, int currentMaterialClass )
 {
@@ -585,7 +632,7 @@ bool MaterialClassCollection::isOfClass( int requestedMaterialClass, int current
 		requestedMaterialClass *= -1;
 	}
 
-	ASSERT( requestedMaterialClass < _matHierarchy.size() );
+	ASSERT( ( size_t ) requestedMaterialClass < _matHierarchy.size() );
 
 	MaterialHierarchy &hierarchy = _matHierarchy[ ( size_t ) currentMaterialClass ];
 

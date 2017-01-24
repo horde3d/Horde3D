@@ -1118,7 +1118,7 @@ void Renderer::updateShadowMap()
 		setupViewMatrices( _curLight->getViewMat(), lightProjMat );
 		
 		// Render
-		drawRenderables( _curLight->_shadowContext, "", false, &frustum, 0x0, RenderingOrder::None, -1 );
+		drawRenderables( _curLight->_shadowContext, 0, false, &frustum, 0x0, RenderingOrder::None, -1 );
 	}
 
 	// Map from post-projective space [-1,1] to texture space [0,1]
@@ -1380,7 +1380,7 @@ void Renderer::drawFSQuad( Resource *matRes, const string &shaderContext )
 }
 
 
-void Renderer::drawGeometry( const string &shaderContext, const string &theClass,
+void Renderer::drawGeometry( const string &shaderContext, int theClass,
                              RenderingOrder::List order, int occSet )
 {
 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, order,
@@ -1391,7 +1391,7 @@ void Renderer::drawGeometry( const string &shaderContext, const string &theClass
 }
 
 
-void Renderer::drawLightGeometry( const string &shaderContext, const string &theClass,
+void Renderer::drawLightGeometry( const string &shaderContext, int theClass,
                                   bool noShadows, RenderingOrder::List order, int occSet )
 {
 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
@@ -1640,7 +1640,7 @@ void Renderer::dispatchCompute( MaterialResource *materialRes, const std::string
 // Scene Node Rendering Functions
 // =================================================================================================
 
-void Renderer::drawRenderables( const string &shaderContext, const string &theClass, bool debugView,
+void Renderer::drawRenderables( const string &shaderContext, int theClass, bool debugView,
                                 const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
                                 int occSet )
 {
@@ -1688,7 +1688,7 @@ void Renderer::drawRenderables( const string &shaderContext, const string &theCl
 }
 
 
-void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
+void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
                            bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
                            int occSet )
 {
@@ -1879,8 +1879,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 }
 
 
-void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
-                              bool debugView, const Frustum *frust1, const Frustum * /*frust2*/, RenderingOrder::List /*order*/,
+void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
+                              bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
                               int occSet )
 {
 	if( frust1 == 0x0 || Modules::renderer().getCurCamera() == 0x0 ) return;
@@ -2045,8 +2045,8 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const string &s
 }
 
 
-void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
-								   bool debugView, const Frustum *frust1, const Frustum * /*frust2*/, RenderingOrder::List /*order*/,
+void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
+								   bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
 								   int occSet )
 {
 	if ( frust1 == 0x0 ) return;
@@ -2226,7 +2226,7 @@ void Renderer::render( CameraNode *camNode )
 				break;
 
 			case PipelineCommands::DrawGeometry:
-				drawGeometry( pc.params[0].getString(), pc.params[1].getString(),
+				drawGeometry( pc.params[0].getString(), pc.params[1].getInt(),
 				              (RenderingOrder::List)pc.params[2].getInt(), _curCamera->_occSet );
 				break;
 
@@ -2239,7 +2239,7 @@ void Renderer::render( CameraNode *camNode )
 			break;
 
 			case PipelineCommands::DoForwardLightLoop:
-				drawLightGeometry( pc.params[0].getString(), pc.params[1].getString(),
+				drawLightGeometry( pc.params[0].getString(), pc.params[1].getInt(),
 				                   pc.params[2].getBool(), (RenderingOrder::List)pc.params[3].getInt(),
 								   _curCamera->_occSet );
 				break;
@@ -2296,7 +2296,7 @@ void Renderer::renderDebugView()
 
 	// Draw renderable nodes as wireframe
 	setupViewMatrices( _curCamera->getViewMat(), _curCamera->getProjMat() );
-	drawRenderables( "", "", true, &_curCamera->getFrustum(), 0x0, RenderingOrder::None, -1 );
+	drawRenderables( "", 0, true, &_curCamera->getFrustum(), 0x0, RenderingOrder::None, -1 );
 
 	// Draw bounding boxes
 	_renderDevice->setCullMode( RS_CULL_NONE );

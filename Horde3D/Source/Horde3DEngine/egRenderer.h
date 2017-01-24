@@ -44,7 +44,7 @@ extern const char *fsOccBox;
 // =================================================================================================
 
 typedef void (*RenderFunc)( uint32 firstItem, uint32 lastItem, const std::string &shaderContext,
-                            const std::string &theClass, bool debugView, const Frustum *frust1,
+                            int theClass, bool debugView, const Frustum *frust1,
                             const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 struct RenderFuncListItem
@@ -172,11 +172,11 @@ public:
 	                   MaterialResource *matRes, int flags );
 	void clearOverlays();
 	
-	static void drawMeshes( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+	static void drawMeshes( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
-	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
-	static void drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass, 
+	static void drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass, 
 									bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 	void render( CameraNode *camNode );
@@ -210,13 +210,13 @@ protected:
 	void bindPipeBuffer( uint32 rbObj, const std::string &sampler, uint32 bufIndex );
 	void clear( bool depth, bool buf0, bool buf1, bool buf2, bool buf3, float r, float g, float b, float a );
 	void drawFSQuad( Resource *matRes, const std::string &shaderContext );
-	void drawGeometry( const std::string &shaderContext, const std::string &theClass,
+	void drawGeometry( const std::string &shaderContext, int theClass,
 	                   RenderingOrder::List order, int occSet );
-	void drawLightGeometry( const std::string &shaderContext, const std::string &theClass,
+	void drawLightGeometry( const std::string &shaderContext, int theClass,
 	                        bool noShadows, RenderingOrder::List order, int occSet );
 	void drawLightShapes( const std::string &shaderContext, bool noShadows, int occSet );
 	
-	void drawRenderables( const std::string &shaderContext, const std::string &theClass, bool debugView,
+	void drawRenderables( const std::string &shaderContext, int theClass, bool debugView,
 		const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 	
 	void renderDebugView();

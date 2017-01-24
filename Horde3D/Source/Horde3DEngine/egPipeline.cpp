@@ -181,7 +181,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 3 );			
 			params[0].setString( node1.getAttribute( "context" ) );
-			params[1].setString( node1.getAttribute( "class", "" ) );
+			params[1].setInt( MaterialClassCollection::addClass( node1.getAttribute( "class", "" ) ) );
 			params[2].setInt( order );
 		}
 		else if( strcmp( node1.getName(), "DrawOverlays" ) == 0 )
@@ -219,7 +219,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 4 );
 			params[0].setString( node1.getAttribute( "context", "" ) );
-			params[1].setString( node1.getAttribute( "class", "" ) );
+			params[1].setInt( MaterialClassCollection::addClass( node1.getAttribute( "class", "" ) ) );
 			params[2].setBool( _stricmp( node1.getAttribute( "noShadows", "false" ), "true" ) == 0 );
 			params[3].setInt( order );
 		}
