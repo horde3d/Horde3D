@@ -646,7 +646,7 @@ bool MaterialClassCollection::isOfClass( int requestedMaterialClass, int current
 		}
 	}
 
-	return false;
+	return exclusion ? true : false;
 }
 
 
