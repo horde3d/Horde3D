@@ -1118,14 +1118,23 @@ int RenderDeviceGL4::getShaderSamplerLoc( uint32 shaderId, const char *name )
 
 int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
 {
-	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
-	int idx = glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
-	
-	int val = 0;
-	const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
-	glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, nullptr, &val );
+	if ( _caps.computeShaders )
+	{
+		RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+		int idx = glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
 
-	return idx != -1 ? val : -1;
+		int val = 0;
+		const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
+		glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, nullptr, &val );
+
+		return idx != -1 ? val : -1;
+	}
+	else
+	{
+		Modules::log().writeError( "Shader storage buffers are not supported on this device." );
+
+		return -1;
+	}
 }
 
 
