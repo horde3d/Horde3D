@@ -141,6 +141,44 @@ bool ComputeBufferResource::createGeometry()
 }
 
 
+bool ComputeBufferResource::overrideGeometry( uint32 geomID )
+{
+	if ( geomID == 0 ) // incorrect geometry
+	{
+		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect geometry specified." );
+		return false;
+	}
+
+	_geoID = geomID;
+	_useAsVertexBuf = true;
+	_geometryParamsSet = true;
+
+	return true;
+}
+
+
+bool ComputeBufferResource::overrideBuffer( uint32 bufferID, uint32 bufSize )
+{
+	if ( bufferID == 0 || bufSize == 0 )
+	{
+		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect buffer specified." );
+		return false;
+	}
+
+	_bufferID = bufferID;
+	
+	if ( _dataSize < bufSize )
+	{
+		delete[] _data;
+
+		_data = new uint8[ bufSize ];
+		_dataSize = bufSize;
+	}
+
+	return true;
+}
+
+
 int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch ( elem )

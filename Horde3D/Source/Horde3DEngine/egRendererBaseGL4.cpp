@@ -713,9 +713,9 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 	if( tex.genMips && (tex.type != GL_TEXTURE_CUBE_MAP || slice == 5) )
 	{
 		// Note: for cube maps mips are only generated when the side with the highest index is uploaded
-		glEnable( tex.type );  // Workaround for ATI driver bug
+//		glEnable( tex.type );  // Workaround for ATI driver bug
 		glGenerateMipmap( tex.type );
-		glDisable( tex.type );
+//		glDisable( tex.type );
 	}
 
 	glBindTexture( tex.type, 0 );

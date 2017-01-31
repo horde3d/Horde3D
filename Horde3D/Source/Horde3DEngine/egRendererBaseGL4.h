@@ -146,8 +146,8 @@ struct RDIInputLayoutGL4
 
 struct RDIShaderGL4
 {
-	uint32          oglProgramObj;
-	RDIInputLayoutGL4  inputLayouts[MaxNumVertexLayouts];
+	uint32				oglProgramObj;
+	RDIInputLayoutGL4	inputLayouts[MaxNumVertexLayouts];
 };
 
 
