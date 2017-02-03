@@ -25,6 +25,13 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 }
 
 
+ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
+	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
+	_useAsVertexBuf( true ), _drawType( -1 ), _vertexLayout( 0 ), _mapped( false ), _data( nullptr ), _dataSize( 1024 )
+{
+	_loaded = true;
+}
+
 ComputeBufferResource::~ComputeBufferResource()
 {
 	release();

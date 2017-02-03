@@ -51,6 +51,8 @@ public:
 	Resource *clone();
 
 	ComputeBufferResource( const std::string &name, int flags );
+	ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags );
+
 	~ComputeBufferResource();
 
 	void initDefault();
