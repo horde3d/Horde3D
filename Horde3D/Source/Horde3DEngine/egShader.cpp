@@ -822,8 +822,6 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 			}
 			else if ( tok.checkToken( "{" ) )
 			{
-				context.blendingEnabled = true; 
-
 				for ( unsigned int i = 0; i < 2; ++i )
 				{
 					if ( tok.checkToken( "Zero" ) ) i == 0 ? context.blendStateSrc = BlendModes::Zero : context.blendStateDst = BlendModes::Zero;
@@ -840,6 +838,10 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 
 					if ( i == 0 && !tok.checkToken( "," ) ) return raiseError( "FX: expected ','", tok.getLine() );
 				}
+
+				// Set blending status
+				if ( context.blendStateSrc == BlendModes::Zero && context.blendStateDst == BlendModes::Zero ) context.blendingEnabled = false;
+				else context.blendingEnabled = true;
 
 				if ( !tok.checkToken( "}" ) ) return raiseError( "FX: expected '}'", tok.getLine() );
 			}
