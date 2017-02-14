@@ -918,6 +918,22 @@ DLLEXP void h3dGetCameraProjMat( NodeHandle cameraNode, float *projMat )
 }
 
 
+DLLEXP void h3dSetCameraProjMat( NodeHandle cameraNode, float *projMat )
+{
+	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( cameraNode );
+	APIFUNC_VALIDATE_NODE_TYPE( sn, SceneNodeTypes::Camera, "h3dSetCameraProjMat", APIFUNC_RET_VOID );
+	if ( projMat == 0x0 )
+	{
+		Modules::setError( "Invalid pointer in h3dSetCameraProjMat" );
+		return;
+	}
+	
+	Modules::sceneMan().updateNodes();
+
+	( ( CameraNode * ) sn )->setProjectionMatrix( projMat );
+}
+
+
 DLLEXP NodeHandle h3dAddEmitterNode( NodeHandle parent, const char *name, ResHandle materialRes,
                                      ResHandle particleEffectRes, int maxParticleCount, int respawnCount )
 {
