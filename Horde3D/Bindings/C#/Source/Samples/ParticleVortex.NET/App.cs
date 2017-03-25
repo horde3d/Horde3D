@@ -26,6 +26,7 @@ using System.IO;
 namespace Horde3DNET.Samples.ParticleVortexNet
 {
     [Serializable]
+    [StructLayout(LayoutKind.Sequential)]  
     public struct ParticleData
     {
         // Thanks to OpenGL implementations bad support for vec3 in buffers, passed to glsl, padding is required
@@ -41,11 +42,9 @@ namespace Horde3DNET.Samples.ParticleVortexNet
         private string _fpsText;
 
         private bool _freeze, _debugViewMode;
-        private float _animTime;
 
         // Engine objects
         private int _fontMatRes, _panelMatRes, _logoMatRes;
-        private int _knight, _particleSys;
         private int _computeMatRes;
         
         private int _statMode = 0;
@@ -83,7 +82,6 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             _curFPS = 30; _timer = 0;
 
             _freeze = false; _debugViewMode = false;
-            _animTime = 0; 
             _fpsText = string.Empty;
             _wireframeMode = false;
         }
@@ -141,7 +139,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             float tmpVal = 0;
             float angle = 0;
 
-            for ( UInt32 i = 0; i < particlesCount; i++ )
+            for ( int i = 0; i < particlesCount; i++ )
             {
                 ParticleData data = new ParticleData();
 
@@ -203,7 +201,8 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             var mStream = new MemoryStream();
             binFormatter.Serialize( mStream, particles );
 
-            Marshal.Copy(mStream.ToArray(), 0, dataPtr, particlesCount * 32);
+            var arr = mStream.ToArray();
+            Marshal.Copy( arr, 0, dataPtr, particlesCount * 32 );
 	        h3d.unmapResStream( compBuf );
 
             // Load resources
@@ -252,7 +251,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             if (!_freeze)
             {
                 // Set animation time
-                h3d.setMaterialUniform( _computeMatRes, "deltaTime", 1.0f / 60.0F, 0, 0, 0 );
+                h3d.setMaterialUniform( _computeMatRes, "deltaTime", 1.0f / 30.0F, 0, 0, 0 );
 
                 // Set attractor point
                 float angle = (float) _timer * 0.5f;
@@ -307,7 +306,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             h3d.resizePipelineBuffers(_forwardPipeRes, width, height);
             h3d.resizePipelineBuffers(_hdrPipeRes, width, height);
             // Set virtual camera parameters
-            h3d.setupCameraView(_cam, 45.0f, (float)width / height, 0.1f, 1000.0f);
+            h3d.setupCameraView(_cam, 45.0f, (float)width / height, 0.1f, 5000.0f);
         }
 
         public void keyPressEvent(Keys key)
