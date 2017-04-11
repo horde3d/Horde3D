@@ -25,13 +25,23 @@ using System.IO;
 
 namespace Horde3DNET.Samples.ParticleVortexNet
 {
-    [Serializable]
-    [StructLayout(LayoutKind.Sequential)]  
-    public struct ParticleData
+    
+    [StructLayout(LayoutKind.Sequential,Pack=1)]
+    public struct vec4
     {
         // Thanks to OpenGL implementations bad support for vec3 in buffers, passed to glsl, padding is required
-	    public Array position; 
-	    public Array velocity;
+        public float x;
+        public float y;
+        public float z;
+        public float w;
+    }
+
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential, Pack=1)]  
+    public struct ParticleData
+    {
+	    public vec4 position; 
+	    public vec4 velocity;
     }
 
     internal class Application
@@ -75,6 +85,9 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             y *= invLength;
             z *= invLength;
         }
+
+        [DllImport("msvcrt.dll", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl, SetLastError = false)]
+        static extern IntPtr memcpy(IntPtr dest, IntPtr src, int count);
 
         public Application()
         {
@@ -123,7 +136,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
 
         	// Generate random position data for particles
 	        int particlesCount = 1000000;
-            List<ParticleData> particles = new List<ParticleData>();
+            ParticleData[] particles = new ParticleData[ particlesCount ];
 
             float maxDiapason10 = 10.0f;
             float minDiapason10 = -10.0f;
@@ -143,7 +156,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             {
                 ParticleData data = new ParticleData();
 
-                data.position = Array.CreateInstance( typeof( float ), 4 );
+                data.position = new vec4();
                 
                 // Set random position
                 x = (maxDiapason10 + 1 - minDiapason10 ) * (float) rand.NextDouble() + minDiapason10;
@@ -153,22 +166,19 @@ namespace Horde3DNET.Samples.ParticleVortexNet
                 normalize( ref x, ref y, ref z );
 
                 tmpVal = (maxDiapason100 + 1 - minDiapason100) * (float)rand.NextDouble() + minDiapason100;
-                x *= tmpVal;
-                y *= tmpVal;
-                z *= tmpVal;
-
-                data.position.SetValue(x, 0);
-                data.position.SetValue(y, 1);
-                data.position.SetValue(z, 2);
+                
+                data.position.x = x * tmpVal;
+                data.position.y = y * tmpVal;
+                data.position.z = z * tmpVal;
 
                 angle = -(float)Math.Atan2( x, z );
 
-                data.velocity = Array.CreateInstance( typeof( float ), 4 ); 
-                data.velocity.SetValue( (float)Math.Cos(angle), 0 );
-                data.velocity.SetValue( 0, 0 );
-                data.velocity.SetValue( ( float ) Math.Sin( angle ) * 5.0f, 0 );
+                data.velocity = new vec4(); 
+                data.velocity.x = (float)Math.Cos(angle);
+                data.velocity.y = 0;
+                data.velocity.z = ( float ) Math.Sin( angle ) * 5.0f;
 
-                particles.Add( data );
+                particles[ i ] = data;
             }
        
             // Set size of the compute buffer
@@ -196,14 +206,26 @@ namespace Horde3DNET.Samples.ParticleVortexNet
 
             // Fill compute buffer with generated data
 	        IntPtr dataPtr = h3d.mapResStream( compBuf, (int) h3d.H3DComputeBufRes.ComputeBufElem, 0, 0, false, true );
-            
-            var binFormatter = new BinaryFormatter();
-            var mStream = new MemoryStream();
-            binFormatter.Serialize( mStream, particles );
 
-            var arr = mStream.ToArray();
-            Marshal.Copy( arr, 0, dataPtr, particlesCount * 32 );
-	        h3d.unmapResStream( compBuf );
+            // Some unsafe magic to copy array to c pointer
+            unsafe
+            {
+                GCHandle handle = GCHandle.Alloc(particles, GCHandleType.Pinned);
+                try
+                {
+                    IntPtr pointer = handle.AddrOfPinnedObject();
+                    memcpy(dataPtr, pointer, particlesCount * 32);
+                }
+                finally
+                {
+                    if (handle.IsAllocated)
+                    {
+                        handle.Free();
+                    }
+                }
+            }
+
+            h3d.unmapResStream( compBuf );
 
             // Load resources
             Horde3DUtils.loadResourcesFromDisk("../Content");
