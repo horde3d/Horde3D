@@ -186,6 +186,7 @@ TessellatorSample::TessellatorSample( int argc, char** argv ) :
 	_animTime = 0;
 	_tessInner = _tessOuter = 1;
 	_rotation = 0;
+	_helpRows += 2;
 }
 
 
@@ -202,8 +203,11 @@ bool TessellatorSample::initResources()
 	bool result = createIcosahedron();
 	if ( !result ) return false;
 
-    // 2. Load resources
+	// Help info
+	_helpLabels[ _helpRows - 2 ] = "Up:"; _helpValues[ _helpRows - 2 ] = "Increase tessellation";
+	_helpLabels[ _helpRows - 1 ] = "Down:"; _helpValues[ _helpRows - 1 ] = "Decrease tessellation";
 
+    // 2. Load resources
     if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
     {
 		h3dutDumpMessages();
@@ -291,19 +295,6 @@ void TessellatorSample::update()
 		_rotation += 0.05f;
 		h3dSetNodeTransform( _model, 0, 0, 0, _rotation, _rotation, 0, 1, 1, 1 );
 
-// 		Set animation time
-// 				h3dSetMaterialUniform( _computeMatRes, "deltaTime", 1.0f / H3D_FPS_REFERENCE, 0, 0, 0 );
-// 		
-// 				// Set attractor point
-// 				float angle = ( float ) _animTime * 0.5f;
-// 		
-// 				float attractorX = cosf( angle );
-// 				float attractorY = cosf( angle ) * sinf( angle );
-// 				float attractorZ = sinf( angle );
-// 		
-// 				h3dSetMaterialUniform( _computeMatRes, "attractor", attractorX * 2, attractorY * 2, attractorZ * 2, 0 );
-// 		
-// 				// Perform computing
-// 				h3dCompute( _computeMatRes, "COMPUTE", _computeGroupX /*1024*/, _computeGroupY /*1*/, 1 );
+
 	}
 }
