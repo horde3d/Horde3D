@@ -6,10 +6,10 @@ Horde3D
 		-S D K-
 		-------
 		
-		Version 1.0.0 Beta5
+		Version 1.0.0 
 		
 
-Copyright (C) 2006-2011 Nicolas Schulz and the Horde3D Team
+Copyright (C) 2006-2017 Nicolas Schulz and the Horde3D Team
 
 http://www.horde3d.org
 
@@ -35,18 +35,20 @@ These libraries are included directly as code in the SDK.
 
 Release Notes:
 	
-	The Beta5 release brings a plenty of bug fixes and performance improvements. On the
-	feature side, there are several updates to the shader system which remove all
-	fixed-function dependencies. Besides that, several smaller enhancements to overlays,
-	particle systems, animations and in-game profiling were done.
-	ColladaConv was extended to allow batch processing of input files so that a whole
-	asset repository can be recompiled automatically. Moreover, the parsing speed was
-	improved by using a faster XML parser and applying various other optimizations.
-
-
+	The 1.0 release brings a lot of new features and performance improvements. 
+	Some notable features:
+	- new OpenGL 4 render interface, fully functional in OpenGL core profile. Also works with GL 3.3.
+    - Horde3D now supports all types of shaders, including geometry, tesselation and compute shaders. 
+	- preferred render interface may be specified. Engine will fallback to OpenGL 2 if OpenGL 4 render interface is unavailable.
+    - small performance optimizations in h3dRender function.
+    - CRTP variation is used instead of virtual functions for render interface class. 
+	  In release version function call performs like a direct call because of inlining, 
+	  in debug version it can be a bit slower than virtual function.
+    - Shader storage buffer objects (SSBO) that can be used to pass large amount of arbitrary data to shaders.
+	- Horde3D can now be used on big-endian systems.
+	- New samples that demonstrate compute and tessellation shaders use.
+	
 Special thanks go to the University of Augsburg for supporting this project!
-
-
 
 
 ------------------------------------------------------------------------------------------
@@ -67,7 +69,7 @@ Input:
 	Hold down LSHIFT to move faster.
 	Space freezes the scene, hitting space two times freezes the camera as well.
 	F1 sets fullscreen mode.
-	F3 switches between forward and deferred shading.
+	F3 switches between forward, hdr and deferred shading.
 	F6 toggles frame stats display.
 	F7 toggles debug view.
 	F8 toggles wireframe mode.
@@ -98,7 +100,7 @@ Input:
 	Use 1 and 2 to blend between character animations.
 	Space freezes the scene, hitting space two times freezes the camera as well.
 	F1 sets fullscreen mode.
-	F3 switches between hdr and standard forward lighting.
+	F3 switches between hdr, standard forward lighting and deferred shading.
 	F6 toggles frame stats and information display.
 	F7 toggles debug view.
 	F8 toggles wireframe mode.
@@ -111,3 +113,54 @@ Notes on content:
 	Noncommercial 3.0 License (http://creativecommons.org/licenses/by-nc/3.0/).
 	The cubemap texture is a modified version of one of M@dcow's high res skymaps
 	which can be found at BlenderArtist.org.
+
+
+Particle Vortex
+------
+
+This sample shows particle simulation process using compute shaders. Currently up to 1 million
+particles are simulated. 
+
+
+Input:
+
+	Use WASD to move and the mouse to look around.
+	Hold down LSHIFT to move faster.
+	Space freezes the scene, hitting space two times freezes the camera as well.
+	F1 sets fullscreen mode.
+	F3 switches between hdr, standard forward lighting and deferred shading (currently works only with forward shading).
+	F6 toggles frame stats and information display.
+	F7 toggles debug view.
+	F8 toggles wireframe mode.
+	ESC quits the application.
+
+Notes on content:
+
+	This sample is inspired by GPU Particles DirectX 11 example, created by ForhaxeD. Link (in russian): https://habrahabr.ru/post/248755/
+	
+
+	
+Tessellator
+------
+
+This sample shows procedurally generated tessellatable mesh that resembles icosahedron. 
+Tessellation levels can be adjusted.
+
+
+Input:
+
+	Use WASD to move and the mouse to look around.
+	Hold down LSHIFT to move faster.
+	Space freezes the scene, hitting space two times freezes the camera as well.
+	Up/Down arrows to modify tessellation level of the mesh.
+	F1 sets fullscreen mode.
+	F3 switches between hdr, standard forward lighting and deferred shading (currently works only with forward shading).
+	F6 toggles frame stats and information display.
+	F7 toggles debug view.
+	F8 toggles wireframe mode.
+	ESC quits the application.
+
+Notes on content:
+
+	This sample is inspired by OpenGL tessellation example, created by Philip Rideout. Link: http://prideout.net/blog/?p=48
+	

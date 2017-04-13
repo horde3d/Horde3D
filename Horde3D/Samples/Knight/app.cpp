@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -44,7 +44,8 @@ bool KnightSample::initResources()
         return false;
 
 	// 1. Add resources
-	
+	h3dSetOption( H3DOptions::FastAnimation, 0 );
+
 	// Environment
     H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/sphere/sphere.scene.xml", 0 );
 

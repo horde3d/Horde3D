@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -398,6 +398,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 	static float defLightsGPUTime = 0;
 	static float shadowsGPUTime = 0;
 	static float particleGPUTime = 0;
+	static float computeGPUTime = 0;
 
 	// Calculate FPS
 	float curFrameTime = h3dGetStat( H3DStats::FrameTime, true );
@@ -415,6 +416,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 		defLightsGPUTime = h3dGetStat( H3DStats::DefLightsGPUTime, true );
 		shadowsGPUTime = h3dGetStat( H3DStats::ShadowsGPUTime, true );
 		particleGPUTime = h3dGetStat( H3DStats::ParticleGPUTime, true );
+		computeGPUTime = h3dGetStat( H3DStats::ComputeGPUTime, true );
 		timer = 0;
 	}
 	else
@@ -490,7 +492,7 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 		addInfoBoxRow( "Particles", text.str().c_str() );
 
 		// GPU time
-        beginInfoBox( 0.03f, 0.65f, 0.32f, 3, "GPU Time", fontMaterialRes, panelMaterialRes );
+        beginInfoBox( 0.03f, 0.65f, 0.32f, 4, "GPU Time", fontMaterialRes, panelMaterialRes );
 
 		// Forward and deferred lights
 		text.str( "" );
@@ -506,6 +508,11 @@ DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes
 		text.str( "" );
 		text << particleGPUTime << "ms";
 		addInfoBoxRow( "Particles", text.str().c_str() );
+
+		// Compute
+		text.str( "" );
+		text << computeGPUTime << "ms";
+		addInfoBoxRow( "Compute", text.str().c_str() );
 	}
 }
 

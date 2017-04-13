@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -72,24 +72,24 @@ struct RenderingOrder
 class PipeCmdParam
 {
 public:
-	PipeCmdParam() : _string( 0x0 ) { _basic.ptr = 0x0; }
+	PipeCmdParam() { _basic.ptr = 0x0; }
 	PipeCmdParam( const PipeCmdParam &copy )
-		: _basic( copy._basic ), _string( 0x0 ), _resource( copy._resource )
-		{ if( copy._string ) setString( copy._string->c_str() ); }
-	~PipeCmdParam() { delete _string; }
+		: _basic( copy._basic ), _resource( copy._resource )
+		{ if( !copy._string.empty() ) setString( copy._string.c_str() ); }
+	~PipeCmdParam() {}
 	
 	float getFloat() const { return _basic.f; }
 	int getInt() const { return _basic.i; }
 	bool getBool() const { return _basic.b; }
 	void *getPtr() const { return _basic.ptr; }
-	const char *getString() const { return _string ? _string->c_str() : 0x0; }
+	const std::string &getString() const { return _string; }
 	Resource *getResource() const { return _resource.getPtr(); }
 
 	void setFloat( float f ) { _basic.f = f; }
 	void setInt( int i ) { _basic.i = i; }
 	void setBool( bool b ) { _basic.b = b; }
 	void setPtr( void *ptr ) { _basic.ptr = ptr; }
-	void setString( const char *str ) { _string = new std::string( str ); }
+	void setString( const char *str ) { _string = std::string( str ); } 
 	void setResource( Resource *resource ) { _resource = resource; }
 
 protected:
@@ -102,7 +102,7 @@ protected:
 	};
 
 	BasicType      _basic;
-	std::string    *_string;
+	std::string    _string; 
 	PResource      _resource;
 };
 
@@ -126,7 +126,7 @@ struct PipelineStage
 	std::vector< PipelineCommand >  commands;
 	bool                            enabled;
 
-	PipelineStage() : matLink( 0x0 ) {}
+	PipelineStage() : matLink( 0x0 ), enabled( false ) {}
 };
 
 
@@ -146,6 +146,10 @@ struct RenderTarget
 		hasDepthBuf = false;
 		numColBufs = 0;
 		rendBuf = 0;
+		width = height = 0;
+		samples = 0;
+		scale = 0;
+		format = TextureFormats::Unknown;
 	}
 };
 

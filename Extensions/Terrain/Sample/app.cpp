@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -22,7 +22,7 @@ using namespace std;
 
 
 TerrainSample::TerrainSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Terrain - Horde3D Sample", 45.0f, 0.1f, 2000.0f )
+    SampleApplication( argc, argv, "Terrain - Horde3D Sample", H3DRenderDevice::OpenGL4, 45.0f, 0.1f, 2000.0f )
 {
     _x = 512; _y = 120; _z = 512;
     _rx = 0; _ry = 225;

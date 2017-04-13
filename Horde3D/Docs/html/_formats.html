@@ -170,7 +170,7 @@ In Horde3D materials are specified with an XML syntax.</p>
 <div class="codebox">
 <pre>
 &lt;Material class="Translucent.MyClass"&gt;
-    &lt;Shader source="myshader.shader.xml" /&gt;
+    &lt;Shader source="myshader.shader" /&gt;
     &lt;Sampler name="albedoMap" map="mytex.jpg" /&gt;
     &lt;Uniform name="myColor" a="1.0" b="1.0" c="0.5" /&gt;
 &lt;/Material&gt;
@@ -353,6 +353,10 @@ In Horde3D materials are specified with an XML syntax.</p>
                 </tr>
                 <tr>
                     <td><b>col_B</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>col_mult</b></td>
                     <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
                 </tr>
                 <tr>
@@ -560,7 +564,7 @@ like the Collada Converter described above.
 A geometry resource contains the raw vertex data with optional morph targets organized as streams. Furthermore
 it contains the triangle data as well as information about the skeleton of a model.</p>
 
-<p><b>Important Note:</b> Currently the maximum number of joints for skeletal animation is limited to 75.</p>
+<p><b>Important Note:</b> Currently the maximum number of joints for skeletal animation is limited to 75 for OpenGL 2 and 330 for OpenGL 4.</p>
 
 <h3>Version 5</h3>
 <p>The file format is based on streams. The streams are written in that order:

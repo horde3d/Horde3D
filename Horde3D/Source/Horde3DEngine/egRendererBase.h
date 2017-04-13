@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -15,14 +15,52 @@
 
 #include "egPrerequisites.h"
 #include "utMath.h"
-#include "utOpenGL.h"
 #include <string>
 #include <vector>
-
+#include <cassert>
 
 namespace Horde3D {
 
-const uint32 MaxNumVertexLayouts = 16;
+// =================================================================================================
+
+// Using the SFINAE (Substitution Failure Is Not An Error) technique,
+// the following macro creates a template class with typename T and a
+// static boolean member "value" that is set to true if the specified
+// member function exists in the T class.
+// This macro was created based on information that was retrieved from
+// the following URLs:
+// https://groups.google.com/forum/?fromgroups#!topic/comp.lang.c++/DAq3H8Ph_1k
+// http://objectmix.com/c/779528-call-member-function-only-if-exists-vc-9-a.html
+
+#define CreateMemberFunctionChecker( FNNAME )                            \
+  template<typename T> struct has_member_##FNNAME;                       \
+                                                                         \
+  template<typename R, typename C> class has_member_##FNNAME<R C::*> {   \
+     private:                                                            \
+        template<R C::*> struct helper;                                  \
+        template<typename T> static char check(helper<&T::FNNAME>*);     \
+        template<typename T> static char (& check(...))[2];              \
+     public:                                                             \
+        static const bool value = (sizeof(check<C>(0)) == sizeof(char)); \
+		  }
+
+// This corresponding macro is used to check the existence of the
+// interface function in the derived class.
+#define CheckMemberFunction( FNNAME, FNPROTOTYPE ) {                     \
+              assert( has_member_##FNNAME<FNPROTOTYPE>::value ); }
+
+//
+// Current RenderDeviceInterface and GPUTimer implementation is based on Simulated C++ Interface Template Pattern from
+// http://www.codeproject.com/Articles/603818/Cplusplus-Runtime-Polymorphism-without-Virtual-Fun
+//
+// Tips:
+// 1) There are 5 sections to consider: 
+// - function checking, that checks the availability of the function in inherited class
+// - typedefs that create a representation of the function
+// - pointers to functions of the inherited class that will be called by the base class
+// - invoker functions that are called by the base class
+// - template <typename T> void initFunctions(): a function that should be called by any inherited class that will create pointers to class member functions
+// 2) DO NOT FORGET to add empty brackets in CheckMemberFunction macro for functions that have no parameters. Something like this: CheckMemberFunction( reset, void( T::* )( ) );
 
 
 // =================================================================================================
@@ -31,23 +69,110 @@ const uint32 MaxNumVertexLayouts = 16;
 
 class GPUTimer
 {
+private:
+	// -----------------------------------------------------------------------------
+	// Template functions
+	// -----------------------------------------------------------------------------
+
+	// Function checking
+	CreateMemberFunctionChecker( beginQuery );
+	CreateMemberFunctionChecker( endQuery );
+	CreateMemberFunctionChecker( updateResults );
+	CreateMemberFunctionChecker( reset );
+	CreateMemberFunctionChecker( getTimeMS );
+
+	// Typedef's
+	typedef void( *PFN_GPUTIMER_BEGINQUERY )( void* const, uint32 frameID );
+	typedef void( *PFN_GPUTIMER_ENDQUERY )( void* const );
+	typedef bool( *PFN_GPUTIMER_UPDATERESULTS )( void* const );
+	typedef void( *PFN_GPUTIMER_RESET )( void* const );
+
+	// pointers to functions
+	PFN_GPUTIMER_BEGINQUERY					_pfn_GPUTimer_BeginQuery;
+	PFN_GPUTIMER_ENDQUERY					_pfn_GPUTimer_EndQuery;
+	PFN_GPUTIMER_UPDATERESULTS				_pfn_GPUTimer_UpdateResults;
+	PFN_GPUTIMER_RESET						_pfn_GPUTimer_Reset;
+
+	// Invoker functions
+	template<typename T>
+	static void              beginQuery_Invoker( void* const pObj, uint32 frameID )
+	{
+		static_cast< T* >( pObj )->beginQuery( frameID );
+	}
+
+	template<typename T>
+	static void              endQuery_Invoker( void* const pObj )
+	{
+		static_cast< T* >( pObj )->endQuery();
+	}
+
+	template<typename T>
+	static bool              updateResults_Invoker( void* const pObj )
+	{
+		return static_cast< T* >( pObj )->updateResults();
+	}
+
+	template<typename T>
+	static void              reset_Invoker( void* const pObj )
+	{
+		static_cast< T* >( pObj )->reset();
+	}
+
+protected:
+
+	GPUTimer()
+	{
+
+	}
+
+	template <typename T>
+	void initFunctions()
+	{
+		// check for implementation
+		CheckMemberFunction( beginQuery, void( T::* )( uint32 ) );
+		CheckMemberFunction( endQuery, void( T::* )( ) );
+		CheckMemberFunction( updateResults, bool( T::* )( ) );
+		CheckMemberFunction( reset, void( T::* )( ) );
+
+		// create pointer to implementation
+		_pfn_GPUTimer_BeginQuery = ( PFN_GPUTIMER_BEGINQUERY ) &beginQuery_Invoker < T > ;
+		_pfn_GPUTimer_EndQuery = ( PFN_GPUTIMER_ENDQUERY ) &endQuery_Invoker < T > ;
+		_pfn_GPUTimer_UpdateResults = ( PFN_GPUTIMER_UPDATERESULTS ) &updateResults_Invoker < T > ;
+		_pfn_GPUTimer_Reset = ( PFN_GPUTIMER_RESET ) &reset_Invoker < T > ;
+	}
+
 public:
-	GPUTimer();
-	~GPUTimer();
 	
-	void beginQuery( uint32 frameID );
-	void endQuery();
-	bool updateResults();
+	// -----------------------------------------------------------------------------
+	// Interface
+	// -----------------------------------------------------------------------------
+	virtual ~GPUTimer()
+	{
+
+	}
 	
-	void reset();
+	void beginQuery( uint32 frameID )
+	{
+		( *_pfn_GPUTimer_BeginQuery ) ( this, frameID );
+	}
+	void endQuery()
+	{
+		( *_pfn_GPUTimer_EndQuery ) ( this );
+	}
+	bool updateResults()
+	{
+		return ( *_pfn_GPUTimer_UpdateResults ) ( this );
+	}
+	
+	void reset()
+	{
+		( *_pfn_GPUTimer_Reset ) ( this );
+	}
+
 	float getTimeMS() const { return _time; }
 
-private:
-	std::vector < uint32 >  _queryPool;
-	uint32                  _numQueries;
-	uint32                  _queryFrame;
+protected:
 	float                   _time;
-	bool                    _activeQuery;
 };
 
 
@@ -94,8 +219,6 @@ public:
 		return _objects[handle - 1];
 	}
 
-	friend class RenderDevice;
-
 private:
 	std::vector< T >       _objects;
 	std::vector< uint32 >  _freeList;
@@ -104,9 +227,15 @@ private:
 
 struct DeviceCaps
 {
-	bool  texFloat;
-	bool  texNPOT;
-	bool  rtMultisampling;
+	uint16	maxJointCount;
+	uint16	maxTexUnitCount;
+	bool	texFloat;
+	bool	texNPOT;
+	bool	rtMultisampling;
+	bool	geometryShaders;
+	bool	tesselation;
+	bool	computeShaders;
+	bool	instancing;
 };
 
 
@@ -133,24 +262,15 @@ struct RDIVertexLayout
 // Buffers
 // ---------------------------------------------------------
 
-struct RDIBuffer
-{
-	uint32  type;
-	uint32  glObj;
-	uint32  size;
-};
-
-struct RDIVertBufSlot
-{
-	uint32  vbObj;
-	uint32  offset;
-	uint32  stride;
-
-	RDIVertBufSlot() : vbObj( 0 ), offset( 0 ), stride( 0 ) {}
-	RDIVertBufSlot( uint32 vbObj, uint32 offset, uint32 stride ) :
-		vbObj( vbObj ), offset( offset ), stride( stride ) {}
-};
-
+// struct RDIBufferTypes
+// {
+// 	enum List
+// 	{
+// 		VertexBuffer = 0,
+// 		IndexBuffer,
+// 		TextureBuffer
+// 	};
+// };
 
 // ---------------------------------------------------------
 // Textures
@@ -160,9 +280,9 @@ struct TextureTypes
 {
 	enum List
 	{
-		Tex2D = GL_TEXTURE_2D,
-		Tex3D = GL_TEXTURE_3D,
-		TexCube = GL_TEXTURE_CUBE_MAP
+		Tex2D = 0,
+		Tex3D,
+		TexCube
 	};
 };
 
@@ -177,31 +297,32 @@ struct TextureFormats
 		DXT5,
 		RGBA16F,
 		RGBA32F,
-		DEPTH
+		DEPTH,
+		R32,
+		RG32
 	};
 };
 
-struct RDITexture
+struct TextureUsage
 {
-	uint32                glObj;
-	uint32                glFmt;
-	int                   type;
-	TextureFormats::List  format;
-	int                   width, height, depth;
-	int                   memSize;
-	uint32                samplerState;
-	bool                  sRGB;
-	bool                  hasMips, genMips;
+	enum List
+	{
+		Texture = 0,
+		ComputeImageRO, // read-only image
+		ComputeImageWO, // write-only image
+		ComputeImageRW  // read-write image
+	};
 };
 
 struct RDITexSlot
 {
 	uint32  texObj;
 	uint32  samplerState;
+	uint32  usage;
 
-	RDITexSlot() : texObj( 0 ), samplerState( 0 ) {}
-	RDITexSlot( uint32 texObj, uint32 samplerState ) :
-		texObj( texObj ), samplerState( samplerState ) {}
+	RDITexSlot() : texObj( 0 ), samplerState( 0 ), usage( 0 ) {}
+	RDITexSlot( uint32 texObj, uint32 samplerState, uint32 usage ) :
+		texObj( texObj ), samplerState( samplerState ), usage( usage ) {}
 };
 
 
@@ -218,41 +339,6 @@ enum RDIShaderConstType
 	CONST_FLOAT44,
 	CONST_FLOAT33
 };
-
-struct RDIInputLayout
-{
-	bool  valid;
-	int8  attribIndices[16];
-};
-
-struct RDIShader
-{
-	uint32          oglProgramObj;
-	RDIInputLayout  inputLayouts[MaxNumVertexLayouts];
-};
-
-
-// ---------------------------------------------------------
-// Render buffers
-// ---------------------------------------------------------
-
-struct RDIRenderBuffer
-{
-	static const uint32 MaxColorAttachmentCount = 4;
-
-	uint32  fbo, fboMS;  // fboMS: Multisampled FBO used when samples > 0
-	uint32  width, height;
-	uint32  samples;
-
-	uint32  depthTex, colTexs[MaxColorAttachmentCount];
-	uint32  depthBuf, colBufs[MaxColorAttachmentCount];  // Used for multisampling
-
-	RDIRenderBuffer() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 )
-	{
-		for( uint32 i = 0; i < MaxColorAttachmentCount; ++i ) colTexs[i] = colBufs[i] = 0;
-	}
-};
-
 
 // ---------------------------------------------------------
 // Render states
@@ -335,7 +421,12 @@ enum RDIBlendFunc
 	BS_BLEND_ONE,
 	BS_BLEND_SRC_ALPHA,
 	BS_BLEND_INV_SRC_ALPHA,
-	BS_BLEND_DEST_COLOR
+	BS_BLEND_DEST_ALPHA,
+	BS_BLEND_INV_DEST_ALPHA,
+	BS_BLEND_DEST_COLOR,
+	BS_BLEND_SRC_COLOR,
+	BS_BLEND_INV_DEST_COLOR,
+	BS_BLEND_INV_SRC_COLOR
 };
 
 struct RDIBlendState
@@ -392,81 +483,909 @@ enum RDIClearFlags
 
 enum RDIIndexFormat
 {
-	IDXFMT_16 = GL_UNSIGNED_SHORT,
-	IDXFMT_32 = GL_UNSIGNED_INT
+	IDXFMT_16 = 0,
+	IDXFMT_32
 };
 
 enum RDIPrimType
 {
-	PRIM_TRILIST = GL_TRIANGLES,
-	PRIM_TRISTRIP = GL_TRIANGLE_STRIP
+	PRIM_TRILIST = 0,
+	PRIM_TRISTRIP,
+	PRIM_LINES,
+	PRIM_POINTS,
+	PRIM_PATCHES,
 };
 
-// =================================================================================================
-
-
-class RenderDevice
+enum RDIDrawBarriers
 {
+	NotSet = 0,
+	VertexBufferBarrier,	// Wait till vertex buffer is updated by shaders
+	IndexBufferBarrier,			// Wait till index buffer is updated by shaders
+	ImageBarrier				// Wait till image is updated by shaders
+};
+
+class RenderDeviceInterface
+{
+// -----------------------------------------------------------------------------
+// Template functions
+// -----------------------------------------------------------------------------
+private:
+	// Function checking
+	CreateMemberFunctionChecker( init );
+	CreateMemberFunctionChecker( initStates );
+	CreateMemberFunctionChecker( registerVertexLayout );
+	CreateMemberFunctionChecker( beginRendering );
+
+	CreateMemberFunctionChecker( beginCreatingGeometry );
+	CreateMemberFunctionChecker( setGeomVertexParams );
+	CreateMemberFunctionChecker( setGeomIndexParams );
+	CreateMemberFunctionChecker( finishCreatingGeometry );
+	CreateMemberFunctionChecker( destroyGeometry );
+	CreateMemberFunctionChecker( createVertexBuffer );
+	CreateMemberFunctionChecker( createIndexBuffer );
+	CreateMemberFunctionChecker( createTextureBuffer );
+	CreateMemberFunctionChecker( createShaderStorageBuffer );
+	CreateMemberFunctionChecker( destroyBuffer );
+	CreateMemberFunctionChecker( destroyTextureBuffer );
+	CreateMemberFunctionChecker( updateBufferData );
+
+	CreateMemberFunctionChecker( calcTextureSize );
+	CreateMemberFunctionChecker( createTexture );
+	CreateMemberFunctionChecker( uploadTextureData );
+	CreateMemberFunctionChecker( destroyTexture );
+	CreateMemberFunctionChecker( updateTextureData );
+	CreateMemberFunctionChecker( getTextureData );
+
+	CreateMemberFunctionChecker( createShader );
+	CreateMemberFunctionChecker( destroyShader );
+	CreateMemberFunctionChecker( bindShader );
+	CreateMemberFunctionChecker( getShaderConstLoc );
+	CreateMemberFunctionChecker( getShaderSamplerLoc );
+	CreateMemberFunctionChecker( getShaderBufferLoc );
+	CreateMemberFunctionChecker( runComputeShader );
+	CreateMemberFunctionChecker( setShaderConst );
+	CreateMemberFunctionChecker( setShaderSampler );
+	CreateMemberFunctionChecker( getDefaultVSCode );
+	CreateMemberFunctionChecker( getDefaultFSCode );
+
+	CreateMemberFunctionChecker( createRenderBuffer );
+	CreateMemberFunctionChecker( destroyRenderBuffer );
+	CreateMemberFunctionChecker( getRenderBufferTex );
+	CreateMemberFunctionChecker( setRenderBuffer );
+	CreateMemberFunctionChecker( getRenderBufferData );
+	CreateMemberFunctionChecker( getRenderBufferDimensions );
+
+	CreateMemberFunctionChecker( createOcclusionQuery );
+	CreateMemberFunctionChecker( destroyQuery );
+	CreateMemberFunctionChecker( beginQuery );
+	CreateMemberFunctionChecker( endQuery );
+	CreateMemberFunctionChecker( getQueryResult );
+
+	CreateMemberFunctionChecker( createGPUTimer );
+
+	CreateMemberFunctionChecker( commitStates );
+	CreateMemberFunctionChecker( resetStates );
+	CreateMemberFunctionChecker( clear );
+	CreateMemberFunctionChecker( draw );
+	CreateMemberFunctionChecker( drawIndexed );
+
+	CreateMemberFunctionChecker( setStorageBuffer );
+
+	// Typedefs
+	typedef bool( *PFN_INIT )( void* const );
+	typedef void( *PFN_INITSTATES )( void* const );
+	typedef uint32( *PFN_REGISTERVERTEXLAYOUT )( void* const, uint32 numAttribs, VertexLayoutAttrib *attribs );
+	typedef void( *PFN_BEGINRENDERING )( void* const );
+
+	typedef uint32( *PFN_BEGINCREATINGGEOMETRY )( void* const, uint32 vlObj );
+	typedef void( *PFN_FINISHCREATINGGEOMETRY )( void* const, uint32 geoIndex );
+	typedef void( *PFN_DESTROYGEOMETRY )( void* const, uint32 geoIndex );
+	typedef void( *PFN_SETGEOMVERTEXPARAMS )( void* const, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
+	typedef void( *PFN_SETGEOMINDEXPARAMS )( void* const, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format );
+
+	typedef uint32( *PFN_CREATEVERTEXBUFFER )( void* const, uint32 size, const void *data );
+	typedef uint32( *PFN_CREATEINDEXBUFFER )( void* const, uint32 size, const void *data );
+	typedef uint32( *PFN_CREATETEXTUREBUFFER )( void* const, TextureFormats::List format, uint32 size, const void *data );
+	typedef uint32( *PFN_CREATESHADERSTORAGEBUFFER )( void* const, uint32 size, const void *data );
+	typedef void( *PFN_DESTROYBUFFER )( void* const, uint32 bufObj );
+	typedef void( *PFN_DESTROYTEXTUREBUFFER )( void* const, uint32 bufObj );
+	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
+	
+	typedef uint32( *PFN_CALCTEXTURESIZE )( void* const, TextureFormats::List format, int width, int height, int depth );
+	typedef uint32( *PFN_CREATETEXTURE )( void* const, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
+										  bool hasMips, bool genMips, bool compress, bool sRGB );
+	typedef void( *PFN_UPLOADTEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, const void *pixels );
+	typedef void( *PFN_DESTROYTEXTURE )( void* const, uint32 texObj );
+	typedef void( *PFN_UPDATETEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, const void *pixels );
+	typedef bool( *PFN_GETTEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, void *buffer );
+	
+	typedef uint32( *PFN_CREATESHADER )( void* const, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+										 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc );
+	typedef void( *PFN_DESTROYSHADER )( void* const, uint32 shaderId );
+	typedef void( *PFN_BINDSHADER )( void* const, uint32 shaderId );
+	typedef int( *PFN_GETSHADERCONSTLOC )( void* const, uint32 shaderId, const char *name );
+	typedef int( *PFN_GETSHADERSAMPLERLOC )( void* const, uint32 shaderId, const char *name );
+	typedef int( *PFN_GETSHADERBUFFERLOC )( void* const, uint32 shaderId, const char *name );
+	typedef void( *PFN_RUNCOMPUTESHADER )( void* const, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim );
+	typedef void( *PFN_SETSHADERCONST )( void* const, int loc, RDIShaderConstType type, void *values, uint32 count );
+	typedef void( *PFN_SETSHADERSAMPLER )( void* const, int loc, uint32 texUnit );
+	typedef const char*( *PFN_GETDEFAULTVSCODE )( void* const );
+	typedef const char*( *PFN_GETDEFAULTFSCODE )( void* const );
+	
+	typedef uint32( *PFN_CREATERENDERBUFFER )( void* const, uint32 width, uint32 height, TextureFormats::List format,
+											   bool depth, uint32 numColBufs, uint32 samples );
+	typedef void( *PFN_DESTROYRENDERBUFFER )( void* const, uint32 rbObj );
+	typedef uint32( *PFN_GETRENDERBUFFERTEX )( void* const, uint32 rbObj, uint32 bufIndex );
+	typedef void( *PFN_SETRENDERBUFFER )( void* const, uint32 rbObj );
+	typedef bool( *PFN_GETRENDERBUFFERDATA )( void* const, uint32 rbObj, int bufIndex, int *width, int *height,
+											  int *compCount, void *dataBuffer, int bufferSize );
+	typedef bool( *PFN_GETRENDERBUFFERDIMENSIONS )( void* const, uint32 rbObj, int *width, int *height );
+
+	typedef uint32( *PFN_CREATEOCCLUSIONQUERY )( void *const );
+	typedef void( *PFN_DESTROYQUERY )( void* const, uint32 queryObj );
+	typedef void( *PFN_BEGINQUERY )( void* const, uint32 queryObj );
+	typedef void( *PFN_ENDQUERY )( void* const, uint32 queryObj );
+	typedef uint32( *PFN_GETQUERYRESULT )( void* const, uint32 queryObj );
+
+	typedef GPUTimer *( *PFN_CREATEGPUTIMER )( void* const );
+
+	typedef bool( *PFN_COMMITSTATES )( void* const, uint32 filter );
+	typedef void( *PFN_RESETSTATES )( void* const );
+
+	typedef void( *PFN_CLEAR )( void* const, uint32 flags, float *colorRGBA, float depth );
+	typedef void( *PFN_DRAW )( void* const, RDIPrimType primType, uint32 firstVert, uint32 numVerts );
+	typedef void( *PFN_DRAWINDEXED )( void* const, RDIPrimType primType, uint32 firstIndex, uint32 numIndices, uint32 firstVert, uint32 numVerts );
+
+	typedef bool( *PFN_SETSTORAGEBUFFER )( void* const, uint8 slot, uint32 bufObj  );
+
+	// pointers to functions
+	// general
+	PFN_INIT					_pfnInit;
+	PFN_INITSTATES				_pfnInitStates;
+	PFN_REGISTERVERTEXLAYOUT	_pfnRegisterVertexLayout;
+	PFN_BEGINRENDERING			_pfnBeginRendering;
+
+	// geometry
+	PFN_BEGINCREATINGGEOMETRY	_pfnBeginCreatingGeometry;
+	PFN_SETGEOMVERTEXPARAMS		_pfnSetGeomVertexParams;
+	PFN_SETGEOMINDEXPARAMS		_pfnSetGeomIndexParams;
+	PFN_FINISHCREATINGGEOMETRY  _pfnFinishCreatingGeometry;
+	PFN_DESTROYGEOMETRY			_pfnDestroyGeometry;
+	PFN_CREATEVERTEXBUFFER		_pfnCreateVertexBuffer;
+	PFN_CREATEINDEXBUFFER		_pfnCreateIndexBuffer;
+	PFN_CREATETEXTUREBUFFER		_pfnCreateTextureBuffer;
+	PFN_CREATESHADERSTORAGEBUFFER _pfnCreateShaderStorageBuffer;
+	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
+	PFN_DESTROYTEXTUREBUFFER	_pfnDestroyTextureBuffer;
+	PFN_UPDATEBUFFERDATA		_pfnUpdateBufferData;
+	
+	// textures
+	PFN_CALCTEXTURESIZE			_pfnCalcTextureSize;
+	PFN_CREATETEXTURE			_pfnCreateTexture;
+	PFN_UPLOADTEXTUREDATA		_pfnUploadTextureData;
+	PFN_DESTROYTEXTURE			_pfnDestroyTexture;
+	PFN_UPDATETEXTUREDATA		_pfnUpdateTextureData;
+	PFN_GETTEXTUREDATA			_pfnGetTextureData;
+
+	// shaders
+	PFN_CREATESHADER			_pfnCreateShader;
+	PFN_DESTROYSHADER			_pfnDestroyShader;
+	PFN_BINDSHADER				_pfnBindShader;
+	PFN_GETSHADERCONSTLOC		_pfnGetShaderConstLoc;
+	PFN_GETSHADERSAMPLERLOC		_pfnGetShaderSamplerLoc;
+	PFN_GETSHADERBUFFERLOC		_pfnGetShaderBufferLoc;
+	PFN_RUNCOMPUTESHADER		_pfnRunComputeShader;
+	PFN_SETSHADERCONST			_pfnSetShaderConst;
+	PFN_SETSHADERSAMPLER		_pfnSetShaderSampler;
+	PFN_GETDEFAULTVSCODE		_pfnGetDefaultVSCode;
+	PFN_GETDEFAULTFSCODE		_pfnGetDefaultFSCode;
+
+	// render bufs
+	PFN_CREATERENDERBUFFER		_pfnCreateRenderBuffer;
+	PFN_DESTROYRENDERBUFFER		_pfnDestroyRenderBuffer;
+	PFN_GETRENDERBUFFERTEX		_pfnGetRenderBufferTex;
+	PFN_SETRENDERBUFFER			_pfnSetRenderBuffer;
+	PFN_GETRENDERBUFFERDATA		_pfnGetRenderBufferData;
+	PFN_GETRENDERBUFFERDIMENSIONS _pfnGetRenderBufferDimensions;
+
+	// queries
+	PFN_CREATEOCCLUSIONQUERY	_pfnCreateOcclusionQuery;
+	PFN_DESTROYQUERY			_pfnDestroyQuery;
+	PFN_BEGINQUERY				_pfnBeginQuery;
+	PFN_ENDQUERY				_pfnEndQuery;
+	PFN_GETQUERYRESULT			_pfnGetQueryResult;
+
+	PFN_CREATEGPUTIMER			_pfnCreateGPUTimer;
+
+	// states handling
+	PFN_COMMITSTATES			_pfnCommitStates;
+	PFN_RESETSTATES				_pfnResetStates;
+	PFN_CLEAR					_pfnClear;
+
+	// drawing
+	PFN_DRAW					_pfnDraw;
+	PFN_DRAWINDEXED				_pfnDrawIndexed;
+	
+	// commands
+	PFN_SETSTORAGEBUFFER		_pfnSetStorageBuffer;
+
+	// invoker functions
+	// main funcs
+	template<typename T>
+	static bool              init_Invoker( void* const pObj ) 
+	{ 
+		return static_cast< T* >( pObj )->init();
+	}
+
+	template<typename T>
+	static void              initStates_Invoker( void* const pObj ) 
+	{
+		static_cast< T* >( pObj )->initStates();
+	}
+
+	template<typename T>
+	static uint32            registerVertexLayout_Invoker( void* const pObj, uint32 numAttribs, VertexLayoutAttrib *attribs )
+	{ 
+		return static_cast< T* >( pObj )->registerVertexLayout( numAttribs, attribs );
+	}
+	
+	template<typename T>
+	static void              beginRendering_Invoker( void* const pObj ) 
+	{ 
+		static_cast< T* >( pObj )->beginRendering();
+	}
+
+	// buffers
+	template<typename T>
+	static uint32            createVertexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	{ 
+		return static_cast< T* >( pObj )->createVertexBuffer( size, data ); 
+	}
+
+	template<typename T>
+	static uint32            createIndexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	{ 
+		return static_cast< T* >( pObj )->createIndexBuffer( size, data ); 
+	}
+
+	template<typename T>
+	static uint32            createTextureBuffer_Invoker( void* const pObj, TextureFormats::List format, uint32 bufSize, const void *data )
+	{
+		return static_cast< T* >( pObj )->createTextureBuffer( format, bufSize, data );
+	}
+
+	template<typename T>
+	static uint32            createShaderStorageBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	{
+		return static_cast< T* >( pObj )->createShaderStorageBuffer( size, data );
+	}
+
+	template<typename T>
+	static void				 setGeomVertexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
+	{
+		static_cast< T* >( pObj )->setGeomVertexParams( geoIndex, vbo, vbSlot, offset, stride );
+	}
+
+	template<typename T>
+	static void				 setGeomIndexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format )
+	{
+		static_cast< T* >( pObj )->setGeomIndexParams( geoIndex, idxBuf, format );
+	}
+
+	template<typename T>
+	static uint32            beginCreatingGeometry_Invoker( void* const pObj, uint32 vlObj )
+	{
+		return static_cast< T* >( pObj )->beginCreatingGeometry( vlObj );
+	}
+
+	template<typename T>
+	static void		         finishCreatingGeometry_Invoker( void* const pObj, uint32 geoIndex )
+	{
+		static_cast< T* >( pObj )->finishCreatingGeometry( geoIndex );
+	}
+
+	template<typename T>
+	static void              destroyGeometry_Invoker( void* const pObj, uint32 geoIndex )
+	{
+		static_cast< T* >( pObj )->destroyGeometry( geoIndex );
+	}
+
+	template<typename T>
+	static void              destroyBuffer_Invoker( void* const pObj, uint32 bufObj )
+	{ 
+		static_cast< T* >( pObj )->destroyBuffer( bufObj ); 
+	}
+
+	template<typename T>
+	static void              destroyTextureBuffer_Invoker( void* const pObj, uint32 bufObj )
+	{
+		static_cast< T* >( pObj )->destroyTextureBuffer( bufObj );
+	}
+
+	template<typename T>
+	static void              updateBufferData_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
+	{
+		static_cast< T* >( pObj )->updateBufferData( geoObj, bufObj, offset, size, data );
+	}
+
+	// textures
+	template<typename T>
+	static uint32            calcTextureSize_Invoker( void* const pObj, TextureFormats::List format, int width, int height, int depth )
+	{
+		return static_cast< T* >( pObj )->calcTextureSize( format, width, height, depth );
+	}
+
+	template<typename T>
+	static uint32            createTexture_Invoker( void* const pObj, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
+													bool hasMips, bool genMips, bool compress, bool sRGB )
+	{
+		return static_cast< T* >( pObj )->createTexture( type, width, height, depth, format, hasMips, genMips, compress, sRGB );
+	}
+
+	template<typename T>
+	static void              uploadTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, const void *pixels )
+	{
+		static_cast< T* >( pObj )->uploadTextureData( texObj, slice, mipLevel, pixels );
+	}
+
+	template<typename T>
+	static void              destroyTexture_Invoker( void* const pObj, uint32 texObj )
+	{
+		static_cast< T* >( pObj )->destroyTexture( texObj );
+	}
+
+	template<typename T>
+	static void              updateTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, const void *pixels )
+	{
+		static_cast< T* >( pObj )->updateTextureData( texObj, slice, mipLevel, pixels );
+	}
+
+	template<typename T>
+	static bool              getTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, void *buffer )
+	{
+		return static_cast< T* >( pObj )->getTextureData( texObj, slice, mipLevel, buffer );
+	}
+
+	// shaders
+	template<typename T>
+	static uint32            createShader_Invoker( void* const pObj, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+												   const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+	{
+		return static_cast< T* >( pObj )->createShader( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
+	}
+
+	template<typename T>
+	static void				 destroyShader_Invoker( void* const pObj, uint32 shaderId )
+	{
+		static_cast< T* >( pObj )->destroyShader( shaderId );
+	}
+
+	template<typename T>
+	static void				 bindShader_Invoker( void* const pObj, uint32 shaderId )
+	{
+		static_cast< T* >( pObj )->bindShader( shaderId );
+	}
+
+	template<typename T>
+	static int				 getShaderConstLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
+	{
+		return static_cast< T* >( pObj )->getShaderConstLoc( shaderId, name );
+	}
+
+	template<typename T>
+	static int				 getShaderSamplerLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
+	{
+		return static_cast< T* >( pObj )->getShaderSamplerLoc( shaderId, name );
+	}
+
+	template<typename T>
+	static int				 getShaderBufferLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
+	{
+		return static_cast< T* >( pObj )->getShaderBufferLoc( shaderId, name );
+	}
+
+	template<typename T>
+	static void				 runComputeShader_Invoker( void* const pObj, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+	{
+		static_cast< T* >( pObj )->runComputeShader( shaderId, xDim, yDim, zDim );
+	}
+
+	template<typename T>
+	static void				 setShaderConst_Invoker( void* const pObj, int loc, RDIShaderConstType type, void *values, uint32 count )
+	{
+		static_cast< T* >( pObj )->setShaderConst( loc, type, values, count );
+	}
+
+	template<typename T>
+	static void				 setShaderSampler_Invoker( void* const pObj, int loc, uint32 texUnit )
+	{
+		static_cast< T* >( pObj )->setShaderSampler( loc, texUnit );
+	}
+
+	template<typename T>
+	static const char *		 getDefaultVSCode_Invoker( void* const pObj )
+	{
+		return static_cast< T* >( pObj )->getDefaultVSCode();
+	}
+
+	template<typename T>
+	static const char *		 getDefaultFSCode_Invoker( void* const pObj )
+	{
+		return static_cast< T* >( pObj )->getDefaultFSCode();
+	}
+	
+	// Render bufs
+	template<typename T>
+	static uint32            createRenderBuffer_Invoker( void* const pObj, uint32 width, uint32 height, TextureFormats::List format,
+														 bool depth, uint32 numColBufs, uint32 samples )
+	{
+		return static_cast< T* >( pObj )->createRenderBuffer( width, height, format, depth, numColBufs, samples );
+	}
+
+	template<typename T>
+	static void				 destroyRenderBuffer_Invoker( void* const pObj, uint32 rbObj )
+	{
+		static_cast< T* >( pObj )->destroyRenderBuffer( rbObj );
+	}
+
+	template<typename T>
+	static uint32            getRenderBufferTex_Invoker( void* const pObj, uint32 rbObj, uint32 bufIndex )
+	{
+		return static_cast< T* >( pObj )->getRenderBufferTex( rbObj, bufIndex );
+	}
+
+	template<typename T>
+	static void				 setRenderBuffer_Invoker( void* const pObj, uint32 rbObj )
+	{
+		static_cast< T* >( pObj )->setRenderBuffer( rbObj );
+	}
+	
+	template<typename T>
+	static bool	             getRenderBufferData_Invoker( void* const pObj, uint32 rbObj, int bufIndex, int *width, int *height,
+														  int *compCount, void *dataBuffer, int bufferSize )
+	{
+		return static_cast< T* >( pObj )->getRenderBufferData( rbObj, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+	}
+	
+	template<typename T>
+	static void	             getRenderBufferDimensions_Invoker( void* const pObj, uint32 rbObj, int *width, int *height )
+	{
+		static_cast< T* >( pObj )->getRenderBufferDimensions( rbObj, width, height );
+	}
+
+	// Queries
+	template<typename T>
+	static uint32            createOcclusionQuery_Invoker( void* const pObj )
+	{
+		return static_cast< T* >( pObj )->createOcclusionQuery();
+	}
+
+	template<typename T>
+	static void				 destroyQuery_Invoker( void* const pObj, uint32 queryObj )
+	{
+		static_cast< T* >( pObj )->destroyQuery( queryObj );
+	}
+
+	template<typename T>
+	static void				 beginQuery_Invoker( void* const pObj, uint32 queryObj )
+	{
+		static_cast< T* >( pObj )->beginQuery( queryObj );
+	}
+
+	template<typename T>
+	static void				 endQuery_Invoker( void* const pObj, uint32 queryObj )
+	{
+		static_cast< T* >( pObj )->endQuery( queryObj );
+	}
+
+	template<typename T>
+	static uint32			 getQueryResult_Invoker( void* const pObj, uint32 queryObj )
+	{
+		return static_cast< T* >( pObj )->getQueryResult( queryObj );
+	}
+
+	template<typename T>
+	static GPUTimer *		 createGPUTimer_Invoker( void* const pObj )
+	{
+		return static_cast< T* >( pObj )->createGPUTimer();
+	}
+
+	// drawing
+	template<typename T>
+	static bool	             commitStates_Invoker( void* const pObj, uint32 filter )
+	{
+		return static_cast< T* >( pObj )->commitStates( filter );
+	}
+
+	template<typename T>
+	static void				 resetStates_Invoker( void* const pObj )
+	{
+		static_cast< T* >( pObj )->resetStates();
+	}
+
+	template<typename T>
+	static void				 clear_Invoker( void* const pObj, uint32 flags, float *colorRGBA, float depth )
+	{
+		static_cast< T* >( pObj )->clear( flags, colorRGBA, depth );
+	}
+
+	template<typename T>
+	static void				 draw_Invoker( void* const pObj, RDIPrimType primType, uint32 firstVert, uint32 numVerts )
+	{
+		static_cast< T* >( pObj )->draw( primType, firstVert, numVerts );
+	}
+
+	template<typename T>
+	static void				 drawIndexed_Invoker( void* const pObj, RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
+												  uint32 firstVert, uint32 numVerts )
+	{
+		static_cast< T* >( pObj )->drawIndexed( primType, firstIndex, numIndices, firstVert, numVerts );
+	}
+
+	template<typename T>
+	static void				 setStorageBuffer_Invoker( void* const pObj, uint8 slot, uint32 bufObj )
+	{
+		static_cast< T* >( pObj )->setStorageBuffer( slot, bufObj );
+	}
+
+protected:
+
+	template< typename T > void initRDIFunctions()
+	{
+		// check for implementation
+		CheckMemberFunction( initStates, void( T::* )() );
+		CheckMemberFunction( init, bool( T::* )() );
+		CheckMemberFunction( registerVertexLayout, uint32( T::* )( uint32, VertexLayoutAttrib * ) );
+		CheckMemberFunction( beginRendering, void( T::* )() );
+
+		CheckMemberFunction( createVertexBuffer, uint32( T::* )( uint32, const void* ) );
+		CheckMemberFunction( createIndexBuffer, uint32( T::* )( uint32, const void* ) );
+		CheckMemberFunction( createTextureBuffer, uint32( T::* )( TextureFormats::List, uint32, const void * ) );
+		CheckMemberFunction( createShaderStorageBuffer, uint32( T::* )( uint32, const void* ) );
+		CheckMemberFunction( beginCreatingGeometry, uint32( T::* )( uint32 ) );
+		CheckMemberFunction( setGeomVertexParams, void( T::* )( uint32, uint32, uint32, uint32, uint32 ) );
+		CheckMemberFunction( setGeomIndexParams, void( T::* )( uint32, uint32, RDIIndexFormat ) );
+		CheckMemberFunction( finishCreatingGeometry, void( T::* )( uint32 ) );
+		CheckMemberFunction( destroyGeometry, void( T::* )( uint32 ) );
+		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
+		CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32 ) );
+		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
+		
+		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
+		CheckMemberFunction( createTexture, uint32( T::* )( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) );
+		CheckMemberFunction( uploadTextureData, void( T::* )( uint32, int, int, const void * ) );
+		CheckMemberFunction( destroyTexture, void( T::* )( uint32 ) );
+		CheckMemberFunction( updateTextureData, void( T::* )( uint32, int, int, const void * ) );
+		CheckMemberFunction( getTextureData, bool( T::* )( uint32, int, int, void * ) );
+	
+		CheckMemberFunction( createShader, uint32( T::* )( const char *, const char *, const char *, const char *, const char *, const char * ) );
+		CheckMemberFunction( destroyShader, void( T::* )( uint32 ) );
+		CheckMemberFunction( bindShader, void( T::* )( uint32 ) );
+		CheckMemberFunction( getShaderConstLoc, int( T::* )( uint32, const char * ) );
+		CheckMemberFunction( getShaderSamplerLoc, int( T::* )( uint32, const char * ) );
+		CheckMemberFunction( getShaderBufferLoc, int( T::* )( uint32, const char * ) );
+		CheckMemberFunction( runComputeShader, void( T::* )( uint32, uint32, uint32, uint32 ) );
+		CheckMemberFunction( setShaderConst, void( T::* )( int, RDIShaderConstType, void *, uint32 ) );
+		CheckMemberFunction( setShaderSampler, void( T::* )( int, uint32 ) );
+		CheckMemberFunction( getDefaultVSCode, const char *( T::* )() );
+		CheckMemberFunction( getDefaultFSCode, const char *( T::* )() );
+
+		CheckMemberFunction( createRenderBuffer, uint32( T::* )( uint32, uint32, TextureFormats::List, bool, uint32, uint32 ) );
+		CheckMemberFunction( destroyRenderBuffer, void( T::* )( uint32 ) );
+		CheckMemberFunction( getRenderBufferTex, uint32( T::* )( uint32, uint32 ) );
+		CheckMemberFunction( setRenderBuffer, void( T::* )( uint32 ) );
+		CheckMemberFunction( getRenderBufferData, bool( T::* )( uint32, int, int *, int *, int *, void *, int ) );
+		CheckMemberFunction( getRenderBufferDimensions, void( T::* )( uint32, int *, int * ) );
+
+		CheckMemberFunction( createOcclusionQuery, uint32( T::* )() );
+		CheckMemberFunction( destroyQuery, void( T::* )( uint32 ) );
+		CheckMemberFunction( beginQuery, void( T::* )( uint32 ) );
+		CheckMemberFunction( endQuery, void( T::* )( uint32 ) );
+		CheckMemberFunction( getQueryResult, uint32( T::* )( uint32 ) );
+
+		CheckMemberFunction( createGPUTimer, GPUTimer *( T::* )() );
+
+		CheckMemberFunction( commitStates, bool( T::* )( uint32 ) );
+		CheckMemberFunction( resetStates, void( T::* )() );
+		CheckMemberFunction( clear, void( T::* )( uint32, float *, float ) );
+		CheckMemberFunction( draw, void( T::* )( RDIPrimType, uint32, uint32 ) );
+		CheckMemberFunction( drawIndexed, void( T::* )( RDIPrimType, uint32, uint32, uint32, uint32 ) );
+
+		CheckMemberFunction( setStorageBuffer, void( T::* )( uint8, uint32 ) );
+
+		// create pointer to implementation
+		_pfnInit = ( PFN_INIT ) &init_Invoker< T > ;
+		_pfnInitStates = ( PFN_INITSTATES ) &initStates_Invoker< T >;
+		_pfnRegisterVertexLayout = ( PFN_REGISTERVERTEXLAYOUT ) &registerVertexLayout_Invoker< T >;
+		_pfnBeginRendering = ( PFN_BEGINRENDERING ) &beginRendering_Invoker< T >;
+
+		_pfnCreateVertexBuffer = ( PFN_CREATEVERTEXBUFFER ) &createVertexBuffer_Invoker < T >;
+		_pfnCreateIndexBuffer = ( PFN_CREATEINDEXBUFFER ) &createIndexBuffer_Invoker < T >;
+		_pfnCreateTextureBuffer = ( PFN_CREATETEXTUREBUFFER ) &createTextureBuffer_Invoker < T >;
+		_pfnCreateShaderStorageBuffer = ( PFN_CREATESHADERSTORAGEBUFFER ) &createShaderStorageBuffer_Invoker < T >;
+		_pfnBeginCreatingGeometry = ( PFN_BEGINCREATINGGEOMETRY ) &beginCreatingGeometry_Invoker < T > ;
+		_pfnSetGeomVertexParams = ( PFN_SETGEOMVERTEXPARAMS ) &setGeomVertexParams_Invoker < T > ;
+		_pfnSetGeomIndexParams = ( PFN_SETGEOMINDEXPARAMS ) &setGeomIndexParams_Invoker < T > ;
+		_pfnFinishCreatingGeometry = ( PFN_FINISHCREATINGGEOMETRY ) &finishCreatingGeometry_Invoker < T > ;
+		_pfnDestroyGeometry = ( PFN_DESTROYGEOMETRY ) &destroyGeometry_Invoker < T > ;
+		_pfnDestroyBuffer = ( PFN_DESTROYBUFFER ) &destroyBuffer_Invoker < T >;
+		_pfnDestroyTextureBuffer = ( PFN_DESTROYTEXTUREBUFFER ) &destroyTextureBuffer_Invoker < T > ;
+		_pfnUpdateBufferData = ( PFN_UPDATEBUFFERDATA ) &updateBufferData_Invoker < T >;
+
+		_pfnCalcTextureSize = ( PFN_CALCTEXTURESIZE ) &calcTextureSize_Invoker < T >;
+		_pfnCreateTexture = ( PFN_CREATETEXTURE ) &createTexture_Invoker < T >;
+		_pfnUploadTextureData = ( PFN_UPLOADTEXTUREDATA ) &uploadTextureData_Invoker < T >;
+		_pfnDestroyTexture = ( PFN_DESTROYTEXTURE ) &destroyTexture_Invoker < T >;
+		_pfnUpdateTextureData = ( PFN_UPDATETEXTUREDATA ) &updateTextureData_Invoker < T >;
+		_pfnGetTextureData = ( PFN_GETTEXTUREDATA ) &getTextureData_Invoker < T >;
+
+		_pfnCreateShader = ( PFN_CREATESHADER ) &createShader_Invoker < T >;
+		_pfnDestroyShader = ( PFN_DESTROYSHADER ) &destroyShader_Invoker < T > ;
+		_pfnBindShader = ( PFN_BINDSHADER ) &bindShader_Invoker < T > ;
+		_pfnGetShaderConstLoc = ( PFN_GETSHADERCONSTLOC ) &getShaderConstLoc_Invoker < T > ;
+		_pfnGetShaderSamplerLoc = ( PFN_GETSHADERSAMPLERLOC ) &getShaderSamplerLoc_Invoker < T > ;
+		_pfnGetShaderBufferLoc = ( PFN_GETSHADERBUFFERLOC ) &getShaderBufferLoc_Invoker < T >;
+		_pfnRunComputeShader = ( PFN_RUNCOMPUTESHADER ) &runComputeShader_Invoker < T > ;
+		_pfnSetShaderConst = ( PFN_SETSHADERCONST ) &setShaderConst_Invoker < T > ;
+		_pfnSetShaderSampler = ( PFN_SETSHADERSAMPLER ) &setShaderSampler_Invoker < T > ;
+		_pfnGetDefaultVSCode = ( PFN_GETDEFAULTVSCODE ) &getDefaultVSCode_Invoker < T > ;
+		_pfnGetDefaultFSCode = ( PFN_GETDEFAULTFSCODE ) &getDefaultFSCode_Invoker < T > ;
+
+		_pfnCreateRenderBuffer = ( PFN_CREATERENDERBUFFER ) &createRenderBuffer_Invoker < T > ;
+		_pfnDestroyRenderBuffer = ( PFN_DESTROYRENDERBUFFER ) &destroyRenderBuffer_Invoker < T > ;
+		_pfnGetRenderBufferTex = ( PFN_GETRENDERBUFFERTEX ) &getRenderBufferTex_Invoker < T > ;
+		_pfnSetRenderBuffer = ( PFN_SETRENDERBUFFER ) &setRenderBuffer_Invoker < T > ;
+		_pfnGetRenderBufferData = ( PFN_GETRENDERBUFFERDATA ) &getRenderBufferData_Invoker < T > ;
+		_pfnGetRenderBufferDimensions = ( PFN_GETRENDERBUFFERDIMENSIONS ) &getRenderBufferDimensions_Invoker < T >;
+
+		_pfnCreateOcclusionQuery = ( PFN_CREATEOCCLUSIONQUERY ) &createOcclusionQuery_Invoker < T > ;
+		_pfnDestroyQuery = ( PFN_DESTROYQUERY ) &destroyQuery_Invoker < T > ;
+		_pfnBeginQuery = ( PFN_BEGINQUERY ) &beginQuery_Invoker < T > ;
+		_pfnEndQuery = ( PFN_ENDQUERY ) &endQuery_Invoker < T > ;
+		_pfnGetQueryResult = ( PFN_GETQUERYRESULT ) &getQueryResult_Invoker < T > ;
+
+		_pfnCreateGPUTimer = ( PFN_CREATEGPUTIMER ) &createGPUTimer_Invoker < T > ;
+
+		_pfnCommitStates = ( PFN_COMMITSTATES ) &commitStates_Invoker < T > ;
+		_pfnResetStates = ( PFN_RESETSTATES ) &resetStates_Invoker < T > ;
+		_pfnClear = ( PFN_CLEAR ) &clear_Invoker < T > ;
+		_pfnDraw = ( PFN_DRAW ) &draw_Invoker < T > ;
+		_pfnDrawIndexed = ( PFN_DRAWINDEXED ) &drawIndexed_Invoker < T > ;
+
+		_pfnSetStorageBuffer = ( PFN_SETSTORAGEBUFFER ) &setStorageBuffer_Invoker< T >;
+	}
+
+// -----------------------------------------------------------------------------
+// Main interface
+// -----------------------------------------------------------------------------
 public:
 
-	RenderDevice();
-	~RenderDevice();
+	RenderDeviceInterface()
+	{
+
+	}
+ 	
+	virtual ~RenderDeviceInterface()
+	{
+
+	}
 	
-	void initStates();
-	bool init();
+	void initStates() 
+	{ 
+		( *_pfnInitStates )( this );
+	}
+	bool init() 
+	{ 
+		return ( *_pfnInit )( this );
+	}
+
 	
 // -----------------------------------------------------------------------------
 // Resources
 // -----------------------------------------------------------------------------
 
 	// Vertex layouts
-	uint32 registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs );
+	uint32 registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs ) 
+	{ 
+		return ( *_pfnRegisterVertexLayout )( this, numAttribs, attribs );
+	}
 	
 	// Buffers
-	void beginRendering();
-	uint32 createVertexBuffer( uint32 size, const void *data );
-	uint32 createIndexBuffer( uint32 size, const void *data );
-	void destroyBuffer( uint32 bufObj );
-	void updateBufferData( uint32 bufObj, uint32 offset, uint32 size, void *data );
-	uint32 getBufferMem() const { return _bufferMem; }
+	void beginRendering() 
+	{ 
+		( *_pfnBeginRendering )( this );
+	}
+	uint32 beginCreatingGeometry( uint32 vlObj )
+	{
+		return ( *_pfnBeginCreatingGeometry ) ( this, vlObj );
+	}
+	void setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
+	{
+		( *_pfnSetGeomVertexParams ) ( this, geoObj, vbo, vbSlot, offset, stride );
+	}
+	void setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
+	{
+		( *_pfnSetGeomIndexParams ) ( this, geoObj, indBuf, format );
+	}
+	void finishCreatingGeometry( uint32 geoObj )
+	{
+		( *_pfnFinishCreatingGeometry ) ( this, geoObj );
+	}
+	void destroyGeometry( uint32 geoObj )
+	{
+		( *_pfnDestroyGeometry ) ( this, geoObj );
+	}
+	uint32 createVertexBuffer( uint32 size, const void *data )
+	{
+		return ( *_pfnCreateVertexBuffer )( this, size, data );
+	}
+	uint32 createIndexBuffer( uint32 size, const void *data ) 
+	{ 
+		return ( *_pfnCreateIndexBuffer )( this, size, data );
+	}
+	uint32 createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
+	{
+		return ( *_pfnCreateTextureBuffer )( this, format, bufSize, data );
+	}
+	uint32 createShaderStorageBuffer( uint32 size, const void *data )
+	{
+		return ( *_pfnCreateShaderStorageBuffer )( this, size, data );
+	}
+	void destroyBuffer( uint32 bufObj ) 
+	{ 
+		( *_pfnDestroyBuffer )( this, bufObj );
+	}
+	void destroyTextureBuffer( uint32 bufObj )
+	{
+		( *_pfnDestroyTextureBuffer )( this, bufObj );
+	}
+	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data ) 
+	{ 
+		( *_pfnUpdateBufferData )( this, geoObj, bufObj, offset, size, data );
+	}
+	uint32 getBufferMem() const 
+	{ 
+		return _bufferMem;
+	}
 
 	// Textures
-	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth ) const;
+	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth ) 
+	{ 
+		return ( *_pfnCalcTextureSize )( this, format, width, height, depth );
+	}
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
-	                      bool hasMips, bool genMips, bool compress, bool sRGB );
-	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
-	void destroyTexture( uint32 texObj );
-	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
-	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
-	uint32 getTextureMem() const { return _textureMem; }
+	                      bool hasMips, bool genMips, bool compress, bool sRGB )
+	{ 
+		return ( *_pfnCreateTexture )( this, type, width, height, depth, format, hasMips, genMips, compress, sRGB );
+	}
+	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
+	{ 
+		( *_pfnUploadTextureData )( this, texObj, slice, mipLevel, pixels );
+	}
+	void destroyTexture( uint32 texObj ) 
+	{ 
+		( *_pfnDestroyTexture )( this, texObj );
+	}
+	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels ) 
+	{ 
+		( *_pfnUpdateTextureData )( this, texObj, slice, mipLevel, pixels );
+	}
+	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
+	{
+		return ( *_pfnGetTextureData )( this, texObj, slice, mipLevel, buffer ); 
+	}
+	uint32 getTextureMem() const 
+	{
+		return _textureMem; 
+	}
 
 	// Shaders
-	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc );
-	void destroyShader( uint32 shaderId );
-	void bindShader( uint32 shaderId );
-	std::string getShaderLog() const { return _shaderLog; }
-	int getShaderConstLoc( uint32 shaderId, const char *name );
-	int getShaderSamplerLoc( uint32 shaderId, const char *name );
-	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 );
-	void setShaderSampler( int loc, uint32 texUnit );
-	const char *getDefaultVSCode() const;
-	const char *getDefaultFSCode() const;
+	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
+						 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc ) 
+	{
+		return ( *_pfnCreateShader )( this, vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
+									  tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
+	}
+	void destroyShader( uint32 shaderId )
+	{
+		( *_pfnDestroyShader )( this, shaderId ); 
+	}
+	void bindShader( uint32 shaderId ) 
+	{ 
+		( *_pfnBindShader )( this, shaderId ); 
+	}
+	std::string getShaderLog() const 
+	{
+		return _shaderLog; 
+	}
+	int getShaderConstLoc( uint32 shaderId, const char *name ) 
+	{ 
+		return ( *_pfnGetShaderConstLoc )( this, shaderId, name );
+	}
+	int getShaderSamplerLoc( uint32 shaderId, const char *name )
+	{ 
+		return ( *_pfnGetShaderSamplerLoc )( this, shaderId, name ); 
+	}
+	int getShaderBufferLoc( uint32 shaderId, const char *name )
+	{
+		return ( *_pfnGetShaderBufferLoc )( this, shaderId, name );
+	}
+	void setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count = 1 ) 
+	{
+		( *_pfnSetShaderConst )( this, loc, type, values, count );
+	}
+	void setShaderSampler( int loc, uint32 texUnit ) 
+	{
+		( *_pfnSetShaderSampler )( this, loc, texUnit ); 
+	}
+	const char *getDefaultVSCode() 
+	{ 
+		return ( *_pfnGetDefaultVSCode )( this );
+	}
+	const char *getDefaultFSCode()  
+	{ 
+		return ( *_pfnGetDefaultFSCode ) ( this ); 
+	}
+	void runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+	{
+		( *_pfnRunComputeShader ) ( this, shaderId, xDim, yDim, zDim );
+	}
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples );
-	void destroyRenderBuffer( uint32 rbObj );
-	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex );
-	void setRenderBuffer( uint32 rbObj );
+	                           bool depth, uint32 numColBufs, uint32 samples )
+	{
+		return ( *_pfnCreateRenderBuffer )( this, width, height, format, depth, numColBufs, samples );
+	}
+	void destroyRenderBuffer( uint32 rbObj ) 
+	{ 
+		( *_pfnDestroyRenderBuffer )( this, rbObj );
+	}
+	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex ) 
+	{
+		return ( *_pfnGetRenderBufferTex )( this, rbObj, bufIndex );
+	}
+	void setRenderBuffer( uint32 rbObj ) 
+	{ 
+		( *_pfnSetRenderBuffer )( this, rbObj ); 
+	}
 	bool getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
-	                          int *compCount, void *dataBuffer, int bufferSize );
+	                          int *compCount, void *dataBuffer, int bufferSize )
+	{
+		return ( *_pfnGetRenderBufferData )( this, rbObj, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+	}
+	void getRenderBufferDimensions( uint32 rbObj, int *width, int *height )
+	{
+		( *_pfnGetRenderBufferDimensions )( this, rbObj, width, height );
+	}
 
 	// Queries
-	uint32 createOcclusionQuery();
-	void destroyQuery( uint32 queryObj );
-	void beginQuery( uint32 queryObj );
-	void endQuery( uint32 queryObj );
-	uint32 getQueryResult( uint32 queryObj ) const;
+	uint32 createOcclusionQuery() 
+	{
+		return ( *_pfnCreateOcclusionQuery )( this );
+	}
+	void destroyQuery( uint32 queryObj ) 
+	{
+		( *_pfnDestroyQuery ) ( this, queryObj ); 
+	}
+	void beginQuery( uint32 queryObj ) 
+	{ 
+		( *_pfnBeginQuery )( this, queryObj ); 
+	}
+	void endQuery( uint32 queryObj ) 
+	{ 
+		( *_pfnEndQuery )( this, queryObj ); 
+	}
+	uint32 getQueryResult( uint32 queryObj )  
+	{
+		return ( *_pfnGetQueryResult )( this, queryObj );
+	}
+
+	// Render Device dependent GPU Timer
+	GPUTimer *createGPUTimer() 
+	{ 
+		return ( *_pfnCreateGPUTimer )( this );
+	}
 
 // -----------------------------------------------------------------------------
 // Commands
@@ -476,17 +1395,18 @@ public:
 		{ _vpX = x; _vpY = y; _vpWidth = width; _vpHeight = height; _pendingMask |= PM_VIEWPORT; }
 	void setScissorRect( int x, int y, int width, int height )
 		{ _scX = x; _scY = y; _scWidth = width; _scHeight = height; _pendingMask |= PM_SCISSOR; }
-	void setIndexBuffer( uint32 bufObj, RDIIndexFormat idxFmt )
-		{ _indexFormat = (uint32)idxFmt; _newIndexBuf = bufObj; _pendingMask |= PM_INDEXBUF; }
-	void setVertexBuffer( uint32 slot, uint32 vbObj, uint32 offset, uint32 stride )
-		{ ASSERT( slot < 16 ); _vertBufSlots[slot] = RDIVertBufSlot( vbObj, offset, stride );
-	      _pendingMask |= PM_VERTLAYOUT; }
-	void setVertexLayout( uint32 vlObj )
-		{ _newVertLayout = vlObj; }
-	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState )
-		{ ASSERT( slot < 16 ); _texSlots[slot] = RDITexSlot( texObj, samplerState );
+	void setGeometry( uint32 geoIndex )
+		{ _curGeometryIndex = geoIndex;  _pendingMask |= PM_GEOMETRY; }
+	void setTexture( uint32 slot, uint32 texObj, uint16 samplerState, uint16 usage )
+		{ ASSERT( slot < 16/*_maxTexSlots*/ ); _texSlots[slot] = RDITexSlot( texObj, samplerState, usage );
 	      _pendingMask |= PM_TEXTURES; }
-	
+// 	void setTextureBuffer( uint32 bufObj )
+// 	{	_curTextureBuf = bufObj; _pendingMask |= PM_TEXTUREBUFFER; }
+	void setMemoryBarrier( RDIDrawBarriers barrier )
+	{	_memBarriers = barrier; _pendingMask |= PM_BARRIER; }
+	void setStorageBuffer( uint8 slot, uint32 bufObj )
+	{	( *_pfnSetStorageBuffer )( this, slot, bufObj ); }
+
 	// Render states
 	void setColorWriteMask( bool enabled )
 		{ _newRasterState.renderTargetWriteMask = enabled; _pendingMask |= PM_RENDERSTATES; }
@@ -530,24 +1450,41 @@ public:
 		{ _newDepthStencilState.depthFunc = depthFunc; _pendingMask |= PM_RENDERSTATES; }
 	void getDepthFunc( RDIDepthFunc &depthFunc ) const
 		{ depthFunc = (RDIDepthFunc)_newDepthStencilState.depthFunc; }
+	void setTessPatchVertices( uint16 verts )
+		{ _tessPatchVerts = verts; _pendingMask |= PM_RENDERSTATES; }
 
-	bool commitStates( uint32 filter = 0xFFFFFFFF );
-	void resetStates();
+	bool commitStates( uint32 filter = 0xFFFFFFFF ) 
+	{
+		return ( *_pfnCommitStates )( this, filter );
+	}
+	void resetStates() 
+	{
+		( *_pfnResetStates )( this );
+	}
 	
 	// Draw calls and clears
-	void clear( uint32 flags, float *colorRGBA = 0x0, float depth = 1.0f );
-	void draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts );
+	void clear( uint32 flags, float *colorRGBA = 0x0, float depth = 1.0f )
+	{
+		( *_pfnClear )( this, flags, colorRGBA, depth ); 
+	}
+	void draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
+	{
+		( *_pfnDraw )( this, primType, firstVert, numVerts );
+	}
 	void drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
-	                  uint32 firstVert, uint32 numVerts );
+	                  uint32 firstVert, uint32 numVerts )
+	{ 
+		( *_pfnDrawIndexed )( this, primType, firstIndex, numIndices, firstVert, numVerts );
+	}
 
 // -----------------------------------------------------------------------------
 // Getters
 // -----------------------------------------------------------------------------
 
 	const DeviceCaps getCaps() const { return _caps; }
-	const RDIBuffer getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITexture getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBuffer getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+// 	const RDIBuffer getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+// 	const RDITexture getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+// 	const RDIRenderBuffer getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 	friend class Renderer;
 
@@ -556,58 +1493,52 @@ protected:
 	enum RDIPendingMask
 	{
 		PM_VIEWPORT      = 0x00000001,
-		PM_INDEXBUF      = 0x00000002,
-		PM_VERTLAYOUT    = 0x00000004,
+// 		PM_INDEXBUF      = 0x00000002,
+// 		PM_VERTLAYOUT    = 0x00000004,
+		PM_TEXTUREBUFFER = 0x00000004,
 		PM_TEXTURES      = 0x00000008,
 		PM_SCISSOR       = 0x00000010,
-		PM_RENDERSTATES  = 0x00000020
+		PM_RENDERSTATES  = 0x00000020,
+		PM_GEOMETRY		 = 0x00000040,
+		PM_BARRIER		 = 0x00000080,
+		PM_COMPUTE		 = 0x00000100
 	};
 
 protected:
 
-	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc );
-	bool linkShaderProgram( uint32 programObj );
-	void resolveRenderBuffer( uint32 rbObj );
+	DeviceCaps					_caps;
 
-	void checkGLError();
-	bool applyVertexLayout();
-	void applySamplerState( RDITexture &tex );
-	void applyRenderStates();
+	RDITexSlot					_texSlots[ 16 ];
+	// 	std::vector< RDITexSlot >	_texSlots;
+	RDIRasterState				_curRasterState, _newRasterState;
+	RDIBlendState				_curBlendState, _newBlendState;
+	RDIDepthStencilState		_curDepthStencilState, _newDepthStencilState;
+	RDIDrawBarriers				_memBarriers;
 
-protected:
+	// 8 ssbo
 
-	DeviceCaps    _caps;
-	
-	uint32        _depthFormat;
-	int           _vpX, _vpY, _vpWidth, _vpHeight;
-	int           _scX, _scY, _scWidth, _scHeight;
-	int           _fbWidth, _fbHeight;
-	std::string   _shaderLog;
-	uint32        _curRendBuf;
-	int           _outputBufferIndex;  // Left and right eye for stereo rendering
-	uint32        _textureMem, _bufferMem;
+	std::string					_shaderLog;
+	uint32						_depthFormat;
+	int							_vpX, _vpY, _vpWidth, _vpHeight;
+	int							_scX, _scY, _scWidth, _scHeight;
+	int							_fbWidth, _fbHeight;
+	uint32						_curRendBuf;
+	int							_outputBufferIndex;  // Left and right eye for stereo rendering
+	uint32						_textureMem, _bufferMem;
 
-	int                            _defaultFBO;
-    bool                           _defaultFBOMultisampled;
+	uint32                      _numVertexLayouts;
 
-	uint32                         _numVertexLayouts;
-	RDIVertexLayout                _vertexLayouts[MaxNumVertexLayouts];
-	RDIObjects< RDIBuffer >        _buffers;
-	RDIObjects< RDITexture >       _textures;
-	RDIObjects< RDIShader >        _shaders;
-	RDIObjects< RDIRenderBuffer >  _rendBufs;
+	uint32						_prevShaderId, _curShaderId;
+	uint32						_pendingMask;
+	uint32						_curGeometryIndex;
+//	uint32						_curTextureBuf;
+ 	uint32						_maxTexSlots; // specified in inherited render devices
 
-	RDIVertBufSlot        _vertBufSlots[16];
-	RDITexSlot            _texSlots[16];
-	RDIRasterState        _curRasterState, _newRasterState;
-	RDIBlendState         _curBlendState, _newBlendState;
-	RDIDepthStencilState  _curDepthStencilState, _newDepthStencilState;
-	uint32                _prevShaderId, _curShaderId;
-	uint32                _curVertLayout, _newVertLayout;
-	uint32                _curIndexBuf, _newIndexBuf;
-	uint32                _indexFormat;
-	uint32                _activeVertexAttribsMask;
-	uint32                _pendingMask;
+	uint32						_tessPatchVerts; // number of vertices in patch. Used for tesselation.
+
+	int							_defaultFBO;
+	bool                        _defaultFBOMultisampled;
+
 };
 
 }

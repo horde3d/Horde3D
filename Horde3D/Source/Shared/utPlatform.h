@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -88,6 +88,7 @@
 
 // Shortcuts for common types
 typedef signed char int8;
+typedef unsigned char uint8;
 typedef short int16;
 typedef unsigned short uint16;
 typedef int int32;
@@ -138,5 +139,8 @@ namespace StaticAssert
 	template<> struct FAILED< true > { };
 }
 #define ASSERT_STATIC( exp ) (StaticAssert::FAILED< (exp) != 0 >())
+
+// Misc functions
+#define H3D_UNUSED_VAR( exp ) ( (void) (exp))
 
 #endif // _utPlatform_H_

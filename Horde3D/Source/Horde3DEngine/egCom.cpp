@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -265,29 +265,41 @@ bool EngineLog::getMessage( LogMessage &msg )
 // Class StatManager
 // *************************************************************************************************
 
-StatManager::StatManager()
+StatManager::StatManager() : _fwdLightsGPUTimer( nullptr ), _defLightsGPUTimer( nullptr ), _shadowsGPUTimer( nullptr ), _particleGPUTimer( nullptr ),
+							 _computeGPUTimer( nullptr )
 {
 	_statTriCount = 0;
 	_statBatchCount = 0;
 	_statLightPassCount = 0;
 
 	_frameTime = 0;
-
-	_fwdLightsGPUTimer = new GPUTimer();
-	_defLightsGPUTimer = new GPUTimer();
-	_shadowsGPUTimer = new GPUTimer();
-	_particleGPUTimer = new GPUTimer();
 }
 
 
 StatManager::~StatManager()
 {
-	delete _fwdLightsGPUTimer;
-	delete _defLightsGPUTimer;
-	delete _shadowsGPUTimer;
-	delete _particleGPUTimer;
+	if ( _fwdLightsGPUTimer ) { delete _fwdLightsGPUTimer; _fwdLightsGPUTimer = nullptr; }
+	if ( _defLightsGPUTimer ) { delete _defLightsGPUTimer; _defLightsGPUTimer = nullptr; }
+	if ( _shadowsGPUTimer ) { delete _shadowsGPUTimer; _shadowsGPUTimer = nullptr; }
+	if ( _particleGPUTimer ) { delete _particleGPUTimer; _particleGPUTimer = nullptr; }
+	if ( _computeGPUTimer ) { delete _computeGPUTimer; _computeGPUTimer = nullptr; }
 }
 
+
+bool StatManager::init()
+{
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+	if ( !rdi )
+		return false;
+
+	_fwdLightsGPUTimer = rdi->createGPUTimer();
+	_defLightsGPUTimer = rdi->createGPUTimer();
+	_shadowsGPUTimer = rdi->createGPUTimer();
+	_particleGPUTimer = rdi->createGPUTimer();
+	_computeGPUTimer = rdi->createGPUTimer();
+
+	return true;
+}
 
 float StatManager::getStat( int param, bool reset )
 {
@@ -340,9 +352,13 @@ float StatManager::getStat( int param, bool reset )
 		if( reset ) _shadowsGPUTimer->reset();
 		return value;
 	case EngineStats::TextureVMem:
-		return (gRDI->getTextureMem() / 1024) / 1024.0f;
+		return ( Modules::renderer().getRenderDevice()->getTextureMem() / 1024) / 1024.0f;
 	case EngineStats::GeometryVMem:
-		return (gRDI->getBufferMem() / 1024) / 1024.0f;
+		return ( Modules::renderer().getRenderDevice()->getBufferMem() / 1024 ) / 1024.0f;
+	case EngineStats::ComputeGPUTime:
+		value = _computeGPUTimer->getTimeMS();
+		if ( reset ) _computeGPUTimer->reset();
+		return value;
 	default:
 		Modules::setError( "Invalid param for h3dGetStat" );
 		return Math::NaN;
@@ -400,6 +416,8 @@ GPUTimer *StatManager::getGPUTimer( int param ) const
 		return _shadowsGPUTimer;
 	case EngineStats::ParticleGPUTime:
 		return _particleGPUTimer;
+	case EngineStats::ComputeGPUTime:
+		return _computeGPUTimer;
 	default:
 		return 0x0;
 	}

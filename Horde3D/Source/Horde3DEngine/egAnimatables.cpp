@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -31,10 +31,11 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 	SceneNode( meshTpl ),
 	_materialRes( meshTpl.matRes ), _batchStart( meshTpl.batchStart ), _batchCount( meshTpl.batchCount ),
 	_vertRStart( meshTpl.vertRStart ), _vertREnd( meshTpl.vertREnd ), _lodLevel( meshTpl.lodLevel ),
-	_parentModel( 0x0 )
+	_parentModel( 0x0 ), _tessellatable( meshTpl.tessellatable )
 {
 	_renderable = true;
-	
+	_lodSupported = true;
+
 	if( _materialRes != 0x0 )
 		_sortKey = (float)_materialRes->getHandle();
 }
@@ -42,11 +43,13 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 
 MeshNode::~MeshNode()
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	_materialRes = 0x0;
 	for( uint32 i = 0; i < _occQueries.size(); ++i )
 	{
 		if( _occQueries[i] != 0 )
-			gRDI->destroyQuery( _occQueries[i] );
+			rdi->destroyQuery( _occQueries[i] );
 	}
 }
 
@@ -81,6 +84,13 @@ SceneNodeTpl *MeshNode::parsingFunc( map< string, string > &attribs )
 
 	itr = attribs.find( "lodLevel" );
 	if( itr != attribs.end() ) meshTpl->lodLevel = atoi( itr->second.c_str() );
+
+	itr = attribs.find( "tessellatable" );
+	if ( itr != attribs.end() )
+	{
+		if ( itr->second == "true" || itr->second == "1" ) meshTpl->tessellatable = 1;
+		else meshTpl->tessellatable = 0;
+	}
 
 	if( !result )
 	{
@@ -139,6 +149,8 @@ int MeshNode::getParamI( int param ) const
 		return _vertREnd;
 	case MeshNodeParams::LodLevelI:
 		return _lodLevel;
+	case MeshNodeParams::TessellatableI:
+		return _tessellatable;
 	}
 
 	return SceneNode::getParamI( param );
@@ -165,6 +177,9 @@ void MeshNode::setParamI( int param, int value )
 		return;
 	case MeshNodeParams::LodLevelI:
 		_lodLevel = value;
+		return;
+	case MeshNodeParams::TessellatableI:
+		_tessellatable = value;
 		return;
 	}
 
@@ -219,6 +234,18 @@ bool MeshNode::checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec
 	intsPos = _absTrans * nearestIntsPos;
 	
 	return intersection;
+}
+
+
+uint32 MeshNode::calcLodLevel( const Vec3f &viewPoint ) const
+{
+	return _parentModel->calcLodLevel( viewPoint );
+}
+
+
+bool MeshNode::checkLodCorrectness( uint32 lodLevel ) const
+{
+	return _lodLevel == lodLevel;
 }
 
 

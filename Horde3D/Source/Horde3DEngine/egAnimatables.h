@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -38,7 +38,8 @@ struct MeshNodeParams
 		BatchCountI,
 		VertRStartI,
 		VertREndI,
-		LodLevelI
+		LodLevelI,
+		TessellatableI
 	};
 };
 
@@ -50,11 +51,12 @@ struct MeshNodeTpl : public SceneNodeTpl
 	uint32             batchStart, batchCount;
 	uint32             vertRStart, vertREnd;
 	uint32             lodLevel;
+	uint32			   tessellatable;
 
 	MeshNodeTpl( const std::string &name, MaterialResource *materialRes, uint32 batchStart,
 	             uint32 batchCount, uint32 vertRStart, uint32 vertREnd ) :
 		SceneNodeTpl( SceneNodeTypes::Mesh, name ), matRes( materialRes ), batchStart( batchStart ),
-		batchCount( batchCount ), vertRStart( vertRStart ), vertREnd( vertREnd ), lodLevel( 0 )
+		batchCount( batchCount ), vertRStart( vertRStart ), vertREnd( vertREnd ), lodLevel( 0 ), tessellatable( 0 )
 	{
 	}
 };
@@ -76,6 +78,9 @@ public:
 	int getParamI( int param ) const;
 	void setParamI( int param, int value );
 	bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
+	
+	uint32 calcLodLevel( const Vec3f &viewPoint ) const;
+	bool checkLodCorrectness( uint32 lodLevel ) const;
 
 	void onAttach( SceneNode &parentNode );
 	void onDetach( SceneNode &parentNode );
@@ -87,6 +92,7 @@ public:
 	uint32 getVertRStart() const { return _vertRStart; }
 	uint32 getVertREnd() const { return _vertREnd; }
 	uint32 getLodLevel() const { return _lodLevel; }
+	uint32 getTessellationStatus() const { return _tessellatable; }
 	ModelNode *getParentModel() const { return _parentModel; }
 
 protected:
@@ -98,6 +104,7 @@ protected:
 	uint32              _batchStart, _batchCount;
 	uint32              _vertRStart, _vertREnd;
 	uint32              _lodLevel;
+	uint32				_tessellatable;
 	
 	ModelNode           *_parentModel;
 	BoundingBox         _localBBox;

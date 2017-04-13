@@ -47,8 +47,8 @@ IF(NOT GLFW_LIBRARY OR HORDE3D_FORCE_DOWNLOAD_GLFW)
     MESSAGE(STATUS "Preparing external GLFW project")
     INCLUDE(ExternalProject)
     ExternalProject_Add(project_glfw 
-        URL http://sourceforge.net/projects/glfw/files/glfw/3.0.4/glfw-3.0.4.zip
-        URL_MD5 3949775a24ae921c8de8b948236f3c9a
+        URL https://github.com/glfw/glfw/releases/download/3.2.1/glfw-3.2.1.zip
+        URL_MD5 824C99EEA073BDD6D2FEC76B538F79AF
         CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DGLFW_BUILD_DOCS:BOOL=OFF -DGLFW_BUILD_EXAMPLES:BOOL=OFF -DGLFW_BUILD_TESTS:BOOL=OFF
         LOG_DOWNLOAD 1
         LOG_UPDATE 1
@@ -88,10 +88,21 @@ IF(GLFW_LIBRARY)
     # But for non-OSX systems, I will use the CMake Threads package.
     # In fact, there seems to be a problem if I used the Threads package
     # and try using this line, so I'm just skipping it entirely for OS X.
-    IF(NOT APPLE)
-    FIND_PACKAGE(Threads)
-    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-    ENDIF(NOT APPLE)
+    IF(UNIX AND NOT APPLE)
+		FIND_PACKAGE(Threads)
+		SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+    
+		if ( CMAKE_DL_LIBS )
+			SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${CMAKE_DL_LIBS})
+		endif()
+			
+		find_library(RT_LIBRARY rt)
+		mark_as_advanced(RT_LIBRARY)
+		if (RT_LIBRARY)
+			SET( GLFW_LIBRARIES ${GLFW_LIBRARIES} ${RT_LIBRARY} )
+		endif()
+		
+	ENDIF(UNIX AND NOT APPLE)
 
     # For OS X, GLFW uses Cocoa as a backend so it must link to Cocoa.
     IF(APPLE OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -111,13 +122,14 @@ IF(GLFW_LIBRARY)
     SET(GLFW_LIBRARIES ${MINGW32_LIBRARY} ${GLFW_LIBRARIES})
     ENDIF(MINGW)
     
-    # For Unix, GLFW should be linked to X11-releated libraries.
+    # For Unix, GLFW should be linked to X11-related libraries.
     IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    FIND_LIBRARY(X11_LIBRARY X11)
-    FIND_LIBRARY(Xrandr_LIBRARY Xrandr)
-    FIND_LIBRARY(Xxf86vm_LIBRARY Xxf86vm)
-    FIND_LIBRARY(Xi_LIBRARY Xi)
-    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${X11_LIBRARY} ${Xrandr_LIBRARY} ${Xxf86vm_LIBRARY} ${Xi_LIBRARY})
+    FIND_PACKAGE(X11 REQUIRED)
+	# FIND_LIBRARY(X11_LIBRARY X11)
+    # FIND_LIBRARY(Xrandr_LIBRARY Xrandr)
+    # FIND_LIBRARY(Xxf86vm_LIBRARY Xxf86vm)
+    # FIND_LIBRARY(Xi_LIBRARY Xi)
+    SET(GLFW_LIBRARIES ${GLFW_LIBRARIES} ${X11_X11_LIB} ${X11_Xrandr_LIB} ${X11_Xxf86vm_LIB} ${X11_Xinput_LIB} ${X11_Xinerama_LIB} ${X11_Xcursor_LIB})
     ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     # Set the final string here so the GUI reflects the final state.

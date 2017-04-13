@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -51,6 +51,16 @@ struct RenderFuncListItem
 {
 	int         nodeType;
 	RenderFunc  renderFunc;
+};
+
+struct RenderBackendType
+{
+	enum List
+	{
+		OpenGL2 = 2,
+		OpenGL4 = 4,
+		OpenGLES = 8
+	};
 };
 
 // =================================================================================================
@@ -112,6 +122,16 @@ struct PipeSamplerBinding
 	uint32  bufIndex;
 };
 
+struct DefaultVertexLayouts
+{
+	enum List
+	{
+		Position = 0,
+		Particle,
+		Model,
+		Overlay
+	};
+};
 
 class Renderer
 {
@@ -120,17 +140,20 @@ public:
 	~Renderer();
 
 	void registerRenderFunc( int nodeType, RenderFunc rf );
-	
+
+	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
+
 	unsigned char *useScratchBuf( uint32 minSize );
 	
-	bool init();
+	bool init( RenderBackendType::List type );
 	void initStates();
 
 	void drawAABB( const Vec3f &bbMin, const Vec3f &bbMax );
 	void drawSphere( const Vec3f &pos, float radius );
 	void drawCone( float height, float fov, const Matrix4f &transMat );
 	
-	bool createShaderComb( const char *vertexShader, const char *fragmentShader, ShaderCombination &sc );
+	bool createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
+						   const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader );
 	void releaseShaderComb( ShaderCombination &sc );
 	void setShaderComb( ShaderCombination *sc );
 	void commitGeneralUniforms();
@@ -153,15 +176,23 @@ public:
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
+	static void drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass, 
+									bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 	void render( CameraNode *camNode );
 	void finalizeFrame();
+
+	void dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z );
 
 	uint32 getFrameID() const { return _frameID; }
 	ShaderCombination *getCurShader() const { return _curShader; }
 	CameraNode *getCurCamera() const { return _curCamera; }
 	uint32 getQuadIdxBuf() const { return _quadIdxBuf; }
 	uint32 getParticleVBO() const { return _particleVBO; }
+	uint32 getParticleGeometry() const { return _particleGeo; }
+	uint32 getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const;
+
+	int getRenderDeviceType() { return _renderDeviceType; }
 
 protected:
 	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
@@ -191,7 +222,13 @@ protected:
 	void renderDebugView();
 	void finishRendering();
 
+	RenderDeviceInterface *createRenderDevice( int type );
+
+	void		  releaseRenderDevice();
 protected:
+	
+	RenderDeviceInterface		       *_renderDevice;
+
 	std::vector< RenderFuncListItem >  _renderFuncRegistry;
 	
 	unsigned char                      *_scratchBuf;
@@ -205,8 +242,16 @@ protected:
 	
 	std::vector< OverlayBatch >        _overlayBatches;
 	OverlayVert                        *_overlayVerts;
+	uint32							   _overlayGeo;
 	uint32                             _overlayVB;
 	
+	// standard geometry
+	uint32								_particleGeo;
+	uint32								_cubeGeo;
+	uint32								_sphereGeo;
+	uint32								_coneGeo;
+	uint32								_FSPolyGeo;
+
 	uint32                             _shadowRB;
 	uint32                             _frameID;
 	uint32                             _defShadowMap;
@@ -230,6 +275,9 @@ protected:
 	
 	uint32                             _vbCube, _ibCube, _vbSphere, _ibSphere;
 	uint32                             _vbCone, _ibCone, _vbFSPoly;
+	
+	int									_renderDeviceType;
+	
 };
 
 }

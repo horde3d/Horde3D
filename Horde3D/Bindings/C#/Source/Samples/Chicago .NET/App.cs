@@ -58,7 +58,7 @@ namespace Horde3DNET.Samples.ChicagoNET
         public bool init()
         {
 	        // Initialize engine
-            if (!h3d.init())
+            if (!h3d.init( h3d.H3DRenderDevice.OpenGL4 ) )
             {
                 Horde3DUtils.dumpMessages();
                 return false;
