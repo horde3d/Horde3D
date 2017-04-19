@@ -136,6 +136,7 @@ bool Renderer::init( RenderBackendType::List type )
 				releaseRenderDevice();
 				return false;
 			}
+			type = RenderBackendType::OpenGL2;
 		}
 		else
 			return false;

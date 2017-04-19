@@ -215,8 +215,6 @@ publish, and distribute this file as you see fit.
 
 */
 
-namespace Horde3D {
-
 #if defined(STBI_ONLY_JPEG) || defined(STBI_ONLY_PNG) || defined(STBI_ONLY_BMP) \
   || defined(STBI_ONLY_TGA) || defined(STBI_ONLY_GIF) || defined(STBI_ONLY_PSD) \
   || defined(STBI_ONLY_HDR) || defined(STBI_ONLY_PIC) || defined(STBI_ONLY_PNM) \
@@ -431,6 +429,8 @@ static int stbi__sse2_available()
 #ifndef STBI_SIMD_ALIGN
 #define STBI_SIMD_ALIGN(type, name) type name
 #endif
+
+namespace Horde3D {
 
 ///////////////////////////////////////////////
 //

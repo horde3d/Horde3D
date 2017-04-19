@@ -687,7 +687,7 @@ bool initOpenGLExtensions( bool forceLegacyFuncs )
 	
 	if ( forceLegacyFuncs )
 	{
-		if ( glExt::majorVersion > 2 && glExt::minorVersion >= 1 )
+		if ( glExt::majorVersion > 2 || (glExt::majorVersion == 2 && glExt::minorVersion >= 1) )
 		{
 			glExt::majorVersion = 2; glExt::minorVersion = 1;
 		}
@@ -1206,7 +1206,7 @@ bool initOpenGLExtensions( bool forceLegacyFuncs )
 	// Default extensions, suitable for any OpenGL version
 	glExt::EXT_texture_filter_anisotropic = isExtensionSupported( "GL_EXT_texture_filter_anisotropic" );
 
-	glExt::EXT_texture_compression_s3tc = isExtensionSupported( "GL_EXT_texture_compression_s3tc" );
+	glExt::EXT_texture_compression_s3tc = isExtensionSupported( "GL_EXT_texture_compression_s3tc" ) || isExtensionSupported( "GL_S3_s3tc" );
 
 	glExt::EXT_texture_sRGB = isExtensionSupported( "GL_EXT_texture_sRGB" );
 

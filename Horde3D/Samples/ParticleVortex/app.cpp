@@ -20,6 +20,7 @@
 #include <math.h>
 #include <iomanip>
 #include <random>
+#include <string.h>
 #include <memory>
 
 using namespace std;

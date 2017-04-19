@@ -417,14 +417,13 @@ void ShaderResource::initializationFunc()
 	switch ( Modules::renderer().getRenderDeviceType() )
 	{
 		case RenderBackendType::OpenGL4:
-		{
 			_vertPreamble = "#version 330\r\n";
 			_fragPreamble = "#version 330\r\n";
 			_geomPreamble = "#version 330\r\n";
 			_tessCtlPreamble = "#version 410\r\n";
 			_tessEvalPreamble = "#version 410\r\n";
 			_computePreamble = "#version 430\r\n";
-		}
+			break;
 		default:
 			break;
 	}

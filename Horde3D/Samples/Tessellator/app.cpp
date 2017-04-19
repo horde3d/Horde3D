@@ -145,7 +145,7 @@ bool createIcosahedron()
 
 	for ( size_t j = 0; j < 12; ++j )
 	{
-		Vec3 &v = normalize( normals[ j ] );
+		Vec3 v = normalize( normals[ j ] );
 		normalsShort[ j * 3 + 0 ] = ( short ) ( v.x * 32767 );
 		normalsShort[ j * 3 + 1 ] = ( short ) ( v.y * 32767 );
 		normalsShort[ j * 3 + 2 ] = ( short ) ( v.z * 32767 );
