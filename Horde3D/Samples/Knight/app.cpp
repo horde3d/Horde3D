@@ -25,7 +25,7 @@ using namespace std;
 
 
 KnightSample::KnightSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Knight - Horde3D Sample" ),
+    SampleApplication( argc, argv, "Knight - Horde3D Sample", H3DRenderDevice::OpenGL2 ),
     _animTime(0),
     _weight(1.0f)
 {

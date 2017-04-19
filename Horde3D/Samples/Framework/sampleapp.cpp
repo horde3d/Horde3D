@@ -71,7 +71,7 @@ bool checkForBenchmarkOption( int argc, char** argv )
 
 SampleApplication::SampleApplication(int argc, char** argv,
         const char* title,
-		int renderer,
+        int renderer,
         float fov, float near_plane, float far_plane,
         int width, int height,
         bool fullscreen, bool show_cursor,
@@ -228,7 +228,7 @@ int SampleApplication::run()
 {
 	
 	int frames = 0;
-    float fps = H3D_FPS_REFERENCE;
+	float fps = H3D_FPS_REFERENCE;
 	
 	_running = true;
 
@@ -616,7 +616,7 @@ bool SampleApplication::init()
         while( glfwGetTime() - startTime < 5.0 ) { /* Sleep */ }
 		
 		std::cout << "Unable to initialize window" << std::endl;
-        std::cout << "Make sure you have an OpenGL 2.0 compatible graphics card" << std::endl;
+		std::cout << "Make sure you have an OpenGL " << ((_renderInterface == H3DRenderDevice::OpenGL2) ? "2.0" : "4.3") << " compatible graphics card" << std::endl;
 		
 		return false;
 	}
