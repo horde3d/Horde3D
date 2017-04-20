@@ -1,0 +1,174 @@
+<ui version="4.0" >
+ <class>CrowdVisibilityWidget</class>
+ <widget class="QWidget" name="CrowdVisibilityWidget" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>271</width>
+    <height>186</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" >
+   <item row="0" column="0" >
+    <widget class="QLabel" name="label" >
+     <property name="text" >
+      <string>Node Tag:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" >
+    <widget class="QSpinBox" name="m_tag" >
+     <property name="toolTip" >
+      <string>Injector Group Tag: If set to zero the visibility node is only for building the visibility graph and won't emit crowd particles</string>
+     </property>
+     <property name="statusTip" >
+      <string>Injector Group Tag: If set to zero the visibility node is only for building the visibility graph and won't emit crowd particles</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2" >
+    <widget class="QGroupBox" name="groupBox" >
+     <property name="title" >
+      <string>Injector Wait Time:</string>
+     </property>
+     <layout class="QGridLayout" >
+      <property name="leftMargin" >
+       <number>4</number>
+      </property>
+      <property name="topMargin" >
+       <number>4</number>
+      </property>
+      <property name="rightMargin" >
+       <number>4</number>
+      </property>
+      <property name="bottomMargin" >
+       <number>4</number>
+      </property>
+      <property name="horizontalSpacing" >
+       <number>4</number>
+      </property>
+      <property name="verticalSpacing" >
+       <number>4</number>
+      </property>
+      <item row="0" column="0" >
+       <widget class="QLabel" name="label_2" >
+        <property name="text" >
+         <string>Minimum:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" >
+       <widget class="QDoubleSpinBox" name="m_minWait" >
+        <property name="toolTip" >
+         <string>Minimum time to wait before a new crowd particle will be emitted</string>
+        </property>
+        <property name="statusTip" >
+         <string>Minimum time to wait before a new crowd particle will be emitted</string>
+        </property>
+        <property name="maximum" >
+         <double>1000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" >
+       <widget class="QLabel" name="label_3" >
+        <property name="text" >
+         <string>Maximum:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" >
+       <widget class="QDoubleSpinBox" name="m_maxWait" >
+        <property name="toolTip" >
+         <string>Maximum time to wait before a new crowd particle will be emitted</string>
+        </property>
+        <property name="statusTip" >
+         <string>Maximum time to wait before a new crowd particle will be emitted</string>
+        </property>
+        <property name="maximum" >
+         <double>1000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2" >
+    <widget class="QGroupBox" name="m_crowdSim" >
+     <property name="toolTip" >
+      <string>Global Settings for the crowd simulation component</string>
+     </property>
+     <property name="statusTip" >
+      <string>Changes made here only affect the current simulation and are not saved into the scene</string>
+     </property>
+     <property name="title" >
+      <string>Crowd Simulation</string>
+     </property>
+     <property name="checkable" >
+      <bool>true</bool>
+     </property>
+     <layout class="QGridLayout" >
+      <property name="leftMargin" >
+       <number>4</number>
+      </property>
+      <property name="topMargin" >
+       <number>4</number>
+      </property>
+      <property name="rightMargin" >
+       <number>4</number>
+      </property>
+      <property name="bottomMargin" >
+       <number>4</number>
+      </property>
+      <property name="horizontalSpacing" >
+       <number>4</number>
+      </property>
+      <property name="verticalSpacing" >
+       <number>4</number>
+      </property>
+      <item row="0" column="0" >
+       <widget class="QLabel" name="label_9" >
+        <property name="text" >
+         <string>Simulation Speed:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" >
+       <widget class="QDoubleSpinBox" name="m_simSpeed" >
+        <property name="maximum" >
+         <double>1000.000000000000000</double>
+        </property>
+        <property name="value" >
+         <double>10.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" >
+       <widget class="QLabel" name="label_10" >
+        <property name="text" >
+         <string>Minimum Target Distance:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1" >
+       <widget class="QDoubleSpinBox" name="m_minTargetDist" >
+        <property name="maximum" >
+         <double>1000.000000000000000</double>
+        </property>
+        <property name="value" >
+         <double>20.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

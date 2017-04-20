@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.0)
+
+#FIND_PACKAGE(Qt4 REQUIRED)
+
+SET(qpsd_SOURCES
+	main.cpp
+	qpsdhandler.cpp
+)
+SET(qpsd_HEADERS
+	qpsdhandler.h	
+)
+
+INCLUDE_DIRECTORIES("../../include" "${CMAKE_CURRENT_BINARY_DIR}")
+
+#INCLUDE(${QT_USE_FILE})
+ADD_DEFINITIONS(${QT_DEFINITIONS})
+
+ADD_LIBRARY( qpsd SHARED  ${qpsd_SOURCES} )
+
+TARGET_LINK_LIBRARIES( qpsd ${QT_LIBRARIES} )

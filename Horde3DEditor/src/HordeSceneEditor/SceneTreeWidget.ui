@@ -1,0 +1,136 @@
+<ui version="4.0" >
+ <class>SceneTreeWidget</class>
+ <widget class="QWidget" name="SceneTreeWidget" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>262</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" >
+   <property name="spacing" >
+    <number>3</number>
+   </property>
+   <property name="leftMargin" >
+    <number>2</number>
+   </property>
+   <property name="topMargin" >
+    <number>2</number>
+   </property>
+   <property name="rightMargin" >
+    <number>2</number>
+   </property>
+   <property name="bottomMargin" >
+    <number>2</number>
+   </property>
+   <item>
+    <widget class="QTabWidget" name="m_tabWidget" >
+     <property name="currentIndex" >
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="m_sceneWidget" >
+      <attribute name="title" >
+       <string>Scene Tree</string>
+      </attribute>
+      <attribute name="toolTip" >
+       <string>Scene Graph Manipulation</string>
+      </attribute>
+      <layout class="QGridLayout" >
+       <property name="leftMargin" >
+        <number>2</number>
+       </property>
+       <property name="topMargin" >
+        <number>4</number>
+       </property>
+       <property name="rightMargin" >
+        <number>2</number>
+       </property>
+       <property name="bottomMargin" >
+        <number>2</number>
+       </property>
+       <property name="verticalSpacing" >
+        <number>4</number>
+       </property>
+       <item row="0" column="0" >
+        <widget class="QToolButton" name="m_previousLayerButton" >
+         <property name="enabled" >
+          <bool>false</bool>
+         </property>
+         <property name="toolTip" >
+          <string>Go back to the parent scene graph file</string>
+         </property>
+         <property name="statusTip" >
+          <string>Closes the currently opened scene graph and returns to the previous one</string>
+         </property>
+         <property name="text" >
+          <string>&lt;-</string>
+         </property>
+         <property name="icon" >
+          <iconset resource="resources.qrc" >:/Icons/Resources/RootIcon.png</iconset>
+         </property>
+         <property name="shortcut" >
+          <string>Backspace</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1" >
+        <widget class="QLabel" name="m_sceneGraphLabel" >
+         <property name="text" >
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2" >
+        <widget class="SceneTreeView" name="m_sceneTreeView" >
+         <property name="dragEnabled" >
+          <bool>true</bool>
+         </property>
+         <property name="dragDropOverwriteMode" >
+          <bool>false</bool>
+         </property>
+         <property name="dragDropMode" >
+          <enum>QAbstractItemView::DragDrop</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_extraWidget" >
+      <attribute name="title" >
+       <string>Extras</string>
+      </attribute>
+      <attribute name="toolTip" >
+       <string>Manipulation of plugin specific extra nodes within the scene</string>
+      </attribute>
+      <layout class="QVBoxLayout" >
+       <item>
+        <widget class="ExtraTreeView" name="m_extraTreeView" />
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>SceneTreeView</class>
+   <extends>QTreeView</extends>
+   <header>SceneTreeView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>ExtraTreeView</class>
+   <extends>QTreeView</extends>
+   <header>ExtraTreeView.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resources.qrc" />
+ </resources>
+ <connections/>
+</ui>

@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SoundWidget</class>
+ <widget class="QWidget" name="SoundWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>372</width>
+    <height>223</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>&amp;Gain:</string>
+     </property>
+     <property name="buddy">
+      <cstring>m_gain</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QDoubleSpinBox" name="m_gain">
+     <property name="toolTip">
+      <string>source gain
+value should be positive</string>
+     </property>
+     <property name="whatsThis">
+      <string>source gain
+value should be positive</string>
+     </property>
+     <property name="maximum">
+      <double>1.000000000000000</double>
+     </property>
+     <property name="singleStep">
+      <double>0.010000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="3">
+    <widget class="QCheckBox" name="m_loop">
+     <property name="text">
+      <string>&amp;Loop</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="4">
+    <widget class="QCheckBox" name="m_forceNoStream">
+     <property name="text">
+      <string>&amp;Force No Stream</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="5">
+    <widget class="QCheckBox" name="m_autoStart">
+     <property name="text">
+      <string>&amp;Autostart</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Max Dist:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1" colspan="2">
+    <widget class="QDoubleSpinBox" name="m_maxDist">
+     <property name="toolTip">
+      <string>used with the Inverse Clamped Distance Model
+to set the distance where there will no longer be
+any attenuation of the source</string>
+     </property>
+     <property name="whatsThis">
+      <string>used with the Inverse Clamped Distance Model
+to set the distance where there will no longer be
+any attenuation of the source</string>
+     </property>
+     <property name="minimum">
+      <double>0.200000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>10000.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>20.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="3">
+    <widget class="QLabel" name="label_4">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Ref Dist:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="4">
+    <widget class="QDoubleSpinBox" name="m_refDist">
+     <property name="toolTip">
+      <string>the distance under which the volume for the
+source would normally drop by half (before being influenced by rolloff factor or
+AL_MAX_DISTANCE)</string>
+     </property>
+     <property name="statusTip">
+      <string/>
+     </property>
+     <property name="whatsThis">
+      <string>the distance under which the volume for the
+source would normally drop by half (before being influenced by rolloff factor or
+AL_MAX_DISTANCE)</string>
+     </property>
+     <property name="minimum">
+      <double>0.100000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>9999.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>10.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QLabel" name="m_labelRolloff">
+     <property name="text">
+      <string>&amp;Rolloff:</string>
+     </property>
+     <property name="buddy">
+      <cstring>m_rolloff</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QDoubleSpinBox" name="m_rolloff">
+     <property name="toolTip">
+      <string>the rolloff rate for the source
+default is 1.0</string>
+     </property>
+     <property name="whatsThis">
+      <string>the rolloff rate for the source
+default is 1.0</string>
+     </property>
+     <property name="minimum">
+      <double>0.000000000000000</double>
+     </property>
+     <property name="maximum">
+      <double>100.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="3">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>&amp;Pitch:</string>
+     </property>
+     <property name="buddy">
+      <cstring>m_pitch</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="4">
+    <widget class="QDoubleSpinBox" name="m_pitch">
+     <property name="toolTip">
+      <string>pitch multiplier
+always positive</string>
+     </property>
+     <property name="whatsThis">
+      <string>pitch multiplier
+always positive</string>
+     </property>
+     <property name="maximum">
+      <double>1000.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="m_labelOffset">
+     <property name="text">
+      <string>&amp;Offset:</string>
+     </property>
+     <property name="buddy">
+      <cstring>m_rolloff</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1" colspan="2">
+    <widget class="QDoubleSpinBox" name="m_offset">
+     <property name="toolTip">
+      <string>pitch multiplier
+always positive</string>
+     </property>
+     <property name="whatsThis">
+      <string>pitch multiplier
+always positive</string>
+     </property>
+     <property name="maximum">
+      <double>1000.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="2">
+    <widget class="QLabel" name="m_labelVisemeBlendSpeed">
+     <property name="text">
+      <string>&amp;Viseme Blend Speed:</string>
+     </property>
+     <property name="buddy">
+      <cstring>m_rolloff</cstring>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="2" colspan="2">
+    <widget class="QDoubleSpinBox" name="m_visemeBlendSpeed">
+     <property name="toolTip">
+      <string>pitch multiplier
+always positive</string>
+     </property>
+     <property name="whatsThis">
+      <string>pitch multiplier
+always positive</string>
+     </property>
+     <property name="decimals">
+      <number>1</number>
+     </property>
+     <property name="maximum">
+      <double>1000.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QToolButton" name="m_playButton">
+     <property name="text">
+      <string>Play</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="1">
+    <widget class="QToolButton" name="m_stopButton">
+     <property name="text">
+      <string>Stop</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="4" colspan="2">
+    <widget class="QToolButton" name="m_phonemeEditorButton">
+     <property name="text">
+      <string>Phoneme Editor</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="5">
+    <layout class="QHBoxLayout">
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Sound File:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="m_soundFile">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="m_importSound">
+       <property name="toolTip">
+        <string>Import a new sound file into the sound directory of the current scene</string>
+       </property>
+       <property name="statusTip">
+        <string>Import a new sound file into the sound directory of the current scene</string>
+       </property>
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="5" column="0" colspan="5">
+    <layout class="QHBoxLayout" name="_2">
+     <item>
+      <widget class="QLabel" name="label_5">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Phoneme File:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="m_phonemeFile">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="m_importPhoneme">
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

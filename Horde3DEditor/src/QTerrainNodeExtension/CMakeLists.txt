@@ -1,0 +1,43 @@
+cmake_minimum_required(VERSION 3.0)
+
+#FIND_PACKAGE(Qt4 REQUIRED QtCore QtGui QtXml)
+
+SET(QTerrainNodeExtension_SOURCES
+	ExtTerrainPlugIn.cpp
+	QTerrainNode.cpp
+	QTerrainNodePage.cpp
+)
+SET(QTerrainNodeExtension_HEADERS
+	ExtTerrainPlugIn.h
+	QTerrainNode.h
+	QTerrainNodePage.h
+)
+SET(QTerrainNodeExtension_FORMS
+	QTerrainNodePage.ui
+)
+
+
+ADD_DEFINITIONS(${QT_DEFINITIONS})
+add_definitions(-DQT_PLUGIN)
+add_definitions(-DQT_SHARED)
+SET(QT_USE_QTXML TRUE)
+
+#INCLUDE(${QT_USE_FILE})
+
+INCLUDE_DIRECTORIES("../HordeSceneEditorCore" "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_SOURCE_DIR}/Horde3D/Bindings/C++" "${CMAKE_SOURCE_DIR}/Extensions/Terrain/Bindings/C++" "${CMAKE_CURRENT_BINARY_DIR}")
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+	endif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+MESSAGE(STATUS "CMAKE_RUNTIME_OUTPUT_DIRECTORY: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins)
+
+MESSAGE(STATUS "Output to ${LIBRARY_OUTPUT_DIRECTORY} ${RUNTIME_OUTPUT_DIRECTORY}")
+
+ADD_LIBRARY( QTerrainNodeExtension SHARED  ${QTerrainNodeExtension_SOURCES}  ${QTerrainNodeExtension_HEADERS} ${QTerrainNodeExtension_FORMS} )
+
+TARGET_LINK_LIBRARIES( QTerrainNodeExtension ${QT_LIBRARIES} HordeSceneEditorCore QXmlTree QPropertyEditor ${LUA_LIBRARIES} Horde3D Horde3DUtils )
