@@ -152,7 +152,7 @@ bool createIcosahedron()
 	}
 		
 
-	int geo = h3dutCreateGeometryRes( "icosa", 12, indices.size(), reinterpret_cast< float * > ( vertPos.data() ), indices.data(), normalsShort.data(), nullptr, nullptr, texCoords.data(), nullptr );
+	int geo = h3dutCreateGeometryRes( "icosa", 12, indices.size(), reinterpret_cast< float * > ( vertPos.data() ), indices.data(), normalsShort.data(), 0, 0, texCoords.data(), 0 );
 	if ( geo == 0 ) return false;
 
 	// Create material 

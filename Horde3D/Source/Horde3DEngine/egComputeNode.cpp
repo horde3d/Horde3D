@@ -42,15 +42,15 @@ ComputeNode::~ComputeNode()
 SceneNodeTpl *ComputeNode::parsingFunc( map< string, string > &attribs )
 {
 // 	map< string, string >::iterator itr;
-// 	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "", nullptr, nullptr );
+// 	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "", 0, 0 );
 
-	return nullptr;
+	return 0;
 }
 
 
 SceneNode *ComputeNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 {
-	if ( nodeTpl.type != SceneNodeTypes::Compute ) return nullptr;
+	if ( nodeTpl.type != SceneNodeTypes::Compute ) return 0;
 
 	return new ComputeNode( *( ComputeNodeTpl * ) &nodeTpl );
 }

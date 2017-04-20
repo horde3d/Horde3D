@@ -165,7 +165,7 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_curGeometryIndex = 1;
 	_defaultFBO = 0;
 	_defaultFBOMultisampled = false;
-	_indexFormat = (uint32)RDIIndexFormat::IDXFMT_16;
+    _indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 	_tessPatchVerts = 0;

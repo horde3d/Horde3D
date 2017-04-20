@@ -3,7 +3,7 @@
 # This module defines:
 #
 # GLFW_FOUND, if false, do not try to link to GLFW
-# GLFW_LIBRARY, the name of the library to link against
+# GLFW_LIBRARY_PATH, the name of the library to link against
 # GLFW_LIBRARIES, the full list of libs to link against
 # GLFW_INCLUDE_DIR, where to find glfw3.h
 #=============================================================================
@@ -25,7 +25,7 @@ FIND_PATH(GLFW_INCLUDE_DIR glfw3.h
 
 #MESSAGE("GLFW_INCLUDE_DIR is ${GLFW_INCLUDE_DIR}")
 
-FIND_LIBRARY(GLFW_LIBRARY
+FIND_LIBRARY(GLFW_LIBRARY_PATH
 	NAMES glfw3 GLFW
 	HINTS
 	$ENV{GLFWDIR}
@@ -41,7 +41,7 @@ FIND_LIBRARY(GLFW_LIBRARY
 
 SET(GLFW_FOUND FALSE)
 
-IF(NOT GLFW_LIBRARY OR HORDE3D_FORCE_DOWNLOAD_GLFW)
+IF(NOT GLFW_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_GLFW)
     # If not found, try to build with local sources.
     # It uses CMake's "ExternalProject_Add" target.
     MESSAGE(STATUS "Preparing external GLFW project")
@@ -64,23 +64,28 @@ IF(NOT GLFW_LIBRARY OR HORDE3D_FORCE_DOWNLOAD_GLFW)
         ${install_dir}/src/project_glfw/include
     )
     
-    IF(WIN32)
-	    SET(GLFW_LIBRARY
-	        ${install_dir}/lib/glfw3.lib
-	    )
-	ELSE(WIN32)
-	    SET(GLFW_LIBRARY
-	        ${install_dir}/lib/libglfw3.a
-	    )
-	ENDIF(WIN32)
-    
-ENDIF(NOT GLFW_LIBRARY OR HORDE3D_FORCE_DOWNLOAD_GLFW)
+    IF(MSVC)
+       SET(GLFW_LIBRARY_PATH ${install_dir}/lib/glfw3.lib )
+    ELSE(MSVC)
+       SET(GLFW_LIBRARY_PATH ${install_dir}/lib/libglfw3.a )
+    ENDIF(MSVC)
 
-#MESSAGE("GLFW_LIBRARY is ${GLFW_LIBRARY}")
+    add_library(GLFW_LIBRARY UNKNOWN IMPORTED)
+    set_property(TARGET GLFW_LIBRARY PROPERTY IMPORTED_LOCATION  ${GLFW_LIBRARY_PATH} )
+    set_property(TARGET GLFW_LIBRARY PROPERTY IMPORTED_LOCATION  ${GLFW_LIBRARY_PATH} )
+    add_custom_command(OUTPUT ${GLFW_LIBRARY_PATH} VERBATIM COMMAND ${CMAKE_COMMAND} -E echo "Building GLFW" DEPENDS project_glfw)
+    add_custom_target(GLFW_LIBRARY_EXTERN DEPENDS ${GLFW_LIBRARY_PATH} project_glfw)
+    add_dependencies(GLFW_LIBRARY project_glfw)
+    add_dependencies(GLFW_LIBRARY GLFW_LIBRARY_EXTERN)
+    set(GLFW_LIBRARY_PATH GLFW_LIBRARY )
 
-IF(GLFW_LIBRARY)
+ENDIF(NOT GLFW_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_GLFW)
 
-    SET(GLFW_LIBRARIES ${GLFW_LIBRARY} CACHE STRING "All the libs required to link GLFW")
+#MESSAGE("GLFW_LIBRARY is ${GLFW_LIBRARY_PATH}")
+
+IF(GLFW_LIBRARY_PATH)
+
+    SET(GLFW_LIBRARIES ${GLFW_LIBRARY_PATH} CACHE STRING "All the libs required to link GLFW")
 
     # GLFW may require threads on your system.
     # The Apple build may not need an explicit flag because one of the
@@ -133,12 +138,12 @@ IF(GLFW_LIBRARY)
     ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
     # Set the final string here so the GUI reflects the final state.
-    SET(GLFW_LIBRARY ${GLFW_LIBRARY} CACHE STRING "Where the GLFW Library can be found")
+    SET(GLFW_LIBRARY_PATH ${GLFW_LIBRARY_PATH} CACHE STRING "Where the GLFW Library can be found")
 
     SET(GLFW_FOUND TRUE)
 
     #MESSAGE("GLFW_LIBRARIES is ${GLFW_LIBRARIES}")
 
-ENDIF(GLFW_LIBRARY)
+ENDIF(GLFW_LIBRARY_PATH)
 
 MESSAGE("-- Found GLFW: ${GLFW_FOUND}")

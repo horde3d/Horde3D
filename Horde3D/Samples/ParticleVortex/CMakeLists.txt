@@ -1,8 +1,11 @@
+cmake_minimum_required(VERSION 3.1)
+
 add_executable(ParticleVortex WIN32 MACOSX_BUNDLE
     ../Framework/sampleapp.cpp
 	app.cpp
 	main.cpp
 )
+set_property(TARGET ParticleVortex PROPERTY CXX_STANDARD 14)
 
 target_link_libraries(ParticleVortex Horde3D Horde3DUtils ${GLFW_LIBRARIES})
 

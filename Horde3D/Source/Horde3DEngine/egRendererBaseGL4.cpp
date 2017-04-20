@@ -171,7 +171,7 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 	_tessPatchVerts = _lastTessPatchVertsValue = 0;
-	_memBarriers = RDIDrawBarriers::NotSet;
+    _memBarriers = NotSet;
 	
 	_maxComputeBufferAttachments = 8;
 	_storageBufs.reserve( _maxComputeBufferAttachments );
@@ -1125,7 +1125,7 @@ int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
 
 		int val = 0;
 		const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
-		glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, nullptr, &val );
+		glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, 0, &val );
 
 		return idx != -1 ? val : -1;
 	}
@@ -1855,7 +1855,7 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		// Place memory barriers
 		if ( mask & PM_BARRIER )
 		{
-			if ( _memBarriers != RDIDrawBarriers::NotSet ) glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers - 1 ] );
+            if ( _memBarriers != NotSet ) glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers - 1 ] );
 			_pendingMask &= ~PM_BARRIER;
 		}
 
@@ -1886,7 +1886,7 @@ void RenderDeviceGL4::resetStates()
 	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
 	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;
 
-	_memBarriers = RDIDrawBarriers::NotSet;
+    _memBarriers = NotSet;
 
 //	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )

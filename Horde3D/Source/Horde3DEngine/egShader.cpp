@@ -230,7 +230,7 @@ std::string CodeResource::assembleCode() const
 
 void CodeResource::updateShaders()
 {
-	auto resources = Modules::resMan().getResources();
+    std::vector< Resource * >& resources = Modules::resMan().getResources();
 	for( uint32 i = 0; i < resources.size(); ++i )
 	{
 		Resource *res = resources[ i ];
@@ -1026,7 +1026,7 @@ bool ShaderResource::load( const char *data, int size )
 				// FX section
 				if ( fxCode != 0x0 )
 				{
-					delete[] fxCode; fxCode = nullptr; 
+					delete[] fxCode; fxCode = 0; 
 					return raiseError( "More than one FX section" );
 				}
 
@@ -1216,12 +1216,12 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 	
 	// Compile shader
 	bool compiled = Modules::renderer().createShaderComb( sc, 
-														  vsAvailable ? _tmpCodeVS.c_str() : nullptr,
-														  fsAvailable ? _tmpCodeFS.c_str() : nullptr,  
-														  gsAvailable ? _tmpCodeGS.c_str() : nullptr,
-														  tscAvailable ? _tmpCodeTSCtl.c_str() : nullptr,
-														  tseAvailable ? _tmpCodeTSEval.c_str() : nullptr,
-														  csAvailable ? _tmpCodeCS.c_str() : nullptr
+														  vsAvailable ? _tmpCodeVS.c_str() : 0,
+														  fsAvailable ? _tmpCodeFS.c_str() : 0,  
+														  gsAvailable ? _tmpCodeGS.c_str() : 0,
+														  tscAvailable ? _tmpCodeTSCtl.c_str() : 0,
+														  tseAvailable ? _tmpCodeTSEval.c_str() : 0,
+														  csAvailable ? _tmpCodeCS.c_str() : 0
 														  );
 	if( !compiled )
 	{

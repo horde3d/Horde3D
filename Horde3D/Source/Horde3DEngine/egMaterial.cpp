@@ -61,7 +61,7 @@ void MaterialResource::release()
 	_shaderRes = 0x0;
 	_matLink = 0x0;
 	for( uint32 i = 0; i < _samplers.size(); ++i ) _samplers[i].texRes = 0x0;
-// 	for ( uint32 i = 0; i < _buffers.size(); ++i ) _buffers[ i ].compBufRes = nullptr;
+// 	for ( uint32 i = 0; i < _buffers.size(); ++i ) _buffers[ i ].compBufRes = 0;
 
 	_buffers.clear();
 	_samplers.clear();
