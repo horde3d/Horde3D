@@ -4,7 +4,7 @@ IF( DEFINED DEFINITIONS)
 ADD_DEFINITIONS(-D${DEFINITIONS})
 ENDIF()
 
-ADD_LIBRARY( lua SHARED
+ADD_LIBRARY( lua STATIC
     src/lapi.c
     src/lapi.h
     src/lauxlib.c

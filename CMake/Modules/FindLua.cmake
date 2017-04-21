@@ -212,8 +212,6 @@ IF(NOT LUA_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_LUA)
 
     IF(MSVC)
        SET(LUA_LIBRARY_PATH  ${install_dir}/lib/lua.lib )
-    ELSEIF(MINGW)
-       SET(LUA_LIBRARY_PATH  ${install_dir}/lib/liblua.dll.a )
     ELSE(MSVC)
        SET(LUA_LIBRARY_PATH ${install_dir}/lib/liblua.a )
     ENDIF(MSVC)

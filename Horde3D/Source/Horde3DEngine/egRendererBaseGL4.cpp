@@ -1122,12 +1122,12 @@ int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
 	{
 		RDIShaderGL4 &shader = _shaders.getRef( shaderId );
 		int idx = glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
-
-		int val = 0;
-		const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
-		glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, 0, &val );
-
-		return idx != -1 ? val : -1;
+        if( idx != -1 )
+        {
+            const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
+            glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, 0, &idx );
+        }
+        return idx;
 	}
 	else
 	{
