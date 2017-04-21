@@ -20,6 +20,7 @@
 #include <math.h>
 #include <iomanip>
 #include <random>
+#include <iostream>
 #include <string.h>
 #include <memory>
 
@@ -74,7 +75,12 @@ bool ParticleVortexSample::initResources()
 
 	// Generate random position data for particles
 	size_t particlesCount = 1000000;
-	std::unique_ptr< ParticleData[] > compData = std::make_unique< ParticleData[] >( particlesCount );
+    ParticleData* compData = static_cast<ParticleData*>( malloc(sizeof(ParticleData) * particlesCount) );
+    if( !compData )
+    {
+        std::cout << "Out of memory when allocating particle data" << std::endl;
+        return false;
+    }
 
 	std::random_device rd;
 	std::mt19937 gen( rd() );
@@ -129,8 +135,9 @@ bool ParticleVortexSample::initResources()
 
 	// Fill compute buffer with generated data
 	void *data = h3dMapResStream( compBuf, H3DComputeBufRes::ComputeBufElem, 0, 0, false, true );
-	memcpy( data, compData.get(), particlesCount * sizeof( ParticleData ) );
+    memcpy( data, compData, particlesCount * sizeof( ParticleData ) );
 	h3dUnmapResStream( compBuf );
+    free(compData);
 
     // 3. Load resources
 

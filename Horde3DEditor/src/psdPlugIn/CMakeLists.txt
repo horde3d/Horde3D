@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
-#FIND_PACKAGE(Qt4 REQUIRED)
-
 SET(qpsd_SOURCES
 	main.cpp
 	qpsdhandler.cpp

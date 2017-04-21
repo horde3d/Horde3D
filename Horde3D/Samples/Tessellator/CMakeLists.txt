@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.1)
-
 add_executable(Tessellator WIN32 MACOSX_BUNDLE
     ../Framework/sampleapp.cpp
 	app.cpp

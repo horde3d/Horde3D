@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
-#FIND_PACKAGE(Qt4 REQUIRED QtCore QtGui QtXml)
-
 SET(QTerrainNodeExtension_SOURCES
 	ExtTerrainPlugIn.cpp
 	QTerrainNode.cpp
@@ -21,8 +17,6 @@ ADD_DEFINITIONS(${QT_DEFINITIONS})
 add_definitions(-DQT_PLUGIN)
 add_definitions(-DQT_SHARED)
 SET(QT_USE_QTXML TRUE)
-
-#INCLUDE(${QT_USE_FILE})
 
 INCLUDE_DIRECTORIES("../HordeSceneEditorCore" "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_SOURCE_DIR}/Horde3D/Bindings/C++" "${CMAKE_SOURCE_DIR}/Extensions/Terrain/Bindings/C++" "${CMAKE_CURRENT_BINARY_DIR}")
 

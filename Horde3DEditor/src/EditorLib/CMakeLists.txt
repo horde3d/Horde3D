@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
 SET(EditorLib_SOURCES
    HighLighter.cpp
    LuaFunctions.cpp

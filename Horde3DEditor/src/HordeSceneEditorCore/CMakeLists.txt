@@ -1,6 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
-#FIND_PACKAGE(Qt4 REQUIRED QtCore QtGui QtOpenGL QtXml )
 IF(MSVC)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 ENDIF(MSVC)

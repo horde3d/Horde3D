@@ -1,7 +1,3 @@
-cmake_minimum_required(VERSION 3.0)
-
-#FIND_PACKAGE(Qt4 REQUIRED)
-
 SET(TerrainToolPlugIn_SOURCES
 	ConverterWizard.cpp
 	TerrainToolPlugIn.cpp
@@ -17,8 +13,6 @@ SET(TerrainToolPlugIn_FORMS
 SET(QT_USE_QTXML TRUE)
 
 INCLUDE_DIRECTORIES("../../include" "../HordeSceneEditorCore" "${CMAKE_CURRENT_BINARY_DIR}")
-
-#INCLUDE(${QT_USE_FILE})
 ADD_DEFINITIONS(${QT_DEFINITIONS})
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
