@@ -46,7 +46,7 @@ ColorCombo::~ColorCombo()
 
 QColor ColorCombo::color() const
 {
-	return itemData(currentIndex(), Qt::DecorationRole).value<QColor>();
+    return itemData(currentIndex(), Qt::DecorationRole).value<QColor>();
 }
 
 void ColorCombo::setColor(QColor color)
@@ -65,7 +65,7 @@ void ColorCombo::currentChanged(int index)
 {
 	if (itemData(index).isValid() && itemData(index) == QVariant((int)QVariant::UserType))
 	{
-		QColor color = QColorDialog::getColor(m_init, this, QString());		
+		QColor color = QColorDialog::getColor(m_init, this);
 		if (color.isValid())
 		{
 			if (findData(color, int(Qt::DecorationRole)) == -1)
