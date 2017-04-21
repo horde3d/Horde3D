@@ -521,7 +521,7 @@ void GLWidget::mouseMoveEvent(QMouseEvent* event)
         QPoint globalPos = event->globalPos();
         float diffX = globalPos.x() - m_navOrigin.x();
         float diffY = globalPos.y() - m_navOrigin.y();
-        m_navOrigin = QCursor::pos();
+        m_navOrigin = globalPos;
         if (controlPressed) // Strafe
             cameraNavigationUpdate(diffX * (m_navSpeed / 200), diffY * (m_navSpeed / 200), 0, 0, 0);
         else // Rotate Camera
