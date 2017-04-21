@@ -156,7 +156,7 @@ if (LUA_VERSION_STRING)
     )
 endif ()
 
-MESSAGE("LUA_LIBRARY is ${LUA_LIBRARY_PATH}")
+#MESSAGE("LUA_LIBRARY is ${LUA_LIBRARY_PATH}")
 
 IF(NOT LUA_LIBRARY_PATH )
 
@@ -248,7 +248,7 @@ if (LUA_LIBRARY_PATH)
     # Set the final string here so the GUI reflects the final state.
     SET(LUA_LIBRARY_PATH ${LUA_LIBRARY_PATH} CACHE STRING "Where the LUA Library can be found")
 
-    MESSAGE("LUA_LIBRARY is now ${LUA_LIBRARY_PATH}")
+    #MESSAGE("LUA_LIBRARY is now ${LUA_LIBRARY_PATH}")
 
 endif ()
 
