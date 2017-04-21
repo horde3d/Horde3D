@@ -293,7 +293,7 @@ void HordeSceneEditor::closeEvent(QCloseEvent* event)
 
 void HordeSceneEditor::customEvent(QEvent* event)
 {
-	if (event->type() == SceneFile::UpdateFileWatcherEvent)
+    if( static_cast<int>(event->type()) == static_cast<int>(SceneFile::UpdateFileWatcherEvent) )
 		updateFileSystemWatcher();
 }
 

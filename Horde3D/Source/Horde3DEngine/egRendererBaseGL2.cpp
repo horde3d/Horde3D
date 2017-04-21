@@ -799,8 +799,8 @@ bool RenderDeviceGL2::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-									  const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char */*geometryShaderSrc*/,
+                                      const char */*tessControlShaderSrc*/, const char */*tessEvaluationShaderSrc*/, const char */*computeShaderSrc*/ )
 {
 	// Compile and link shader
 	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
