@@ -49,11 +49,14 @@ void Property::setValue(const QVariant &value)
 }
 
 bool Property::isReadOnly()
-{
-	if( m_propertyObject->dynamicPropertyNames().contains( objectName().toLocal8Bit() ) )
-		return false;
-	if (m_propertyObject && m_propertyObject->metaObject()->property(m_propertyObject->metaObject()->indexOfProperty(qPrintable(objectName()))).isWritable())
-		return false;
+{	
+    if (m_propertyObject )
+    {
+        if( m_propertyObject->metaObject()->property(m_propertyObject->metaObject()->indexOfProperty(qPrintable(objectName()))).isWritable() )
+            return false;
+        if( m_propertyObject->dynamicPropertyNames().contains( objectName().toLocal8Bit() ) )
+            return false;
+    }
 	else
 		return true;
 }
