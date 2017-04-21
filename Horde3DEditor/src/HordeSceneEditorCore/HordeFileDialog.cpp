@@ -41,7 +41,7 @@
 
 HordeFileDialog::HordeFileDialog(H3DResTypes::List type, const QString& resourcePath, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : QDialog(parent, flags), 
 m_type(type), 
-DefaultRepoPath( QApplication::applicationDirPath()+"/../../Content/Repository" ),
+DefaultRepoPath( QDir(QApplication::applicationDirPath()+"/../../Content").absolutePath() ),
 m_sceneResourcePath(resourcePath)
 {
 	setupUi(this);
