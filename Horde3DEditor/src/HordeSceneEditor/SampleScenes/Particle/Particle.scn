@@ -1,0 +1,7 @@
+<!DOCTYPE SceneConfiguration>
+<Configuration>
+    <SceneGraph path="particles/particle.scene.xml"/>
+    <LightParameters lightingcontext="LIGHTING" shadowcontext="SHADOWMAP" material="material/light.material.xml"/>
+    <Extras/>
+    <ActiveCamera name="Camera"/>
+</Configuration>

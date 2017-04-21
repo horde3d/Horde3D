@@ -37,11 +37,13 @@ class QPropertyModel : public QAbstractItemModel
 {
 	Q_OBJECT
 public:
+    enum { MetaObjectRule = Qt::UserRole+1 };
+
 	/**
 	 * Constructor
 	 * @param parent optional parent object
 	 */
-	QPropertyModel(QObject* parent = 0);
+    QPropertyModel(QObject* parent = 0);
 	/// Destructor
 	virtual ~QPropertyModel();
 
@@ -100,12 +102,13 @@ public:
 		
 
 private:
+    QList<QByteArray> getDynamicProperties(QObject *propertyObject);
 
 	/// Adds dynamic properties to the model
-	void addDynamicProperties( Property* parent, QObject* propertyObject );
+    void addDynamicProperties(Property* parent, QObject* propertyObject);
 
 	/// The Root Property for all objects
-	Property*									m_rootItem;
+    Property*									m_rootItem;
 
 	/// Custom callback
 	QList<QPropertyEditorWidget::UserTypeCB>	m_userCallbacks;

@@ -54,7 +54,7 @@ QWidget *QVariantDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 	case QVariant::Int:
 	case QMetaType::Float:	
 	case QVariant::Double:	
-	case QVariant::UserType:			
+    case QVariant::UserType:
 		editor = p->createEditor(parent, option);
 		if (editor)	
 		{
@@ -66,7 +66,7 @@ QWidget *QVariantDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 			break; // if no editor could be created take default case
 		}
 	default:
-		editor = QItemDelegate::createEditor(parent, option, index);
+        if( !editor) editor = QItemDelegate::createEditor(parent, option, index);
 	}
 	parseEditorHints(editor, p->editorHints());
 	return editor;
@@ -75,6 +75,7 @@ QWidget *QVariantDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 void QVariantDelegate::setEditorData(QWidget *editor, const QModelIndex &index) const
 {		
 	m_finishedMapper->blockSignals(true);
+    editor->blockSignals(true);
 	QVariant data = index.model()->data(index, Qt::EditRole);	
 	
 	switch(data.type())
@@ -90,31 +91,30 @@ void QVariantDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
 		QItemDelegate::setEditorData(editor, index);
 		break;
 	}
-	m_finishedMapper->blockSignals(false);
+    editor->blockSignals(false);
+	m_finishedMapper->blockSignals(false);    
 }
 
 void QVariantDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
 {	
 	QVariant data = index.model()->data(index, Qt::EditRole);	
-	switch(data.type())
+    unsigned int type = data.type();
+    switch(type)
 	{
 	case QVariant::Color:		
 	case QMetaType::Double:
 	case QMetaType::Float:				
 	case QVariant::UserType: 
 	case QVariant::Int:
-		{
-			QVariant data = static_cast<Property*>(index.internalPointer())->editorData(editor);
-			if (data.isValid())
-			{
-				model->setData(index, data , Qt::EditRole); 
-				break;
-			}
-		}
-	default:
+        break;
+	default:        
 		QItemDelegate::setModelData(editor, model, index);
-		break;
+        return;
 	}
+
+    data = static_cast<Property*>(index.internalPointer())->editorData(editor);
+    if (data.isValid())
+        model->setData(index, data , Qt::EditRole);
 }
 
 void QVariantDelegate::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex& index ) const

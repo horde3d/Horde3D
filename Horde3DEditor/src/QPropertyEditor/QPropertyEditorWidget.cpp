@@ -53,9 +53,8 @@ void QPropertyEditorWidget::setObject(QObject* propertyObject)
 }
 
 void QPropertyEditorWidget::updateObject(QObject* propertyObject)
-{
-	if (propertyObject)
-		m_model->updateItem(propertyObject);	
+{    
+    m_model->updateItem(propertyObject);
 }
 
 void QPropertyEditorWidget::registerCustomPropertyCB(UserTypeCB callback)
@@ -66,5 +65,38 @@ void QPropertyEditorWidget::registerCustomPropertyCB(UserTypeCB callback)
 void QPropertyEditorWidget::unregisterCustomPropertyCB(UserTypeCB callback)
 {
 	m_model->unregisterCustomPropertyCB(callback);
+}
+
+bool QPropertyEditorWidget::showsProperty(QObject *propertyObject)
+{
+    if( !propertyObject )
+        return m_model->rowCount() == 0;
+    QModelIndex index = m_model->index(0, 0);
+    QModelIndexList items = m_model->match( index, QPropertyModel::MetaObjectRule, QVariant::fromValue<void*>( (void*) propertyObject), 1, Qt::MatchRecursive | Qt::MatchExactly );
+    return !items.empty();
+}
+
+void QPropertyEditorWidget::dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles)
+{
+    // For some reason currently dataChanged is not called for all changed properties.
+    // String editor works so far, Spinboxes not,... TODO find out why
+    QTreeView::dataChanged(topLeft, bottomRight, roles );
+    int rowStart = topLeft.row();
+    int rowEnd = bottomRight.row();
+    QObject* propertyObject = 0;
+    Property* p = 0;
+    QModelIndex index;
+    for( int i = rowStart; i <= rowEnd; ++i )
+    {
+        index = m_model->index(i, 0, topLeft.parent() );
+        if( (p = static_cast<Property*>(index.internalPointer())) )
+        {
+            if( p->propertyObject() != propertyObject )
+            {
+                propertyObject = p->propertyObject();
+                emit objectChanged(propertyObject);
+            }
+        }
+    }
 }
 

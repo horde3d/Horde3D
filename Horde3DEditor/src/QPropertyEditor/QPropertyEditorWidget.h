@@ -95,9 +95,10 @@ public:
 	/**
 	 * Updates the view for the given object. This can be usefull if a property was changed programmatically instead
 	 * of using the view. In this case the view normally will display the new property values only after the user clicked
-	 * on it. To overcome this problem you can call updateObject with the object whose property was changed.
+     * on it. To overcome this problem you can call updateObject with the object whose property was changed or 0
+     * so the root item's property object will be updated.
 	 */
-	void updateObject(QObject* propertyObject);
+    void updateObject(QObject* propertyObject = 0);
 
 	/**
 	 * If you define custom datatypes outside of this library the QPropertyModel will check if you
@@ -110,11 +111,25 @@ public:
 	 * You can register more than one callback. If one of those callbacks are not used any longer, you can unregister
 	 * it with this method
 	 */
-	void unregisterCustomPropertyCB(UserTypeCB callback);
+    void unregisterCustomPropertyCB(UserTypeCB callback);
+
+    /**
+     * @brief returns true if the current model contains the given property
+     * @param propertyObject propery object to search for
+     * @return true if object is currently shown by the model, false otherwise
+     */
+    bool showsProperty( QObject* propertyObject );
+
+signals:
+    void objectChanged( QObject* propertyObject );
+
+protected slots:
+    void dataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight, const QVector<int> &roles);
 
 private:
 	/// The Model for this view
 	QPropertyModel*			m_model;
 
 };
+
 #endif
