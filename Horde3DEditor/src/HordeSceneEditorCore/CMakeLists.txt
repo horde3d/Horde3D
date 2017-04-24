@@ -76,3 +76,4 @@ source_group("Forms" FILES ${HordeSceneEditorCore_FORMS})
 ADD_LIBRARY( HordeSceneEditorCore STATIC ${HordeSceneEditorCore_SOURCES} ${HordeSceneEditorCore_HEADERS} ${HordeSceneEditorCore_FORMS} )
 
 TARGET_LINK_LIBRARIES( HordeSceneEditorCore ${QT_LIBRARIES} )
+TARGET_INCLUDE_DIRECTORIES( HordeSceneEditorCore PUBLIC ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HordeSceneEditorCore ${CMAKE_CURRENT_BINARY_DIR}/HordeSceneEditorCore_autogen/include )

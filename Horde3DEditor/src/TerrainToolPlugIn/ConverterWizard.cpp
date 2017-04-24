@@ -22,8 +22,8 @@
 
 #include "ConverterWizard.h"
 
-#include <QtGui/QImageWriter>
-#include <QtGui/QImageReader>
+#include <QImageWriter>
+#include <QImageReader>
 #include <QMessageBox>
 #include <QFileDialog>
 

@@ -23,6 +23,17 @@ context TRANSLUCENT
 	BlendMode = AddBlended;
 }
 
+OpenGL4
+{
+	context TRANSLUCENT
+	{
+		VertexShader = compile GLSL VS_TRANSLUCENT_GL4;
+		PixelShader = compile GLSL FS_TRANSLUCENT_GL4;
+		
+		ZWriteEnable = false;
+		BlendMode = AddBlended;
+	}
+}
 
 [[VS_SHADOWMAP]]
 // =================================================================================================
@@ -72,6 +83,24 @@ void main(void)
 	gl_Position = viewProjMat * vec4( calcParticlePos( texCoords0 ), 1 );
 }
 
+[[VS_TRANSLUCENT_GL4]]
+// =================================================================================================
+
+#include "shaders/utilityLib/vertParticleGL4.glsl"
+
+uniform mat4 viewProjMat;
+
+layout( location = 0 ) in vec2 texCoords0;
+out vec4 color;
+out vec2 texCoords;
+
+void main(void)
+{
+	color = getParticleColor();
+	texCoords = vec2( texCoords0.s, -texCoords0.t );
+	gl_Position = viewProjMat * vec4( calcParticlePos( texCoords0 ), 1 );
+}
+
 
 [[FS_TRANSLUCENT]]
 // =================================================================================================
@@ -85,4 +114,20 @@ void main( void )
 	vec4 albedo = texture2D( albedoMap, texCoords );
 	
 	gl_FragColor = albedo * color;
+}
+
+[[FS_TRANSLUCENT_GL4]]
+// =================================================================================================
+
+uniform sampler2D albedoMap;
+in vec4 color;
+in vec2 texCoords;
+
+out vec4 fragColor;
+
+void main( void )
+{
+	vec4 albedo = texture2D( albedoMap, texCoords );
+	
+	fragColor = albedo * color;
 }

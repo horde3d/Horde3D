@@ -18,7 +18,7 @@ add_definitions(-DQT_PLUGIN)
 add_definitions(-DQT_SHARED)
 SET(QT_USE_QTXML TRUE)
 
-INCLUDE_DIRECTORIES("../HordeSceneEditorCore" "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_SOURCE_DIR}/Horde3D/Bindings/C++" "${CMAKE_SOURCE_DIR}/Extensions/Terrain/Bindings/C++" "${CMAKE_CURRENT_BINARY_DIR}")
+INCLUDE_DIRECTORIES( "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_SOURCE_DIR}/Horde3D/Bindings/C++" "${CMAKE_SOURCE_DIR}/Extensions/Terrain/Bindings/C++" "${CMAKE_CURRENT_BINARY_DIR}")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")

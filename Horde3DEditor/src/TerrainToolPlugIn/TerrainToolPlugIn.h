@@ -25,7 +25,7 @@
 
 #include <QtCore/QObject>
 
-#include "../HordeSceneEditorCore/ToolPlugIn.h"
+#include <ToolPlugIn.h>
 
 class QProgressDialog;
 

@@ -14,7 +14,7 @@ uniform vec3 parPosArray[64];
 uniform vec2 parSizeAndRotArray[64];
 uniform vec4 parColorArray[64];
 
-attribute float parIdx;
+layout( location = 1 ) in float parIdx;
 
 
 vec4 getParticleColor()

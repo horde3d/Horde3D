@@ -25,13 +25,13 @@
 #include "ConverterWizard.h"
 
 #include <QFileDialog>
-#include <QtGui/QImageReader>
-#include <QtCore/QFileInfo>
+#include <QImageReader>
+#include <QFileInfo>
 #include <QMessageBox>
-#include <QtCore/QFile>
-#include <QtCore/QTextStream>
+#include <QFile>
+#include <QTextStream>
 #include <QProgressDialog>
-#include <QtCore/QDir>
+#include <QDir>
 
 #include <math.h>
 
