@@ -28,7 +28,6 @@
 
 #include <QtXml/qdom.h>
 #include <QtCore/QProcess>
-#include <QtCore/QFileSystemWatcher>
 #include <QMessageBox>
 #include <QtCore/QDir>
 #include <QFileDialog>

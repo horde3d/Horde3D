@@ -27,7 +27,6 @@
 
 #include <QtCore/QDir>
 
-class QFileSystemWatcher;
 class QProcess;
 class ColladaImporter : public QDialog, protected Ui_ColladaImporter
 {

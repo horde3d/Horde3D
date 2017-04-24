@@ -839,10 +839,9 @@ void HordeSceneEditor::fileChanged(const QString& path)
 		if (h3dGetResType(resource) == H3DResTypes::Pipeline && m_cameraToolBar->currentPipelineID() == resource)
 			m_pipelineWidget->loadPipeline(m_cameraToolBar->currentPipelineFile(), m_cameraToolBar->currentPipelineID());
 	}
-#ifdef __APPLE__
+    // See http://stackoverflow.com/questions/18300376/qt-qfilesystemwatcher-signal-filechanged-gets-emited-only-once/30076119
     m_fileSystemWatcher->removePath(path);
     m_fileSystemWatcher->addPath(path);
-#endif
 }
 
 void HordeSceneEditor::setUndoStack(QUndoStack* undoStack)
