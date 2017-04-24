@@ -85,7 +85,7 @@ SettingsDialog::SettingsDialog(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*
 	settings.endGroup();
 
 	settings.beginGroup("Repository");
-    m_repositoryPath->setText( QDir::toNativeSeparators( settings.value("repositoryDir", QDir(QApplication::applicationDirPath()+"/../../Content").absolutePath() ).toString() ) );
+    m_repositoryPath->setText( QDir::toNativeSeparators( settings.value("repositoryDir", qApp->property("DefaultRepoDir") ).toString() ) );
 	settings.endGroup();
 
 	settings.beginGroup("ConfirmDialogs");

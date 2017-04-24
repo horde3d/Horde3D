@@ -81,6 +81,9 @@ m_sceneFile(0), m_glWidget(0)
 {
 	setupUi(this);		
 
+    // Define default folder for asset repository (can be configured in settings)
+    qApp->setProperty("DefaultRepoDir", QDir(QApplication::applicationDirPath()+"/../../Content").absolutePath());
+
 	// Set default GL Format
 	QGLFormat fmt;
 	fmt.setAlpha(true);

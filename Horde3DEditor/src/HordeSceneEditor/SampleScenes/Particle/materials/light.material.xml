@@ -1,0 +1,3 @@
+<Material>
+	<Shader source="shaders/deferredLighting.shader"/>
+</Material>

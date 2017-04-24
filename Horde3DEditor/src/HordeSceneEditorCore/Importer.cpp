@@ -35,7 +35,7 @@ Importer::Importer()
 {
 	QHordeSceneEditorSettings settings;
 	settings.beginGroup("Repository");
-	m_sourceResourcePath = settings.value("repositoryDir", QApplication::applicationDirPath()+QDir::separator()+"Repository").toString();
+    m_sourceResourcePath = settings.value("repositoryDir", qApp->property("DefaultRepoDir")).toString();
 	settings.endGroup();
 
 }
