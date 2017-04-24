@@ -177,7 +177,6 @@ ENDIF()
 
 unset(_lua_library_names)
 
-
 IF(NOT LUA_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_LUA)
     IF(MINGW)
        SET(LUA_PLATFORM "LUA_BUILD_AS_DLL")
@@ -223,8 +222,10 @@ IF(NOT LUA_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_LUA)
     add_custom_target(LUA_LIBRARY_EXTERN DEPENDS ${LUA_LIBRARY_PATH} project_lua)
     add_dependencies(LUA_LIBRARY project_lua)
     add_dependencies(LUA_LIBRARY LUA_LIBRARY_EXTERN)
+    get_filename_component(LUA_LIB_EXT ${LUA_LIBRARY_PATH} EXT)
     set(LUA_LIBRARY_PATH LUA_LIBRARY )
-
+ELSE(NOT LUA_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_LUA)
+    get_filename_component(LUA_LIB_EXT ${LUA_LIBRARY_PATH} EXT)
 ENDIF(NOT LUA_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_LUA)
 
 
@@ -235,7 +236,6 @@ if (LUA_LIBRARY_PATH)
         set(LUA_LIBRARIES "${LUA_LIBRARY_PATH};${LUA_MATH_LIBRARY}")
 
         # include dl library for statically-linked Lua library
-        get_filename_component(LUA_LIB_EXT ${LUA_LIBRARY_PATH} EXT)
         if(LUA_LIB_EXT STREQUAL CMAKE_STATIC_LIBRARY_SUFFIX)
           list(APPEND LUA_LIBRARIES ${CMAKE_DL_LIBS})
         endif()

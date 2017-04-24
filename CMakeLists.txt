@@ -28,11 +28,6 @@ else()
     message("Not building examples.")
 endif(HORDE3D_BUILD_EXAMPLES)
 
-option(HORDE3D_BUILD_EDITOR "Build Horde3D Editor" OFF)
-if(HORDE3D_BUILD_EDITOR)
-  add_subdirectory(Horde3DEditor)
-endif(HORDE3D_BUILD_EDITOR)
-
 # Set binaries output folder.
 SET(HORDE3D_OUTPUT_PATH_PREFIX "${PROJECT_BINARY_DIR}/Binaries")
 SET(HORDE3D_OUTPUT_PATH_SUFFIX "")
@@ -54,6 +49,11 @@ include(Extensions/Extensions.txt)
 
 # Add engine target.
 add_subdirectory(Horde3D)
+
+option(HORDE3D_BUILD_EDITOR "Build Horde3D Editor" OFF)
+if(HORDE3D_BUILD_EDITOR)
+  add_subdirectory(Horde3DEditor)
+endif(HORDE3D_BUILD_EDITOR)
 
 if(POLICY CMP0058)
     cmake_policy(SET CMP0058 NEW)
