@@ -219,6 +219,11 @@ public:
 		return _objects[handle - 1];
 	}
 
+	uint32 size()
+	{
+		return _objects.size() - _freeList.size();
+	}
+
 private:
 	std::vector< T >       _objects;
 	std::vector< uint32 >  _freeList;
