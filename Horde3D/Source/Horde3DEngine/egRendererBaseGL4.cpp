@@ -411,7 +411,9 @@ void RenderDeviceGL4::destroyGeometry( uint32 geoObj )
 		destroyBuffer( curVao.vertexBufInfo[ i ].vbObj );
 	}
 
-	glDeleteVertexArrays( 1, &geoObj );
+    glDeleteVertexArrays( 1, &curVao.vao );
+
+    _vaos.remove( geoObj );
 }
 
 uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
