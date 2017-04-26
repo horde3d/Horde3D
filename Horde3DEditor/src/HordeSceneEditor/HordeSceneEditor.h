@@ -97,9 +97,7 @@ class HordeSceneEditor : public QMainWindow, protected Ui_HordeSceneEditor
 	friend class PlugInManager;
 
 public:
-	static HordeSceneEditor* instance() { if (!m_instance) m_instance = new HordeSceneEditor();	return m_instance; }
-	static void release();
-
+    HordeSceneEditor(QWidget* parent = 0, Qt::WindowFlags flags = 0);
 	virtual ~HordeSceneEditor();
 
 	GLWidget* glContext() {return m_glWidget;}
@@ -166,9 +164,6 @@ private slots:
 	void toolRegistered(const QList<QAction*>& actions);
 
 private:
-	HordeSceneEditor(QWidget* parent = 0, Qt::WindowFlags flags = 0);
-	static HordeSceneEditor* m_instance;
-
 	void addWatches(const QDir& directory, const QStringList& nameFilters);
 	void updateFileSystemWatcher();
 

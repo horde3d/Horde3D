@@ -68,21 +68,16 @@
 #include <Horde3D.h>
 #include <Horde3DUtils.h>
 
-HordeSceneEditor* HordeSceneEditor::m_instance = 0;
-
-void HordeSceneEditor::release()
-{
-	delete m_instance;
-}
-
-
 HordeSceneEditor::HordeSceneEditor(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : QMainWindow(parent, flags), 
 m_sceneFile(0), m_glWidget(0)
 {
-	setupUi(this);		
-
+    // Allow access of scene editor instance by other classes without passing in a pointer
+    qApp->setProperty("SceneEditorInstance", QVariant::fromValue<void*>(this));
     // Define default folder for asset repository (can be configured in settings)
     qApp->setProperty("DefaultRepoDir", QDir(QApplication::applicationDirPath()+"/../../Content").absolutePath());
+
+    setupUi(this);
+
 
 	// Set default GL Format
 	QGLFormat fmt;
@@ -279,7 +274,6 @@ HordeSceneEditor::~HordeSceneEditor()
 	settings.setValue("State", (unsigned int) windowState());
 	settings.endGroup();
 	delete m_pluginManager;
-	m_instance = 0;	
 }
 
 void HordeSceneEditor::closeEvent(QCloseEvent* event)

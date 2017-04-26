@@ -53,7 +53,7 @@
 
 
 GLWidget::GLWidget(QLabel* fpsLabel, QWidget* parent, Qt::WindowFlags flags) : QGLWidget(parent, 0, flags), 
-    m_fpsLabel(fpsLabel), m_transformationMode(0), m_collisionCheck(false), m_navSpeed(5), m_fps(30.0), m_parentWidget(0), m_shared(false),
+    m_fpsLabel(fpsLabel), m_transformationMode(0), m_collisionCheck(false), m_navSpeed(5), m_fps(30.0), m_parentWidget(0),
     m_forward(false), m_backward(false), m_left(false), m_right(false), m_up(false), m_down(false),
     m_limitToAxis(0), m_axisVpX(1), m_axisVpY(1), m_gizmoSelection(0), m_debugInfo(0), m_gridScale(1),
     m_currentNode(0), m_attachmentPlugIn(0), m_activeCameraID(0), m_initialized(false)
@@ -72,30 +72,9 @@ GLWidget::GLWidget(QLabel* fpsLabel, QWidget* parent, Qt::WindowFlags flags) : Q
     loadButtonConfig();
 }
 
-GLWidget::GLWidget(GLWidget* shared, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : QGLWidget(shared->format(), parent, shared, flags),
-    m_fpsLabel(shared->m_fpsLabel), m_transformationMode(0), m_collisionCheck(shared->m_collisionCheck), m_navSpeed(shared->m_navSpeed), m_fps(shared->m_fps), m_parentWidget(0), m_shared(true),
-    m_forward(false), m_backward(false), m_left(false), m_right(false), m_up(false), m_down(false),
-    m_limitToAxis(0), m_axisVpX(1), m_axisVpY(1), m_gizmoSelection(0),
-    m_debugInfo(shared->m_debugInfo), m_gridScale(shared->m_gridScale), m_currentNode(shared->m_currentNode),
-    m_attachmentPlugIn(shared->m_attachmentPlugIn), m_activeCameraID(shared->m_activeCameraID), m_initialized(shared->m_initialized)
-{
-    setFocusPolicy(Qt::ClickFocus);
-    setAttribute(Qt::WA_DeleteOnClose);
-    m_wheelTimer = new QTimer(this);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    m_wheelTimer->setTimerType(Qt::PreciseTimer);
-#endif
-    m_wheelTimer->setSingleShot(true);
-    connect(m_wheelTimer, SIGNAL(timeout()), this, SLOT(stopWheelMove()));
-    loadButtonConfig();
-}
-
-
-
 GLWidget::~GLWidget()
 {
-    if (!m_shared) // Only release if it's the only widget
-        h3dRelease();
+    h3dRelease();
 }
 
 // Update the log widget
@@ -194,7 +173,7 @@ void GLWidget::setCurrentNode(QXmlTreeNode* node)
 
 void GLWidget::initializeGL()
 {		
-    if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL4) ) == false)
+    if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL2) ) == false)
         QMessageBox::warning(this, tr("Error"), tr("Error initializing Horde3D!"));
 }
 

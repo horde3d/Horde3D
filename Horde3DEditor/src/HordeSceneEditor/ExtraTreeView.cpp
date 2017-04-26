@@ -112,7 +112,8 @@ void ExtraTreeView::addNode()
 	// select the currently selected node as root
 	if( currentIndex().isValid() )
 		H3DRootNode = static_cast<QXmlTreeNode*>(currentIndex().internalPointer());	
-	QDomElement newNode = HordeSceneEditor::instance()->pluginManager()->createNode( source->data().toString(), this );
+    HordeSceneEditor* instance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
+    QDomElement newNode = instance->pluginManager()->createNode( source->data().toString(), this );
 	if( !newNode.isNull() )
 		treeModel->undoStack()->push(createAddUndoCommand(newNode, H3DRootNode->xmlNode(), treeModel, source->text()));		
 }

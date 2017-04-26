@@ -7,8 +7,9 @@
 #include "SceneFile.h"
 
 HordeModelDialog::HordeModelDialog(const QString& targetPath, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : HordeFileDialog(H3DResTypes::SceneGraph, targetPath, parent, flags),
-m_glWidget(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_cameraID(0)
+m_glWidget(0), m_glParentOriginal(0), m_oldCameraID(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_cameraID(0)
 {
+    m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	m_glFrame->setLayout(new QHBoxLayout());
 	initModelViewer();
     m_importButton = new QPushButton(tr("Import Collada File"), this);
@@ -27,12 +28,20 @@ m_glWidget(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_cameraID(0)
 
 HordeModelDialog::~HordeModelDialog()
 {
+    if( m_glWidget )
+    {
+        m_glWidget->setParent(m_glParentOriginal);
+        if( m_glParentOriginal->layout() )
+            m_glParentOriginal->layout()->addWidget(m_glWidget);
+        m_glWidget->setActiveCam(m_oldCameraID);
+    }
+
 	if (m_newScene)		
 	{
 		h3dRemoveNode(m_newScene);
-		while (!m_resources.isEmpty())
-			h3dRemoveResource(m_resources.takeLast());
-		h3dReleaseUnusedResources();
+        while (!m_resources.isEmpty())
+            h3dRemoveResource(m_resources.takeLast());
+        h3dReleaseUnusedResources();
 	}
 	if (m_oldScene != 0)
 		h3dSetNodeFlags(m_oldScene, 0, true );
@@ -73,7 +82,7 @@ void HordeModelDialog::importCollada()
 	importDlg.initImportPath( defaultRepoPath );
 	importDlg.exec();	
 	m_fileList->clear();
-	if ( HordeSceneEditor::instance()->currentScene() )
+    if ( m_editorInstance->currentScene() )
 		// Add all files already existing in the current scene
 		populateList(m_sceneResourcePath.absolutePath(), m_sceneResourcePath.absolutePath(), m_currentFilter, false);
 	settings.beginGroup("Repository");
@@ -87,7 +96,7 @@ void HordeModelDialog::importCollada()
 void HordeModelDialog::initModelViewer()
 {
 	
-	SceneFile* scene = HordeSceneEditor::instance()->currentScene();
+    SceneFile* scene = m_editorInstance->currentScene();
 	if( scene )			
 	{
 		// Prepare xmlview for engine log
@@ -99,8 +108,12 @@ void HordeModelDialog::initModelViewer()
 		// Add new scene for model view
 		m_newScene = h3dAddGroupNode(H3DRootNode, "ModelView");		
 
+        m_glWidget = m_editorInstance->glContext();
+        m_glParentOriginal = m_glWidget->parentWidget();
+        m_oldCameraID = m_glWidget->activeCam();
+
 		// Get Pipeline from the last active camera
-		int pipelineID = h3dGetNodeParamI(HordeSceneEditor::instance()->glContext()->activeCam(), H3DCamera::PipeResI);
+        int pipelineID = h3dGetNodeParamI(m_oldCameraID, H3DCamera::PipeResI);
 		// add new camera that will be used within the modelview
 		m_cameraID = h3dAddCameraNode(m_newScene, "Camera", pipelineID);
 		h3dSetupCameraView(m_cameraID, 45, 4.0f/3.0f, 0.1f, 5000.f);
@@ -124,19 +137,15 @@ void HordeModelDialog::initModelViewer()
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 1.0f );
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 1.0f );
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 1.0f );
-		// Important to create the glwidget after adding the shaders 
-		// because only the first context can create new shader programs
-		m_glWidget = new GLWidget(HordeSceneEditor::instance()->glContext(), m_glFrame);	
-		// Set widget as shared widget
-		HordeSceneEditor::instance()->glContext()->setFullScreen(false, m_glWidget);
 		m_glWidget->setActiveCam(m_cameraID);
+        m_glWidget->setParent(m_glFrame);
 		m_glFrame->layout()->addWidget(m_glWidget);
 		m_glWidget->setNavigationSpeed(10.0);
 	}
 	QHordeSceneEditorSettings settings;
 	settings.beginGroup("Repository");
 	m_currentFilter = "*.scene.xml";
-	if ( HordeSceneEditor::instance()->currentScene() )
+    if ( m_editorInstance->currentScene() )
 		populateList( m_sceneResourcePath.absolutePath(), m_sceneResourcePath, m_currentFilter, false);
 	populateList( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString(), QDir( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString() ), m_currentFilter, true);
 	m_stackedWidget->setCurrentWidget(m_glFrame);
@@ -161,7 +170,7 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
 		m_stackedWidget->setCurrentWidget(m_glFrame);
 	// make the first glcontext current because the shared context is not allowed
 	// to create new shader programs that may be loaded by the selected model
-	HordeSceneEditor::instance()->glContext()->makeCurrent();
+    m_glWidget->makeCurrent();
 	// Add resource for model 
 	H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, qPrintable(fileName), 0 );
 	// Load data
@@ -194,7 +203,7 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
 		if( repoFile ) 
 			QDir::setCurrent( scenePath );
 		// Release unused resources within Horde3D
-		h3dReleaseUnusedResources();
+        h3dReleaseUnusedResources();
 		return;
 	}
 	if (!m_resources.contains(envRes))

@@ -44,8 +44,7 @@ public:
 	enum Axis {X = 1, Y = 2, Z = 4, Local_X = 8, Local_Y = 16, Local_Z = 32};
 	enum DebugInformation { DRAW_NO_DEBUG = 0, DRAW_GRID = 1, DRAW_BOUNDING_BOX = 2 };
 
-	GLWidget(QLabel* fpsLabel /*= 0*/, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/);
-	GLWidget(GLWidget* shared, QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	GLWidget(QLabel* fpsLabel /*= 0*/, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/);	
 	virtual ~GLWidget();
 
 	void updateLog();
@@ -265,7 +264,6 @@ private:
 
 	float			m_fps;
     QWidget*		m_parentWidget;
-	const bool		m_shared;
 
 	QTimer*			m_wheelTimer;
 

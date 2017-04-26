@@ -45,10 +45,11 @@ QSceneNode* QCameraNode::loadNode(const QDomElement& xmlNode, int row, SceneTree
 QCameraNode::QCameraNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode) : 
 QSceneNode(xmlNode, row, model, parentNode), m_pipelineID(0), m_viewportWidth(1), m_viewportHeight(0)
 {
+    m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	setObjectName("Camera");
 	addRepresentation();	
 	// May be a hack
-	connect(HordeSceneEditor::instance()->glContext(), SIGNAL(resized(int, int)), this, SLOT(viewportResized(int, int)));
+    connect(m_editorInstance->glContext(), SIGNAL(resized(int, int)), this, SLOT(viewportResized(int, int)));
 	setKeepAspect(keepAspect());
 }
 
@@ -58,8 +59,8 @@ QCameraNode::~QCameraNode()
 	{
 		h3dRemoveResource(m_pipelineID );
 		m_pipelineID = 0;
-	}	
-	HordeSceneEditor::instance()->removeCamera(this);
+	}	    
+    m_editorInstance->removeCamera(this);
 }
 
 void QCameraNode::addRepresentation()
@@ -86,7 +87,7 @@ void QCameraNode::addRepresentation()
 	AttachmentPlugIn* plugIn = model->nodeFactory()->attachmentPlugIn();
 	if (!attachment.isNull() &&  plugIn != 0) plugIn->initNodeAttachment(this);
 
-	HordeSceneEditor::instance()->addCamera(this);
+    m_editorInstance->addCamera(this);
 }
 
 //void QCameraNode::addDebugRepresentation()
@@ -211,8 +212,8 @@ void QCameraNode::setKeepAspect(bool keep)
 		m_xmlNode.setAttribute("keepAspect", keep);
 		if( keep )
 		{
-			Q_ASSERT( HordeSceneEditor::instance()->glContext() != 0 );
-			viewportResized(HordeSceneEditor::instance()->glContext()->width(), HordeSceneEditor::instance()->glContext()->height());
+            Q_ASSERT( m_editorInstance->glContext() != 0 );
+            viewportResized(m_editorInstance->glContext()->width(), m_editorInstance->glContext()->height());
 		}
 	}
 	else if (keep != QCameraNode::keepAspect())
@@ -259,7 +260,7 @@ void QCameraNode::activate()
 {
 	QVec3f t = position(), r = rotation(), s = scale();
 	h3dSetNodeTransform(m_hordeID, t.X, t.Y, t.Z, r.X, r.Y, r.Z, s.X, s.Y, s.Z);
-	HordeSceneEditor::instance()->setCamera(this);
+    m_editorInstance->setCamera(this);
 }
 
 void QCameraNode::viewportResized(int width, int height)

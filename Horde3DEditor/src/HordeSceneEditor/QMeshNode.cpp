@@ -160,7 +160,7 @@ void QMeshNode::activate()
 	float minX, minY, minZ, maxX, maxY, maxZ;
 	h3dGetNodeAABB(m_hordeID, &minX, &minY, &minZ, &maxX, &maxY, &maxZ);
 
-	unsigned int cameraID = HordeSceneEditor::instance()->glContext()->activeCam();
+    unsigned int cameraID = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>())->glContext()->activeCam();
 	float leftPlane = h3dGetNodeParamF(cameraID, H3DCamera::LeftPlaneF, 0);
 	float rightPlane = h3dGetNodeParamF(cameraID, H3DCamera::RightPlaneF, 0);
 	float bottomPlane = h3dGetNodeParamF(cameraID, H3DCamera::BottomPlaneF, 0);

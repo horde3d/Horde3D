@@ -37,12 +37,13 @@
 ColladaImporter::ColladaImporter(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : QDialog(parent, flags)
 {
 	setupUi(this);
+    m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	connect(m_setColladaFile, SIGNAL(clicked()), this, SLOT(setColladaFiles()));
 	connect(m_importButton, SIGNAL(clicked()), this, SLOT(importFiles()));
 	connect(m_lod, SIGNAL(currentIndexChanged(int)), this, SLOT(lodLevelChanged(int)));
 	connect(m_lodDist, SIGNAL(valueChanged(int)), this, SLOT(lodChanged(int)));
 	m_convertProcess = new QProcess(this);
-	HordeSceneEditor::instance()->pauseRendering( true );
+    m_editorInstance->pauseRendering( true );
 }
 
 
@@ -56,7 +57,7 @@ ColladaImporter::~ColladaImporter()
 	settings.setValue("lodDist3", m_lod->itemData(2).toInt() );
 	settings.setValue("lodDist4", m_lod->itemData(3).toInt() );
 	settings.endGroup();
-	HordeSceneEditor::instance()->pauseRendering( false );
+    m_editorInstance->pauseRendering( false );
 }
 
 

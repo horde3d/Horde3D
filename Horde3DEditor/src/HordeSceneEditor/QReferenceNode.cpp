@@ -49,6 +49,7 @@ QReferenceNode::QReferenceNode(const QDomElement& xmlNode, int row, SceneTreeMod
 	QSceneNode(xmlNode, row, model, parentNode), m_treeModel(0)
 {
 	setObjectName("Reference");
+    m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	m_hordeID = parentNode ? parentNode->hordeId() : H3DRootNode;
 	QReferenceNode::addRepresentation();
 }
@@ -63,7 +64,7 @@ QReferenceNode::~QReferenceNode()
 
 	delete m_treeModel;
 	QDomElement attachment = m_xmlNode.firstChildElement("Attachment");	
-	AttachmentPlugIn* plugIn = HordeSceneEditor::instance()->pluginManager()->attachmentPlugIn();
+    AttachmentPlugIn* plugIn = m_editorInstance->pluginManager()->attachmentPlugIn();
 	if( !attachment.isNull() && plugIn )
 		plugIn->destroyNodeAttachment(this);
 	// Avoid removing of attachment in QSceneNode Destructor
@@ -103,7 +104,7 @@ void QReferenceNode::addRepresentation()
 	QFile sceneGraphFile(m_fileName);
 	if (!sceneGraphFile.open(QIODevice::ReadOnly))
 	{		
-		HordeSceneEditor::instance()->updateLog(new QListWidgetItem(tr("Error when opening file %1!\n%2").arg(m_fileName).arg(sceneGraphFile.errorString()), 0, 2));
+        m_editorInstance->updateLog(new QListWidgetItem(tr("Error when opening file %1!\n%2").arg(m_fileName).arg(sceneGraphFile.errorString()), 0, 2));
 		m_hordeID = 0;
 		return;
 	}
@@ -112,21 +113,21 @@ void QReferenceNode::addRepresentation()
 	// parse xml
 	if (!m_sceneGraphFile.setContent(&sceneGraphFile, &errorMsg, &line, &column))
 	{
-		HordeSceneEditor::instance()->updateLog(new QListWidgetItem(tr("Error in XML file %1, line %2 column %3:\n%4").arg(m_fileName).arg(line).arg(column).arg(errorMsg), 0, 2));		
+        m_editorInstance->updateLog(new QListWidgetItem(tr("Error in XML file %1, line %2 column %3:\n%4").arg(m_fileName).arg(line).arg(column).arg(errorMsg), 0, 2));
 		m_hordeID = 0;
 		return;
 	}
 	sceneGraphFile.close();
 	
 	// Create new model for xml file
-	m_treeModel = new SceneTreeModel(HordeSceneEditor::instance()->pluginManager(), m_sceneGraphFile.documentElement(), this);
+    m_treeModel = new SceneTreeModel(m_editorInstance->pluginManager(), m_sceneGraphFile.documentElement(), this);
 	if( m_treeModel->rootNode() )
 	{
 		m_hordeID = static_cast<QSceneNode*>(m_treeModel->rootNode())->hordeId();
 		setProperty("HordeType", m_treeModel->rootNode()->property("HordeType"));
 		// Check for attachments
 		QDomElement attachment = m_xmlNode.firstChildElement("Attachment");	
-		AttachmentPlugIn* plugIn = HordeSceneEditor::instance()->pluginManager()->attachmentPlugIn();
+        AttachmentPlugIn* plugIn = m_editorInstance->pluginManager()->attachmentPlugIn();
 		if (!attachment.isNull() &&  plugIn != 0)
 			plugIn->initNodeAttachment(this);
 	}
@@ -143,7 +144,7 @@ void QReferenceNode::activate()
 	float minX, minY, minZ, maxX, maxY, maxZ;
 	h3dGetNodeAABB(m_hordeID, &minX, &minY, &minZ, &maxX, &maxY, &maxZ);
 
-	unsigned int cameraID = HordeSceneEditor::instance()->glContext()->activeCam();
+    unsigned int cameraID = m_editorInstance->glContext()->activeCam();
 	float leftPlane = h3dGetNodeParamF(cameraID, H3DCamera::LeftPlaneF, 0);
 	float rightPlane = h3dGetNodeParamF(cameraID, H3DCamera::RightPlaneF, 0);
 	float bottomPlane = h3dGetNodeParamF(cameraID, H3DCamera::BottomPlaneF, 0);

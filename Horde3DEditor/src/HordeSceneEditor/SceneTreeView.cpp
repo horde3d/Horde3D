@@ -81,8 +81,10 @@ public:
 		{
 			QSceneNode* newNode = static_cast<QSceneNode*>(index.internalPointer());
 			
-			const float* camera = 0;	
-			unsigned int cameraID = HordeSceneEditor::instance()->glContext()->activeCam();
+            const float* camera = 0;
+
+            HordeSceneEditor* editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
+            unsigned int cameraID = editorInstance->glContext()->activeCam();
 			h3dGetNodeTransMats(cameraID, 0, &camera);
 			if ( camera )
 			{
@@ -121,6 +123,7 @@ public:
 
 SceneTreeView::SceneTreeView(QWidget* parent /*= 0*/) : QXmlTreeView(parent), m_rootNode(0), m_contextCall(false)
 {
+    m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	connect(this, SIGNAL(doubleClicked(const QModelIndex&)), this, SLOT(nodeActivated(const QModelIndex&)));
 	connect(this, SIGNAL(expanded(const QModelIndex&)), this, SLOT(resizeColumns(const QModelIndex&)));
 }
@@ -265,7 +268,7 @@ void SceneTreeView::addNode()
 	if( m_contextCall && currentIndex().isValid() )
 		// ... select the currently selected node as root
 		sceneNode = static_cast<QSceneNode*>(currentIndex().internalPointer());	
-	QDomElement newNode = HordeSceneEditor::instance()->pluginManager()->createNode( source->data().toString(), this );
+    QDomElement newNode = m_editorInstance->pluginManager()->createNode( source->data().toString(), this );
 	if( !newNode.isNull() )
 		treeModel->undoStack()->push(createAddUndoCommand(newNode, sceneNode->xmlNode(), treeModel, source->text()));		
 }
@@ -276,12 +279,12 @@ void SceneTreeView::addAttachmentNode()
 	QSceneNode* node = static_cast<QSceneNode*>(currentIndex().internalPointer());
 	if( node->xmlNode().firstChildElement("Attachment").isNull() )
 	{
-		HordeSceneEditor::instance()->pluginManager()->attachmentPlugIn()->createNodeAttachment();
+        m_editorInstance->pluginManager()->attachmentPlugIn()->createNodeAttachment();
 		qobject_cast<QAction*>(sender())->setText(tr("Remove Attachment"));
 	}
 	else
 	{
-		HordeSceneEditor::instance()->pluginManager()->attachmentPlugIn()->removeNodeAttachment();
+        m_editorInstance->pluginManager()->attachmentPlugIn()->removeNodeAttachment();
 		qobject_cast<QAction*>(sender())->setText(tr("Add Attachment"));
 	}
 }
@@ -357,7 +360,7 @@ void SceneTreeView::currentNodeChanged(const QModelIndex& current, const QModelI
 	{
 		QSceneNode* node = static_cast<QSceneNode*>(current.internalPointer());
 		if (h3dGetNodeType(node->hordeId()) == H3DNodeTypes::Undefined)
-			HordeSceneEditor::instance()->updateLog(new QListWidgetItem(tr("The selected node has no valid scenegraph ID.\nMaybe it was removed from the scene graph by a plugin or failed to load properly!"), 0, 2));
+            m_editorInstance->updateLog(new QListWidgetItem(tr("The selected node has no valid scenegraph ID.\nMaybe it was removed from the scene graph by a plugin or failed to load properly!"), 0, 2));
 	}
 	if ( current.internalPointer() != previous.internalPointer() )
 		emit nodeAboutToChange();
@@ -370,7 +373,7 @@ void SceneTreeView::useCameraTransformation()
 	{
 		QSceneNode* object = static_cast<QSceneNode*>(currentIndex().internalPointer());
 		const float* camera = 0;	
-		unsigned int cameraID = HordeSceneEditor::instance()->glContext()->activeCam();
+        unsigned int cameraID = m_editorInstance->glContext()->activeCam();
 		// TODO create a useCameraTransformation( cameraID ) method in QSceneNode to handle setting of the transformation indivdually
 		h3dGetNodeTransMats(cameraID, 0, &camera);
 		if ( camera )
@@ -397,7 +400,7 @@ void SceneTreeView::setCameraTransformation()
 	{
 		QSceneNode* object = static_cast<QSceneNode*>(currentIndex().internalPointer());
 
-		unsigned int cameraID = HordeSceneEditor::instance()->glContext()->activeCam();
+        unsigned int cameraID = m_editorInstance->glContext()->activeCam();
 		const float* cameraParent = 0;
 		H3DNode parentNode = h3dGetNodeParent(cameraID);
 		h3dGetNodeTransMats(parentNode, 0, &cameraParent); 

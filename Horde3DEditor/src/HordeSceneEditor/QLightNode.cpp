@@ -174,7 +174,7 @@ void QLightNode::addRepresentation()
 
 void QLightNode::activate()
 {	
-	H3DNode cam = HordeSceneEditor::instance()->glContext()->activeCam();
+    H3DNode cam = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>())->glContext()->activeCam();
 	const float* absMat = 0;	
 	h3dGetNodeTransMats(h3dGetNodeParent(cam), 0, &absMat);
 	if( !absMat ) return;
