@@ -25,6 +25,13 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 }
 
 
+ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
+	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
+	_useAsVertexBuf( true ), _drawType( -1 ), _vertexLayout( 0 ), _mapped( false ), _data( nullptr ), _dataSize( 1024 )
+{
+	_loaded = true;
+}
+
 ComputeBufferResource::~ComputeBufferResource()
 {
 	release();
@@ -136,6 +143,44 @@ bool ComputeBufferResource::createGeometry()
 
 	// indicate that geometry is already created
 	_geometryParamsSet = true;
+
+	return true;
+}
+
+
+bool ComputeBufferResource::overrideGeometry( uint32 geomID )
+{
+	if ( geomID == 0 ) // incorrect geometry
+	{
+		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect geometry specified." );
+		return false;
+	}
+
+	_geoID = geomID;
+	_useAsVertexBuf = true;
+	_geometryParamsSet = true;
+
+	return true;
+}
+
+
+bool ComputeBufferResource::overrideBuffer( uint32 bufferID, uint32 bufSize )
+{
+	if ( bufferID == 0 || bufSize == 0 )
+	{
+		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect buffer specified." );
+		return false;
+	}
+
+	_bufferID = bufferID;
+	
+	if ( _dataSize < bufSize )
+	{
+		delete[] _data;
+
+		_data = new uint8[ bufSize ];
+		_dataSize = bufSize;
+	}
 
 	return true;
 }

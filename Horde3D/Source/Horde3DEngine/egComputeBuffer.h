@@ -51,6 +51,8 @@ public:
 	Resource *clone();
 
 	ComputeBufferResource( const std::string &name, int flags );
+	ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags );
+
 	~ComputeBufferResource();
 
 	void initDefault();
@@ -59,6 +61,11 @@ public:
 
 	// 	int getElemCount( int elem ) const;
 	uint32 getBufferObject() { return _bufferID; }
+	uint32 getGeometry() { return _geoID; }
+
+	// internal use only (i.e. extensions)
+	bool overrideGeometry( uint32 geomID );
+	bool overrideBuffer( uint32 bufferID, uint32 bufSize );
 
 	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void setElemParamI( int elem, int elemIdx, int param, int value );

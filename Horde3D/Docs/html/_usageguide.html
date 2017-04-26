@@ -135,6 +135,10 @@ vector to look up the texel that lies in the corresponding direction.</p>
 like its color, size and velocity change over its lifetime. ParticleEffect resources are usually assigned to emitter nodes
 which bring forth the particles.</p>
 
+<h4>ComputeBuffer</h4>
+<p>A compute buffer is a buffer with arbitrary data that is available in shaders. Primarily used for compute purposes. 
+Compute buffers can also be drawn to screen using Compute node.</p>
+
 <a id="SceneGraph"></a>
 <h3>Scene Graph</h3>
 <p>A scene graph is used to represent the logical or spatial structure of the scene to be rendered. Usually it also
@@ -211,6 +215,10 @@ in the model's geometry resource. This bind matrix is used by the engine to do t
 <p>Emitter nodes are used to setup particle systems. They are responsible for creating particles based on the description
 from a ParticleEffect resource and have several parameters to configure properties like the birth rate or the maximum number
 of particles.</p>
+
+<h4>Compute</h4>
+<p>Compute nodes are used to draw data that resides in compute buffers. For example, they can be used to draw particles after
+their simulation in compute shader.</p>
 
 <a id="Advanced"></a>
 <h2>Advanced Topics</h2>

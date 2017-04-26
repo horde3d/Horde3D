@@ -49,7 +49,6 @@ struct Particle
 };
 
 const int maxThreadsInGroup = 1024;
-const int maxProcessedParticles = 5000000;
  
 layout (std430, binding = 1) buffer ParticleData
 { 
@@ -179,5 +178,7 @@ out vec4 fragColor;
 void main()
 {
 	vec4 texColor = texture( albedoMap, vec2( vertTexCoords.s, -vertTexCoords.t ) );
+	if ( texColor.a < 0.1 ) discard;
+	
 	fragColor = vec4( color * texColor.xyz, texColor.a );
 }

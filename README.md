@@ -18,6 +18,7 @@ Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of Direct
     - Support for post processing effects like bloom, DOF or motion blur
     - Support for almost all forward, deferred and High Dynamic Range rendering techniques
     - Support for real-time reflections and other techniques that require several cameras
+	- Support for geometry, tessellation and compute shaders
     - Real-time shadows using Parallel Split Shadow Maps (PSSM)
     - Particle systems that can cast shadows and have effects like motion blur
 - Unified scene system

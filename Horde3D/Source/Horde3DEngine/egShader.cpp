@@ -822,8 +822,6 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 			}
 			else if ( tok.checkToken( "{" ) )
 			{
-				context.blendingEnabled = true; 
-
 				for ( unsigned int i = 0; i < 2; ++i )
 				{
 					if ( tok.checkToken( "Zero" ) ) i == 0 ? context.blendStateSrc = BlendModes::Zero : context.blendStateDst = BlendModes::Zero;
@@ -840,6 +838,10 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 
 					if ( i == 0 && !tok.checkToken( "," ) ) return raiseError( "FX: expected ','", tok.getLine() );
 				}
+
+				// Set blending status
+				if ( context.blendStateSrc == BlendModes::Zero && context.blendStateDst == BlendModes::Zero ) context.blendingEnabled = false;
+				else context.blendingEnabled = true;
 
 				if ( !tok.checkToken( "}" ) ) return raiseError( "FX: expected '}'", tok.getLine() );
 			}
@@ -950,16 +952,33 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 			return raiseError( "FX: Vertex shader referenced by context '" + context.id + "' not found" );
 		if ( context.fragCodeIdx < 0 )
 			return raiseError( "FX: Pixel shader referenced by context '" + context.id + "' not found" );
-		if ( geometryShaderAvailable && context.geomCodeIdx < 0 )
-			return raiseError( "FX: Geometry shader referenced by context '" + context.id + "' not found" );
-		if ( tessControlShaderAvailable && context.tessCtlCodeIdx < 0 )
-			return raiseError( "FX: Tessellation control shader referenced by context '" + context.id + "' not found" );
-		if ( tessEvalShaderAvailable && context.tessEvalCodeIdx < 0 )
-			return raiseError( "FX: Tessellation evaluation shader referenced by context '" + context.id + "' not found" );
+		if ( geometryShaderAvailable )
+		{
+			if ( !Modules::renderer().getRenderDevice()->getCaps().geometryShaders )
+				return raiseError( "FX: Geometry shaders referenced by context '" + context.id + "' are not supported on this device" );
+			else if ( context.geomCodeIdx < 0 )
+				return raiseError( "FX: Geometry shader referenced by context '" + context.id + "' not found" );
+		}
+		if ( tessControlShaderAvailable )
+		{
+			if ( !Modules::renderer().getRenderDevice()->getCaps().tesselation )
+				return raiseError( "FX: Tessellation shaders referenced by context '" + context.id + "' are not supported on this device" );
+			else if ( context.tessCtlCodeIdx < 0 )
+				return raiseError( "FX: Tessellation control shader referenced by context '" + context.id + "' not found" );
+		}
+		if ( tessEvalShaderAvailable )
+		{
+			if ( !Modules::renderer().getRenderDevice()->getCaps().tesselation )
+				return raiseError( "FX: Tessellation shaders referenced by context '" + context.id + "' are not supported on this device" );
+			else if ( context.tessEvalCodeIdx < 0 )
+				return raiseError( "FX: Tessellation evaluation shader referenced by context '" + context.id + "' not found" );
+		}
 	}
 	else
 	{
-		if ( context.computeCodeIdx < 0 )
+		if ( !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
+			return raiseError( "FX: Compute shaders referenced by context '" + context.id + "' are not supported on this device" );
+		else if ( context.computeCodeIdx < 0 )
 			return raiseError( "FX: Compute shader referenced by context '" + context.id + "' not found" );
 	}
 

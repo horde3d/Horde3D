@@ -452,7 +452,7 @@ annotations are just skipped by Horde's parser.</p>
 
 <p>It is possible to specify different parameters for specific render interfaces (currently only contexts can be redefined).
 If render interface tag is not found, parameter is shared for all render interfaces. In case of contexts <b>OpenGL 2 
-render device is used</b> by default. </p>
+render device is used by default.</b> </p>
 <p>Supported render interfaces:</p>
 <div class="descbox">
 <table>
@@ -548,6 +548,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 	<tr><td>[ ZEnable <b>=</b> <b>true</b> / false <b>;</b> ]</td></tr>
 	<tr><td>[ ZFunc <b>=</b> Always / Equal / Less / <b>LessEqual</b> / Greater / GreaterEqual <b>;</b> ]</td></tr>
 	<tr><td>[ BlendMode <b>=</b> <b>Replace</b> / Blend / Add / AddBlended / Mult <b>;</b> ]</td></tr>
+	<tr><td>[ BlendMode <b>= {</b> <b>Zero</b> / One / SrcAlpha / OneMinusSrcAlpha / DestAlpha / OneMinusDestAlpha / DestColor / SrcColor / OneMinusDestColor / OneMinusSrcColor <b>};</b> ]</td></tr>
 	<tr><td>[ CullMode <b>=</b> <b>Back</b> / Front / None <b>;</b> ]</td></tr>
 	<tr><td>[ AlphaToCoverage <b>=</b> <b>false</b> / true <b>;</b> ]</td></tr>
 	<tr><td>[ TessPatchVertices <b>=</b> <b>1</b> / .. / 32 <b>;</b> ]</td></tr>
@@ -562,6 +563,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 <li>Geometry and tesselation steps are optional</li>
 <li>Geometry, compute and tesselation shaders are available only for OpenGL4 render interface</li>
 <li>TessPatchVertices - number of vertices per patch. Used for tesselation. Available only for OpenGL4 render interface.</li>
+<li>BlendMode may either be set the old way - with one word definition, or by using a new form, i.e BlendMode = { One, One } for more blending control.</li>
 </ul>
 
 
