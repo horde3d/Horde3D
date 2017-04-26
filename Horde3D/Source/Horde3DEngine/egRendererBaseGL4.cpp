@@ -197,43 +197,6 @@ void RenderDeviceGL4::initStates()
 	GLint value;
 	glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
 	_defaultFBOMultisampled = value > 0;
-
-    // VAO's have to be recreated for context sharing
-    if ( _vaos.size() > 1 )
-    {
-        RDIGeometryInfoGL4 tmp;
-
-        uint32 vaoCount = _vaos.size();
-        for ( int i = 1; i < vaoCount; ++i ) // default geometry is always created, so zero index is skipped
-        {
-            // save information
-            RDIGeometryInfoGL4 &vao = _vaos.getRef( i );
-
-            tmp.atrribsBinded = vao.atrribsBinded;
-            tmp.indexBuf = vao.indexBuf;
-            tmp.indexBuf32Bit = vao.indexBuf32Bit;
-            tmp.layout = vao.layout;
-            tmp.vertexBufInfo.swap( vao.vertexBufInfo );
-
-            // destroy & recreate new vao with saved information
-            _vaos.remove( i );
-
-            uint32 newVao = beginCreatingGeometry( tmp.layout );
-            if ( tmp.indexBuf ) setGeomIndexParams( newVao, tmp.indexBuf, tmp.indexBuf32Bit ? IDXFMT_32 : IDXFMT_16 );
-
-            for ( int vaoVertParam = 0; vaoVertParam < tmp.vertexBufInfo.size(); ++vaoVertParam )
-            {
-                RDIVertBufSlotGL4 &vbs = tmp.vertexBufInfo[ vaoVertParam ];
-
-                setGeomVertexParams( newVao, vbs.vbObj, 0, vbs.offset, vbs.stride );
-            }
-
-            finishCreatingGeometry( newVao );
-
-            // clear temporary info for the next vao
-            tmp.vertexBufInfo.clear();
-        }
-    }
 }
 
 
