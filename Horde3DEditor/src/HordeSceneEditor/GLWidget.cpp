@@ -116,8 +116,10 @@ void GLWidget::setFullScreen(bool fullscreen, GLWidget* widget /*= 0*/)
     }
     else
     {
-        setParent(m_parentWidget);
         showNormal();
+        setParent(m_parentWidget);
+        if( m_parentWidget->layout() )
+            m_parentWidget->layout()->addWidget(this);
         emit fullscreenActive(false);
     }
 }
