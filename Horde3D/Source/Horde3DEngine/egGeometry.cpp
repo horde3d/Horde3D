@@ -121,37 +121,38 @@ void GeometryResource::release()
 {
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
-	if ( _geoObj != 0 )
+	if( _posVBuf != 0 && _posVBuf != defVertBuffer )
 	{
-		rdi->destroyGeometry( _geoObj );
+		rdi->destroyBuffer( _posVBuf );
+		_posVBuf = 0;
+	}
+	if( _tanVBuf != 0 && _tanVBuf != defVertBuffer )
+	{
+		rdi->destroyBuffer( _tanVBuf );
+		_tanVBuf = 0;
+	}
+	if( _staticVBuf != 0 && _staticVBuf != defVertBuffer )
+	{
+		rdi->destroyBuffer( _staticVBuf );
+		_staticVBuf = 0;
+	}
+	
+	if( _indexBuf != 0 && _indexBuf != defIndexBuffer )
+	{
+		rdi->destroyBuffer( _indexBuf );
+		_indexBuf = 0;
 	}
 
-// 	if( _posVBuf != 0 && _posVBuf != defVertBuffer )
-// 	{
-// 		rdi->destroyBuffer( _posVBuf );
-// 		_posVBuf = 0;
-// 	}
-// 	if( _tanVBuf != 0 && _tanVBuf != defVertBuffer )
-// 	{
-// 		rdi->destroyBuffer( _tanVBuf );
-// 		_tanVBuf = 0;
-// 	}
-// 	if( _staticVBuf != 0 && _staticVBuf != defVertBuffer )
-// 	{
-// 		rdi->destroyBuffer( _staticVBuf );
-// 		_staticVBuf = 0;
-// 	}
-// 	
-// 	if( _indexBuf != 0 && _indexBuf != defIndexBuffer )
-// 	{
-// 		rdi->destroyBuffer( _indexBuf );
-// 		_indexBuf = 0;
-// 	}
+	if ( _geoObj != 0 )
+	{
+		rdi->destroyGeometry( _geoObj, false );
+	}
 
 	delete[] _indexData; _indexData = 0x0;
 	delete[] _vertPosData; _vertPosData = 0x0;
 	delete[] _vertTanData; _vertTanData = 0x0;
 	delete[] _vertStaticData; _vertStaticData = 0x0;
+	
 	_joints.clear();
 	_morphTargets.clear();
 }

@@ -2084,6 +2084,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
 				drawType = PRIM_POINTS;
 				break;
 			default:
+				drawType = PRIM_POINTS;
 				break;
 		}
 

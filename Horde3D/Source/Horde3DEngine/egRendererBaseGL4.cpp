@@ -399,21 +399,25 @@ void RenderDeviceGL4::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndex
 	curVao.indexBuf32Bit = ( format == IDXFMT_32 ? true : false );
 }
 
-void RenderDeviceGL4::destroyGeometry( uint32 geoObj )
+void RenderDeviceGL4::destroyGeometry( uint32 geoObj, bool destroyBindedBuffers )
 {
 	if ( geoObj == 0 ) return;
 	
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
-	destroyBuffer( curVao.indexBuf );
 	
-	for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
+	if ( destroyBindedBuffers )
 	{
-		destroyBuffer( curVao.vertexBufInfo[ i ].vbObj );
+		for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
+		{
+			destroyBuffer( curVao.vertexBufInfo[ i ].vbObj );
+		}
+
+		destroyBuffer( curVao.indexBuf );
 	}
+	
+	glDeleteVertexArrays( 1, &curVao.vao );
 
-    glDeleteVertexArrays( 1, &curVao.vao );
-
-    _vaos.remove( geoObj );
+	_vaos.remove( geoObj );
 }
 
 uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
