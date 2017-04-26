@@ -200,11 +200,6 @@ protected:
 
 private slots:
 	/**
-	 * Slot triggered when shared fullscreen widget has been closed
-	 */
-	void fullScreenClosed();
-
-	/**
 	 * Slot triggered after mouse wheel has been used to stop the movement 
 	 */
 	void stopWheelMove() {m_forward = false; m_backward = false;}	
@@ -269,7 +264,7 @@ private:
 	float			m_navRx, m_navRy;
 
 	float			m_fps;
-	GLWidget*		m_fullScreen;
+    QWidget*		m_parentWidget;
 	const bool		m_shared;
 
 	QTimer*			m_wheelTimer;
