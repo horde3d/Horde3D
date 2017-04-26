@@ -4,6 +4,7 @@
 #include <HordeFileDialog.h>
 
 class GLWidget;
+class HordeSceneEditor;
 
 class HordeModelDialog : public HordeFileDialog
 {
@@ -33,6 +34,9 @@ private:
 
 	GLWidget*				m_glWidget;
 	QPushButton*			m_importButton;
+    HordeSceneEditor*       m_editorInstance;
+    QWidget*                m_glParentOriginal;
+    int                     m_oldCameraID;
 
 	unsigned int			m_oldScene;
 	unsigned int			m_newScene;

@@ -44,8 +44,7 @@ public:
 	enum Axis {X = 1, Y = 2, Z = 4, Local_X = 8, Local_Y = 16, Local_Z = 32};
 	enum DebugInformation { DRAW_NO_DEBUG = 0, DRAW_GRID = 1, DRAW_BOUNDING_BOX = 2 };
 
-	GLWidget(QLabel* fpsLabel /*= 0*/, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/);
-	GLWidget(GLWidget* shared, QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	GLWidget(QLabel* fpsLabel /*= 0*/, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/);	
 	virtual ~GLWidget();
 
 	void updateLog();
@@ -200,11 +199,6 @@ protected:
 
 private slots:
 	/**
-	 * Slot triggered when shared fullscreen widget has been closed
-	 */
-	void fullScreenClosed();
-
-	/**
 	 * Slot triggered after mouse wheel has been used to stop the movement 
 	 */
 	void stopWheelMove() {m_forward = false; m_backward = false;}	
@@ -269,8 +263,7 @@ private:
 	float			m_navRx, m_navRy;
 
 	float			m_fps;
-	GLWidget*		m_fullScreen;
-	const bool		m_shared;
+    QWidget*		m_parentWidget;
 
 	QTimer*			m_wheelTimer;
 

@@ -36,6 +36,7 @@
 #include <QtCore/QTimer>
 #include <QApplication>
 #include <QMessageBox>
+#include <QDesktopWidget>
 
 #include <math.h>
 #ifdef __APPLE__
@@ -52,7 +53,7 @@
 
 
 GLWidget::GLWidget(QLabel* fpsLabel, QWidget* parent, Qt::WindowFlags flags) : QGLWidget(parent, 0, flags), 
-    m_fpsLabel(fpsLabel), m_transformationMode(0), m_collisionCheck(false), m_navSpeed(5), m_fps(30.0), m_fullScreen(0), m_shared(false),
+    m_fpsLabel(fpsLabel), m_transformationMode(0), m_collisionCheck(false), m_navSpeed(5), m_fps(30.0), m_parentWidget(0),
     m_forward(false), m_backward(false), m_left(false), m_right(false), m_up(false), m_down(false),
     m_limitToAxis(0), m_axisVpX(1), m_axisVpY(1), m_gizmoSelection(0), m_debugInfo(0), m_gridScale(1),
     m_currentNode(0), m_attachmentPlugIn(0), m_activeCameraID(0), m_initialized(false)
@@ -71,30 +72,9 @@ GLWidget::GLWidget(QLabel* fpsLabel, QWidget* parent, Qt::WindowFlags flags) : Q
     loadButtonConfig();
 }
 
-GLWidget::GLWidget(GLWidget* shared, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : QGLWidget(shared->format(), parent, shared, flags), 
-    m_fpsLabel(shared->m_fpsLabel), m_transformationMode(0), m_collisionCheck(shared->m_collisionCheck), m_navSpeed(shared->m_navSpeed), m_fps(shared->m_fps), m_fullScreen(0), m_shared(true),
-    m_forward(false), m_backward(false), m_left(false), m_right(false), m_up(false), m_down(false),
-    m_limitToAxis(0), m_axisVpX(1), m_axisVpY(1), m_gizmoSelection(0),
-    m_debugInfo(shared->m_debugInfo), m_gridScale(shared->m_gridScale), m_currentNode(shared->m_currentNode),
-    m_attachmentPlugIn(shared->m_attachmentPlugIn), m_activeCameraID(shared->m_activeCameraID), m_initialized(shared->m_initialized)
-{
-    setFocusPolicy(Qt::ClickFocus);
-    setAttribute(Qt::WA_DeleteOnClose);
-    m_wheelTimer = new QTimer(this);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-    m_wheelTimer->setTimerType(Qt::PreciseTimer);
-#endif
-    m_wheelTimer->setSingleShot(true);
-    connect(m_wheelTimer, SIGNAL(timeout()), this, SLOT(stopWheelMove()));
-    loadButtonConfig();
-}
-
-
-
 GLWidget::~GLWidget()
 {
-    if (!m_shared) // Only release if it's the only widget
-        h3dRelease();
+    h3dRelease();
 }
 
 // Update the log widget
@@ -127,45 +107,26 @@ void GLWidget::loadButtonConfig()
 
 void GLWidget::setFullScreen(bool fullscreen, GLWidget* widget /*= 0*/)
 {
-    if (m_fullScreen && fullscreen == false)
-        m_fullScreen->close();
-    if( widget )
+    if( fullscreen)
     {
-        m_fullScreen = widget;
-        // Forward resize event of fullscreen widget to adjust camera settings correctly
-        connect(m_fullScreen, SIGNAL(resized(int, int)), this, SIGNAL(resized(int, int)));
-        connect(m_fullScreen, SIGNAL(logMessages(const QList<QListWidgetItem*>&)), this, SIGNAL(logMessages(const QList<QListWidgetItem*>&)));
+        m_parentWidget = parentWidget();
+        setParent(0);
+        showFullScreen();
+        setGeometry( qApp->desktop()->screenGeometry() );
     }
-    else if (m_fullScreen == 0 && fullscreen)
+    else
     {
-        // Create a new shared widget, that does not initialize or release Horde3D
-        // but render in fullscreen
-        m_fullScreen = new GLWidget(this, 0, Qt::Window);
-        // Forward resize event of fullscreen widget to adjust camera settings correctly
-        connect(m_fullScreen, SIGNAL(resized(int, int)), this, SIGNAL(resized(int, int)));
-        connect(m_fullScreen, SIGNAL(transformationMode(int)), this, SIGNAL(transformationMode(int)));
-        connect(m_fullScreen, SIGNAL(nodeSelected(int)), this, SIGNAL(nodeSelected(int)));
-        connect(m_fullScreen, SIGNAL(scaleObject(const float, const float, const float)), this, SIGNAL(scaleObject(const float, const float, const float)));
-        connect(m_fullScreen, SIGNAL(moveObject(const float, const float, const float)), this, SIGNAL(moveObject(const float, const float, const float)));
-        connect(m_fullScreen, SIGNAL(rotateObject(const float, const float, const float)), this, SIGNAL(rotateObject(const float, const float, const float)));
-        connect(m_fullScreen, SIGNAL(logMessages(const QList<QListWidgetItem*>&)), this, SIGNAL(logMessages(const QList<QListWidgetItem*>&)));
-        // now show our new render widget in fullscreen mode
-        m_fullScreen->showFullScreen();
-    }
-    if (m_fullScreen)
-    {
-        m_fullScreen->m_navSpeed = m_navSpeed;
-        // take care of the new widget, to reactivate the parent GLWidget after fullscreen mode has been left
-        connect(m_fullScreen, SIGNAL(destroyed(QObject*)), this, SLOT(fullScreenClosed()));
+        showNormal();
+        setParent(m_parentWidget);
+        if( m_parentWidget->layout() )
+            m_parentWidget->layout()->addWidget(this);
+        emit fullscreenActive(false);
     }
 }
 
 void GLWidget::setTransformationMode(int mode)
 {	
     if( m_transformationMode == mode )	return;
-
-    if (m_fullScreen)
-        m_fullScreen->setTransformationMode(mode);
 
     if (m_transformationMode != None)
         resetMode(false);
@@ -176,11 +137,8 @@ void GLWidget::setTransformationMode(int mode)
         return;
     }
 
-    if (m_fullScreen == 0) // Are we the active widget?
-    {
-        if(!underMouse()) // Set mouse cursor if transformation mode was set by toolbar icon
-            QCursor::setPos(mapToGlobal(frameGeometry().center()));
-    }
+    if(!underMouse()) // Set mouse cursor if transformation mode was set by toolbar icon
+        QCursor::setPos(mapToGlobal(frameGeometry().center()));
 
     // Store mouse position when transformation mode was changed
     m_x = mapFromGlobal(QCursor::pos()).x();
@@ -212,7 +170,6 @@ void GLWidget::enableDebugView(bool debug)
 void GLWidget::setCurrentNode(QXmlTreeNode* node)
 {
     m_currentNode = node;
-    if (m_fullScreen) m_fullScreen->m_currentNode = m_currentNode;
 }
 
 
@@ -233,60 +190,56 @@ void GLWidget::paintGL()
     static QTime initTime(QTime::currentTime());
     static int fps = 0;
     if( m_glClear ) glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
-    if (m_fullScreen == 0) // Do the render call only in one widget
+
+    fps++;
+    int mseconds = initTime.msecsTo(QTime::currentTime());
+    //qDebug("FPS: %d MSeconds %d", fps, mseconds);
+    if (fps%5 == 0 && mseconds > 0)
     {
-        fps++;
-        int mseconds = initTime.msecsTo(QTime::currentTime());
-        //qDebug("FPS: %d MSeconds %d", fps, mseconds);
-        if (fps%5 == 0 && mseconds > 0)
+        // Calculate frame rate
+        m_fps = fps * 1000.0f / mseconds;
+        if (mseconds >= 2000)
         {
-            // Calculate frame rate
-            m_fps = fps * 1000.0f / mseconds;
-            if (mseconds >= 2000)
-            {
-                // Update label (if available) every 2 seconds
-                if (m_fpsLabel) m_fpsLabel->setText(QString("FPS %1").arg((int)m_fps));
-                // Reset counter
-                fps = 0;
-                initTime = QTime::currentTime();
-            }
+            // Update label (if available) every 2 seconds
+            if (m_fpsLabel) m_fpsLabel->setText(QString("FPS %1").arg((int)m_fps));
+            // Reset counter
+            fps = 0;
+            initTime = QTime::currentTime();
         }
-        float x = 0.0f, y = 0.0f, z = 0.0f;
-        if (m_fps > 0.0f)
-        {
-            float curVel = m_navSpeed/m_fps;
-            // Fast mode?
-            if (qApp->keyboardModifiers() & Qt::ShiftModifier) curVel *= 3;
-
-            if (m_up)		y -= curVel;
-            if (m_down)		y += curVel;
-            if (m_forward)	z -= curVel;
-            if (m_backward)	z += curVel;
-            if (m_left)		x -= curVel;
-            if (m_right)	x += curVel;
-            // Apply camera transformation
-            if (x != 0 || y != 0 || z != 0)
-                cameraNavigationUpdate(x, y, z, 0.0f, 0.0f);
-        }
-        if (m_attachmentPlugIn)
-        {
-            //Horde3D::render(m_activeCameraID); // Render scene
-            m_attachmentPlugIn->update();
-            m_attachmentPlugIn->render( m_activeCameraID );
-        }
-        else
-        {
-            h3dRender(m_activeCameraID); // Render scene
-            h3dFinalizeFrame();
-        }
-
-        renderEditorInfo();
-
-        // Update Log if we are not the fullscreen widget
-        updateLog();
     }
-    else  // This is not the active widget, run the fullscreen widget's renderer
-        m_fullScreen->updateGL();
+    float x = 0.0f, y = 0.0f, z = 0.0f;
+    if (m_fps > 0.0f)
+    {
+        float curVel = m_navSpeed/m_fps;
+        // Fast mode?
+        if (qApp->keyboardModifiers() & Qt::ShiftModifier) curVel *= 3;
+
+        if (m_up)		y -= curVel;
+        if (m_down)		y += curVel;
+        if (m_forward)	z -= curVel;
+        if (m_backward)	z += curVel;
+        if (m_left)		x -= curVel;
+        if (m_right)	x += curVel;
+        // Apply camera transformation
+        if (x != 0 || y != 0 || z != 0)
+            cameraNavigationUpdate(x, y, z, 0.0f, 0.0f);
+    }
+    if (m_attachmentPlugIn)
+    {
+        //Horde3D::render(m_activeCameraID); // Render scene
+        m_attachmentPlugIn->update();
+        m_attachmentPlugIn->render( m_activeCameraID );
+    }
+    else
+    {
+        h3dRender(m_activeCameraID); // Render scene
+        h3dFinalizeFrame();
+    }
+
+    renderEditorInfo();
+
+    // Update Log if we are not the fullscreen widget
+    updateLog();
 }
 
 
@@ -350,9 +303,10 @@ void GLWidget::keyPressEvent(QKeyEvent* event)
         m_right = true;
         break;
     case Qt::Key_Escape:
-        if (isFullScreen() && m_fullScreen == 0)
-            close();
+        if (isFullScreen() )
+            setFullScreen(false);
         resetMode(false);
+        break;
     case Qt::Key_Return:
         resetMode(true);
         break;
@@ -559,13 +513,6 @@ void GLWidget::focusOutEvent(QFocusEvent* event)
     event->accept();
 }
 
-void GLWidget::fullScreenClosed()
-{
-    m_fullScreen = 0;
-    updateGL();
-    resizeGL(width(), height());
-    emit fullscreenActive(false);
-}
 
 void GLWidget::cameraNavigationStart()
 {	

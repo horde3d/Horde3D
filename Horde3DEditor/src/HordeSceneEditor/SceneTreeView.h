@@ -31,6 +31,7 @@ class QXmlTreeNode;
 class SceneTreeModel;
 class QUndoStack;
 class QReferenceNode;
+class HordeSceneEditor;
 
 /**
  * Displays the scene tree for Horde3D by using the SceneTreeModel
@@ -163,6 +164,8 @@ private:
 	QList<SceneTreeModel*>	m_activeModels;
 
 	QReferenceNode*			m_rootNode;
+
+    HordeSceneEditor*       m_editorInstance;
 
 	bool					m_contextCall;
 

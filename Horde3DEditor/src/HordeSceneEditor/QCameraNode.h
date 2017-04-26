@@ -25,6 +25,8 @@
 
 #include "QSceneNode.h"
 
+class HordeSceneEditor;
+
 /**
  * A camera node item for the SceneTreeModel
  */
@@ -102,7 +104,7 @@ protected:
 	void addRepresentation();
 
 private:
-
+        HordeSceneEditor* m_editorInstance;
         int     m_pipelineID;
         int     m_viewportWidth;
         int     m_viewportHeight;

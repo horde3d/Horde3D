@@ -39,7 +39,7 @@ int main(int argc, char** argv)
     splash.show();
     app.processEvents();
 	// create a new instance of HordeSceneEditor (will be automatically deleted on close)
-	HordeSceneEditor* mainWindow = HordeSceneEditor::instance();	
+    HordeSceneEditor* mainWindow = new HordeSceneEditor();
 	mainWindow->show();
 	splash.finish(mainWindow);
 	if (argc > 1 && !QString(argv[1]).isEmpty())

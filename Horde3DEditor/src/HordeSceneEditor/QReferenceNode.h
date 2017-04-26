@@ -26,6 +26,7 @@
 #include "QSceneNode.h"
 
 class SceneTreeModel;
+class HordeSceneEditor;
 
 /**
  * A reference node item for the SceneTreeModel
@@ -56,7 +57,7 @@ public:
 	QString toolTip( int column );
 
 protected:	
-	
+    HordeSceneEditor* m_editorInstance;
 	SceneTreeModel*	m_treeModel;
 	QString			m_fileName;
 	QDomDocument	m_sceneGraphFile;

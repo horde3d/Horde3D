@@ -28,6 +28,8 @@
 #include <QtCore/QDir>
 
 class QProcess;
+class HordeSceneEditor;
+
 class ColladaImporter : public QDialog, protected Ui_ColladaImporter
 {
 	Q_OBJECT
@@ -53,6 +55,8 @@ private:
 	QDir m_outputDir;
 
 	QProcess*				m_convertProcess;
+
+    HordeSceneEditor*       m_editorInstance;
 
 	QStringList				m_colladaFiles;
 };

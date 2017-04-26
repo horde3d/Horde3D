@@ -80,7 +80,11 @@ void QPropertyEditorWidget::dataChanged(const QModelIndex &topLeft, const QModel
 {
     // For some reason currently dataChanged is not called for all changed properties.
     // String editor works so far, Spinboxes not,... TODO find out why
+#if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
     QTreeView::dataChanged(topLeft, bottomRight, roles );
+#else
+    QTreeView::dataChanged(topLeft, bottomRight );
+#endif
     int rowStart = topLeft.row();
     int rowEnd = bottomRight.row();
     QObject* propertyObject = 0;

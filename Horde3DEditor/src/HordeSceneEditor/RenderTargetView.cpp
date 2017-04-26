@@ -132,8 +132,9 @@ void RenderTargetView::setRenderTarget(const QDomElement &renderTarget, unsigned
 	float scale = renderTarget.attribute("scale","1.0").toFloat();
 	if (width == 0 && height == 0)
 	{
-		width = HordeSceneEditor::instance()->glContext()->width();
-		height = HordeSceneEditor::instance()->glContext()->height();
+        HordeSceneEditor* editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
+        width = editorInstance->glContext()->width();
+        height = editorInstance->glContext()->height();
 	}
 	width *= scale;
 	height *= scale;
