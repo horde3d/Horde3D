@@ -173,7 +173,7 @@ void GLWidget::setCurrentNode(QXmlTreeNode* node)
 
 void GLWidget::initializeGL()
 {		
-    if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL2) ) == false)
+    if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL4) ) == false)
         QMessageBox::warning(this, tr("Error"), tr("Error initializing Horde3D!"));
 }
 

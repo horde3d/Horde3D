@@ -39,9 +39,12 @@ HordeModelDialog::~HordeModelDialog()
 	if (m_newScene)		
 	{
 		h3dRemoveNode(m_newScene);
-        while (!m_resources.isEmpty())
-            h3dRemoveResource(m_resources.takeLast());
-        h3dReleaseUnusedResources();
+        // There seem to be a problem here with releasing resources, resulting in crash
+        // after readding the loaded resource later when adding the QSceneNode
+        // TODO find out what goes wrong
+//        while (!m_resources.isEmpty())
+//            h3dRemoveResource(m_resources.takeLast());
+//        h3dReleaseUnusedResources();
 	}
 	if (m_oldScene != 0)
 		h3dSetNodeFlags(m_oldScene, 0, true );
