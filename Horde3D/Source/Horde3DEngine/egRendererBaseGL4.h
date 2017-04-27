@@ -198,7 +198,7 @@ public:
 	void finishCreatingGeometry( uint32 geoObj );
 	void setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
 	void setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format );
-	void destroyGeometry( uint32 geoObj );
+	void destroyGeometry( uint32 geoObj, bool destroyBindedBuffers );
 
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );

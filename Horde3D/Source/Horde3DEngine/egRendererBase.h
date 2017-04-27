@@ -579,7 +579,7 @@ private:
 
 	typedef uint32( *PFN_BEGINCREATINGGEOMETRY )( void* const, uint32 vlObj );
 	typedef void( *PFN_FINISHCREATINGGEOMETRY )( void* const, uint32 geoIndex );
-	typedef void( *PFN_DESTROYGEOMETRY )( void* const, uint32 geoIndex );
+	typedef void( *PFN_DESTROYGEOMETRY )( void* const, uint32 geoIndex, bool destroyBindedBuffers );
 	typedef void( *PFN_SETGEOMVERTEXPARAMS )( void* const, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
 	typedef void( *PFN_SETGEOMINDEXPARAMS )( void* const, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format );
 
@@ -785,9 +785,9 @@ private:
 	}
 
 	template<typename T>
-	static void              destroyGeometry_Invoker( void* const pObj, uint32 geoIndex )
+	static void              destroyGeometry_Invoker( void* const pObj, uint32 geoIndex, bool destroyBindedBuffers )
 	{
-		static_cast< T* >( pObj )->destroyGeometry( geoIndex );
+		static_cast< T* >( pObj )->destroyGeometry( geoIndex, destroyBindedBuffers );
 	}
 
 	template<typename T>
@@ -1046,7 +1046,7 @@ protected:
 		CheckMemberFunction( setGeomVertexParams, void( T::* )( uint32, uint32, uint32, uint32, uint32 ) );
 		CheckMemberFunction( setGeomIndexParams, void( T::* )( uint32, uint32, RDIIndexFormat ) );
 		CheckMemberFunction( finishCreatingGeometry, void( T::* )( uint32 ) );
-		CheckMemberFunction( destroyGeometry, void( T::* )( uint32 ) );
+		CheckMemberFunction( destroyGeometry, void( T::* )( uint32, bool ) );
 		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
@@ -1211,9 +1211,9 @@ public:
 	{
 		( *_pfnFinishCreatingGeometry ) ( this, geoObj );
 	}
-	void destroyGeometry( uint32 geoObj )
+	void destroyGeometry( uint32 geoObj, bool destroyBindedBuffers = true )
 	{
-		( *_pfnDestroyGeometry ) ( this, geoObj );
+		( *_pfnDestroyGeometry ) ( this, geoObj, destroyBindedBuffers );
 	}
 	uint32 createVertexBuffer( uint32 size, const void *data )
 	{

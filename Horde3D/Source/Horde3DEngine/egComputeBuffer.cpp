@@ -388,7 +388,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 	{
 		if ( elem == ComputeBufferResData::ComputeBufElem )
 		{
-			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+//			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 			// 			_mappedData = Modules::renderer().useScratchBuf( _dataSize );
 

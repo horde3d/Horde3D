@@ -349,19 +349,22 @@ void RenderDeviceGL2::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndex
 	geo.indexBuf32Bit = format == IDXFMT_32 ? true : false;
 }
 
-void RenderDeviceGL2::destroyGeometry( uint32 geoObj )
+void RenderDeviceGL2::destroyGeometry( uint32 geoObj, bool destroyBindedBuffers )
 {
 	if ( geoObj == 0 ) return;
 
 	RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( geoObj );
 	
-	for ( unsigned int i = 0; i < geo.vertexBufInfo.size(); ++i )
+	if ( destroyBindedBuffers )
 	{
-		destroyBuffer( geo.vertexBufInfo[ i ].vbObj );
+		for ( unsigned int i = 0; i < geo.vertexBufInfo.size(); ++i )
+		{
+			destroyBuffer( geo.vertexBufInfo[ i ].vbObj );
+		}
+
+		destroyBuffer( geo.indexBufIdx );
 	}
-
-	destroyBuffer( geo.indexBufIdx );
-
+	
 	_geometryInfo.remove( geoObj );
 }
 
@@ -799,9 +802,14 @@ bool RenderDeviceGL2::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char */*geometryShaderSrc*/,
-                                      const char */*tessControlShaderSrc*/, const char */*tessEvaluationShaderSrc*/, const char */*computeShaderSrc*/ )
+uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+                                      const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
 {
+	H3D_UNUSED_VAR( geometryShaderSrc );
+	H3D_UNUSED_VAR( tessControlShaderSrc );
+	H3D_UNUSED_VAR( tessEvaluationShaderSrc );
+	H3D_UNUSED_VAR( computeShaderSrc );
+
 	// Compile and link shader
 	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
 	if( programObj == 0 ) return 0;
@@ -895,6 +903,9 @@ int RenderDeviceGL2::getShaderSamplerLoc( uint32 shaderId, const char *name )
 
 int RenderDeviceGL2::getShaderBufferLoc( uint32 shaderId, const char *name )
 {
+	H3D_UNUSED_VAR( shaderId );
+	H3D_UNUSED_VAR( name );
+
 	// Not supported on OpenGL 2
 	return -1;
 }
@@ -1331,6 +1342,13 @@ void RenderDeviceGL2::checkError()
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
 	ASSERT( error != GL_STACK_OVERFLOW && error != GL_STACK_UNDERFLOW );
+}
+
+
+void RenderDeviceGL2::setStorageBuffer( uint8 slot, uint32 bufObj )
+{
+	H3D_UNUSED_VAR( slot );
+	H3D_UNUSED_VAR( bufObj );
 }
 
 
