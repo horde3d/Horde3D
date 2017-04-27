@@ -37,9 +37,9 @@ public:
 	QJointNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode);
 	virtual ~QJointNode();
 
-	void addRepresentation();
-
 	int jointIndex() const;
 
+private:
+    void addRepresentation();
 };
 #endif

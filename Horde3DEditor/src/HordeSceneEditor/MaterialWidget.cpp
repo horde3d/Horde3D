@@ -376,9 +376,13 @@ void MaterialWidget::syncWithShader()
         return;
     }
 
-    m_shaderHandle = h3dAddResource( H3DResTypes::Shader, qPrintable( m_shader->currentText() ), 0 );
+    int shaderHandle = h3dFindResource(H3DResTypes::Shader, qPrintable( m_shader->currentText() ) );
+    if( !shaderHandle )
+    {
 
-    h3dLoadResource( m_shaderHandle, shaderData.constData(), shaderData.size() );
+        shaderHandle = m_shaderHandle = h3dAddResource( H3DResTypes::Shader, qPrintable( m_shader->currentText() ), 0 );
+        h3dLoadResource( m_shaderHandle, shaderData.constData(), shaderData.size() );
+    }
 
     QDomNodeList flags = m_materialXml.elementsByTagName( "ShaderFlag" );
     m_shaderFlags->blockSignals( true );
@@ -402,10 +406,10 @@ void MaterialWidget::syncWithShader()
     m_shaderFlags->blockSignals( false );
 
     QDomNodeList samplers = m_materialXml.documentElement().elementsByTagName("Sampler");
-    int numSamplers = h3dGetResElemCount( m_shaderHandle, H3DShaderRes::SamplerElem );
+    int numSamplers = h3dGetResElemCount( shaderHandle, H3DShaderRes::SamplerElem );
     for( int i = 0; i < numSamplers; ++i )
     {
-        QString sampler = h3dGetResParamStr( m_shaderHandle, H3DShaderRes::SamplerElem, i, H3DShaderRes::SampNameStr );
+        QString sampler = h3dGetResParamStr( shaderHandle, H3DShaderRes::SamplerElem, i, H3DShaderRes::SampNameStr );
         QString tip("Sampler %1");
         tip = tip.arg( sampler );
         QDomElement samplerXML;
@@ -421,7 +425,7 @@ void MaterialWidget::syncWithShader()
         {
             samplerXML = m_materialXml.documentElement().appendChild( m_materialXml.createElement("Sampler") ).toElement();
             samplerXML.setAttribute( "name", sampler );
-            H3DRes texRes = h3dGetResParamI( m_shaderHandle, H3DShaderRes::SamplerElem, i, H3DShaderRes::SampDefTexResI );
+            H3DRes texRes = h3dGetResParamI( shaderHandle, H3DShaderRes::SamplerElem, i, H3DShaderRes::SampDefTexResI );
             if( texRes )
                 samplerXML.setAttribute( "map", h3dGetResName( texRes ) );
         }
@@ -432,10 +436,10 @@ void MaterialWidget::syncWithShader()
     }
 
     QDomNodeList uniforms = m_materialXml.documentElement().elementsByTagName("Uniform");
-    int numUniforms = h3dGetResElemCount( m_shaderHandle, H3DShaderRes::UniformElem );
+    int numUniforms = h3dGetResElemCount( shaderHandle, H3DShaderRes::UniformElem );
     for( int i = 0; i < numUniforms; ++i )
     {
-        QString uniformName = h3dGetResParamStr( m_shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifNameStr );
+        QString uniformName = h3dGetResParamStr( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifNameStr );
         QUniform* uni = 0;
         for( int j = 0; j < uniforms.count(); ++j)
         {
@@ -450,14 +454,12 @@ void MaterialWidget::syncWithShader()
         {
             QDomElement uniform = m_materialXml.createElement( "Uniform" );
             uniform.setAttribute( "name", uniformName );
-            uniform.setAttribute( "a", h3dGetResParamF( m_shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 0 ) );
-            uniform.setAttribute( "b", h3dGetResParamF( m_shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 1 ) );
-            uniform.setAttribute( "c", h3dGetResParamF( m_shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 2 ) );
-            uniform.setAttribute( "d", h3dGetResParamF( m_shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 3 ) );
+            uniform.setAttribute( "a", h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 0 ) );
+            uniform.setAttribute( "b", h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 1 ) );
+            uniform.setAttribute( "c", h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 2 ) );
+            uniform.setAttribute( "d", h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 3 ) );
             uni = new QUniform( uniform, true, m_uniformCombo );
         }
         m_uniformCombo->addItem( uni->name(), QVariant::fromValue<void*>( uni ) );
     }
-
-
 }

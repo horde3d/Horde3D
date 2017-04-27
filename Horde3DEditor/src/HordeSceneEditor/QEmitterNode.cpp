@@ -74,9 +74,6 @@ void QEmitterNode::addRepresentation()
 		qWarning("Error opening resource %s", qPrintable(m_xmlNode.attribute("material")));
 
 	// Stupid return value, if false it can also be the case that the resource was loaded before instead of that their was an error
-
-
-
 	h3dLoadResource(m_matResource, matFile.readAll().append('\0').constData(), matFile.size() + 1);
 	matFile.close();
 

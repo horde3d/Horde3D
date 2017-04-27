@@ -100,10 +100,9 @@ public slots:
 signals:
 	void pipelineChanged(QCameraNode*);
 
-protected:
-	void addRepresentation();
-
 private:
+        void addRepresentation();
+
         HordeSceneEditor* m_editorInstance;
         int     m_pipelineID;
         int     m_viewportWidth;

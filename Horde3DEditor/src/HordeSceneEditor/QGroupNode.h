@@ -39,6 +39,7 @@ public:
 	QGroupNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode);
 	virtual ~QGroupNode();
 
+private:
 	void addRepresentation();
 
 };

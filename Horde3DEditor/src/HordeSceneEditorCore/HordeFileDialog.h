@@ -67,8 +67,8 @@ public:
 	static QString getResourceFile( H3DResTypes::List resourceType, const QString& targetPath, QWidget* parent, const QString& caption);
 
 public slots:
-	void accept();
-	void reject();
+    virtual void accept();
+    virtual void reject();
 
 protected slots:
 	virtual void itemChanged(QListWidgetItem* current, QListWidgetItem* previous);
@@ -91,8 +91,6 @@ protected:
 
 	QString					m_currentFilter;
 
-	QList<unsigned int>		m_resources;
-	
 	
 	H3DResTypes::List		m_type;
 

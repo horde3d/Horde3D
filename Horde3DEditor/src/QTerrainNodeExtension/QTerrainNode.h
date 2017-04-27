@@ -70,6 +70,7 @@ public:
 
 private:
 	void addRepresentation();
+
 	unsigned int	m_heightMapID;
 	unsigned int	m_materialID;
 

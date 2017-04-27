@@ -45,7 +45,7 @@ QSceneNode* QMeshNode::loadNode(const QDomElement& xmlNode, int row, SceneTreeMo
 }
 
 QMeshNode::QMeshNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode) : 
-	QSceneNode(xmlNode, row, model, parentNode)
+    QSceneNode(xmlNode, row, model, parentNode), m_materialResID(0)
 {
 	setObjectName("Mesh");
 	QMeshNode::addRepresentation();
@@ -54,17 +54,17 @@ QMeshNode::QMeshNode(const QDomElement& xmlNode, int row, SceneTreeModel* model,
 
 QMeshNode::~QMeshNode()
 {
-	if (m_resourceID != 0)
+    if (m_materialResID != 0)
 	{
-		h3dRemoveResource(m_resourceID);
-		m_resourceID = 0;
+        h3dRemoveResource(m_materialResID);
+        m_materialResID = 0;
 	}
 }
 
 
 void QMeshNode::addRepresentation()
 {
-	m_resourceID = h3dAddResource(H3DResTypes::Material, qPrintable(m_xmlNode.attribute("material")), 0);
+    m_materialResID = h3dAddResource(H3DResTypes::Material, qPrintable(m_xmlNode.attribute("material")), 0);
 
 	QSceneNode* parentNode = static_cast<QSceneNode*>(parent());
 	unsigned int rootID = parentNode ? parentNode->hordeId() : H3DRootNode;
@@ -72,7 +72,7 @@ void QMeshNode::addRepresentation()
 	m_hordeID = h3dAddMeshNode(
 		rootID, 
 		qPrintable(m_xmlNode.attribute("name")), 
-		m_resourceID, 
+        m_materialResID,
 		m_xmlNode.attribute("batchStart").toUInt(),
 		m_xmlNode.attribute("batchCount").toUInt(),
 		m_xmlNode.attribute("vertRStart").toUInt(),
@@ -102,12 +102,11 @@ void QMeshNode::setMaterial(const Material &material)
 {
 	if (signalsBlocked())
 	{
-		m_xmlNode.setAttribute("material", material.FileName);
-		H3DRes resourceID = h3dFindResource(H3DResTypes::Material, qPrintable(QMeshNode::material().FileName));
-		if (resourceID != 0)
-			h3dRemoveResource(resourceID);
-		resourceID = h3dAddResource( H3DResTypes::Material, qPrintable(material.FileName), 0 );		
-		h3dSetNodeParamI(m_hordeID, H3DMesh::MatResI, resourceID);
+		m_xmlNode.setAttribute("material", material.FileName);		
+        if (m_materialResID != 0)
+            h3dRemoveResource(m_materialResID);
+        m_materialResID = h3dAddResource( H3DResTypes::Material, qPrintable(material.FileName), 0 );
+        h3dSetNodeParamI(m_hordeID, H3DMesh::MatResI, m_materialResID);
 		h3dutLoadResourcesFromDisk(".");
 	}
 	else if (material != QMeshNode::material())

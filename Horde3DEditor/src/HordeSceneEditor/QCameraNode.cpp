@@ -67,6 +67,7 @@ void QCameraNode::addRepresentation()
 {	
 	QSceneNode* parentNode = static_cast<QSceneNode*>(parent());
 	unsigned int rootID = parentNode ? parentNode->hordeId() : H3DRootNode;
+    if( m_pipelineID ) h3dRemoveResource(m_pipelineID);
 	m_pipelineID = h3dAddResource(H3DResTypes::Pipeline, qPrintable(m_xmlNode.attribute("pipeline")), 0);
 
 	m_hordeID = h3dAddCameraNode( rootID, qPrintable(m_xmlNode.attribute("name", tr("ATTENTION no node name"))), m_pipelineID );	
@@ -177,9 +178,7 @@ void QCameraNode::setFrustum(const Frustum& frustum)
 
 Pipeline QCameraNode::pipeline() const
 {
-	Pipeline pipeline(m_xmlNode.attribute("pipeline"));
-	pipeline.ResourceID = m_pipelineID;
-	return pipeline;
+    return Pipeline(m_xmlNode.attribute("pipeline"));
 }
 
 void QCameraNode::setPipeline(const Pipeline &pipeline)
@@ -188,8 +187,9 @@ void QCameraNode::setPipeline(const Pipeline &pipeline)
 	{
 		m_xmlNode.setAttribute("pipeline", pipeline.FileName);					
 		h3dSetNodeParamI(m_hordeID, H3DCamera::PipeResI, pipeline.ResourceID);
-		h3dRemoveResource(m_pipelineID);
-		m_pipelineID = pipeline.ResourceID;		
+        if( m_pipelineID ) h3dRemoveResource(m_pipelineID);
+        // Add user ref
+        m_pipelineID = h3dAddResource( H3DResTypes::Pipeline, qPrintable(pipeline.FileName), 0 );
 		blockSignals(false); // We have to unblock signals here, otherwise the pipeline tree view won't get notified about the change
 		emit pipelineChanged(this);
 	}

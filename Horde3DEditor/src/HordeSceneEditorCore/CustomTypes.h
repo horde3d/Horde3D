@@ -25,6 +25,7 @@
 
 #include <QtCore/QVariant>
 #include <math.h>
+#include <Horde3D.h>
 
 class Property;
 class QObject;
@@ -124,12 +125,14 @@ Q_DECLARE_METATYPE(Frustum)
 
 struct Pipeline
 {
-	Pipeline() : FileName(QString()) {}
-	Pipeline(const QString& file) : FileName(file) {}
+    Pipeline() : FileName(QString()), ResourceID(0) {}
+    Pipeline(const QString& file) : FileName(file), ResourceID(h3dAddResource(H3DResTypes::Pipeline, qPrintable(file), 0)) {}
+    Pipeline( const Pipeline& p ) : FileName(p.FileName), ResourceID(h3dAddResource(H3DResTypes::Pipeline, qPrintable(p.FileName), 0)) {}
+    ~Pipeline() { if( ResourceID ) h3dRemoveResource(ResourceID); }
 
 	QString		FileName;
-	int			ResourceID;
-
+    int         ResourceID;
+    Pipeline& operator=(const Pipeline& p) { if( ResourceID ) h3dRemoveResource(ResourceID); FileName = p.FileName; ResourceID = h3dAddResource(H3DResTypes::Pipeline, qPrintable(FileName), 0);}
 	bool operator != (const Pipeline& other) const {return ResourceID != other.ResourceID || FileName != other.FileName;}	
 };
 Q_DECLARE_METATYPE(Pipeline)

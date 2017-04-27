@@ -43,7 +43,7 @@ QJointNode::QJointNode(const QDomElement& xmlNode, int row, SceneTreeModel* mode
 	QSceneNode(xmlNode, row, model, parentNode)
 {
 	setObjectName("QJointNode");	
-	QJointNode::addRepresentation();
+    addRepresentation();
 }
 
 

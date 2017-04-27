@@ -233,8 +233,6 @@ bool SceneTreeView::selectNode( int H3DNode )
 		if (!items.isEmpty())
 		{
 			while (m_activeModels.count() > i && popSceneGraph()) {}
-			// Little hack, otherwise the scrollTo command won't be executed successfully
-			qApp->processEvents();
 			setCurrentIndex(items.first());
 			scrollTo(items.first(), QAbstractItemView::PositionAtCenter);
 			return true;
@@ -242,8 +240,7 @@ bool SceneTreeView::selectNode( int H3DNode )
 	}
 	// Not found? Then we have to take the hard way	and search through all models
 	QApplication::setOverrideCursor(Qt::BusyCursor);
-	QStringList fileCache;
-	QList<SceneTreeModel*> models = findSceneGraph(m_activeModels.first(), H3DNode);
+    QList<SceneTreeModel*> models = findSceneGraph(m_activeModels.first(), H3DNode);
 	QApplication::restoreOverrideCursor();
 	if (models.isEmpty())
 		return false;

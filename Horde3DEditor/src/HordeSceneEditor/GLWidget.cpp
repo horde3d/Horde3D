@@ -107,19 +107,28 @@ void GLWidget::loadButtonConfig()
 
 void GLWidget::setFullScreen(bool fullscreen, GLWidget* widget /*= 0*/)
 {
+    /*
+     *  Note that under Windows, the QGLContext belonging to a QGLWidget has to be
+     * recreated when the QGLWidget is reparented. This is necessary due to limitations
+     * on the Windows platform. This will most likely cause problems for users that have
+     * subclassed and installed their own QGLContext on a QGLWidget. It is possible to
+     * work around this issue by putting the QGLWidget inside a dummy widget and then reparenting the
+     * dummy widget, instead of the QGLWidget. This will side-step the issue altogether, and
+     * is what we recommend for users that need this kind of functionality.
+     */
     if( fullscreen)
     {
-        m_parentWidget = parentWidget();
-        setParent(0);
-        showFullScreen();
-        setGeometry( qApp->desktop()->screenGeometry() );
+        m_parentWidget = parentWidget()->parentWidget();
+        parentWidget()->setParent(0);
+        parentWidget()->showFullScreen();
+        //setGeometry( qApp->desktop()->screenGeometry() );
     }
     else
     {
-        showNormal();
-        setParent(m_parentWidget);
+        parentWidget()->showNormal();
+        parentWidget()->setParent(m_parentWidget);
         if( m_parentWidget->layout() )
-            m_parentWidget->layout()->addWidget(this);
+            m_parentWidget->layout()->addWidget(parentWidget());
         emit fullscreenActive(false);
     }
 }
@@ -175,7 +184,7 @@ void GLWidget::setCurrentNode(QXmlTreeNode* node)
 
 void GLWidget::initializeGL()
 {		
-    if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL4) ) == false)
+    if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL2) ) == false)
         QMessageBox::warning(this, tr("Error"), tr("Error initializing Horde3D!"));
 }
 
@@ -303,7 +312,7 @@ void GLWidget::keyPressEvent(QKeyEvent* event)
         m_right = true;
         break;
     case Qt::Key_Escape:
-        if (isFullScreen() )
+        if (parentWidget()->isFullScreen() )
             setFullScreen(false);
         resetMode(false);
         break;

@@ -162,7 +162,8 @@ void QModelNode::addRepresentation()
 		qWarning("Error opening resource %s (%s)", qPrintable(m_xmlNode.attribute("geometry")), qPrintable( QFileInfo(resourceName).absoluteFilePath() ));
 	
 	// Stupid return value, if false it can also be the case that the resource was loaded before instead of that their was an error
-	h3dLoadResource(m_resourceID, file.readAll().constData(), file.size());
+    if( !h3dIsResLoaded(m_resourceID) )
+        h3dLoadResource(m_resourceID, file.readAll().constData(), file.size());
 	file.close();
 
 	QSceneNode* parentNode = static_cast<QSceneNode*>(parent());

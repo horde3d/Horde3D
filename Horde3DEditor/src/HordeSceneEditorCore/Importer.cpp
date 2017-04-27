@@ -397,9 +397,6 @@ void Importer::importTextureFile( const QFileInfo& textureFile, const QString& t
 		m_alreadyCopied.append(job);
 }
 
-
-
-
 void Importer::importGeometrieElement(const QDomElement& element)
 {
 	if (element.hasAttribute("geometry"))

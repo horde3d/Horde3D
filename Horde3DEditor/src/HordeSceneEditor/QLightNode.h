@@ -54,8 +54,6 @@ public:
 	QLightNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode);
 	virtual ~QLightNode();
 
-	void addRepresentation();
-
 	void activate();
 
 	float fov() const;
@@ -85,7 +83,7 @@ public:
 	Material material() const;
 	void setMaterial(const Material& material);
 	
-        QString toolTip( int /*column*/ )  { return tr("Double click to move the camera to the lights position"); }
+    QString toolTip( int /*column*/ )  { return tr("Double click to move the camera to the lights position"); }
 
 protected:
 	
@@ -93,6 +91,8 @@ protected:
 	//void removeDebugRepresentation();
 
 private:	
+    void addRepresentation();
+
 	unsigned int m_resourceID;
 	unsigned int m_debugID;
 	unsigned int m_debugResourceMat;

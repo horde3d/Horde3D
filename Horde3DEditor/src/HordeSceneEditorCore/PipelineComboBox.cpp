@@ -51,8 +51,7 @@ void PipelineComboBox::init( const QString& resourcePath )
 
 Pipeline PipelineComboBox::pipeline() const
 {
-	Pipeline pipeline(currentText());
-	pipeline.ResourceID = h3dAddResource(H3DResTypes::Pipeline, qPrintable(currentText()), 0);
+	Pipeline pipeline(currentText());	
 	h3dutLoadResourcesFromDisk(".");
 	return pipeline;
 }

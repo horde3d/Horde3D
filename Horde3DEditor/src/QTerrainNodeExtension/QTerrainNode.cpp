@@ -87,7 +87,7 @@ void QTerrainNode::setMaterial(const Material& material)
 	if (signalsBlocked())
 	{
 		m_xmlNode.setAttribute("material", material.FileName);
-		h3dRemoveResource(m_materialID);
+        if( m_materialID ) h3dRemoveResource(m_materialID);
 		m_materialID = h3dAddResource( H3DResTypes::Material, qPrintable(material.FileName), 0 );		
 		h3dutLoadResourcesFromDisk(".");
 		h3dSetNodeParamI(m_hordeID, H3DEXTTerrain::MatResI, m_materialID);
@@ -106,7 +106,7 @@ void QTerrainNode::setHeightMap(const Texture& heightMap)
 	if (signalsBlocked())
 	{
 		m_xmlNode.setAttribute("heightmap", heightMap.FileName);
-		h3dRemoveResource(m_heightMapID);
+        if( m_heightMapID ) h3dRemoveResource(m_heightMapID);
 		m_heightMapID = h3dAddResource( H3DResTypes::Texture, qPrintable(heightMap.FileName), 0 );		
 		h3dutLoadResourcesFromDisk(".");
 		h3dSetNodeParamI(m_hordeID, H3DEXTTerrain::HeightTexResI, m_heightMapID);

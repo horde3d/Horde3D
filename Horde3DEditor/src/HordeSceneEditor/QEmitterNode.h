@@ -51,8 +51,6 @@ public:
 	QEmitterNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode);
 	virtual ~QEmitterNode();
 
-	void addRepresentation();
-
 	Material material() const;
 	void setMaterial(const Material& material);
 
@@ -81,6 +79,8 @@ protected:
 	void timerEvent(QTimerEvent* event);
 	
 private:
+    void addRepresentation();
+
 	unsigned int	m_effectResource;
 	unsigned int	m_matResource;	
 };

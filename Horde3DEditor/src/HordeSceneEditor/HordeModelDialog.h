@@ -21,6 +21,10 @@ public:
 	 */
 	static QString getModelFile(const QString& targetPath, QWidget* parent, const QString& caption);
 
+public slots:
+    virtual void accept();
+    virtual void reject();
+
 protected slots:
 	virtual void itemChanged(QListWidgetItem* current, QListWidgetItem* previous);
 
@@ -37,6 +41,7 @@ private:
     HordeSceneEditor*       m_editorInstance;
     QWidget*                m_glParentOriginal;
     int                     m_oldCameraID;
+    H3DRes                  m_envRes;
 
 	unsigned int			m_oldScene;
 	unsigned int			m_newScene;

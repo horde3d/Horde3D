@@ -66,6 +66,6 @@ signals:
 private:
 	void addRepresentation();
 
-	unsigned int	m_resourceID;
+    unsigned int    m_materialResID;
 };
 #endif

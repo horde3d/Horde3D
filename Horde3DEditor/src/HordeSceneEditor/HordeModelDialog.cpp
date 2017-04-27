@@ -7,7 +7,7 @@
 #include "SceneFile.h"
 
 HordeModelDialog::HordeModelDialog(const QString& targetPath, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : HordeFileDialog(H3DResTypes::SceneGraph, targetPath, parent, flags),
-m_glWidget(0), m_glParentOriginal(0), m_oldCameraID(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_cameraID(0)
+m_glWidget(0), m_glParentOriginal(0), m_oldCameraID(0), m_envRes(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_cameraID(0)
 {
     m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	m_glFrame->setLayout(new QHBoxLayout());
@@ -30,22 +30,14 @@ HordeModelDialog::~HordeModelDialog()
 {
     if( m_glWidget )
     {
-        m_glWidget->setParent(m_glParentOriginal);
+        m_glWidget->parentWidget()->setParent(m_glParentOriginal);
         if( m_glParentOriginal->layout() )
-            m_glParentOriginal->layout()->addWidget(m_glWidget);
+            m_glParentOriginal->layout()->addWidget(m_glWidget->parentWidget());
         m_glWidget->setActiveCam(m_oldCameraID);
     }
 
 	if (m_newScene)		
-	{
 		h3dRemoveNode(m_newScene);
-        // There seem to be a problem here with releasing resources, resulting in crash
-        // after readding the loaded resource later when adding the QSceneNode
-        // TODO find out what goes wrong
-//        while (!m_resources.isEmpty())
-//            h3dRemoveResource(m_resources.takeLast());
-//        h3dReleaseUnusedResources();
-	}
 	if (m_oldScene != 0)
 		h3dSetNodeFlags(m_oldScene, 0, true );
 }
@@ -112,7 +104,16 @@ void HordeModelDialog::initModelViewer()
 		m_newScene = h3dAddGroupNode(H3DRootNode, "ModelView");		
 
         m_glWidget = m_editorInstance->glContext();
-        m_glParentOriginal = m_glWidget->parentWidget();
+        /*
+         *  Note that under Windows, the QGLContext belonging to a QGLWidget has to be
+         * recreated when the QGLWidget is reparented. This is necessary due to limitations
+         * on the Windows platform. This will most likely cause problems for users that have
+         * subclassed and installed their own QGLContext on a QGLWidget. It is possible to
+         * work around this issue by putting the QGLWidget inside a dummy widget and then reparenting the
+         * dummy widget, instead of the QGLWidget. This will side-step the issue altogether, and
+         * is what we recommend for users that need this kind of functionality.
+         */
+        m_glParentOriginal = m_glWidget->parentWidget()->parentWidget();
         m_oldCameraID = m_glWidget->activeCam();
 
 		// Get Pipeline from the last active camera
@@ -140,9 +141,11 @@ void HordeModelDialog::initModelViewer()
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 1.0f );
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 1.0f );
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 1.0f );
+        // Remove user reference, as the light handles the reference itself now
+        if( lightMaterial ) h3dRemoveResource( lightMaterial );
 		m_glWidget->setActiveCam(m_cameraID);
-        m_glWidget->setParent(m_glFrame);
-		m_glFrame->layout()->addWidget(m_glWidget);
+        m_glWidget->parentWidget()->setParent(m_glFrame);
+        m_glFrame->layout()->addWidget(m_glWidget->parentWidget());
 		m_glWidget->setNavigationSpeed(10.0);
 	}
 	QHordeSceneEditorSettings settings;
@@ -167,17 +170,18 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
 	if (m_currentModel != 0)
 	{
 		h3dRemoveNode(m_currentModel);
+        h3dRemoveResource(m_envRes);
+        m_envRes = 0;
+        h3dReleaseUnusedResources();
 		m_currentModel = 0;
 	}
 	else
 		m_stackedWidget->setCurrentWidget(m_glFrame);
-	// make the first glcontext current because the shared context is not allowed
-	// to create new shader programs that may be loaded by the selected model
-    m_glWidget->makeCurrent();
+
 	// Add resource for model 
-	H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, qPrintable(fileName), 0 );
+    m_envRes = h3dAddResource( H3DResTypes::SceneGraph, qPrintable(fileName), 0 );
 	// Load data
-	if (envRes == 0 || !h3dutLoadResourcesFromDisk( "." )) // if loading failed
+    if (m_envRes == 0 || !h3dutLoadResourcesFromDisk( "." )) // if loading failed
 	{
 		// Clear log
 		m_xmlView->clear();
@@ -201,7 +205,8 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
 		// Show XML View Widget
 		m_stackedWidget->setCurrentWidget(m_xmlView);	
 		// Remove the added resource
-		if( envRes ) h3dRemoveResource(envRes);		
+        if( m_envRes ) h3dRemoveResource(m_envRes);
+        m_envRes = 0;
 		// Restore Path settings if the selected model was from the repository
 		if( repoFile ) 
 			QDir::setCurrent( scenePath );
@@ -209,10 +214,8 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
         h3dReleaseUnusedResources();
 		return;
 	}
-	if (!m_resources.contains(envRes))
-		m_resources.push_back(envRes);
-	// Add to scene graph
-	m_currentModel = h3dAddNodes( m_newScene, envRes );
+    // Add to scene graph
+    m_currentModel = h3dAddNodes( m_newScene, m_envRes );
 	float minX, minY, minZ, maxX, maxY, maxZ;			
 	// get bounding box to scale each model to the same size
 	h3dGetNodeAABB(m_currentModel, &minX, &minY, &minZ, &maxX, &maxY, &maxZ);
@@ -251,5 +254,24 @@ QString HordeModelDialog::getModelFile(const QString& targetPath, QWidget* paren
 		return dlg.fileName();
 	}
 	else
-		return QString();
+        return QString();
 }
+
+void HordeModelDialog::accept()
+{
+    if( m_envRes )
+        // Remove user reference count
+        h3dRemoveResource(m_envRes);
+    // We don't release the unused resources, to allow reusing already loaded data without the need to reload it later
+    HordeFileDialog::accept();
+}
+
+void HordeModelDialog::reject()
+{
+    if( m_envRes )
+        h3dRemoveResource(m_envRes);
+    // Free all resources used by the model preview
+    h3dReleaseUnusedResources();
+    HordeFileDialog::reject();
+}
+

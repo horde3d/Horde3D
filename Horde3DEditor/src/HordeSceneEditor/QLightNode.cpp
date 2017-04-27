@@ -54,10 +54,7 @@ QLightNode::QLightNode(const QDomElement& xmlNode, int row, SceneTreeModel* mode
 QLightNode::~QLightNode()
 {
 	if (m_resourceID != 0)
-	{
 		h3dRemoveResource(m_resourceID);
-		m_resourceID = 0;
-	}
 	//removeDebugRepresentation();
 }
 
