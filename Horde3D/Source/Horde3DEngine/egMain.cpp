@@ -10,6 +10,7 @@
 //
 // *************************************************************************************************
 
+#include "Horde3D.h"
 #include "egModules.h"
 #include "egCom.h"
 #include "egExtensions.h"
@@ -178,26 +179,26 @@ DLLEXP const char *h3dGetMessage( int *level, float *time )
 }
 
 
-DLLEXP float h3dGetOption( EngineOptions::List param )
+DLLEXP float h3dGetOption( H3DOptions::List param )
 {
-	return Modules::config().getOption( param );
+	return Modules::config().getOption( (EngineOptions::List)param );
 }
 
 
-DLLEXP bool h3dSetOption( EngineOptions::List param, float value )
+DLLEXP bool h3dSetOption( H3DOptions::List param, float value )
 {
-	return Modules::config().setOption( param, value );
+	return Modules::config().setOption( (EngineOptions::List)param, value );
 }
 
 
-DLLEXP float h3dGetStat( EngineStats::List param, bool reset )
+DLLEXP float h3dGetStat( H3DStats::List param, bool reset )
 {
-	return Modules::stats().getStat( param, reset );
+	return Modules::stats().getStat( (EngineOptions::List)param, reset );
 }
 
 
 DLLEXP void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG,
-                             float colB, float colA, uint32 materialRes, int flags )
+                             float colB, float colA, H3DRes materialRes, int flags )
 {
 	Resource *resObj = Modules::resMan().resolveResHandle( materialRes ); 
 	APIFUNC_VALIDATE_RES_TYPE( resObj, ResourceTypes::Material, "h3dShowOverlays", APIFUNC_RET_VOID );
@@ -996,6 +997,7 @@ DLLEXP NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResHan
 // =================================================================================================
 
 
+#ifndef STATIC_H3D
 #ifdef PLATFORM_WIN
 BOOL APIENTRY DllMain( HANDLE /*hModule*/, DWORD /*ul_reason_for_call*/, LPVOID /*lpReserved*/ )
 {
@@ -1013,4 +1015,5 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/, DWORD /*ul_reason_for_call*/, LPVOID 
 	
 	return TRUE;
 }
+#endif
 #endif
