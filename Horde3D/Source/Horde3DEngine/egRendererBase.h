@@ -1213,7 +1213,7 @@ public:
 	{
 		( *_pfnFinishCreatingGeometry ) ( this, geoObj );
 	}
-	void destroyGeometry( uint32 geoObj, bool destroyBindedBuffers = true )
+	void destroyGeometry( uint32& geoObj, bool destroyBindedBuffers = true )
 	{
 		( *_pfnDestroyGeometry ) ( this, geoObj, destroyBindedBuffers );
 	}
@@ -1237,7 +1237,7 @@ public:
 	{ 
 		( *_pfnDestroyBuffer )( this, bufObj );
 	}
-	void destroyTextureBuffer( uint32 bufObj )
+	void destroyTextureBuffer( uint32& bufObj )
 	{
 		( *_pfnDestroyTextureBuffer )( this, bufObj );
 	}
@@ -1264,7 +1264,7 @@ public:
 	{ 
 		( *_pfnUploadTextureData )( this, texObj, slice, mipLevel, pixels );
 	}
-	void destroyTexture( uint32 texObj ) 
+	void destroyTexture( uint32& texObj )
 	{ 
 		( *_pfnDestroyTexture )( this, texObj );
 	}
