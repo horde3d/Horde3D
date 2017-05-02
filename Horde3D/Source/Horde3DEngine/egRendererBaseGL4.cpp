@@ -171,7 +171,7 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 	_tessPatchVerts = _lastTessPatchVertsValue = 0;
-    _memBarriers = NotSet;
+	_memBarriers = NotSet;
 	
 	_maxComputeBufferAttachments = 8;
 	_storageBufs.reserve( _maxComputeBufferAttachments );
@@ -209,7 +209,7 @@ bool RenderDeviceGL4::init()
 	char *version = (char *)glGetString( GL_VERSION );
 	
 	Modules::log().writeInfo( "Initializing GL4 backend using OpenGL driver '%s' by '%s' on '%s'",
-	                          version, vendor, renderer );
+							  version, vendor, renderer );
 	
 	// Init extensions
 	if( !initOpenGLExtensions( false ) )
@@ -399,9 +399,10 @@ void RenderDeviceGL4::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndex
 	curVao.indexBuf32Bit = ( format == IDXFMT_32 ? true : false );
 }
 
-void RenderDeviceGL4::destroyGeometry( uint32 geoObj, bool destroyBindedBuffers )
+void RenderDeviceGL4::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers )
 {
-	if ( geoObj == 0 ) return;
+	if ( geoObj == 0 )
+		return;
 	
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
 	
@@ -418,6 +419,7 @@ void RenderDeviceGL4::destroyGeometry( uint32 geoObj, bool destroyBindedBuffers 
 	glDeleteVertexArrays( 1, &curVao.vao );
 
 	_vaos.remove( geoObj );
+	geoObj = 0;
 }
 
 uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
@@ -504,21 +506,24 @@ uint32 RenderDeviceGL4::createBuffer( uint32 bufType, uint32 size, const void *d
 }
 
 
-void RenderDeviceGL4::destroyBuffer( uint32 bufObj )
+void RenderDeviceGL4::destroyBuffer( uint32& bufObj )
 {
-	if( bufObj == 0 ) return;
+	if( bufObj == 0 )
+		return;
 	
 	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
 	glDeleteBuffers( 1, &buf.glObj );
 
 	_bufferMem -= buf.size;
 	_buffers.remove( bufObj );
+	bufObj = 0;
 }
 
 
-void RenderDeviceGL4::destroyTextureBuffer( uint32 bufObj )
+void RenderDeviceGL4::destroyTextureBuffer( uint32& bufObj )
 {
-	if ( bufObj == 0 ) return;
+	if ( bufObj == 0 )
+		return;
 
 	RDITextureBufferGL4 &buf = _textureBuffs.getRef( bufObj );
 	destroyBuffer( buf.bufObj );
@@ -526,6 +531,7 @@ void RenderDeviceGL4::destroyTextureBuffer( uint32 bufObj )
 	glDeleteTextures( 1, &buf.glTexID );
 
 	_textureBuffs.remove( bufObj );
+	bufObj = 0;
 }
 
 void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
@@ -589,8 +595,8 @@ uint32 RenderDeviceGL4::calcTextureSize( TextureFormats::List format, int width,
 
 
 uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int height, int depth,
-                                    TextureFormats::List format,
-                                    bool hasMips, bool genMips, bool compress, bool sRGB )
+									TextureFormats::List format,
+									bool hasMips, bool genMips, bool compress, bool sRGB )
 {
 	ASSERT( depth > 0 );
 
@@ -673,7 +679,7 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 	
 	int inputFormat = GL_BGRA, inputType = GL_UNSIGNED_BYTE;
 	bool compressed = (format == TextureFormats::DXT1) || (format == TextureFormats::DXT3) ||
-	                  (format == TextureFormats::DXT5);
+					  (format == TextureFormats::DXT5);
 	
 	switch( format )
 	{
@@ -700,7 +706,7 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 		
 		if( compressed )
 			glCompressedTexImage2D( target, mipLevel, tex.glFmt, width, height, 0,
-			                        calcTextureSize( format, width, height, 1 ), pixels );
+									calcTextureSize( format, width, height, 1 ), pixels );
 		else
 			glTexImage2D( target, mipLevel, tex.glFmt, width, height, 0, inputFormat, inputType, pixels );
 	}
@@ -710,10 +716,10 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 		
 		if( compressed )
 			glCompressedTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			                        calcTextureSize( format, width, height, depth ), pixels );	
+									calcTextureSize( format, width, height, depth ), pixels );	
 		else
 			glTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			              inputFormat, inputType, pixels );
+						  inputFormat, inputType, pixels );
 	}
 
 	if( tex.genMips && (tex.type != GL_TEXTURE_CUBE_MAP || slice == 5) )
@@ -730,15 +736,17 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 }
 
 
-void RenderDeviceGL4::destroyTexture( uint32 texObj )
+void RenderDeviceGL4::destroyTexture( uint32& texObj )
 {
-	if( texObj == 0 ) return;
+	if( texObj == 0 )
+		return;
 	
 	const RDITextureGL4 &tex = _textures.getRef( texObj );
 	glDeleteTextures( 1, &tex.glObj );
 
 	_textureMem -= tex.memSize;
 	_textures.remove( texObj );
+	texObj = 0;
 }
 
 
@@ -1081,13 +1089,15 @@ uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *f
 }
 
 
-void RenderDeviceGL4::destroyShader( uint32 shaderId )
+void RenderDeviceGL4::destroyShader( uint32& shaderId )
 {
-	if( shaderId == 0 ) return;
+	if( shaderId == 0 )
+		return;
 
 	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
 	glDeleteProgram( shader.oglProgramObj );
 	_shaders.remove( shaderId );
+	shaderId = 0;
 }
 
 
@@ -1128,12 +1138,12 @@ int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
 	{
 		RDIShaderGL4 &shader = _shaders.getRef( shaderId );
 		int idx = glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
-        if( idx != -1 )
-        {
-            const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
-            glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, 0, &idx );
-        }
-        return idx;
+		if( idx != -1 )
+		{
+			const GLenum bufBindingPoint[ 1 ] = { GL_BUFFER_BINDING };
+			glGetProgramResourceiv( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, idx, 1, bufBindingPoint, 1, 0, &idx );
+		}
+		return idx;
 	}
 	else
 	{
@@ -1201,7 +1211,7 @@ void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 // =================================================================================================
 
 uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-                                         bool depth, uint32 numColBufs, uint32 samples )
+										 bool depth, uint32 numColBufs, uint32 samples )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
 	{
@@ -1256,12 +1266,12 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, rb.samples, tex.glFmt, rb.width, rb.height );
 				// Attach the renderbuffer
 				glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + j,
-				                              GL_RENDERBUFFER, rb.colBufs[j] );
+											  GL_RENDERBUFFER, rb.colBufs[j] );
 			}
 		}
 
 		uint32 buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
-		                     GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+							 GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 		glDrawBuffers( numColBufs, buffers );
 		
@@ -1308,7 +1318,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 			glRenderbufferStorageMultisample( GL_RENDERBUFFER, rb.samples, _depthFormat, rb.width, rb.height );
 			// Attach the renderbuffer
 			glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-			                              GL_RENDERBUFFER, rb.depthBuf );
+										  GL_RENDERBUFFER, rb.depthBuf );
 		}
 	}
 
@@ -1339,7 +1349,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 }
 
 
-void RenderDeviceGL4::destroyRenderBuffer( uint32 rbObj )
+void RenderDeviceGL4::destroyRenderBuffer( uint32& rbObj )
 {
 	RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
 	
@@ -1361,6 +1371,7 @@ void RenderDeviceGL4::destroyRenderBuffer( uint32 rbObj )
 	rb.fbo = rb.fboMS = 0;
 
 	_rendBufs.remove( rbObj );
+	rbObj = 0;
 }
 
 
@@ -1437,7 +1448,7 @@ void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
 		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
-        if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
+		if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
 		else glDisable( GL_MULTISAMPLE );
 	}
 	else
@@ -1460,7 +1471,7 @@ void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
 
 
 bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
-                                        int *compCount, void *dataBuffer, int bufferSize )
+										int *compCount, void *dataBuffer, int bufferSize )
 {
 	int x, y, w, h;
 	int format = GL_RGBA;
@@ -1512,7 +1523,7 @@ bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *widt
 	
 	bool retVal = false;
 	if( dataBuffer != 0x0 &&
-	    bufferSize >= w * h * comps * (type == GL_FLOAT ? 4 : 1) ) 
+		bufferSize >= w * h * comps * (type == GL_FLOAT ? 4 : 1) ) 
 	{
 		glFinish();
 		glReadPixels( x, y, w, h, format, type, dataBuffer );
@@ -1861,7 +1872,7 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		// Place memory barriers
 		if ( mask & PM_BARRIER )
 		{
-            if ( _memBarriers != NotSet ) glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers - 1 ] );
+			if ( _memBarriers != NotSet ) glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers - 1 ] );
 			_pendingMask &= ~PM_BARRIER;
 		}
 
@@ -1892,7 +1903,7 @@ void RenderDeviceGL4::resetStates()
 	_curBlendState.hash = 0xFFFFFFFF; _newBlendState.hash = 0;
 	_curDepthStencilState.hash = 0xFFFFFFFF; _newDepthStencilState.hash = 0;
 
-    _memBarriers = NotSet;
+	_memBarriers = NotSet;
 
 //	_texSlots.clear();
 	for( uint32 i = 0; i < 16; ++i )
@@ -1981,7 +1992,7 @@ void RenderDeviceGL4::draw( RDIPrimType primType, uint32 firstVert, uint32 numVe
 
 
 void RenderDeviceGL4::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
-                                uint32 firstVert, uint32 numVerts )
+								uint32 firstVert, uint32 numVerts )
 {
 	if( commitStates() )
 	{

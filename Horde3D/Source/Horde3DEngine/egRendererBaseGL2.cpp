@@ -349,9 +349,10 @@ void RenderDeviceGL2::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndex
 	geo.indexBuf32Bit = format == IDXFMT_32 ? true : false;
 }
 
-void RenderDeviceGL2::destroyGeometry( uint32 geoObj, bool destroyBindedBuffers )
+void RenderDeviceGL2::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers )
 {
-	if ( geoObj == 0 ) return;
+	if ( geoObj == 0 )
+		return;
 
 	RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( geoObj );
 	
@@ -366,6 +367,7 @@ void RenderDeviceGL2::destroyGeometry( uint32 geoObj, bool destroyBindedBuffers 
 	}
 	
 	_geometryInfo.remove( geoObj );
+	geoObj = 0;
 }
 
 uint32 RenderDeviceGL2::createVertexBuffer( uint32 size, const void *data )
@@ -445,19 +447,21 @@ uint32 RenderDeviceGL2::createBuffer( uint32 bufType, uint32 size, const void *d
 	return _buffers.add( buf );
 }
 
-void RenderDeviceGL2::destroyBuffer( uint32 bufObj )
+void RenderDeviceGL2::destroyBuffer( uint32& bufObj )
 {
-	if( bufObj == 0 ) return;
+	if( bufObj == 0 )
+		return;
 	
 	RDIBufferGL2 &buf = _buffers.getRef( bufObj );
 	glDeleteBuffers( 1, &buf.glObj );
 
 	_bufferMem -= buf.size;
 	_buffers.remove( bufObj );
+	bufObj = 0;
 }
 
 
-void RenderDeviceGL2::destroyTextureBuffer( uint32 bufObj )
+void RenderDeviceGL2::destroyTextureBuffer( uint32& bufObj )
 {
 
 }
@@ -648,15 +652,17 @@ void RenderDeviceGL2::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 }
 
 
-void RenderDeviceGL2::destroyTexture( uint32 texObj )
+void RenderDeviceGL2::destroyTexture( uint32& texObj )
 {
-	if( texObj == 0 ) return;
+	if( texObj == 0 )
+		return;
 	
 	const RDITextureGL2 &tex = _textures.getRef( texObj );
 	glDeleteTextures( 1, &tex.glObj );
 
 	_textureMem -= tex.memSize;
 	_textures.remove( texObj );
+	texObj = 0;
 }
 
 
@@ -860,13 +866,15 @@ uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *f
 }
 
 
-void RenderDeviceGL2::destroyShader( uint32 shaderId )
+void RenderDeviceGL2::destroyShader( uint32& shaderId )
 {
-	if( shaderId == 0 ) return;
+	if( shaderId == 0 )
+		return;
 
 	RDIShaderGL2 &shader = _shaders.getRef( shaderId );
 	glDeleteProgram( shader.oglProgramObj );
 	_shaders.remove( shaderId );
+	shaderId = 0;
 }
 
 
@@ -1107,7 +1115,7 @@ uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, Texture
 }
 
 
-void RenderDeviceGL2::destroyRenderBuffer( uint32 rbObj )
+void RenderDeviceGL2::destroyRenderBuffer( uint32& rbObj )
 {
 	RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
 	
@@ -1129,6 +1137,7 @@ void RenderDeviceGL2::destroyRenderBuffer( uint32 rbObj )
 	rb.fbo = rb.fboMS = 0;
 
 	_rendBufs.remove( rbObj );
+	rbObj = 0;
 }
 
 

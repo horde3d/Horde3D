@@ -76,6 +76,9 @@ Renderer::~Renderer()
 		releaseShaderComb( _defColorShader );
 
 		_renderDevice->destroyGeometry( _particleGeo );
+		// Particle and overlay share the index buffer,
+		// so avoid releasing the index buffer of _overlayGeo by setting it to zero
+		_renderDevice->setGeomIndexParams( _overlayGeo, 0, IDXFMT_16 );
 		_renderDevice->destroyGeometry( _cubeGeo );
 		_renderDevice->destroyGeometry( _sphereGeo );
 		_renderDevice->destroyGeometry( _coneGeo );

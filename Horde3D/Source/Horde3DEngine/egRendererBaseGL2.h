@@ -206,14 +206,14 @@ public:
 	void finishCreatingGeometry( uint32 geoObj );
 	void setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
 	void setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format );
-	void destroyGeometry( uint32 geoObj, bool destroyBindedBuffers );
+	void destroyGeometry(uint32 &geoObj, bool destroyBindedBuffers );
 
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	uint32 createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data );
 	uint32 createShaderStorageBuffer( uint32 size, const void *data );
-	void destroyBuffer( uint32 bufObj );
-	void destroyTextureBuffer( uint32 bufObj );
+	void destroyBuffer(uint32 &bufObj );
+	void destroyTextureBuffer(uint32 &bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 // 	uint32 getBufferMem() const { return _bufferMem; }
 
@@ -222,7 +222,7 @@ public:
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 	                      bool hasMips, bool genMips, bool compress, bool sRGB );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
-	void destroyTexture( uint32 texObj );
+	void destroyTexture( uint32& texObj );
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
 // 	uint32 getTextureMem() const { return _textureMem; }
@@ -230,7 +230,7 @@ public:
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
 						 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc );
-	void destroyShader( uint32 shaderId );
+	void destroyShader(uint32 &shaderId );
 	void bindShader( uint32 shaderId );
 	std::string getShaderLog() const { return _shaderLog; }
 	int getShaderConstLoc( uint32 shaderId, const char *name );
@@ -245,7 +245,7 @@ public:
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
 	                           bool depth, uint32 numColBufs, uint32 samples );
-	void destroyRenderBuffer( uint32 rbObj );
+	void destroyRenderBuffer(uint32 &rbObj );
 	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex );
 	void setRenderBuffer( uint32 rbObj );
 	bool getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
