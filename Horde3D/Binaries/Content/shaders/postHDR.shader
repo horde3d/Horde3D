@@ -135,7 +135,7 @@ void main( void )
 [[FS_BRIGHTPASS_GL4]]
 // =================================================================================================
 
-#include "shaders/utilityLib/fragPostProcess.glsl"
+#include "shaders/utilityLib/fragPostProcessGL4.glsl"
 
 uniform sampler2D buf0;
 uniform vec2 frameBufSize;
@@ -187,7 +187,7 @@ void main( void )
 [[FS_BLUR_GL4]]
 // =================================================================================================
 
-#include "shaders/utilityLib/fragPostProcess.glsl"
+#include "shaders/utilityLib/fragPostProcessGL4.glsl"
 
 uniform sampler2D buf0;
 uniform vec2 frameBufSize;
@@ -233,8 +233,8 @@ out vec4 fragColor;
 
 void main( void )
 {
-	vec4 col0 = texture2D( buf0, texCoords );	// HDR color
-	vec4 col1 = texture2D( buf1, texCoords );	// Bloom
+	vec4 col0 = texture( buf0, texCoords );	// HDR color
+	vec4 col1 = texture( buf1, texCoords );	// Bloom
 	
 	// Tonemap (using photographic exposure mapping)
 	vec4 col = 1.0 - exp2( -hdrExposure * col0 );

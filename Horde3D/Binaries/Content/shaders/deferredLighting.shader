@@ -165,7 +165,7 @@ void main( void )
 
 [[FS_AMBIENT_GL4]]
 
-#include "shaders/utilityLib/fragDeferredRead.glsl"
+#include "shaders/utilityLib/fragDeferredReadGL4.glsl"
 
 uniform samplerCube ambientMap;
 in vec2 texCoords;
@@ -217,7 +217,7 @@ void main( void )
 [[FS_LIGHTING_GL4]]
 
 #include "shaders/utilityLib/fragLightingGL4.glsl"
-#include "shaders/utilityLib/fragDeferredRead.glsl"
+#include "shaders/utilityLib/fragDeferredReadGL4.glsl"
 
 uniform mat4 viewMat;
 in vec4 vpos;
@@ -258,5 +258,5 @@ in vec2 texCoords;
 
 void main( void )
 {
-	gl_FragDepth = texture2D( depthBuf, texCoords ).r;
+	gl_FragDepth = texture( depthBuf, texCoords ).r;
 }

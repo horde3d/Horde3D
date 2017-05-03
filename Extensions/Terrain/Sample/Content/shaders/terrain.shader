@@ -156,8 +156,8 @@ vec3 light = -normalize( sunDir.xyz );
 
 void main( void )
 {
-	vec3 detailCol = texture2D( detailMap, texCoords * 300.0 ).rgb;
-	vec4 texel = texture2D( heightNormMap, texCoords ) * 2.0 - 1.0;
+	vec3 detailCol = texture( detailMap, texCoords * 300.0 ).rgb;
+	vec4 texel = texture( heightNormMap, texCoords ) * 2.0 - 1.0;
 	float ny = sqrt( max( 1.0 - texel.b*texel.b - texel.a*texel.a, 0.0 ) );		// Use max because of numerical issues
 	vec3 normal = vec3( texel.b, ny, texel.a );
 	
@@ -274,8 +274,8 @@ out vec4 fragColor;
 
 void main( void )
 {
-	vec3 detailCol = texture2D( detailMap, texCoords * 300.0 ).rgb;
-	vec4 texel = texture2D( heightNormMap, texCoords ) * 2.0 - 1.0;
+	vec3 detailCol = texture( detailMap, texCoords * 300.0 ).rgb;
+	vec4 texel = texture( heightNormMap, texCoords ) * 2.0 - 1.0;
 	float ny = sqrt( max( 1.0 - texel.b*texel.b - texel.a*texel.a, 0.0 ) );		// Use max because of numerical issues
 	vec3 normal = vec3( texel.b, ny, texel.a );
 	
@@ -319,8 +319,8 @@ vec3 light = -normalize( sunDir.xyz );
 
 void main( void )
 {
-	vec3 detailCol = texture2D( detailMap, texCoords * 300.0 ).rgb;
-	vec4 texel = texture2D( heightNormMap, texCoords ) * 2.0 - 1.0;
+	vec3 detailCol = texture( detailMap, texCoords * 300.0 ).rgb;
+	vec4 texel = texture( heightNormMap, texCoords ) * 2.0 - 1.0;
 	float ny = sqrt( max( 1.0 - texel.b*texel.b - texel.a*texel.a, 0.0 ) );		// Use max because of numerical issues
 	vec3 normal = vec3( texel.b, ny, texel.a );
 	

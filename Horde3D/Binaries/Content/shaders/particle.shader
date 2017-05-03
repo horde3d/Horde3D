@@ -127,7 +127,7 @@ out vec4 fragColor;
 
 void main( void )
 {
-	vec4 albedo = texture2D( albedoMap, texCoords );
+	vec4 albedo = texture( albedoMap, texCoords );
 	
 	fragColor = albedo * color;
 }
