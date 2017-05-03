@@ -405,7 +405,10 @@ void RenderDeviceGL4::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers
 		return;
 	
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
-	
+
+	glDeleteVertexArrays( 1, &curVao.vao );
+	glBindVertexArray( 0 );
+
 	if ( destroyBindedBuffers )
 	{
 		for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
@@ -415,8 +418,6 @@ void RenderDeviceGL4::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers
 
 		destroyBuffer( curVao.indexBuf );
 	}
-	
-	glDeleteVertexArrays( 1, &curVao.vao );
 
 	_vaos.remove( geoObj );
 	geoObj = 0;
