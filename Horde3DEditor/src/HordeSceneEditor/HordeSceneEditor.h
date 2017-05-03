@@ -108,6 +108,8 @@ public:
 
 	void addCamera(QCameraNode* camera);
 	void removeCamera(QCameraNode* camera);
+	QCameraNode* activeCam();
+
 	void pauseRendering( bool paused );
 
 	void updateLog(QListWidgetItem* item, bool scroll = true);

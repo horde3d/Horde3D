@@ -1013,6 +1013,11 @@ void HordeSceneEditor::removeCamera(QCameraNode* camera)
 	if (index != -1) m_cameraToolBar->m_activeCam->removeItem(index);
 }
 
+QCameraNode *HordeSceneEditor::activeCam()
+{
+	return m_cameraToolBar->currentCam();
+}
+
 void HordeSceneEditor::pauseRendering( bool paused )
 {
 	if( paused )

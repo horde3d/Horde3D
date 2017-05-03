@@ -82,6 +82,12 @@ QString CameraToolBar::activeCameraName() const
 	return m_activeCam->currentText();
 }
 
+QCameraNode *CameraToolBar::currentCam()
+{
+	QCameraNode* camera = static_cast<QCameraNode*>(m_activeCam->itemData(m_activeCam->currentIndex()).value<void*>());
+	return camera;
+}
+
 void CameraToolBar::pipelineChanged(QCameraNode* camera)
 {
 	if (camera == static_cast<QCameraNode*>(m_activeCam->itemData(m_activeCam->currentIndex()).value<void*>()) || m_activeCam->currentIndex() == -1)

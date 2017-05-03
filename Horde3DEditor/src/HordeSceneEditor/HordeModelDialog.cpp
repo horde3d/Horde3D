@@ -6,8 +6,10 @@
 #include "GLWidget.h"
 #include "SceneFile.h"
 
+#include <QCameraNode.h>
+
 HordeModelDialog::HordeModelDialog(const QString& targetPath, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : HordeFileDialog(H3DResTypes::SceneGraph, targetPath, parent, flags),
-m_glWidget(0), m_glParentOriginal(0), m_oldCameraID(0), m_envRes(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_cameraID(0)
+m_glWidget(0), m_glParentOriginal(0), m_oldCamera(0), m_envRes(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_viewCam(0)
 {
     m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	m_glFrame->setLayout(new QHBoxLayout());
@@ -20,7 +22,7 @@ m_glWidget(0), m_glParentOriginal(0), m_oldCameraID(0), m_envRes(0), m_oldScene(
 		"Using this button makes the conversion process more easy, since the execution of the Collada Converter is done\n" 
 		"via a graphical user interface and the output of the Horde3D collada converter is\n"
 		"automatically copied to the specifc directories of your repository."));
-    HordeFileDialog::gridLayout->addWidget(m_importButton, 3, 0, 1, 1);
+	HordeFileDialog::gridLayout->addWidget(m_importButton, 3, 0, 1, 1);
 
 	connect(m_importButton, SIGNAL(clicked()), this, SLOT(importCollada()));
 }
@@ -28,13 +30,16 @@ m_glWidget(0), m_glParentOriginal(0), m_oldCameraID(0), m_envRes(0), m_oldScene(
 
 HordeModelDialog::~HordeModelDialog()
 {
-    if( m_glWidget )
-    {
-        m_glWidget->parentWidget()->setParent(m_glParentOriginal);
-        if( m_glParentOriginal->layout() )
-            m_glParentOriginal->layout()->addWidget(m_glWidget->parentWidget());
-        m_glWidget->setActiveCam(m_oldCameraID);
-    }
+	if( m_glWidget )
+	{
+		m_glWidget->parentWidget()->setParent(m_glParentOriginal);
+		if( m_glParentOriginal->layout() )
+			m_glParentOriginal->layout()->addWidget(m_glWidget->parentWidget());
+		if( m_oldCamera )
+			m_editorInstance->setCamera(m_oldCamera);
+		m_editorInstance->removeCamera(m_viewCam);
+		delete m_viewCam;
+	}
 
 	if (m_newScene)		
 		h3dRemoveNode(m_newScene);
@@ -90,9 +95,9 @@ void HordeModelDialog::importCollada()
 
 void HordeModelDialog::initModelViewer()
 {
-	
-    SceneFile* scene = m_editorInstance->currentScene();
-	if( scene )			
+	m_oldCamera = m_editorInstance->activeCam();
+	SceneFile* scene = m_editorInstance->currentScene();
+	if( scene && m_oldCamera )
 	{
 		// Prepare xmlview for engine log
 		m_xmlView->setStyleSheet("QTextEdit#m_xmlView { background: black;  color: white }");
@@ -114,13 +119,10 @@ void HordeModelDialog::initModelViewer()
          * is what we recommend for users that need this kind of functionality.
          */
         m_glParentOriginal = m_glWidget->parentWidget()->parentWidget();
-        m_oldCameraID = m_glWidget->activeCam();
 
-		// Get Pipeline from the last active camera
-        int pipelineID = h3dGetNodeParamI(m_oldCameraID, H3DCamera::PipeResI);
-		// add new camera that will be used within the modelview
-		m_cameraID = h3dAddCameraNode(m_newScene, "Camera", pipelineID);
-		h3dSetupCameraView(m_cameraID, 45, 4.0f/3.0f, 0.1f, 5000.f);
+		QDomElement node = m_oldCamera->xmlNode().cloneNode().toElement();
+		m_viewCam = new QCameraNode( node, 0, 0, 0 );
+		m_editorInstance->addCamera(m_viewCam);
 		// Load default light specified in the scene file
 		QDomElement standardLight(scene->sceneFileDom().documentElement().namedItem("LightParameters").toElement());
 		H3DRes lightMaterial = 0;
@@ -129,7 +131,7 @@ void HordeModelDialog::initModelViewer()
 		h3dutLoadResourcesFromDisk(".");		
 		// Add Light to cam
 		H3DNode light = h3dAddLightNode( 
-			m_cameraID, 
+			m_viewCam->hordeId(),
 			"ModelViewLight", 
 			lightMaterial, 
 			qPrintable(standardLight.attribute("lightingcontext", "LIGHTING")), 
@@ -141,12 +143,18 @@ void HordeModelDialog::initModelViewer()
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 1.0f );
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 1.0f );
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 1.0f );
-        // Remove user reference, as the light handles the reference itself now
-        if( lightMaterial ) h3dRemoveResource( lightMaterial );
-		m_glWidget->setActiveCam(m_cameraID);
-        m_glWidget->parentWidget()->setParent(m_glFrame);
-        m_glFrame->layout()->addWidget(m_glWidget->parentWidget());
+		// Remove user reference, as the light handles the reference itself now
+		if( lightMaterial ) h3dRemoveResource( lightMaterial );
+		m_glWidget->parentWidget()->setParent(m_glFrame);
+		m_glFrame->layout()->addWidget(m_glWidget->parentWidget());
 		m_glWidget->setNavigationSpeed(10.0);
+		m_editorInstance->setCamera(m_viewCam);
+	}
+	else
+	{
+		QMessageBox::warning(this, tr("Error"), tr("No scene or camera defined") );
+		reject();
+		return;
 	}
 	QHordeSceneEditorSettings settings;
 	settings.beginGroup("Repository");
@@ -239,7 +247,7 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
 	if (abs(maxX-minX) < 0.5)
 		h3dSetNodeTransform(m_currentModel, temp[12], temp[13], temp[14], 0, 45, 0, scale, scale, scale);
 	// reset camera position
-	h3dSetNodeTransform(m_cameraID, 0, 0, 0, 0, 0, 0, 1, 1, 1);	
+	h3dSetNodeTransform(m_viewCam->hordeId(), 0, 0, 0, 0, 0, 0, 1, 1, 1);
 	if( repoFile )
 		QDir::setCurrent( scenePath );
 }

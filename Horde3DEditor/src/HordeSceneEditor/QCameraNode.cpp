@@ -83,10 +83,13 @@ void QCameraNode::addRepresentation()
 	h3dSetNodeParamF(m_hordeID, H3DCamera::FarPlaneF, 0, f.Far);
 	
 	// Attachment
-	QDomElement attachment = m_xmlNode.firstChildElement("Attachment");	
 	SceneTreeModel* model = static_cast<SceneTreeModel*>(m_model);
-	AttachmentPlugIn* plugIn = model->nodeFactory()->attachmentPlugIn();
-	if (!attachment.isNull() &&  plugIn != 0) plugIn->initNodeAttachment(this);
+	QDomElement attachment = m_xmlNode.firstChildElement("Attachment");	
+	if( model && !attachment.isNull() )
+	{
+		AttachmentPlugIn* plugIn = model->nodeFactory()->attachmentPlugIn();
+		if (plugIn) plugIn->initNodeAttachment(this);
+	}
 
     m_editorInstance->addCamera(this);
 }

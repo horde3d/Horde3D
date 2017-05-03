@@ -5,6 +5,7 @@
 
 class GLWidget;
 class HordeSceneEditor;
+class QCameraNode;
 
 class HordeModelDialog : public HordeFileDialog
 {
@@ -38,15 +39,16 @@ private:
 
 	GLWidget*				m_glWidget;
 	QPushButton*			m_importButton;
-    HordeSceneEditor*       m_editorInstance;
-    QWidget*                m_glParentOriginal;
-    int                     m_oldCameraID;
-    H3DRes                  m_envRes;
+	HordeSceneEditor*       m_editorInstance;
+	QWidget*                m_glParentOriginal;
+	QCameraNode*            m_oldCamera;
+	H3DRes                  m_envRes;
 
 	unsigned int			m_oldScene;
 	unsigned int			m_newScene;
 	unsigned int			m_currentModel;
-	unsigned int			m_cameraID;
+
+	QCameraNode*            m_viewCam;
 
 };
 #endif
