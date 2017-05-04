@@ -78,6 +78,8 @@ struct RDIBufferGL2
 	uint32  type;
 	uint32  glObj;
 	uint32  size;
+
+	RDIBufferGL2() : type( 0 ), glObj( 0 ), size( 0 ) {}
 };
 
 struct RDIVertBufSlotGL2
@@ -116,6 +118,12 @@ struct RDITextureGL2
 	uint32                samplerState;
 	bool                  sRGB;
 	bool                  hasMips, genMips;
+
+	RDITextureGL2() : glObj( 0 ), glFmt( 0 ), type( 0 ), format( TextureFormats::Unknown ), width( 0 ), height( 0 ),
+		depth( 0 ), memSize( 0 ), samplerState( 0 ), sRGB( false ), hasMips( false ), genMips( false )
+	{
+
+	}
 };
 
 struct RDITexSlotGL2
@@ -133,6 +141,8 @@ struct RDITextureBufferGL2
 	uint32  bufObj;
 	uint32  glFmt;
 	uint32	glTexID;
+
+	RDITextureBufferGL2() : bufObj( 0 ), glFmt( 0 ), glTexID( 0 ) {}
 };
 
 // ---------------------------------------------------------
@@ -143,12 +153,22 @@ struct RDIInputLayoutGL2
 {
 	bool  valid;
 	int8  attribIndices[16];
+
+	RDIInputLayoutGL2() : valid( false )
+	{
+		memset( attribIndices, 0, sizeof( attribIndices ) );
+	}
 };
 
 struct RDIShaderGL2
 {
 	uint32				oglProgramObj;
 	RDIInputLayoutGL2	inputLayouts[MaxNumVertexLayouts];
+
+	RDIShaderGL2() : oglProgramObj( 0 )
+	{
+
+	}
 };
 
 
