@@ -36,6 +36,7 @@ private:
 	void initModelViewer();
 
 	void loadModel(const QString& fileName, bool repoFile);
+    void releaseModel(bool releaseUnused = true);
 
 	GLWidget*				m_glWidget;
 	QPushButton*			m_importButton;
