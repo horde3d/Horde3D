@@ -176,13 +176,7 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
 		settings.endGroup();
 	}
 	if (m_currentModel != 0)
-	{
-		h3dRemoveNode(m_currentModel);
-        h3dRemoveResource(m_envRes);
-        m_envRes = 0;
-        h3dReleaseUnusedResources();
-		m_currentModel = 0;
-	}
+        releaseModel();
 	else
 		m_stackedWidget->setCurrentWidget(m_glFrame);
 
@@ -249,7 +243,19 @@ void HordeModelDialog::loadModel(const QString& fileName, bool repoFile)
 	// reset camera position
 	h3dSetNodeTransform(m_viewCam->hordeId(), 0, 0, 0, 0, 0, 0, 1, 1, 1);
 	if( repoFile )
-		QDir::setCurrent( scenePath );
+        QDir::setCurrent( scenePath );
+}
+
+void HordeModelDialog::releaseModel( bool releaseUnused )
+{
+    if( m_currentModel )
+        h3dRemoveNode(m_currentModel);
+    m_currentModel = 0;
+    if( m_envRes )
+        h3dRemoveResource(m_envRes);
+    m_envRes = 0;
+    if( releaseUnused )
+        h3dReleaseUnusedResources();
 }
 
 
@@ -267,19 +273,14 @@ QString HordeModelDialog::getModelFile(const QString& targetPath, QWidget* paren
 
 void HordeModelDialog::accept()
 {
-    if( m_envRes )
-        // Remove user reference count
-        h3dRemoveResource(m_envRes);
     // We don't release the unused resources, to allow reusing already loaded data without the need to reload it later
+   releaseModel(false);
     HordeFileDialog::accept();
 }
 
 void HordeModelDialog::reject()
 {
-    if( m_envRes )
-        h3dRemoveResource(m_envRes);
-    // Free all resources used by the model preview
-    h3dReleaseUnusedResources();
+    releaseModel();
     HordeFileDialog::reject();
 }
 
