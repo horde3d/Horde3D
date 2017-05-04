@@ -57,8 +57,8 @@ bool Property::isReadOnly()
         if( m_propertyObject->dynamicPropertyNames().contains( objectName().toLocal8Bit() ) )
             return false;
     }
-	else
-		return true;
+	
+	return true;
 }
 
 QWidget* Property::createEditor(QWidget *parent, const QStyleOptionViewItem& /*option*/)
