@@ -13,12 +13,9 @@
 #ifndef _egRendererBaseGL2_H_
 #define _egRendererBaseGL2_H_
 
-//#include "egPrerequisites.h"
 #include "egRendererBase.h"
-//#include "utMath.h"
 #include "utOpenGL.h"
-//#include <string>
-//#include <vector>
+#include <string.h>
 
 
 namespace Horde3D {

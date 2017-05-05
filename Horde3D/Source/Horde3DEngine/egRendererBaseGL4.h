@@ -15,8 +15,7 @@
 
 #include "egRendererBase.h"
 #include "utOpenGL.h"
-#include <string>
-#include <vector>
+#include <string.h>
 
 
 namespace Horde3D {
