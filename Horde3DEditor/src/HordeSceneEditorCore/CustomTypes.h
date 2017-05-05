@@ -132,7 +132,11 @@ struct Pipeline
 
 	QString		FileName;
     int         ResourceID;
-    Pipeline& operator=(const Pipeline& p) { if( ResourceID ) h3dRemoveResource(ResourceID); FileName = p.FileName; ResourceID = h3dAddResource(H3DResTypes::Pipeline, qPrintable(FileName), 0);}
+    Pipeline& operator=(const Pipeline& p) 
+	{ 
+		if( ResourceID ) h3dRemoveResource(ResourceID); FileName = p.FileName; ResourceID = h3dAddResource(H3DResTypes::Pipeline, qPrintable(FileName), 0);
+		return *this;
+	}
 	bool operator != (const Pipeline& other) const {return ResourceID != other.ResourceID || FileName != other.FileName;}	
 };
 Q_DECLARE_METATYPE(Pipeline)

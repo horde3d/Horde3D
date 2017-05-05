@@ -78,6 +78,7 @@ Resource *GeometryResource::clone()
 	memcpy( res->_vertTanData, _vertTanData, _vertCount * sizeof( VertexDataTan ) );
 	memcpy( res->_vertStaticData, _vertStaticData, _vertCount * sizeof( VertexDataStatic ) );
 
+	res->_16BitIndices = _16BitIndices;
 	res->_geoObj = rdi->beginCreatingGeometry( Modules::renderer().getDefaultVertexLayout( DefaultVertexLayouts::Model ) );
 
 	res->_indexBuf = rdi->createIndexBuffer( _indexCount * (_16BitIndices ? 2 : 4), _indexData );
@@ -121,6 +122,9 @@ void GeometryResource::release()
 {
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
+	if ( _geoObj != 0 )
+		rdi->destroyGeometry( _geoObj, false );
+
 	if( _posVBuf != 0 && _posVBuf != defVertBuffer )
 		rdi->destroyBuffer( _posVBuf );
 	if( _tanVBuf != 0 && _tanVBuf != defVertBuffer )
@@ -130,9 +134,6 @@ void GeometryResource::release()
 	
 	if( _indexBuf != 0 && _indexBuf != defIndexBuffer )
 		rdi->destroyBuffer( _indexBuf );
-
-	if ( _geoObj != 0 )
-		rdi->destroyGeometry( _geoObj, false );
 
 	delete[] _indexData; _indexData = 0x0;
 	delete[] _vertPosData; _vertPosData = 0x0;

@@ -523,7 +523,7 @@ bool AnimationController::animate()
 
 int AnimationController::getAnimCount() const
 {
-    return _activeStages.size();
+    return ( int ) _activeStages.size();
 }
 
 
