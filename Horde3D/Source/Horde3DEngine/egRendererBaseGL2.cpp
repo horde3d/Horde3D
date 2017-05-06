@@ -162,6 +162,7 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_curDepthStencilState.hash = _newDepthStencilState.hash = 0;
 // 	_curVertLayout = _newVertLayout = 0;
 // 	_curIndexBuf = _newIndexBuf = 0;
+	_curIndexBuf = 0;
 	_curGeometryIndex = 1;
 	_defaultFBO = 0;
 	_defaultFBOMultisampled = false;
@@ -1599,9 +1600,21 @@ bool RenderDeviceGL2::commitStates( uint32 filter )
 			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
 			{
 				RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( _curGeometryIndex );
-				if ( geo.indexBufIdx != _curIndexBuf )
-					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, geo.indexBufIdx );
 				
+				// index buffer mapping
+				if ( geo.indexBufIdx != _curIndexBuf )
+				{
+					if ( geo.indexBufIdx != 0 )
+					{
+						RDIBufferGL2 &buf = _buffers.getRef( geo.indexBufIdx );
+						ASSERT( buf.glObj != 0 )
+
+						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, buf.glObj );
+					}
+					else
+						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+				}
+
 				if( !applyVertexLayout( geo ) )
 					return false;
 
@@ -1622,7 +1635,7 @@ bool RenderDeviceGL2::commitStates( uint32 filter )
 
 void RenderDeviceGL2::resetStates()
 {
- 	_curIndexBuf = 1; // _newIndexBuf = 0;
+ 	_curIndexBuf = 1; 
 // 	_curVertLayout = 1; _newVertLayout = 0;
 	_curGeometryIndex = 1;
 	_curRasterState.hash = 0xFFFFFFFF; _newRasterState.hash = 0;
@@ -1638,6 +1651,8 @@ void RenderDeviceGL2::resetStates()
 	commitStates();
 
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+//	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+
 	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 }
 
