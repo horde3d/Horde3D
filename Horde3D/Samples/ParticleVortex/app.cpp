@@ -111,20 +111,14 @@ bool ParticleVortexSample::initResources()
 	}
 
 	// Set size of the compute buffer
-	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufDataSizeI, particlesCount * sizeof( ParticleData ) );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufDataSizeI, ( int ) particlesCount * sizeof( ParticleData ) );
 
 	// Mark that compute buffer will be used for rendering as a vertex buffer
 	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufUseAsVertexBufferI, 1 );
 
-	// Set preferred draw type (for this example we draw with points - 2)
-	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawTypeElem, 0, H3DComputeBufRes::DataDrawTypeI, 2 );
-
-	// Set number of elements to draw (for this example we draw 1000000 points)
-	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsElementsCountI, 1000000 );
-
 	// Set vertex binding parameters.
 	// Name - name of the parameter. Used for binding parameter to shader variable.
-	// Size - number of components (4 float for particle position, so 4), 
+	// Size - number of components (4 floats for particle position, so 4), 
 	// Offset - number of bytes. For second parameter it is 16, because the first parameter had 4 floats (16 bytes)
 	h3dSetResParamStr( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsNameStr, "partPosition" );
 	h3dSetResParamI( compBuf, H3DComputeBufRes::DrawParamsElem, 0, H3DComputeBufRes::DrawParamsSizeI, /*3*/ 4 );
@@ -153,15 +147,19 @@ bool ParticleVortexSample::initResources()
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 
 	// In order to draw the results of compute buffer we need a compute node
-	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", computeDrawMatRes, compBuf );
+	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", computeDrawMatRes, compBuf, 2, ( int ) particlesCount );
 
 	// Set node AABB size because currently there is no way to do it otherwise
-	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 0, -30.0f ); // x
-	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 1, -30.0f ); // y
-	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 2, -30.0f ); // z
-	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 0, 30.0f ); // x
-	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 1, 30.0f ); // y
-	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 2, 30.0f ); // z
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 0, -100.0f ); // x
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 1, -100.0f ); // y
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 2, -100.0f ); // z
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 0, 100.0f ); // x
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 1, 100.0f ); // y
+	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 2, 100.0f ); // z
+
+	// If you wish, you can change the number of drawn elements and drawing type on the fly
+//	h3dSetNodeParamI( _compNode, H3DComputeNode::DrawTypeI, 2 ); 	// Set preferred draw type (for this example we draw with points - 2)
+//	h3dSetNodeParamI( _compNode, H3DComputeNode::ElementsCountI, ( int ) particlesCount ); 	// Set number of elements to draw (for this example we draw 1000000 points)
 
 	// Set material uniforms that will not be changed during runtime
 	h3dSetMaterialUniform( _computeMatRes, "totalParticles", ( float ) particlesCount, 0, 0, 0 );
@@ -179,7 +177,7 @@ bool ParticleVortexSample::initResources()
 // 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
 
 	// Calculate number of groups for compute shader
-	int numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
+	size_t numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
 	double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
 	root = ceil( root );
 	_computeGroupX = _computeGroupY = ( unsigned int ) root;
