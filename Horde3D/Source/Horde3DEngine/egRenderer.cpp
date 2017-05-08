@@ -2056,7 +2056,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
 
 		// Sanity check
 		if ( !compNode->_compBufferRes->_useAsVertexBuf || !compNode->_compBufferRes->_geometryParamsSet || 
-			 compNode->_compBufferRes->_numElements == 0 || !compNode->_materialRes->isOfClass( theClass ) )
+			 compNode->_elementsCount == 0 || !compNode->_materialRes->isOfClass( theClass ) )
 			continue;
 
 		if ( debugView )
@@ -2075,7 +2075,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
 
 		// Specify drawing type
 		RDIPrimType drawType;
-		switch ( compNode->_compBufferRes->_drawType )
+		switch ( compNode->_drawType )
 		{
 			case 0: // Triangles
 				drawType = PRIM_TRILIST;
@@ -2119,13 +2119,12 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
         rdi->setMemoryBarrier( VertexBufferBarrier );
 
 		// Render
-		rdi->draw( drawType, 0, compNode->_compBufferRes->_numElements );
+		rdi->draw( drawType, 0, compNode->_elementsCount );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
-		Modules::stats().incStat( EngineStats::TriCount, ( float ) compNode->_compBufferRes->_numElements );
+		Modules::stats().incStat( EngineStats::TriCount, ( float ) compNode->_elementsCount );
 	}
 
 	timer->endQuery();
-
 }
 
 // =================================================================================================

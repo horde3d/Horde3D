@@ -12,6 +12,7 @@
 
 #include "egComputeNode.h"
 #include "egModules.h"
+#include "egCom.h"
 
 namespace Horde3D {
 
@@ -25,6 +26,8 @@ ComputeNode::ComputeNode( const ComputeNodeTpl &computeTpl ) : SceneNode( comput
 {
 	_compBufferRes = computeTpl.compBufRes;
 	_materialRes = computeTpl.matRes;
+	_drawType = computeTpl.drawType;
+	_elementsCount = computeTpl.elementsCount;
 
 	_renderable = true;
 
@@ -73,6 +76,10 @@ int ComputeNode::getParamI( int param ) const
 		case ComputeNodeParams::MatResI:
 			if ( _materialRes ) return _materialRes->getHandle();
 			else return 0;
+		case ComputeNodeParams::DrawTypeI:
+			return _drawType;
+		case ComputeNodeParams::ElementsCountI:
+			return _elementsCount;
 		default:
 			break;
 	}
@@ -100,6 +107,24 @@ void ComputeNode::setParamI( int param, int value )
 				_materialRes = ( MaterialResource * ) res;
 			else
 				Modules::setError( "Invalid handle in h3dSetNodeParamI for H3DComputeNode::MatResI" );
+			return;
+		case ComputeNodeParams::DrawTypeI:
+			if ( value < 0 || value > 2 ) // Triangles - 0, Lines - 1, Points - 2
+			{
+				Modules::log().writeError( "Invalid value specified in h3dSetNodeParamI for H3DComputeNode::DrawTypeI" );
+				return;
+			}
+
+			_drawType = value;
+			return;
+		case ComputeNodeParams::ElementsCountI:
+			if ( value < 0 )
+			{
+				Modules::log().writeError( "Invalid number of draw elements specified in h3dSetNodeParamI for H3DComputeNode::ElementsCountI" );
+				return;
+			}
+
+			_elementsCount = value;
 			return;
 		default:
 			break;

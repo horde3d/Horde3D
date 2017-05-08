@@ -29,7 +29,9 @@ struct ComputeNodeParams
 		MatResI = 800,
 		CompBufResI,
 		AABBMinF,
-		AABBMaxF
+		AABBMaxF,
+		DrawTypeI,
+		ElementsCountI
 	};
 };
 
@@ -37,9 +39,13 @@ struct ComputeNodeTpl : public SceneNodeTpl
 {
 	PMaterialResource		matRes;
 	PComputeBufferResource  compBufRes;
+	int						drawType;
+	uint32					elementsCount;
 
-	ComputeNodeTpl( const std::string &name, ComputeBufferResource *computeBufferRes, MaterialResource *materialRes ) :
-		SceneNodeTpl( SceneNodeTypes::Compute, name ), compBufRes( computeBufferRes ), matRes( materialRes )
+	ComputeNodeTpl( const std::string &name, ComputeBufferResource *computeBufferRes, MaterialResource *materialRes,
+					int vertDrawType, uint32 elemDrawCount ) :
+						SceneNodeTpl( SceneNodeTypes::Compute, name ), compBufRes( computeBufferRes ), matRes( materialRes ),
+						drawType( vertDrawType ), elementsCount( elemDrawCount )
 	{
 	}
 
@@ -73,6 +79,10 @@ protected:
 
 	PMaterialResource		_materialRes;
 	PComputeBufferResource	_compBufferRes;
+
+	uint32					_elementsCount;
+
+	int16					_drawType;
 
 };
 

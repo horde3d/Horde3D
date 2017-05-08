@@ -16,8 +16,8 @@ using namespace std;
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ),
-	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( 0 ), _mapped( false ), _numElements( 0 ), _useAsVertexBuf( false ),
-	_vertexLayout( 0 ), _drawType( -1 ), _geoID( 0 ), _geometryParamsSet( false )
+	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( 0 ), _mapped( false ), _useAsVertexBuf( false ),
+	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ) 
 {
 	initDefault();
 
@@ -27,7 +27,7 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
-	_useAsVertexBuf( true ), _drawType( -1 ), _vertexLayout( 0 ), _mapped( false ), _data( 0 ), _dataSize( 1024 )
+	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _data( 0 ), _dataSize( 1024 ), _writeRequested( false )
 {
 	_loaded = true;
 }
@@ -88,11 +88,9 @@ Resource *ComputeBufferResource::clone()
 
 	// set resource parameters
 	res->_dataSize = _dataSize;
-	res->_drawType = _drawType;
 	res->_vertexLayout = _vertexLayout;
 	res->_useAsVertexBuf = _useAsVertexBuf;
-	res->_dataParams = _dataParams;
-	res->_numElements = _numElements;
+	res->_vlBindingsData = _vlBindingsData;
 	res->_geometryParamsSet = _geometryParamsSet;
 
 	if ( _useAsVertexBuf && _geometryParamsSet )
@@ -122,21 +120,21 @@ bool ComputeBufferResource::createGeometry()
 	// register new vertex layout, so that shaders could use the buffer data, if needed
 	if ( !_vertexLayout )
 	{
-		_vertexLayout = rdi->registerVertexLayout( _dataParams.size(), _dataParams.data() );
+		_vertexLayout = rdi->registerVertexLayout( ( uint32 ) _vlBindingsData.size(), _vlBindingsData.data() );
 		if ( !_vertexLayout ) return false;
 	}
 
-	// create new geometry with compute buffer as vertex buffer
+	// create new geometry with compute buffer used as vertex buffer
 	_geoID = rdi->beginCreatingGeometry( _vertexLayout );
 
 	// calculate stride
 	// only float parameter type is currently supported, if buffer is used as vertex buffer
 	uint32 stride = 0;
-	for ( size_t i = 0; i < _dataParams.size(); ++i )
+	for ( size_t i = 0; i < _vlBindingsData.size(); ++i )
 	{
-		stride += _dataParams[ i ].offset;
+		stride += _vlBindingsData[ i ].offset;
 	}
-	stride += sizeof( float ) * _dataParams.at( _dataParams.size() - 1 ).size;
+	stride += sizeof( float ) * _vlBindingsData.at( _vlBindingsData.size() - 1 ).size;
 
 	rdi->setGeomVertexParams( _geoID, _bufferID, 0, 0, stride );
 	rdi->finishCreatingGeometry( _geoID );
@@ -148,7 +146,7 @@ bool ComputeBufferResource::createGeometry()
 }
 
 
-bool ComputeBufferResource::overrideGeometry( uint32 geomID )
+bool ComputeBufferResource::setGeometry( uint32 geomID )
 {
 	if ( geomID == 0 ) // incorrect geometry
 	{
@@ -164,7 +162,7 @@ bool ComputeBufferResource::overrideGeometry( uint32 geomID )
 }
 
 
-bool ComputeBufferResource::overrideBuffer( uint32 bufferID, uint32 bufSize )
+bool ComputeBufferResource::setBuffer( uint32 bufferID, uint32 bufSize )
 {
 	if ( bufferID == 0 || bufSize == 0 )
 	{
@@ -205,30 +203,6 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 
 			break;
 		}
-
-		case ComputeBufferResData::DrawTypeElem:
-		{
-			switch ( param )
-			{
-				case ComputeBufferResData::DataDrawTypeI:
-					return _drawType;
-				default:
-					break;
-			}
-
-			break;
-		}
-
-		case ComputeBufferResData::DrawParamsElem:
-		{
-			switch ( param )
-			{
-				case ComputeBufferResData::DrawParamsElementsCountI:
-					return _numElements;
-				default:
-					break;
-			}
-		}
 	}
 
 	return Resource::getElemParamI( elem, elemIdx, param );
@@ -260,23 +234,6 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 			}
 			break;
 
-		case ComputeBufferResData::DrawTypeElem:
-			switch ( param )
-			{
-				case ComputeBufferResData::DataDrawTypeI:
-					if ( value < 0 || value > 2 ) // Triangles - 0, Lines - 1, Points - 2
-					{
-						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "wrong draw type specified." );
-						break;
-					}
-
-					_drawType = value;
-					return;
-				default:
-					break;
-			}
-			break;
-
 		case ComputeBufferResData::DrawParamsElem:
 		{
 			VertexLayoutAttrib params;
@@ -286,12 +243,12 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 			switch ( param )
 			{
 				case ComputeBufferResData::DrawParamsSizeI:
-					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
+					if ( _vlBindingsData.empty() || elemIdx == _vlBindingsData.size() )
 					{
 						params.size = value;
-						_dataParams.push_back( params );
+						_vlBindingsData.push_back( params );
 					}
-					else if ( ( uint32 ) elemIdx > _dataParams.size() )
+					else if ( ( uint32 ) elemIdx > _vlBindingsData.size() )
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
@@ -299,18 +256,18 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					}
 					else
 					{
-						_dataParams.at( elemIdx ).size = value;
+						_vlBindingsData.at( elemIdx ).size = value;
 					}
 
 					return;
 
 				case ComputeBufferResData::DrawParamsOffsetI:
-					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
+					if ( _vlBindingsData.empty() || elemIdx == _vlBindingsData.size() )
 					{
 						params.offset = value;
-						_dataParams.push_back( params );
+						_vlBindingsData.push_back( params );
 					}
-					else if ( ( uint32 ) elemIdx > _dataParams.size() )
+					else if ( ( uint32 ) elemIdx > _vlBindingsData.size() )
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
@@ -318,13 +275,9 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					}
 					else
 					{
-						_dataParams.at( elemIdx ).offset = value;
+						_vlBindingsData.at( elemIdx ).offset = value;
 					}
 
-					return;
-
-				case ComputeBufferResData::DrawParamsElementsCountI:
-					_numElements = value;
 					return;
 
 				default:
@@ -352,12 +305,12 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 					params.vbSlot = 0; // always zero because only one buffer can be specified at a time
 					params.offset = params.size = 0;
 
-					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
+					if ( _vlBindingsData.empty() || elemIdx == _vlBindingsData.size() )
 					{
 						params.semanticName = value;
-						_dataParams.push_back( params );
+						_vlBindingsData.push_back( params );
 					}
-					else if ( ( uint32 ) elemIdx > _dataParams.size() )
+					else if ( ( uint32 ) elemIdx > _vlBindingsData.size() )
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
@@ -365,7 +318,7 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 					}
 					else
 					{
-						_dataParams.at( elemIdx ).semanticName = value;
+						_vlBindingsData.at( elemIdx ).semanticName = value;
 					}
 
 					return;
