@@ -40,10 +40,10 @@ struct ComputeNodeTpl : public SceneNodeTpl
 	PMaterialResource		matRes;
 	PComputeBufferResource  compBufRes;
 	int						drawType;
-	uint32					elementsCount;
+	int						elementsCount;
 
 	ComputeNodeTpl( const std::string &name, ComputeBufferResource *computeBufferRes, MaterialResource *materialRes,
-					int vertDrawType, uint32 elemDrawCount ) :
+					int vertDrawType, int elemDrawCount ) :
 						SceneNodeTpl( SceneNodeTypes::Compute, name ), compBufRes( computeBufferRes ), matRes( materialRes ),
 						drawType( vertDrawType ), elementsCount( elemDrawCount )
 	{

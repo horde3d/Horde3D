@@ -443,10 +443,10 @@ struct H3DComputeBufRes
 	DrawParamsElem				- Specifies parameters for shader bindings
 	CompBufDataSizeI			- Size of the buffer
 	CompBufUseAsVertexBufferI	- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
-	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data) [write-only]
-	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3 [write-only]
+	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data)
+	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3
 	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
-	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12 [write-only]
+	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12
 
 	*/
 	enum List
@@ -2323,7 +2323,7 @@ DLL bool h3dHasEmitterFinished( H3DNode emitterNode );
 		name               - name of the node
 		materialRes        - handle to Material resource used for rendering
 		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
-		drawType		   - specifies how to treat data in the compute buffer. 
+		drawType		   - specifies how to treat data in the compute buffer
 		elementsCount	   - number of elements that need to be drawn
 		
 	Returns:

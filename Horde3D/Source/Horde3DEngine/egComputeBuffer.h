@@ -68,7 +68,7 @@ public:
 	void setElemParamI( int elem, int elemIdx, int param, int value );
 	// 	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	// 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
-	// 	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
+ 	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 	void setElemParamStr( int elem, int elemIdx, int param, const char *value );
 
 	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
