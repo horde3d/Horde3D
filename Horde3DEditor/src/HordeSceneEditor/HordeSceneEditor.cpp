@@ -97,8 +97,9 @@ m_sceneFile(0), m_glWidget(0)
 	// Delete the window when closing it
 	setAttribute(Qt::WA_DeleteOnClose);
 	QHBoxLayout* layout = new QHBoxLayout(m_glFrame);
-	layout->setContentsMargins(3,3,3,3);
+    layout->setContentsMargins(0,0,0,0);
 	m_glFrame->setLayout(layout);
+    m_glFrame->setWindowFlags(Qt::FramelessWindowHint);
 
 	// Add toolbar widgets
 	m_cameraToolBar = new CameraToolBar(m_toolBar);
@@ -334,7 +335,7 @@ void HordeSceneEditor::sceneCreated()
 		loadScreen.showMessage(tr("Opening Scene"), Qt::AlignLeft, Qt::white);
 		QApplication::processEvents();
 		// set pipeline.xml
-		loadScreen.showMessage(tr("Creating OpenGL Context"), Qt::AlignLeft, Qt::white);
+		loadScreen.showMessage(tr("Creating OpenGL Context"), Qt::AlignLeft, Qt::white);        
 		m_glFrame->setVisible( true );	
 		m_glWidget = new GLWidget(m_fpsLabel, m_glFrame, 0);
 		connect(m_actionFullscreen, SIGNAL(toggled(bool)), m_glWidget, SLOT(setFullScreen(bool)));

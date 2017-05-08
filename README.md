@@ -74,6 +74,15 @@ You could also skip sample building using `HORDE3D_BUILD_EXAMPLES` flag with CMa
 
      cmake -DHORDE3D_BUILD_EXAMPLES=OFF ..
 
+### Build Horde3D scene editor
+
+There is also a scene editor available for Horde3D. To enabling build of the editor, first make sure you have the Qt 4.8 or any newer Qt 5.x SDK installed. To enable creating makefiles
+for the editor via cmake set the HORDE3D_BUILD_EDITOR flag to ON (default is OFF).
+
+    cmake -DHORDE3D_BUILD_EDITOR=ON
+
+As the editor needs Lua as a dependency you can either make sure the Lua development files can be found by cmake, or Lua will be automatically downloaded by CMake.
+
 ## What's next
 
 Here are some quick links to help you get started:

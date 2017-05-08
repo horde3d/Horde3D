@@ -341,7 +341,10 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 	// bind index buffer, if present
 	if ( curVao.indexBuf )
 	{
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, curVao.indexBuf );
+		RDIBufferGL4 &buf = _buffers.getRef( curVao.indexBuf );
+		ASSERT( buf.glObj > 0 )
+
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, buf.glObj );
 	}
 
 	uint32 newVertexAttribMask = 0;
@@ -1923,8 +1926,10 @@ void RenderDeviceGL4::resetStates()
 	_pendingMask = 0xFFFFFFFF;
 	commitStates();
 
+//	glBindVertexArray( 0 );
  	glBindBuffer( GL_ARRAY_BUFFER, 0 );
-	glBindVertexArray( 0 );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+
 	glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
 }
 

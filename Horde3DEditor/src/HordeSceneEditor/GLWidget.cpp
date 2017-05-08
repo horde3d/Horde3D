@@ -121,6 +121,7 @@ void GLWidget::setFullScreen(bool fullscreen, GLWidget* widget /*= 0*/)
         m_parentWidget = parentWidget()->parentWidget();
         parentWidget()->setParent(0);
         parentWidget()->showFullScreen();
+        setFocus(Qt::ActiveWindowFocusReason);
         //setGeometry( qApp->desktop()->screenGeometry() );
     }
     else
@@ -867,7 +868,7 @@ void GLWidget::renderEditorInfo()
 
     glDisable(GL_DEPTH_TEST);
 
-    if (m_currentNode != 0)
+    if (m_currentNode != 0 && m_currentNode->property("ID").toInt() != m_activeCameraID )
 
     {
         QVariant transProp = m_currentNode->property("__AbsoluteTransformation");
