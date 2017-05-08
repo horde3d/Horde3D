@@ -200,6 +200,12 @@ bool RenderDeviceGL2::init()
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
 	
+    if( !version || !renderer || !vendor )
+    {
+        Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
+        return false;
+    }
+
 	Modules::log().writeInfo( "Initializing GL2 backend using OpenGL driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
 	
