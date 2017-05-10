@@ -270,8 +270,7 @@ bool RenderDeviceGL4::init()
 	_caps.maxTexUnitCount = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 
 	// Find maximum number of storage buffers in compute shader
-	glGetIntegeri_v( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, 0, (GLint *) &_maxComputeBufferAttachments );
-	
+	glGetIntegerv( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, (GLint *) &_maxComputeBufferAttachments );
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
 	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
@@ -810,6 +809,22 @@ bool RenderDeviceGL4::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 	return true;
 }
 
+void RenderDeviceGL4::bindImageToTexture(uint32 texObj, void *eglImage)
+{
+	if( !glExt::OES_EGL_image )
+		Modules::log().writeError("OES_egl_image not supported");
+	else
+	{
+		const RDITextureGL4 &tex = _textures.getRef( texObj );
+		glActiveTexture( GL_TEXTURE15 );
+		glBindTexture( tex.type, tex.glObj );
+		glEGLImageTargetTexture2DOES( tex.type, eglImage );
+		checkError();
+		glBindTexture( tex.type, 0 );
+		if( _texSlots[15].texObj )
+			glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+	}
+}
 
 // =================================================================================================
 // Shaders

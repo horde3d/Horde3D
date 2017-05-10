@@ -15,7 +15,6 @@
 #include <cstdlib>
 #include <cstring>
 
-
 namespace glExt
 {
 	bool EXT_framebuffer_object = false;
@@ -27,6 +26,7 @@ namespace glExt
 	bool ARB_texture_non_power_of_two = false;
 	bool ARB_timer_query = false;
 	bool ARB_texture_buffer_object = false;
+	bool OES_EGL_image = false;
 
 	int	majorVersion = 1, minorVersion = 0;
 }
@@ -542,7 +542,10 @@ PFNGLGETQUERYOBJECTI64VPROC glGetQueryObjecti64vARB = 0x0;
 PFNGLGETQUERYOBJECTUI64VPROC glGetQueryObjectui64vARB = 0x0;
 
 // GL_ARB_texture_buffer_object
-PFNGLTEXBUFFERPROC glTexBufferARB = 0;
+PFNGLTEXBUFFERPROC glTexBufferARB = 0x0;
+
+// GL_OES_EGL_image
+PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = 0x0;
 
 }  // namespace h3dGL
 
@@ -1202,6 +1205,12 @@ bool initOpenGLExtensions( bool forceLegacyFuncs )
 		initLegacyExtensions( r );
 	else
 		initModernExtensions( r );
+
+	glExt::OES_EGL_image = isExtensionSupported( "GL_OES_EGL_image" );
+	if( glExt::OES_EGL_image )
+	{
+		r &= ( glEGLImageTargetTexture2DOES = ( PFNGLEGLIMAGETARGETTEXTURE2DOESPROC ) platGetProcAddress( "glEGLImageTargetTexture2DOES" ) ) != 0x0;
+	}
 
 	// Default extensions, suitable for any OpenGL version
 	glExt::EXT_texture_filter_anisotropic = isExtensionSupported( "GL_EXT_texture_filter_anisotropic" );

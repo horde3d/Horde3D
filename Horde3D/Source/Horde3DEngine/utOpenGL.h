@@ -56,6 +56,7 @@ namespace glExt
 	extern bool ARB_texture_non_power_of_two;
 	extern bool ARB_timer_query;
 	extern bool ARB_texture_buffer_object;
+    extern bool OES_EGL_image;
 
 	extern int  majorVersion, minorVersion;
 }
@@ -2789,6 +2790,20 @@ typedef void ( GLAPIENTRYP PFNGLTEXBUFFERPROC )( GLenum target, GLenum internalf
 extern PFNGLTEXBUFFERPROC glTexBufferARB;
 
 #endif
+
+
+/* GL_OES_EGL_image */
+#ifndef GL_OES_EGL_image
+typedef void* GLeglImageOES;
+#endif
+
+#ifndef GL_OES_EGL_image
+#define GL_OES_EGL_image 1
+typedef void (GLAPIENTRYP PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, GLeglImageOES image);
+typedef void (GLAPIENTRYP PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC) (GLenum target, GLeglImageOES image);
+#endif
+
+extern PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;
 
 #ifndef GL_ARB_texture_rg
 #define GL_ARB_texture_rg 1

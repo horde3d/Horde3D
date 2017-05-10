@@ -722,6 +722,21 @@ bool RenderDeviceGL2::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 	return true;
 }
 
+void RenderDeviceGL2::bindImageToTexture(uint32 texObj, void *eglImage)
+{
+	if( !glExt::OES_EGL_image )
+		Modules::log().writeError("OES_egl_image not supported");
+	else
+	{
+		const RDITextureGL2 &tex = _textures.getRef( texObj );
+		glActiveTexture( GL_TEXTURE15 );
+		glBindTexture( tex.type, tex.glObj );
+		glEGLImageTargetTexture2DOES( tex.type, eglImage );
+		glBindTexture( tex.type, 0 );
+		if( _texSlots[15].texObj )
+			glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+	}
+}
 
 // =================================================================================================
 // Shaders

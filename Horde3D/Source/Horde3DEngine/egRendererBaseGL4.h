@@ -237,6 +237,7 @@ public:
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
 	uint32 getTextureMem() const { return _textureMem; }
+	void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,

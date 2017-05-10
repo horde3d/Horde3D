@@ -600,6 +600,7 @@ private:
     typedef void( *PFN_DESTROYTEXTURE )( void* const, uint32& texObj );
 	typedef void( *PFN_UPDATETEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, const void *pixels );
 	typedef bool( *PFN_GETTEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, void *buffer );
+    typedef void( *PFN_BINDIMAGETOTEXTURE )( void* const, uint32 texObj, void* eglImage );
 	
 	typedef uint32( *PFN_CREATESHADER )( void* const, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
 										 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc );
@@ -668,6 +669,7 @@ private:
 	PFN_DESTROYTEXTURE			_pfnDestroyTexture;
 	PFN_UPDATETEXTUREDATA		_pfnUpdateTextureData;
 	PFN_GETTEXTUREDATA			_pfnGetTextureData;
+    PFN_BINDIMAGETOTEXTURE      _pfnBindImageToTexture;
 
 	// shaders
 	PFN_CREATESHADER			_pfnCreateShader;
@@ -847,6 +849,12 @@ private:
 	{
 		return static_cast< T* >( pObj )->getTextureData( texObj, slice, mipLevel, buffer );
 	}
+
+    template<typename T>
+    static void              bindImageToTexture_Invoker( void* const pObj, uint32 texObj, void* eglImage )
+    {
+        static_cast< T* >( pObj )->bindImageToTexture( texObj, eglImage );
+    }
 
 	// shaders
 	template<typename T>
@@ -1120,6 +1128,7 @@ protected:
 		_pfnDestroyTexture = ( PFN_DESTROYTEXTURE ) &destroyTexture_Invoker < T >;
 		_pfnUpdateTextureData = ( PFN_UPDATETEXTUREDATA ) &updateTextureData_Invoker < T >;
 		_pfnGetTextureData = ( PFN_GETTEXTUREDATA ) &getTextureData_Invoker < T >;
+        _pfnBindImageToTexture = (PFN_BINDIMAGETOTEXTURE ) &bindImageToTexture_Invoker < T >;
 
 		_pfnCreateShader = ( PFN_CREATESHADER ) &createShader_Invoker < T >;
 		_pfnDestroyShader = ( PFN_DESTROYSHADER ) &destroyShader_Invoker < T > ;
@@ -1280,6 +1289,10 @@ public:
 	{
 		return _textureMem; 
 	}
+    void bindImageToTexture( uint32 texObj, void* eglImage )
+    {
+        return ( *_pfnBindImageToTexture )( this, texObj, eglImage );
+    }
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
