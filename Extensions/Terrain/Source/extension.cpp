@@ -41,12 +41,12 @@ bool ExtTerrain::init()
 	if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGL2 )
 	{
 		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-											  vsTerrainDebugView, fsTerrainDebugView, nullptr, nullptr, nullptr, nullptr );
+                                              vsTerrainDebugView, fsTerrainDebugView, 0, 0, 0, 0 );
 	} 
 	else
 	{
 		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-											  vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, nullptr, nullptr, nullptr, nullptr );
+                                              vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, 0, 0, 0, 0 );
 	}
 	
 	return true;

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.1)
 
 # Project details.
 project(Horde3D)
@@ -38,12 +38,14 @@ IF(${CMAKE_CFG_INTDIR} STREQUAL ".")
     ENDIF(NOT HORDE3D_OUTPUT_PATH_SUFFIX)
 ENDIF(${CMAKE_CFG_INTDIR} STREQUAL ".")
 
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/${HORDE3D_OUTPUT_PATH_SUFFIX}
-    CACHE STRING "Where binaries and shared lib files go" FORCE)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/${HORDE3D_OUTPUT_PATH_SUFFIX} CACHE STRING "Where binaries and shared lib files go" FORCE)
 
 IF(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup ")
 ENDIF(MSVC)
+
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
 
 # Manage extensions.
 include(Extensions/Extensions.txt)
@@ -51,3 +53,11 @@ include(Extensions/Extensions.txt)
 # Add engine target.
 add_subdirectory(Horde3D)
 
+option(HORDE3D_BUILD_EDITOR "Build Horde3D Editor" OFF)
+if(HORDE3D_BUILD_EDITOR)
+  add_subdirectory(Horde3DEditor)
+endif(HORDE3D_BUILD_EDITOR)
+
+if(POLICY CMP0058)
+    cmake_policy(SET CMP0058 NEW)
+endif()

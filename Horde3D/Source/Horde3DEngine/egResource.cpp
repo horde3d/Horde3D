@@ -382,10 +382,12 @@ void ResourceManager::releaseUnusedResources()
 	// Find unused resources and release dependencies
 	for( uint32 i = 0; i < _resources.size(); ++i )
 	{
-		if( _resources[i] != 0x0 && _resources[i]->_userRefCount == 0 && _resources[i]->_refCount == 0 )
+
+        Resource* res = _resources[i];
+        if( res != 0x0 && res->_userRefCount == 0 && res->_refCount == 0 )
 		{
 			killList.push_back( i );
-			_resources[i]->release();
+            res->release();
 		}
 	}
 	

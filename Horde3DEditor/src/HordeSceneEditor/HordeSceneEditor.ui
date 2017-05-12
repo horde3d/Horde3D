@@ -1,0 +1,821 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>HordeSceneEditor</class>
+ <widget class="QMainWindow" name="HordeSceneEditor">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1024</width>
+    <height>768</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>The Horde3D Scene Editor</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/Icons/Resources/Icon.png</normaloff>:/Icons/Resources/Icon.png</iconset>
+  </property>
+  <widget class="QWidget" name="m_centralwidget">
+   <layout class="QVBoxLayout">
+    <property name="margin">
+     <number>3</number>
+    </property>
+    <item>
+     <widget class="QFrame" name="m_glFrame">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="m_menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1024</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="m_menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="m_actionNew"/>
+    <addaction name="m_actionOpen"/>
+    <addaction name="m_actionSave"/>
+    <addaction name="m_actionSaveAs"/>
+    <addaction name="m_actionClose"/>
+    <addaction name="separator"/>
+    <addaction name="m_actionCleanScene"/>
+    <addaction name="separator"/>
+    <addaction name="m_actionSettings"/>
+    <addaction name="separator"/>
+    <addaction name="m_actionQuit"/>
+   </widget>
+   <widget class="QMenu" name="m_menuHelp">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="m_actionAbout"/>
+    <addaction name="m_actionOnlineDocumentation"/>
+   </widget>
+   <widget class="QMenu" name="m_menuScene">
+    <property name="title">
+     <string>&amp;Scene</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="m_actionAddAttachment"/>
+   </widget>
+   <widget class="QMenu" name="m_menuWindows">
+    <property name="title">
+     <string>&amp;Windows</string>
+    </property>
+    <addaction name="m_actionToggleDockwindowVisibility"/>
+   </widget>
+   <widget class="QMenu" name="m_menuEdit">
+    <property name="title">
+     <string>&amp;Edit</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="m_actionCopy"/>
+    <addaction name="m_actionCut"/>
+    <addaction name="m_actionPaste"/>
+    <addaction name="separator"/>
+    <addaction name="m_actionRemove"/>
+    <addaction name="separator"/>
+    <addaction name="m_actionMoveObject"/>
+    <addaction name="m_actionRotateObject"/>
+    <addaction name="m_actionScaleObject"/>
+    <addaction name="separator"/>
+    <addaction name="m_actionCameraTransformation2Node"/>
+    <addaction name="m_actionNodeTransformation2Camera"/>
+   </widget>
+   <widget class="QMenu" name="m_menuLog">
+    <property name="title">
+     <string>&amp;Log</string>
+    </property>
+    <addaction name="m_actionFindLog"/>
+    <addaction name="m_actionClearLog"/>
+    <addaction name="separator"/>
+    <addaction name="m_actionLogShowDebug"/>
+    <addaction name="m_actionLogShowInfo"/>
+    <addaction name="m_actionLogShowWarnings"/>
+    <addaction name="m_actionLogShowErrors"/>
+   </widget>
+   <widget class="QMenu" name="m_menuView">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="m_actionFullscreen"/>
+    <addaction name="m_actionDebugView"/>
+    <addaction name="m_actionRenderBB"/>
+    <addaction name="m_actionRenderBaseGrid"/>
+    <addaction name="m_actionCollisionCheck"/>
+   </widget>
+   <widget class="QMenu" name="m_menuTools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="m_menuExtras">
+    <property name="title">
+     <string>E&amp;xtras</string>
+    </property>
+   </widget>
+   <addaction name="m_menuFile"/>
+   <addaction name="m_menuEdit"/>
+   <addaction name="m_menuScene"/>
+   <addaction name="m_menuExtras"/>
+   <addaction name="m_menuLog"/>
+   <addaction name="m_menuView"/>
+   <addaction name="m_menuTools"/>
+   <addaction name="m_menuWindows"/>
+   <addaction name="m_menuHelp"/>
+  </widget>
+  <widget class="QStatusBar" name="m_statusBar"/>
+  <widget class="QDockWidget" name="m_luaDockWidget">
+   <property name="floating">
+    <bool>false</bool>
+   </property>
+   <property name="windowTitle">
+    <string>Lua Scripting</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="LuaController" name="m_luaWidget"/>
+  </widget>
+  <widget class="QDockWidget" name="m_materialWidgetDock">
+   <property name="windowTitle">
+    <string>Material Settings</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="MaterialWidget" name="m_materialWidget">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="m_logWidgetDock">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
+   </property>
+   <property name="windowTitle">
+    <string>Editor Log</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>8</number>
+   </attribute>
+   <widget class="QListWidget" name="m_logWidget">
+    <property name="contextMenuPolicy">
+     <enum>Qt::ActionsContextMenu</enum>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QListWidget#m_logWidget { background: black;  color: white }</string>
+    </property>
+    <property name="selectionMode">
+     <enum>QAbstractItemView::ExtendedSelection</enum>
+    </property>
+    <property name="selectionBehavior">
+     <enum>QAbstractItemView::SelectRows</enum>
+    </property>
+    <property name="wordWrap">
+     <bool>true</bool>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="m_sceneElementDock">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="windowTitle">
+    <string>Scene Elements</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="SceneTreeWidget" name="m_sceneTreeWidget">
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="m_nodeWidgetDock">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="windowTitle">
+    <string>Node Properties</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>1</number>
+   </attribute>
+   <widget class="NodeWidget" name="m_nodeWidget">
+    <property name="alternatingRowColors">
+     <bool>true</bool>
+    </property>
+    <property name="rootIsDecorated">
+     <bool>false</bool>
+    </property>
+    <property name="animated">
+     <bool>true</bool>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QDockWidget" name="m_pipelineDock">
+   <property name="windowTitle">
+    <string>Pipeline Settings</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="PipelineTreeView" name="m_pipelineWidget"/>
+  </widget>
+  <widget class="QDockWidget" name="m_attachmentDock">
+   <property name="windowTitle">
+    <string>Attachment Settings</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+  </widget>
+  <widget class="QToolBar" name="m_toolBar">
+   <property name="windowTitle">
+    <string>Toolbar</string>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>18</width>
+     <height>18</height>
+    </size>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="m_actionNew"/>
+   <addaction name="m_actionOpen"/>
+   <addaction name="m_actionSave"/>
+   <addaction name="separator"/>
+   <addaction name="m_actionMoveObject"/>
+   <addaction name="m_actionRotateObject"/>
+   <addaction name="m_actionScaleObject"/>
+   <addaction name="separator"/>
+   <addaction name="m_actionCameraTransformation2Node"/>
+   <addaction name="m_actionNodeTransformation2Camera"/>
+   <addaction name="separator"/>
+   <addaction name="m_actionDebugView"/>
+   <addaction name="m_actionFullscreen"/>
+   <addaction name="separator"/>
+  </widget>
+  <action name="m_actionQuit">
+   <property name="text">
+    <string>&amp;Quit</string>
+   </property>
+   <property name="statusTip">
+    <string>Quits the Horde Editor</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
+  </action>
+  <action name="m_actionNew">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/New.png</normaloff>:/Icons/Resources/New.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;New Scene</string>
+   </property>
+   <property name="statusTip">
+    <string>Creates a new scene and scene graph file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="m_actionSave">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Save.png</normaloff>:/Icons/Resources/Save.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Save Scene</string>
+   </property>
+   <property name="statusTip">
+    <string>Saves the current scene and all changes made in open scene graph files</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="m_actionSaveAs">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Save Scene as..</string>
+   </property>
+  </action>
+  <action name="m_actionClose">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Close Scene</string>
+   </property>
+   <property name="statusTip">
+    <string>Closes the current scene</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W, Ctrl+F4</string>
+   </property>
+  </action>
+  <action name="m_actionOpen">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Open.png</normaloff>:/Icons/Resources/Open.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Open Scene</string>
+   </property>
+   <property name="statusTip">
+    <string>Opens a scene file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="m_actionAbout">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+   <property name="statusTip">
+    <string>Shows information about the application</string>
+   </property>
+  </action>
+  <action name="m_actionFullscreen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Fullscreen.png</normaloff>:/Icons/Resources/Fullscreen.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Fullscreen Mode</string>
+   </property>
+   <property name="statusTip">
+    <string>Switches the rendering to fullscreen (press escape to switch back to normal view)</string>
+   </property>
+   <property name="shortcut">
+    <string>F5</string>
+   </property>
+  </action>
+  <action name="m_actionToggleDockwindowVisibility">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Toggle Dockwindow Visibility </string>
+   </property>
+   <property name="statusTip">
+    <string>If checked, the dock widgets will be set visible depending on the currently selected node</string>
+   </property>
+  </action>
+  <action name="m_actionSettings">
+   <property name="text">
+    <string>Settings</string>
+   </property>
+   <property name="statusTip">
+    <string>Configures application specific settings like the model repository or the used shader editor</string>
+   </property>
+  </action>
+  <action name="m_actionCopy">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Copy Node</string>
+   </property>
+   <property name="statusTip">
+    <string>Copies the currently selected node to the clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="m_actionPaste">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Paste Node</string>
+   </property>
+   <property name="statusTip">
+    <string>Pastes the node in the clipboard as a child of the currently selected one</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+V</string>
+   </property>
+  </action>
+  <action name="m_actionCut">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Cut Node</string>
+   </property>
+   <property name="statusTip">
+    <string>Cuts the currently selected node to the clipboard</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+X</string>
+   </property>
+  </action>
+  <action name="m_actionRemove">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Remove Node</string>
+   </property>
+   <property name="statusTip">
+    <string>Removes the currently selected node</string>
+   </property>
+   <property name="shortcut">
+    <string>Del</string>
+   </property>
+  </action>
+  <action name="m_actionMoveObject">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Move.png</normaloff>:/Icons/Resources/Move.png</iconset>
+   </property>
+   <property name="text">
+    <string>Move Object</string>
+   </property>
+   <property name="toolTip">
+    <string>Move Object</string>
+   </property>
+   <property name="statusTip">
+    <string>Move Object  -  Shortcut:  t</string>
+   </property>
+   <property name="shortcut">
+    <string>T</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::WindowShortcut</enum>
+   </property>
+  </action>
+  <action name="m_actionRotateObject">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Rotate.png</normaloff>:/Icons/Resources/Rotate.png</iconset>
+   </property>
+   <property name="text">
+    <string>Rotate Object</string>
+   </property>
+   <property name="toolTip">
+    <string>Rotate Object</string>
+   </property>
+   <property name="statusTip">
+    <string>Rotate Object  -  Shortcut: r</string>
+   </property>
+   <property name="shortcut">
+    <string>R</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::WindowShortcut</enum>
+   </property>
+  </action>
+  <action name="m_actionDummyMode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Dummy</string>
+   </property>
+  </action>
+  <action name="m_actionDebugView">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Wireframe.png</normaloff>:/Icons/Resources/Wireframe.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Debug Mode</string>
+   </property>
+   <property name="statusTip">
+    <string>Toggles between debug mode and normal rendering. </string>
+   </property>
+   <property name="shortcut">
+    <string>F7</string>
+   </property>
+  </action>
+  <action name="m_actionCameraTransformation2Node">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Node2Cam.png</normaloff>:/Icons/Resources/Node2Cam.png</iconset>
+   </property>
+   <property name="text">
+    <string>Move Node To Camera Position</string>
+   </property>
+   <property name="toolTip">
+    <string>Move selected node to camera position</string>
+   </property>
+   <property name="statusTip">
+    <string>Sets the transformation of the currently selected node to the camera's transformation</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+C</string>
+   </property>
+  </action>
+  <action name="m_actionFindLog">
+   <property name="text">
+    <string>&amp;Find</string>
+   </property>
+   <property name="statusTip">
+    <string>Let you search in the log for a specific word</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+F</string>
+   </property>
+  </action>
+  <action name="m_actionClearLog">
+   <property name="text">
+    <string>&amp;Clear</string>
+   </property>
+   <property name="statusTip">
+    <string>Clears the current log view</string>
+   </property>
+  </action>
+  <action name="m_actionCollisionCheck">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Camera Collision Check</string>
+   </property>
+   <property name="statusTip">
+    <string>Enables a simple ray collision check, to avoid camera movements through objects</string>
+   </property>
+   <property name="shortcut">
+    <string>C</string>
+   </property>
+  </action>
+  <action name="m_actionRenderBB">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Bounding Box for Selection</string>
+   </property>
+   <property name="statusTip">
+    <string>If enabled, the currently selected node's AABB bounding box will be rendered</string>
+   </property>
+   <property name="shortcut">
+    <string>B</string>
+   </property>
+  </action>
+  <action name="m_actionRenderBaseGrid">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Base &amp;Grid</string>
+   </property>
+   <property name="statusTip">
+    <string>Shows a grid in the X-Z plane</string>
+   </property>
+   <property name="shortcut">
+    <string>G</string>
+   </property>
+  </action>
+  <action name="m_actionScaleObject">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/scale.png</normaloff>:/Icons/Resources/scale.png</iconset>
+   </property>
+   <property name="text">
+    <string>Scale Object</string>
+   </property>
+   <property name="statusTip">
+    <string>Scale Object - Shortcut: e</string>
+   </property>
+   <property name="shortcut">
+    <string>E</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::WindowShortcut</enum>
+   </property>
+  </action>
+  <action name="m_actionOnlineDocumentation">
+   <property name="text">
+    <string>&amp;Online Documentation</string>
+   </property>
+   <property name="statusTip">
+    <string>Opens the PDF Document from the Editor's website</string>
+   </property>
+  </action>
+  <action name="m_actionNodeTransformation2Camera">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/Icons/Resources/Cam2Node.png</normaloff>:/Icons/Resources/Cam2Node.png</iconset>
+   </property>
+   <property name="text">
+    <string>Move Camera To Node</string>
+   </property>
+   <property name="toolTip">
+    <string>Move camera to the transformation of the selected node</string>
+   </property>
+   <property name="statusTip">
+    <string>Moves the camera to the transformation of the currently selected node</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Alt+N</string>
+   </property>
+  </action>
+  <action name="m_actionLogShowInfo">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Show Infos</string>
+   </property>
+   <property name="statusTip">
+    <string>If enabled, all information messages will be visible in the log view</string>
+   </property>
+  </action>
+  <action name="m_actionLogShowWarnings">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Warnings</string>
+   </property>
+   <property name="statusTip">
+    <string>If enabled all warnings will be visible in the log view</string>
+   </property>
+  </action>
+  <action name="m_actionLogShowErrors">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Errors</string>
+   </property>
+   <property name="statusTip">
+    <string>If enabled all errors will be visible in the log view</string>
+   </property>
+  </action>
+  <action name="m_actionLogShowDebug">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show Debug Infos</string>
+   </property>
+  </action>
+  <action name="m_actionCleanScene">
+   <property name="text">
+    <string>C&amp;lean...</string>
+   </property>
+  </action>
+  <action name="m_actionAddAttachment">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Add Attachment</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>SceneTreeWidget</class>
+   <extends>QWidget</extends>
+   <header>SceneTreeWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PipelineTreeView</class>
+   <extends>QTreeView</extends>
+   <header>PipelineTreeView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>NodeWidget</class>
+   <extends>QTreeView</extends>
+   <header>NodeWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>MaterialWidget</class>
+   <extends>QWidget</extends>
+   <header>MaterialWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>LuaController</class>
+   <extends>QWidget</extends>
+   <header>LuaController.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>m_actionQuit</sender>
+   <signal>triggered()</signal>
+   <receiver>HordeSceneEditor</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

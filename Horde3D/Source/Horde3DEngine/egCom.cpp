@@ -265,8 +265,8 @@ bool EngineLog::getMessage( LogMessage &msg )
 // Class StatManager
 // *************************************************************************************************
 
-StatManager::StatManager() : _fwdLightsGPUTimer( nullptr ), _defLightsGPUTimer( nullptr ), _shadowsGPUTimer( nullptr ), _particleGPUTimer( nullptr ),
-							 _computeGPUTimer( nullptr )
+StatManager::StatManager() : _fwdLightsGPUTimer( 0 ), _defLightsGPUTimer( 0 ), _shadowsGPUTimer( 0 ), _particleGPUTimer( 0 ),
+							 _computeGPUTimer( 0 )
 {
 	_statTriCount = 0;
 	_statBatchCount = 0;
@@ -278,11 +278,11 @@ StatManager::StatManager() : _fwdLightsGPUTimer( nullptr ), _defLightsGPUTimer( 
 
 StatManager::~StatManager()
 {
-	if ( _fwdLightsGPUTimer ) { delete _fwdLightsGPUTimer; _fwdLightsGPUTimer = nullptr; }
-	if ( _defLightsGPUTimer ) { delete _defLightsGPUTimer; _defLightsGPUTimer = nullptr; }
-	if ( _shadowsGPUTimer ) { delete _shadowsGPUTimer; _shadowsGPUTimer = nullptr; }
-	if ( _particleGPUTimer ) { delete _particleGPUTimer; _particleGPUTimer = nullptr; }
-	if ( _computeGPUTimer ) { delete _computeGPUTimer; _computeGPUTimer = nullptr; }
+	if ( _fwdLightsGPUTimer ) { delete _fwdLightsGPUTimer; _fwdLightsGPUTimer = 0; }
+	if ( _defLightsGPUTimer ) { delete _defLightsGPUTimer; _defLightsGPUTimer = 0; }
+	if ( _shadowsGPUTimer ) { delete _shadowsGPUTimer; _shadowsGPUTimer = 0; }
+	if ( _particleGPUTimer ) { delete _particleGPUTimer; _particleGPUTimer = 0; }
+	if ( _computeGPUTimer ) { delete _computeGPUTimer; _computeGPUTimer = 0; }
 }
 
 

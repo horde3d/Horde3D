@@ -1,4 +1,3 @@
-
 add_subdirectory(Source)
 if(HORDE3D_BUILD_EXAMPLES)
     add_subdirectory(Samples)

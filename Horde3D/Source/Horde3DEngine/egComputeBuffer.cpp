@@ -16,7 +16,7 @@ using namespace std;
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ),
-	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( nullptr ), _mapped( false ), _numElements( 0 ), _useAsVertexBuf( false ),
+	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( 0 ), _mapped( false ), _numElements( 0 ), _useAsVertexBuf( false ),
 	_vertexLayout( 0 ), _drawType( -1 ), _geoID( 0 ), _geometryParamsSet( false )
 {
 	initDefault();
@@ -27,7 +27,7 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
-	_useAsVertexBuf( true ), _drawType( -1 ), _vertexLayout( 0 ), _mapped( false ), _data( nullptr ), _dataSize( 1024 )
+	_useAsVertexBuf( true ), _drawType( -1 ), _vertexLayout( 0 ), _mapped( false ), _data( 0 ), _dataSize( 1024 )
 {
 	_loaded = true;
 }
@@ -45,7 +45,7 @@ void ComputeBufferResource::initDefault()
 	if ( rdi->getCaps().computeShaders )
 	{
 		if ( _bufferID > 0 ) rdi->destroyBuffer( _bufferID );
-		_bufferID = rdi->createShaderStorageBuffer( _dataSize, nullptr );
+		_bufferID = rdi->createShaderStorageBuffer( _dataSize, 0 );
 		_data = new uint8[ _dataSize ];
 	}
 	else
@@ -58,7 +58,7 @@ void ComputeBufferResource::release()
 	if ( _bufferID )
 	{
 		Modules::renderer().getRenderDevice()->destroyBuffer( _bufferID );
-		delete[] _data; _data = nullptr;
+		delete[] _data; _data = 0;
 	}
 }
 
@@ -82,8 +82,8 @@ Resource *ComputeBufferResource::clone()
 	if ( !res->_bufferID )
 	{
 		// no compute shaders
-		delete res; res = nullptr;
-		return nullptr;
+		delete res; res = 0;
+		return 0;
 	}
 
 	// set resource parameters
@@ -388,7 +388,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 	{
 		if ( elem == ComputeBufferResData::ComputeBufElem )
 		{
-			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+//			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 			// 			_mappedData = Modules::renderer().useScratchBuf( _dataSize );
 
@@ -396,7 +396,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 			{
 				// currently reading back is not supported
 				_writeRequested = false;
-				return nullptr;
+				return 0;
 			}
 
 			if ( write )

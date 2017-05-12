@@ -162,10 +162,11 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_curDepthStencilState.hash = _newDepthStencilState.hash = 0;
 // 	_curVertLayout = _newVertLayout = 0;
 // 	_curIndexBuf = _newIndexBuf = 0;
+	_curIndexBuf = 0;
 	_curGeometryIndex = 1;
 	_defaultFBO = 0;
 	_defaultFBOMultisampled = false;
-	_indexFormat = (uint32)RDIIndexFormat::IDXFMT_16;
+    _indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 	_tessPatchVerts = 0;
@@ -349,20 +350,25 @@ void RenderDeviceGL2::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndex
 	geo.indexBuf32Bit = format == IDXFMT_32 ? true : false;
 }
 
-void RenderDeviceGL2::destroyGeometry( uint32 geoObj )
+void RenderDeviceGL2::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers )
 {
-	if ( geoObj == 0 ) return;
+	if ( geoObj == 0 )
+		return;
 
 	RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( geoObj );
 	
-	for ( unsigned int i = 0; i < geo.vertexBufInfo.size(); ++i )
+	if ( destroyBindedBuffers )
 	{
-		destroyBuffer( geo.vertexBufInfo[ i ].vbObj );
+		for ( unsigned int i = 0; i < geo.vertexBufInfo.size(); ++i )
+		{
+			destroyBuffer( geo.vertexBufInfo[ i ].vbObj );
+		}
+
+		destroyBuffer( geo.indexBufIdx );
 	}
-
-	destroyBuffer( geo.indexBufIdx );
-
+	
 	_geometryInfo.remove( geoObj );
+	geoObj = 0;
 }
 
 uint32 RenderDeviceGL2::createVertexBuffer( uint32 size, const void *data )
@@ -442,19 +448,21 @@ uint32 RenderDeviceGL2::createBuffer( uint32 bufType, uint32 size, const void *d
 	return _buffers.add( buf );
 }
 
-void RenderDeviceGL2::destroyBuffer( uint32 bufObj )
+void RenderDeviceGL2::destroyBuffer( uint32& bufObj )
 {
-	if( bufObj == 0 ) return;
+	if( bufObj == 0 )
+		return;
 	
 	RDIBufferGL2 &buf = _buffers.getRef( bufObj );
 	glDeleteBuffers( 1, &buf.glObj );
 
 	_bufferMem -= buf.size;
 	_buffers.remove( bufObj );
+	bufObj = 0;
 }
 
 
-void RenderDeviceGL2::destroyTextureBuffer( uint32 bufObj )
+void RenderDeviceGL2::destroyTextureBuffer( uint32& bufObj )
 {
 
 }
@@ -645,15 +653,17 @@ void RenderDeviceGL2::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 }
 
 
-void RenderDeviceGL2::destroyTexture( uint32 texObj )
+void RenderDeviceGL2::destroyTexture( uint32& texObj )
 {
-	if( texObj == 0 ) return;
+	if( texObj == 0 )
+		return;
 	
 	const RDITextureGL2 &tex = _textures.getRef( texObj );
 	glDeleteTextures( 1, &tex.glObj );
 
 	_textureMem -= tex.memSize;
 	_textures.remove( texObj );
+	texObj = 0;
 }
 
 
@@ -800,8 +810,13 @@ bool RenderDeviceGL2::linkShaderProgram( uint32 programObj )
 
 
 uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-									  const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+                                      const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
 {
+	H3D_UNUSED_VAR( geometryShaderSrc );
+	H3D_UNUSED_VAR( tessControlShaderSrc );
+	H3D_UNUSED_VAR( tessEvaluationShaderSrc );
+	H3D_UNUSED_VAR( computeShaderSrc );
+
 	// Compile and link shader
 	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
 	if( programObj == 0 ) return 0;
@@ -852,13 +867,15 @@ uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *f
 }
 
 
-void RenderDeviceGL2::destroyShader( uint32 shaderId )
+void RenderDeviceGL2::destroyShader( uint32& shaderId )
 {
-	if( shaderId == 0 ) return;
+	if( shaderId == 0 )
+		return;
 
 	RDIShaderGL2 &shader = _shaders.getRef( shaderId );
 	glDeleteProgram( shader.oglProgramObj );
 	_shaders.remove( shaderId );
+	shaderId = 0;
 }
 
 
@@ -895,6 +912,9 @@ int RenderDeviceGL2::getShaderSamplerLoc( uint32 shaderId, const char *name )
 
 int RenderDeviceGL2::getShaderBufferLoc( uint32 shaderId, const char *name )
 {
+	H3D_UNUSED_VAR( shaderId );
+	H3D_UNUSED_VAR( name );
+
 	// Not supported on OpenGL 2
 	return -1;
 }
@@ -1096,7 +1116,7 @@ uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, Texture
 }
 
 
-void RenderDeviceGL2::destroyRenderBuffer( uint32 rbObj )
+void RenderDeviceGL2::destroyRenderBuffer( uint32& rbObj )
 {
 	RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
 	
@@ -1118,6 +1138,7 @@ void RenderDeviceGL2::destroyRenderBuffer( uint32 rbObj )
 	rb.fbo = rb.fboMS = 0;
 
 	_rendBufs.remove( rbObj );
+	rbObj = 0;
 }
 
 
@@ -1331,6 +1352,13 @@ void RenderDeviceGL2::checkError()
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
 	ASSERT( error != GL_STACK_OVERFLOW && error != GL_STACK_UNDERFLOW );
+}
+
+
+void RenderDeviceGL2::setStorageBuffer( uint8 slot, uint32 bufObj )
+{
+	H3D_UNUSED_VAR( slot );
+	H3D_UNUSED_VAR( bufObj );
 }
 
 
@@ -1572,9 +1600,21 @@ bool RenderDeviceGL2::commitStates( uint32 filter )
 			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
 			{
 				RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( _curGeometryIndex );
-				if ( geo.indexBufIdx != _curIndexBuf )
-					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, geo.indexBufIdx );
 				
+				// index buffer mapping
+				if ( geo.indexBufIdx != _curIndexBuf )
+				{
+					if ( geo.indexBufIdx != 0 )
+					{
+						RDIBufferGL2 &buf = _buffers.getRef( geo.indexBufIdx );
+						ASSERT( buf.glObj != 0 )
+
+						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, buf.glObj );
+					}
+					else
+						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+				}
+
 				if( !applyVertexLayout( geo ) )
 					return false;
 
@@ -1595,7 +1635,7 @@ bool RenderDeviceGL2::commitStates( uint32 filter )
 
 void RenderDeviceGL2::resetStates()
 {
- 	_curIndexBuf = 1; // _newIndexBuf = 0;
+ 	_curIndexBuf = 1; 
 // 	_curVertLayout = 1; _newVertLayout = 0;
 	_curGeometryIndex = 1;
 	_curRasterState.hash = 0xFFFFFFFF; _newRasterState.hash = 0;
@@ -1611,6 +1651,8 @@ void RenderDeviceGL2::resetStates()
 	commitStates();
 
 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+//	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
+
 	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 }
 

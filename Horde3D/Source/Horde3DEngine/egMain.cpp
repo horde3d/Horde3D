@@ -289,8 +289,14 @@ DLLEXP bool h3dLoadResource( ResHandle res, const char *data, int size )
 {
 	Resource *resObj = Modules::resMan().resolveResHandle( res );
 	APIFUNC_VALIDATE_RES( resObj, "h3dLoadResource", false );
-	
-	Modules::log().writeInfo( "Loading resource '%s'", resObj->getName().c_str() );
+    if( resObj->isLoaded() )
+    {
+        Modules::log().writeWarning( "Resource '%s' already loaded", resObj->getName().c_str() );
+        // True or false?
+        return false;
+    }
+    else
+        Modules::log().writeInfo( "Loading resource '%s'", resObj->getName().c_str() );
 	return resObj->load( data, size );
 }
 

@@ -1,0 +1,192 @@
+<ui version="4.0" >
+ <class>LuaController</class>
+ <widget class="QWidget" name="LuaController" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>415</width>
+    <height>314</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" >
+   <item>
+    <widget class="QSplitter" name="splitter" >
+     <property name="orientation" >
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QWidget" native="1" name="widget" >
+      <layout class="QGridLayout" >
+       <property name="leftMargin" >
+        <number>1</number>
+       </property>
+       <property name="topMargin" >
+        <number>1</number>
+       </property>
+       <property name="rightMargin" >
+        <number>1</number>
+       </property>
+       <property name="bottomMargin" >
+        <number>1</number>
+       </property>
+       <property name="horizontalSpacing" >
+        <number>1</number>
+       </property>
+       <item row="0" column="0" colspan="5" >
+        <widget class="QGroupBox" name="groupBox" >
+         <property name="title" >
+          <string>Script Code Window</string>
+         </property>
+         <layout class="QHBoxLayout" >
+          <property name="leftMargin" >
+           <number>3</number>
+          </property>
+          <property name="topMargin" >
+           <number>3</number>
+          </property>
+          <property name="rightMargin" >
+           <number>3</number>
+          </property>
+          <property name="bottomMargin" >
+           <number>3</number>
+          </property>
+          <item>
+           <widget class="TextEdit" name="m_scriptEditor" >
+            <property name="statusTip" >
+             <string>Lua script code specified in this window can be executed by clicking on the execute button</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="1" column="0" >
+        <widget class="QPushButton" name="m_executeButton" >
+         <property name="statusTip" >
+          <string>Clicking this button will execute the current code in the script window</string>
+         </property>
+         <property name="text" >
+          <string>E&amp;xecute</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" >
+        <widget class="QCheckBox" name="m_runLoop" >
+         <property name="statusTip" >
+          <string>If checked the code in the script window will be repeated indefinitely until an error in the script occured</string>
+         </property>
+         <property name="text" >
+          <string>Loop Execution</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2" >
+        <spacer>
+         <property name="orientation" >
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" >
+          <size>
+           <width>16</width>
+           <height>23</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="3" >
+        <widget class="QCheckBox" name="m_clearOnExecute" >
+         <property name="statusTip" >
+          <string>If checked the output window will be cleared before each execution a script</string>
+         </property>
+         <property name="text" >
+          <string>Clear before execution</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4" >
+        <widget class="QPushButton" name="m_clearLog" >
+         <property name="statusTip" >
+          <string>Clicking this button will clear the output window</string>
+         </property>
+         <property name="text" >
+          <string>&amp;Clear Log</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QFrame" name="frame" >
+      <property name="frameShape" >
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow" >
+       <enum>QFrame::Sunken</enum>
+      </property>
+      <layout class="QHBoxLayout" >
+       <property name="leftMargin" >
+        <number>3</number>
+       </property>
+       <property name="topMargin" >
+        <number>3</number>
+       </property>
+       <property name="rightMargin" >
+        <number>3</number>
+       </property>
+       <property name="bottomMargin" >
+        <number>3</number>
+       </property>
+       <item>
+        <widget class="QTextEdit" name="m_scriptLog" >
+         <property name="statusTip" >
+          <string>Output window showing all data printed to the standard output</string>
+         </property>
+         <property name="tabChangesFocus" >
+          <bool>true</bool>
+         </property>
+         <property name="documentTitle" >
+          <string>Standard Ouput</string>
+         </property>
+         <property name="undoRedoEnabled" >
+          <bool>false</bool>
+         </property>
+         <property name="readOnly" >
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>TextEdit</class>
+   <extends>QTextEdit</extends>
+   <header location="global" >EditorLib/TextEdit.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>m_runLoop</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>m_executeButton</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel" >
+     <x>129</x>
+     <y>167</y>
+    </hint>
+    <hint type="destinationlabel" >
+     <x>46</x>
+     <y>165</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

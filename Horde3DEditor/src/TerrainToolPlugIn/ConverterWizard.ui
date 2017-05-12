@@ -1,0 +1,155 @@
+<ui version="4.0" >
+ <class>ConverterWizard</class>
+ <widget class="QWidget" name="ConverterWizard" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" >
+   <item>
+    <widget class="QLabel" name="label" >
+     <property name="text" >
+      <string>Heightmap:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <item>
+      <widget class="QLineEdit" name="m_heightMap" >
+       <property name="toolTip" >
+        <string>The source 8 or 16 bit heightmap file</string>
+       </property>
+       <property name="whatsThis" >
+        <string>Enter the filename of the source 8 or 16 bit heightmap file here</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="m_setHeightMap" >
+       <property name="text" >
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_2" >
+     <property name="text" >
+      <string>Save converted map as...</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <item>
+      <widget class="QLineEdit" name="m_target" >
+       <property name="toolTip" >
+        <string>Base name for the converted heightmap</string>
+       </property>
+       <property name="whatsThis" >
+        <string>Enter the filename for the converted heightmap here. Only use relative pathes if any.</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_3" >
+       <property name="text" >
+        <string>.</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="m_format" >
+       <property name="minimumSize" >
+        <size>
+         <width>70</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="toolTip" >
+        <string>File format used when saving the converted heightmap</string>
+       </property>
+       <property name="whatsThis" >
+        <string>Select the file format used when saving the converted heightmap</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_4" >
+     <property name="text" >
+      <string>Smooth filter for 8-bit image:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" >
+     <item>
+      <widget class="QLabel" name="label_5" >
+       <property name="text" >
+        <string>Radius:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="m_filterRadius" >
+       <property name="minimumSize" >
+        <size>
+         <width>50</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="toolTip" >
+        <string>Radius of mean filter used for smoothing. Zero means no smoothing.</string>
+       </property>
+       <property name="whatsThis" >
+        <string>You can smooth 8 bit textures before they will be converted to 16 bit height values by setting this value greater than zero. In this case the radius indicates the number of pixels considered by the mean filter used for smoothing.</string>
+       </property>
+       <property name="maximum" >
+        <number>32</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer>
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" >
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <spacer>
+     <property name="orientation" >
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" >
+      <size>
+       <width>382</width>
+       <height>111</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

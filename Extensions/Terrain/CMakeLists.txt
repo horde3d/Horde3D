@@ -1,14 +1,10 @@
 add_subdirectory(Bindings)
 add_subdirectory(Source)
 
-set(HORDE3D_EXTENSION_INSTALLS
-	${HORDE3D_EXTENSION_INSTALLS}
-	"extMan().installExtension( new Horde3DTerrain::ExtTerrain() );\n"
+set( HORDE3D_EXTENSION_INSTALLS	"${HORDE3D_EXTENSION_INSTALLS}extMan().installExtension( new Horde3DTerrain::ExtTerrain() );\n"
     PARENT_SCOPE	
 )
-set(HORDE3D_EXTENSION_INCLUDES
-	${HORDE3D_EXTENSION_INCLUDES}
-	"\n#include \"Extensions/Terrain/Source/extension.h\"\n"
+set(HORDE3D_EXTENSION_INCLUDES "${HORDE3D_EXTENSION_INCLUDES}#include \"Extensions/Terrain/Source/extension.h\"\n"
     PARENT_SCOPE
 )
 set(HORDE3D_EXTENSION_LIBS

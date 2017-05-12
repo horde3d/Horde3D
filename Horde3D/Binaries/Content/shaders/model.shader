@@ -390,7 +390,7 @@ void main( void )
 	vec3 eye = normalize( eyeTS );
 	for( int i = 0; i < 4; ++i )
 	{
-		vec4 nmap = texture2D( normalMap, newCoords.st * vec2( 1, -1 ) );
+		vec4 nmap = texture( normalMap, newCoords.st * vec2( 1, -1 ) );
 		float height = nmap.a * plxScale + plxBias;
 		newCoords += (height - newCoords.p) * nmap.z * eye;
 	}
@@ -399,14 +399,14 @@ void main( void )
 	// Flip texture vertically to match the GL coordinate system
 	newCoords.t *= -1.0;
 
-	vec4 albedo = texture2D( albedoMap, newCoords.st ) * matDiffuseCol;
+	vec4 albedo = texture( albedoMap, newCoords.st ) * matDiffuseCol;
 	
 #ifdef _F05_AlphaTest
 	if( albedo.a < 0.01 ) discard;
 #endif
 	
 #ifdef _F02_NormalMapping
-	vec3 normalMap = texture2D( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
+	vec3 normalMap = texture( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
 	vec3 normal = tsbMat * normalMap;
 #else
 	vec3 normal = tsbNormal;
@@ -534,7 +534,7 @@ in vec3 lightVec;
 void main( void )
 {
 #ifdef _F05_AlphaTest
-	vec4 albedo = texture2D( albedoMap, texCoords * vec2( 1, -1 ) ) * matDiffuseCol;
+	vec4 albedo = texture( albedoMap, texCoords * vec2( 1, -1 ) ) * matDiffuseCol;
 	if( albedo.a < 0.01 ) discard;
 #endif
 	
@@ -663,7 +663,7 @@ void main( void )
 	vec3 eye = normalize( eyeTS );
 	for( int i = 0; i < 4; ++i )
 	{
-		vec4 nmap = texture2D( normalMap, newCoords.st * vec2( 1, -1 ) );
+		vec4 nmap = texture( normalMap, newCoords.st * vec2( 1, -1 ) );
 		float height = nmap.a * plxScale + plxBias;
 		newCoords += (height - newCoords.p) * nmap.z * eye;
 	}
@@ -672,14 +672,14 @@ void main( void )
 	// Flip texture vertically to match the GL coordinate system
 	newCoords.t *= -1.0;
 
-	vec4 albedo = texture2D( albedoMap, newCoords.st ) * matDiffuseCol;
+	vec4 albedo = texture( albedoMap, newCoords.st ) * matDiffuseCol;
 	
 #ifdef _F05_AlphaTest
 	if( albedo.a < 0.01 ) discard;
 #endif
 	
 #ifdef _F02_NormalMapping
-	vec3 normalMap = texture2D( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
+	vec3 normalMap = texture( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
 	vec3 normal = tsbMat * normalMap;
 #else
 	vec3 normal = tsbNormal;
@@ -816,7 +816,7 @@ void main( void )
 	vec3 eye = normalize( eyeTS );
 	for( int i = 0; i < 4; ++i )
 	{
-		vec4 nmap = texture2D( normalMap, newCoords.st * vec2( 1, -1 ) );
+		vec4 nmap = texture( normalMap, newCoords.st * vec2( 1, -1 ) );
 		float height = nmap.a * plxScale + plxBias;
 		newCoords += (height - newCoords.p) * nmap.z * eye;
 	}
@@ -825,14 +825,14 @@ void main( void )
 	// Flip texture vertically to match the GL coordinate system
 	newCoords.t *= -1.0;
 
-	vec4 albedo = texture2D( albedoMap, newCoords.st );
+	vec4 albedo = texture( albedoMap, newCoords.st );
 	
 #ifdef _F05_AlphaTest
 	if( albedo.a < 0.01 ) discard;
 #endif
 	
 #ifdef _F02_NormalMapping
-	vec3 normalMap = texture2D( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
+	vec3 normalMap = texture( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
 	vec3 normal = tsbMat * normalMap;
 #else
 	vec3 normal = tsbNormal;

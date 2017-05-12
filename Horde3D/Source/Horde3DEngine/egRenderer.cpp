@@ -42,7 +42,7 @@ Renderer::Renderer()
 	_curShader = 0x0;
 	_curRenderTarget = 0x0;
 	_curShaderUpdateStamp = 1;
-	_curStageMatLink = nullptr;
+	_curStageMatLink = 0;
 	_maxAnisoMask = 0;
 	_smSize = 0;
 	_shadowRB = 0;
@@ -62,7 +62,7 @@ Renderer::Renderer()
 	_occProxies[ 0 ].reserve( 200 ); // meshes
 	_occProxies[ 1 ].reserve( 100 ); // lights
 
-	_renderDevice = nullptr;
+	_renderDevice = 0;
 }
 
 
@@ -76,6 +76,9 @@ Renderer::~Renderer()
 		releaseShaderComb( _defColorShader );
 
 		_renderDevice->destroyGeometry( _particleGeo );
+		// Particle and overlay share the index buffer,
+		// so avoid releasing the index buffer of _overlayGeo by setting it to zero
+		if( _overlayGeo ) _renderDevice->setGeomIndexParams( _overlayGeo, 0, IDXFMT_16 );
 		_renderDevice->destroyGeometry( _cubeGeo );
 		_renderDevice->destroyGeometry( _sphereGeo );
 		_renderDevice->destroyGeometry( _coneGeo );
@@ -118,7 +121,7 @@ unsigned char *Renderer::useScratchBuf( uint32 minSize )
 
 bool Renderer::init( RenderBackendType::List type )
 {
-	if ( _renderDevice == nullptr ) _renderDevice = createRenderDevice( type );
+	if ( _renderDevice == 0 ) _renderDevice = createRenderDevice( type );
 
 	if ( !_renderDevice ) return false;
 
@@ -136,6 +139,7 @@ bool Renderer::init( RenderBackendType::List type )
 				releaseRenderDevice();
 				return false;
 			}
+			type = RenderBackendType::OpenGL2;
 		}
 		else
 			return false;
@@ -179,7 +183,7 @@ bool Renderer::init( RenderBackendType::List type )
 	_vlParticle = _renderDevice->registerVertexLayout( 2, attribsParticle );
 	
 	// Upload default shaders
-	if ( !createShaderComb( _defColorShader, _renderDevice->getDefaultVSCode(), _renderDevice->getDefaultFSCode(), nullptr, nullptr, nullptr, nullptr ) )
+	if ( !createShaderComb( _defColorShader, _renderDevice->getDefaultVSCode(), _renderDevice->getDefaultFSCode(), 0, 0, 0, 0 ) )
 	{
 		Modules::log().writeError( "Failed to compile default shaders" );
 		return false;
@@ -287,12 +291,12 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 			break;
 	}
 
-	return nullptr;
+	return 0;
 }
 
 void Renderer::releaseRenderDevice()
 {
-	delete _renderDevice; _renderDevice = nullptr;
+	delete _renderDevice; _renderDevice = 0;
 }
 
 // =================================================================================================
@@ -789,7 +793,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 	{
 		if ( _curShader->customBuffers[ i ] < 0 ) continue;
 		
-		ComputeBufferResource *buf = nullptr;
+		ComputeBufferResource *buf = 0;
 
 		// Find buffer in material
 		for ( size_t j = 0; j < materialRes->_buffers.size(); ++j )
@@ -2039,8 +2043,8 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 
-	MaterialResource *curMatRes = nullptr;
-	ShaderCombination *curShader = nullptr;
+	MaterialResource *curMatRes = 0;
+	ShaderCombination *curShader = 0;
 
 	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::ComputeGPUTime );
 	if ( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
@@ -2083,6 +2087,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 				drawType = PRIM_POINTS;
 				break;
 			default:
+				drawType = PRIM_POINTS;
 				break;
 		}
 
@@ -2111,7 +2116,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 		}
 		
 		// Wait for completion of compute operation (writing to buffer)
-		rdi->setMemoryBarrier( RDIDrawBarriers::VertexBufferBarrier );
+        rdi->setMemoryBarrier( VertexBufferBarrier );
 
 		// Render
 		rdi->draw( drawType, 0, compNode->_compBufferRes->_numElements );

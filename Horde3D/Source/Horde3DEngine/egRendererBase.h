@@ -17,6 +17,7 @@
 #include "utMath.h"
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <cassert>
 
 namespace Horde3D {
@@ -207,6 +208,7 @@ public:
 	void remove( uint32 handle )
 	{
 		ASSERT( handle > 0 && handle <= _objects.size() );
+		ASSERT( std::find( _freeList.begin(), _freeList.end(), handle - 1 ) == _freeList.end() );
 		
 		_objects[handle - 1] = T();  // Destruct and replace with default object
 		_freeList.push_back( handle - 1 );
@@ -579,7 +581,7 @@ private:
 
 	typedef uint32( *PFN_BEGINCREATINGGEOMETRY )( void* const, uint32 vlObj );
 	typedef void( *PFN_FINISHCREATINGGEOMETRY )( void* const, uint32 geoIndex );
-	typedef void( *PFN_DESTROYGEOMETRY )( void* const, uint32 geoIndex );
+    typedef void( *PFN_DESTROYGEOMETRY )( void* const, uint32& geoIndex, bool destroyBindedBuffers );
 	typedef void( *PFN_SETGEOMVERTEXPARAMS )( void* const, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
 	typedef void( *PFN_SETGEOMINDEXPARAMS )( void* const, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format );
 
@@ -587,21 +589,21 @@ private:
 	typedef uint32( *PFN_CREATEINDEXBUFFER )( void* const, uint32 size, const void *data );
 	typedef uint32( *PFN_CREATETEXTUREBUFFER )( void* const, TextureFormats::List format, uint32 size, const void *data );
 	typedef uint32( *PFN_CREATESHADERSTORAGEBUFFER )( void* const, uint32 size, const void *data );
-	typedef void( *PFN_DESTROYBUFFER )( void* const, uint32 bufObj );
-	typedef void( *PFN_DESTROYTEXTUREBUFFER )( void* const, uint32 bufObj );
+    typedef void( *PFN_DESTROYBUFFER )( void* const, uint32& bufObj );
+    typedef void( *PFN_DESTROYTEXTUREBUFFER )( void* const, uint32& bufObj );
 	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 	
 	typedef uint32( *PFN_CALCTEXTURESIZE )( void* const, TextureFormats::List format, int width, int height, int depth );
 	typedef uint32( *PFN_CREATETEXTURE )( void* const, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 										  bool hasMips, bool genMips, bool compress, bool sRGB );
 	typedef void( *PFN_UPLOADTEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, const void *pixels );
-	typedef void( *PFN_DESTROYTEXTURE )( void* const, uint32 texObj );
+    typedef void( *PFN_DESTROYTEXTURE )( void* const, uint32& texObj );
 	typedef void( *PFN_UPDATETEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, const void *pixels );
 	typedef bool( *PFN_GETTEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, void *buffer );
 	
 	typedef uint32( *PFN_CREATESHADER )( void* const, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
 										 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc );
-	typedef void( *PFN_DESTROYSHADER )( void* const, uint32 shaderId );
+    typedef void( *PFN_DESTROYSHADER )( void* const, uint32& shaderId );
 	typedef void( *PFN_BINDSHADER )( void* const, uint32 shaderId );
 	typedef int( *PFN_GETSHADERCONSTLOC )( void* const, uint32 shaderId, const char *name );
 	typedef int( *PFN_GETSHADERSAMPLERLOC )( void* const, uint32 shaderId, const char *name );
@@ -614,7 +616,7 @@ private:
 	
 	typedef uint32( *PFN_CREATERENDERBUFFER )( void* const, uint32 width, uint32 height, TextureFormats::List format,
 											   bool depth, uint32 numColBufs, uint32 samples );
-	typedef void( *PFN_DESTROYRENDERBUFFER )( void* const, uint32 rbObj );
+    typedef void( *PFN_DESTROYRENDERBUFFER )( void* const, uint32& rbObj );
 	typedef uint32( *PFN_GETRENDERBUFFERTEX )( void* const, uint32 rbObj, uint32 bufIndex );
 	typedef void( *PFN_SETRENDERBUFFER )( void* const, uint32 rbObj );
 	typedef bool( *PFN_GETRENDERBUFFERDATA )( void* const, uint32 rbObj, int bufIndex, int *width, int *height,
@@ -785,19 +787,19 @@ private:
 	}
 
 	template<typename T>
-	inline static void              destroyGeometry_Invoker( void* const pObj, uint32 geoIndex )
+    static void              destroyGeometry_Invoker( void* const pObj, uint32& geoIndex, bool destroyBindedBuffers )
 	{
-		static_cast< T* >( pObj )->destroyGeometry( geoIndex );
+		static_cast< T* >( pObj )->destroyGeometry( geoIndex, destroyBindedBuffers );
 	}
 
 	template<typename T>
-	inline static void              destroyBuffer_Invoker( void* const pObj, uint32 bufObj )
+    static void              destroyBuffer_Invoker( void* const pObj, uint32& bufObj )
 	{ 
 		static_cast< T* >( pObj )->destroyBuffer( bufObj ); 
 	}
 
 	template<typename T>
-	inline static void              destroyTextureBuffer_Invoker( void* const pObj, uint32 bufObj )
+    static void              destroyTextureBuffer_Invoker( void* const pObj, uint32& bufObj )
 	{
 		static_cast< T* >( pObj )->destroyTextureBuffer( bufObj );
 	}
@@ -829,7 +831,7 @@ private:
 	}
 
 	template<typename T>
-	inline static void              destroyTexture_Invoker( void* const pObj, uint32 texObj )
+    static void              destroyTexture_Invoker( void* const pObj, uint32& texObj )
 	{
 		static_cast< T* >( pObj )->destroyTexture( texObj );
 	}
@@ -855,7 +857,7 @@ private:
 	}
 
 	template<typename T>
-	inline static void				destroyShader_Invoker( void* const pObj, uint32 shaderId )
+    static void				 destroyShader_Invoker( void* const pObj, uint32& shaderId )
 	{
 		static_cast< T* >( pObj )->destroyShader( shaderId );
 	}
@@ -923,7 +925,7 @@ private:
 	}
 
 	template<typename T>
-	inline static void				 destroyRenderBuffer_Invoker( void* const pObj, uint32 rbObj )
+    static void				 destroyRenderBuffer_Invoker( void* const pObj, uint32& rbObj )
 	{
 		static_cast< T* >( pObj )->destroyRenderBuffer( rbObj );
 	}
@@ -1046,20 +1048,20 @@ protected:
 		CheckMemberFunction( setGeomVertexParams, void( T::* )( uint32, uint32, uint32, uint32, uint32 ) );
 		CheckMemberFunction( setGeomIndexParams, void( T::* )( uint32, uint32, RDIIndexFormat ) );
 		CheckMemberFunction( finishCreatingGeometry, void( T::* )( uint32 ) );
-		CheckMemberFunction( destroyGeometry, void( T::* )( uint32 ) );
-		CheckMemberFunction( destroyBuffer, void( T::* )( uint32 ) );
-		CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32 ) );
+        CheckMemberFunction( destroyGeometry, void( T::* )( uint32&, bool ) );
+        CheckMemberFunction( destroyBuffer, void( T::* )( uint32& ) );
+        CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32& ) );
 		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
 		
 		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
 		CheckMemberFunction( createTexture, uint32( T::* )( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) );
 		CheckMemberFunction( uploadTextureData, void( T::* )( uint32, int, int, const void * ) );
-		CheckMemberFunction( destroyTexture, void( T::* )( uint32 ) );
+        CheckMemberFunction( destroyTexture, void( T::* )( uint32& ) );
 		CheckMemberFunction( updateTextureData, void( T::* )( uint32, int, int, const void * ) );
 		CheckMemberFunction( getTextureData, bool( T::* )( uint32, int, int, void * ) );
 	
 		CheckMemberFunction( createShader, uint32( T::* )( const char *, const char *, const char *, const char *, const char *, const char * ) );
-		CheckMemberFunction( destroyShader, void( T::* )( uint32 ) );
+        CheckMemberFunction( destroyShader, void( T::* )( uint32& ) );
 		CheckMemberFunction( bindShader, void( T::* )( uint32 ) );
 		CheckMemberFunction( getShaderConstLoc, int( T::* )( uint32, const char * ) );
 		CheckMemberFunction( getShaderSamplerLoc, int( T::* )( uint32, const char * ) );
@@ -1071,7 +1073,7 @@ protected:
 		CheckMemberFunction( getDefaultFSCode, const char *( T::* )() );
 
 		CheckMemberFunction( createRenderBuffer, uint32( T::* )( uint32, uint32, TextureFormats::List, bool, uint32, uint32 ) );
-		CheckMemberFunction( destroyRenderBuffer, void( T::* )( uint32 ) );
+        CheckMemberFunction( destroyRenderBuffer, void( T::* )( uint32& ) );
 		CheckMemberFunction( getRenderBufferTex, uint32( T::* )( uint32, uint32 ) );
 		CheckMemberFunction( setRenderBuffer, void( T::* )( uint32 ) );
 		CheckMemberFunction( getRenderBufferData, bool( T::* )( uint32, int, int *, int *, int *, void *, int ) );
@@ -1211,9 +1213,9 @@ public:
 	{
 		( *_pfnFinishCreatingGeometry ) ( this, geoObj );
 	}
-	void destroyGeometry( uint32 geoObj )
+	void destroyGeometry( uint32& geoObj, bool destroyBindedBuffers = true )
 	{
-		( *_pfnDestroyGeometry ) ( this, geoObj );
+		( *_pfnDestroyGeometry ) ( this, geoObj, destroyBindedBuffers );
 	}
 	uint32 createVertexBuffer( uint32 size, const void *data )
 	{
@@ -1231,11 +1233,11 @@ public:
 	{
 		return ( *_pfnCreateShaderStorageBuffer )( this, size, data );
 	}
-	void destroyBuffer( uint32 bufObj ) 
+    void destroyBuffer( uint32& bufObj )
 	{ 
 		( *_pfnDestroyBuffer )( this, bufObj );
 	}
-	void destroyTextureBuffer( uint32 bufObj )
+	void destroyTextureBuffer( uint32& bufObj )
 	{
 		( *_pfnDestroyTextureBuffer )( this, bufObj );
 	}
@@ -1262,7 +1264,7 @@ public:
 	{ 
 		( *_pfnUploadTextureData )( this, texObj, slice, mipLevel, pixels );
 	}
-	void destroyTexture( uint32 texObj ) 
+	void destroyTexture( uint32& texObj )
 	{ 
 		( *_pfnDestroyTexture )( this, texObj );
 	}
@@ -1286,7 +1288,7 @@ public:
 		return ( *_pfnCreateShader )( this, vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
 									  tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
 	}
-	void destroyShader( uint32 shaderId )
+    void destroyShader( uint32& shaderId )
 	{
 		( *_pfnDestroyShader )( this, shaderId ); 
 	}
@@ -1337,7 +1339,7 @@ public:
 	{
 		return ( *_pfnCreateRenderBuffer )( this, width, height, format, depth, numColBufs, samples );
 	}
-	void destroyRenderBuffer( uint32 rbObj ) 
+    void destroyRenderBuffer( uint32& rbObj )
 	{ 
 		( *_pfnDestroyRenderBuffer )( this, rbObj );
 	}
