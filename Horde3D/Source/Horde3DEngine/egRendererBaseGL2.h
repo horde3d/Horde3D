@@ -235,7 +235,9 @@ public:
 	void destroyBuffer(uint32 &bufObj );
 	void destroyTextureBuffer(uint32 &bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
-// 	uint32 getBufferMem() const { return _bufferMem; }
+	void *mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
+	void unmapBuffer( uint32 geoObj, uint32 bufObj );
+	// 	uint32 getBufferMem() const { return _bufferMem; }
 
 	// Textures
 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );

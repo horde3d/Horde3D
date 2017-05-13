@@ -227,17 +227,17 @@ public:
 	void destroyBuffer(uint32 &bufObj );
 	void destroyTextureBuffer( uint32& bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
-	uint32 getBufferMem() const { return _bufferMem; }
+	void *mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
+	void unmapBuffer( uint32 geoObj, uint32 bufObj );
 
 	// Textures
 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 	                      bool hasMips, bool genMips, bool compress, bool sRGB );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
-	void destroyTexture(uint32 &texObj );
+	void destroyTexture( uint32 &texObj );
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
-	uint32 getTextureMem() const { return _textureMem; }
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,

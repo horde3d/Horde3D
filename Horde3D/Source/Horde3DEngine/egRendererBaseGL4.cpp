@@ -53,6 +53,8 @@ static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTU
 
 static const uint32 memoryBarrierType[ 3 ] = { GL_BUFFER_UPDATE_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT, GL_ELEMENT_ARRAY_BARRIER_BIT, GL_SHADER_IMAGE_ACCESS_BARRIER_BIT };
 
+static const uint32 bufferMappingTypes[ 3 ] = { GL_MAP_READ_BIT, GL_MAP_WRITE_BIT, 0 };
+
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
@@ -541,12 +543,9 @@ void RenderDeviceGL4::destroyTextureBuffer( uint32& bufObj )
 
 void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
-//	const RDIGeometryInfoGL4 &geo = _vaos.getRef( geoObj );
 	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
 	
-//	glBindVertexArray( geo.vao );
-
 	glBindBuffer( buf.type, buf.glObj );
 	
 	if( offset == 0 && size == buf.size )
@@ -554,22 +553,32 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 		// Replacing the whole buffer can help the driver to avoid pipeline stalls
 		glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
 
-// 		glBindBuffer( buf.type, 0 );
-// 		glBindVertexArray( 0 );
-
 		return;
 	}
 	
-
-//	float *bufMem = (float *) glMapBufferRange( buf.type, offset, size, GL_MAP_READ_BIT );
-
-// 	memcpy( bufMem, data, size );
-// 
-// 	glUnmapBuffer( buf.type );
 	glBufferSubData( buf.type, offset, size, data );
+}
 
-// 	glBindBuffer( buf.type, 0 );
-// 	glBindVertexArray( 0 );
+void * RenderDeviceGL4::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
+{
+	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+	ASSERT( offset + size <= buf.size );
+
+	glBindBuffer( buf.type, buf.glObj );
+	
+	if ( offset == 0 && size == buf.size && mapType == Write )
+	{
+		return glMapBufferRange( buf.type, offset, size, bufferMappingTypes[ mapType ] | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+	}
+
+	return glMapBufferRange( buf.type, offset, size, bufferMappingTypes[ mapType ] );
+}
+
+void RenderDeviceGL4::unmapBuffer( uint32 geoObj, uint32 bufObj )
+{
+	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+
+	glUnmapBuffer( buf.type );
 }
 
 

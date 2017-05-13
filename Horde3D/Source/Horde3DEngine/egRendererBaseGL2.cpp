@@ -47,6 +47,8 @@ static const uint32 primitiveTypes[ 4 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 
+static const uint32 bufferMappingTypes[ 3 ] = { GL_READ_ONLY, GL_WRITE_ONLY, GL_READ_WRITE };
+
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
@@ -474,7 +476,7 @@ void RenderDeviceGL2::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 	
 	glBindBuffer( buf.type, buf.glObj );
 	
-	if( offset == 0 &&  size == buf.size )
+	if( offset == 0 && size == buf.size )
 	{
 		// Replacing the whole buffer can help the driver to avoid pipeline stalls
 		glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
@@ -482,6 +484,23 @@ void RenderDeviceGL2::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 	}
 
 	glBufferSubData( buf.type, offset, size, data );
+}
+
+void * RenderDeviceGL2::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
+{
+	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
+	ASSERT( offset + size <= buf.size );
+
+	glBindBuffer( buf.type, buf.glObj );
+
+	return glMapBuffer( buf.type, bufferMappingTypes[ mapType ] );
+}
+
+void RenderDeviceGL2::unmapBuffer( uint32 geoObj, uint32 bufObj )
+{
+	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
+
+	glUnmapBuffer( buf.type );
 }
 
 
