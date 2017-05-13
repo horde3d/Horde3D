@@ -32,7 +32,8 @@ struct ComputeBufferResData
 		CompBufUseAsVertexBufferI,
 		DrawParamsNameStr,
 		DrawParamsSizeI,
-		DrawParamsOffsetI
+		DrawParamsOffsetI,
+		DrawParamsCountI
 	};
 };
 

@@ -447,6 +447,7 @@ struct H3DComputeBufRes
 	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3
 	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
 	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12
+	DrawParamsCountI			- Total number of specified vertex binding parameters [read-only]
 
 	*/
 	enum List
@@ -457,7 +458,8 @@ struct H3DComputeBufRes
 		CompBufUseAsVertexBufferI,
 		DrawParamsNameStr,
 		DrawParamsSizeI,
-		DrawParamsOffsetI
+		DrawParamsOffsetI,
+		DrawParamsCountI
 	};
 };
 

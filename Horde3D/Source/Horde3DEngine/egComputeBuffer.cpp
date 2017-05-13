@@ -206,19 +206,18 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 
 		case ComputeBufferResData::DrawParamsElem:
 		{
-			if ( _vlBindingsData.empty() || elemIdx < 0 || elemIdx > _vlBindingsData.size() - 1 )
-			{
-				// incorrect elemIdx
-				Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
-				return Math::MinInt32;
-			}
-
 			switch ( param )
 			{
 				case ComputeBufferResData::DrawParamsOffsetI:
+					if ( _vlBindingsData.empty() || elemIdx < 0 || elemIdx > _vlBindingsData.size() - 1 ) break;
+
 					return _vlBindingsData.at( elemIdx ).offset;
 				case ComputeBufferResData::DrawParamsSizeI:
+					if ( _vlBindingsData.empty() || elemIdx < 0 || elemIdx > _vlBindingsData.size() - 1 )
+
 					return _vlBindingsData.at( elemIdx ).size;
+				case  ComputeBufferResData::DrawParamsCountI:
+					return _vlBindingsData.size();
 				default:
 					break;
 			}
@@ -272,7 +271,6 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
-						break;
 					}
 					else
 					{
@@ -291,7 +289,6 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
-						break;
 					}
 					else
 					{
@@ -361,7 +358,6 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
-						break;
 					}
 					else
 					{
