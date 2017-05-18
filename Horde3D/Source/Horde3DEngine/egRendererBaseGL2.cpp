@@ -500,6 +500,9 @@ void RenderDeviceGL2::unmapBuffer( uint32 geoObj, uint32 bufObj )
 {
 	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
 
+	// multiple buffers can be mapped at the same time, so bind the one that needs to be unmapped
+	glBindBuffer( buf.type, buf.glObj );
+
 	glUnmapBuffer( buf.type );
 }
 
