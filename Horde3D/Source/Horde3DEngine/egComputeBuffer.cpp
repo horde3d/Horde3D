@@ -102,7 +102,7 @@ Resource *ComputeBufferResource::clone()
 
 	// map original buffer and copy its contents to the new buffer
 	uint8 *data = ( uint8 * ) mapStream( ComputeBufferResData::ComputeBufElem, 0, 0, true, false );
-	rdi->updateBufferData( 0, res->_bufferID, 0, res->_dataSize, res->_data );
+	rdi->updateBufferData( 0, res->_bufferID, 0, res->_dataSize, data );
 	unmapStream();
 
 	return res;
@@ -206,7 +206,7 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 
 					return _vlBindingsData.at( elemIdx ).size;
 				case  ComputeBufferResData::DrawParamsCountI:
-					return _vlBindingsData.size();
+					return (int) _vlBindingsData.size();
 				default:
 					break;
 			}

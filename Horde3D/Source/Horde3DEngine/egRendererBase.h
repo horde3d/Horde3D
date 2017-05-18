@@ -601,7 +601,7 @@ private:
     typedef void( *PFN_DESTROYTEXTUREBUFFER )( void* const, uint32& bufObj );
 	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 	typedef void*( *PFN_MAPBUFFER )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
-	typedef void*( *PFN_UNMAPBUFFER )( void* const, uint32 geoObj, uint32 bufObj );
+	typedef void( *PFN_UNMAPBUFFER )( void* const, uint32 geoObj, uint32 bufObj );
 
 	typedef uint32( *PFN_CALCTEXTURESIZE )( void* const, TextureFormats::List format, int width, int height, int depth );
 	typedef uint32( *PFN_CREATETEXTURE )( void* const, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
@@ -831,7 +831,7 @@ private:
 	}
 
 	template<typename T>
-	static void *            unmapBuffer_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj )
+	static void              unmapBuffer_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj )
 	{
 		static_cast< T* >( pObj )->unmapBuffer( geoObj, bufObj );
 	}
@@ -1284,9 +1284,9 @@ public:
 	{
 		return ( *_pfnMapBuffer )( this, geoObj, bufObj, offset, size, mapType );
 	}
-	void *unmapBuffer( uint32 geoObj, uint32 bufObj )
+	void unmapBuffer( uint32 geoObj, uint32 bufObj )
 	{
-		return ( *_pfnUnmapBuffer )( this, geoObj, bufObj );
+		( *_pfnUnmapBuffer )( this, geoObj, bufObj );
 	}
 
 	uint32 getBufferMem() const 
