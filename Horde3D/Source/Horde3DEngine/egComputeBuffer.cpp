@@ -16,8 +16,8 @@ using namespace std;
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ),
-	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( 0 ), _mapped( false ), _useAsVertexBuf( false ),
-	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ) 
+	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _mapped( false ), _useAsVertexBuf( false ),
+	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false )
 {
 	initDefault();
 
@@ -27,10 +27,11 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
-	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _data( 0 ), _dataSize( 1024 ), _writeRequested( false )
+	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _dataSize( 1024 ), _writeRequested( false )
 {
 	_loaded = true;
 }
+
 
 ComputeBufferResource::~ComputeBufferResource()
 {
@@ -46,7 +47,6 @@ void ComputeBufferResource::initDefault()
 	{
 		if ( _bufferID > 0 ) rdi->destroyBuffer( _bufferID );
 		_bufferID = rdi->createShaderStorageBuffer( _dataSize, 0 );
-		_data = new uint8[ _dataSize ];
 	}
 	else
 		Modules::log().writeError( "Compute shaders are not available. Compute buffer cannot be created." );
@@ -58,7 +58,6 @@ void ComputeBufferResource::release()
 	if ( _bufferID )
 	{
 		Modules::renderer().getRenderDevice()->destroyBuffer( _bufferID );
-		delete[] _data; _data = 0;
 	}
 }
 
@@ -99,15 +98,12 @@ Resource *ComputeBufferResource::clone()
 		createGeometry();
 	}
 
-	// delete small start buffer & copy data from original buffer. 
-	// WARNING: currently there is no way to get data that is modified by compute shader (GPU side)
-	delete[] res->_data;
-	res->_data = new uint8[ res->_dataSize ];
-
-	memcpy( res->_data, _data, _dataSize );
-
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+	// map original buffer and copy its contents to the new buffer
+	uint8 *data = ( uint8 * ) mapStream( ComputeBufferResData::ComputeBufElem, 0, 0, true, false );
 	rdi->updateBufferData( 0, res->_bufferID, 0, res->_dataSize, res->_data );
+	unmapStream();
 
 	return res;
 }
@@ -171,14 +167,7 @@ bool ComputeBufferResource::setBuffer( uint32 bufferID, uint32 bufSize )
 	}
 
 	_bufferID = bufferID;
-	
-	if ( _dataSize < bufSize )
-	{
-		delete[] _data;
-
-		_data = new uint8[ bufSize ];
-		_dataSize = bufSize;
-	}
+	_dataSize = bufSize;
 
 	return true;
 }
@@ -238,8 +227,6 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 				case ComputeBufferResData::CompBufDataSizeI:
 					if ( _dataSize < ( uint32 ) value )
 					{
-						delete[] _data;
-
 						_dataSize = value;
 						initDefault();
 					}
@@ -384,23 +371,25 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 	{
 		if ( elem == ComputeBufferResData::ComputeBufElem )
 		{
-//			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
-
-			// 			_mappedData = Modules::renderer().useScratchBuf( _dataSize );
-
-			if ( read )
-			{
-				// currently reading back is not supported
-				_writeRequested = false;
-				return 0;
-			}
-
-			if ( write )
-				_writeRequested = true;
+			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 			_mapped = true;
 
-			return _data;
+			// Ensure that we are getting data that is not updated right now by the GPU
+			rdi->setMemoryBarrier( RDIDrawBarriers::VertexBufferBarrier );
+
+			if ( read )
+			{
+				_writeRequested = false;
+				return ( unsigned char * )rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Read );
+			}
+
+			if ( write )
+			{
+				_writeRequested = true;
+				return ( unsigned char * )rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Write );
+			}
+
 		}
 	}
 
@@ -410,7 +399,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 
 void ComputeBufferResource::unmapStream()
 {
-	if ( _bufferID != 0 && _writeRequested )
+	if ( _mapped && _bufferID != 0 )
 	{
 		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
@@ -420,7 +409,7 @@ void ComputeBufferResource::unmapStream()
 			createGeometry();
 		}
 
-		rdi->updateBufferData( 0, _bufferID, 0, _dataSize, _data );
+		rdi->unmapBuffer( 0, _bufferID );
 	}
 
 	_mapped = false;

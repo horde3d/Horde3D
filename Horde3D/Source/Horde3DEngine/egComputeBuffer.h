@@ -82,7 +82,6 @@ protected:
 private:
 
 	std::vector< VertexLayoutAttrib >	_vlBindingsData;  /* Vertex binding parameters, if buffer is used for drawing. */
-	uint8								*_data;
 
 	uint32								_dataSize;
 	uint32								_bufferID;
