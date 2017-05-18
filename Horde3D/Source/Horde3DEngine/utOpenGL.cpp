@@ -34,6 +34,12 @@ namespace glExt
 
 namespace h3dGL
 {
+// GL 1.1
+PFNGLGETTEXIMAGEPROC glGetTexImage = 0x0;
+PFNGLPOLYGONMODEPROC glPolygonMode = 0x0;
+PFNGLCLEARDEPTH glClearDepth = 0x0;
+PFNGLDRAWBUFFERPROC glDrawBuffer = 0x0;
+
 // GL 1.2
 PFNGLBLENDCOLORPROC glBlendColor = 0x0;
 PFNGLBLENDEQUATIONPROC glBlendEquation = 0x0;
@@ -601,7 +607,14 @@ void getOpenGLVersion()
 void *platGetProcAddress( const char *funcName )
 {
 #if defined( PLATFORM_WIN )
-	return (void *)wglGetProcAddress( funcName );
+	void* retVal = (void *)wglGetProcAddress( funcName );
+	// For some reason legacy OpenGL functions are not resolved by wglGetProcAddress
+	if( !retVal )
+	{
+		static HMODULE lib = LoadLibraryW(L"opengl32.dll");
+		retVal = (void*) GetProcAddress( lib, funcName);
+	}
+	return retVal;
 #elif defined( PLATFORM_WIN_CE )
 	return (void *)eglGetProcAddress( funcName );
 #elif defined( PLATFORM_MAC )
@@ -617,6 +630,8 @@ void *platGetProcAddress( const char *funcName )
 	CFRelease( functionName );
    
 	return function; 
+#elif defined( HAVE_EGL )
+	return (void *)eglGetProcAddress( funcName );
 #else
 	return (void *)glXGetProcAddressARB( (const GLubyte *)funcName );
 #endif
@@ -695,6 +710,11 @@ bool initOpenGLExtensions( bool forceLegacyFuncs )
 			glExt::majorVersion = 2; glExt::minorVersion = 1;
 		}
 	}
+	// GL 1.1
+	r &= (glPolygonMode = (PFNGLPOLYGONMODEPROC) platGetProcAddress( "glPolygonMode" )) != 0x0;
+	r &= (glGetTexImage = (PFNGLGETTEXIMAGEPROC) platGetProcAddress( "glGetTexImage" )) != 0x0;
+	r &= (glClearDepth = (PFNGLCLEARDEPTH) platGetProcAddress( "glClearDepth" )) != 0x0;
+	r &= (glDrawBuffer = (PFNGLDRAWBUFFERPROC) platGetProcAddress( "glDrawBuffer" )) != 0x0;
 
 	// GL 1.2
 	r &= (glBlendColor = (PFNGLBLENDCOLORPROC) platGetProcAddress( "glBlendColor" )) != 0x0;
