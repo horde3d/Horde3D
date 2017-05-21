@@ -538,7 +538,7 @@ void *TextureResource::mapStream( int elem, int elemIdx, int stream, bool read, 
 			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 			mappedData = Modules::renderer().useScratchBuf(
-				rdi->calcTextureSize( _texFormat, _width, _height, _depth ) );
+				rdi->calcTextureSize( _texFormat, _width, _height, _depth ), 16 ); // 16 byte aligned
 			
 			if( read )
 			{	

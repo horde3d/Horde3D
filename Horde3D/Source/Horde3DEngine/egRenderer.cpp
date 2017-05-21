@@ -106,16 +106,25 @@ void Renderer::registerRenderFunc( int nodeType, RenderFunc rf )
 }
 
 
-unsigned char *Renderer::useScratchBuf( uint32 minSize )
+unsigned char * Renderer::useScratchBuf( uint32 minSize, uint32 alignment )
 {
 	if( _scratchBufSize < minSize )
 	{
 		delete[] _scratchBuf;
-		_scratchBuf = new unsigned char[minSize + 15];
+
+		uint32 padding = alignment > 1 ? alignment - 1 : 0;
+		_scratchBuf = new unsigned char[ minSize + padding ];
 		_scratchBufSize = minSize;
 	}
 
-	return _scratchBuf + (size_t)_scratchBuf % 16;  // 16 byte aligned
+	if ( alignment > 1 )
+	{
+		return _scratchBuf + ( size_t ) _scratchBuf % alignment;
+	} 
+	else
+	{
+		return _scratchBuf;
+	}
 }
 
 
@@ -252,7 +261,7 @@ bool Renderer::init( RenderBackendType::List type )
 	createPrimitives();
 
 	// Init scratch buffer with some default size
-	useScratchBuf( 4 * 1024*1024 );
+	useScratchBuf( 4 * 1024*1024, 16 );
 
 	// Reset states
 	finishRendering();

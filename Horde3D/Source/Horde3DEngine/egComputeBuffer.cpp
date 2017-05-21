@@ -17,7 +17,7 @@ using namespace std;
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ),
 	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _mapped( false ), _useAsVertexBuf( false ),
-	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false )
+	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ), _bufferRecreated( false )
 {
 	initDefault();
 
@@ -27,7 +27,8 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
 	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
-	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _dataSize( 1024 ), _writeRequested( false )
+	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _dataSize( 1024 ), 
+	_writeRequested( false ), _bufferRecreated( false )
 {
 	_loaded = true;
 }
@@ -46,7 +47,7 @@ void ComputeBufferResource::initDefault()
 	if ( rdi->getCaps().computeShaders )
 	{
 		if ( _bufferID > 0 ) rdi->destroyBuffer( _bufferID );
-		_bufferID = rdi->createShaderStorageBuffer( _dataSize, 0 );
+		_bufferID = rdi->createShaderStorageBuffer( _dataSize, 0x0 );
 	}
 	else
 		Modules::log().writeError( "Compute shaders are not available. Compute buffer cannot be created." );
@@ -91,6 +92,7 @@ Resource *ComputeBufferResource::clone()
 	res->_useAsVertexBuf = _useAsVertexBuf;
 	res->_vlBindingsData = _vlBindingsData;
 	res->_geometryParamsSet = _geometryParamsSet;
+	res->_bufferRecreated = true; // specify that buffer should be recreated and not mapped
 
 	if ( _useAsVertexBuf && _geometryParamsSet )
 	{
@@ -229,6 +231,7 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					{
 						_dataSize = value;
 						initDefault();
+						_bufferRecreated = true;
 					}
 					else _dataSize = value;
 
@@ -381,13 +384,21 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 			if ( read )
 			{
 				_writeRequested = false;
-				return ( unsigned char * )rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Read );
+				return rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Read );
 			}
 
 			if ( write )
 			{
 				_writeRequested = true;
-				return ( unsigned char * )rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Write );
+
+				if ( _bufferRecreated )
+				{
+					return Modules::renderer().useScratchBuf( _dataSize, 1 );
+				} 
+				else
+				{
+					return rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Write );
+				}
 			}
 
 		}
@@ -409,11 +420,22 @@ void ComputeBufferResource::unmapStream()
 			createGeometry();
 		}
 
-		rdi->unmapBuffer( 0, _bufferID );
+		if ( _bufferRecreated )
+		{
+			// GL4: for some reason NVIDIA hardware has a significant performance drop if you upload 
+			// a large chunk of data to a not initialized buffer (with 0x0 as data) with buffer map
+			// but has no performance drop if you upload it with BufferData. Therefore this workaround with scratch buffer is used.
+			rdi->updateBufferData( _geoID, _bufferID, 0, _dataSize, Modules::renderer().useScratchBuf( _dataSize, 1 ) );
+
+			_bufferRecreated = false;
+		} 
+		else
+		{
+			rdi->unmapBuffer( 0, _bufferID );
+		}
 	}
 
 	_mapped = false;
 }
 
 } // namespace
-

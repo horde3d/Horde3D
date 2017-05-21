@@ -92,6 +92,7 @@ private:
 	bool								_writeRequested;
 	bool								_mapped;
 	bool								_geometryParamsSet;
+	bool								_bufferRecreated;
 	uint8								_useAsVertexBuf;
 
 	friend class Renderer;
