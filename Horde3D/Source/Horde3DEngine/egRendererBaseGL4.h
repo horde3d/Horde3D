@@ -295,10 +295,10 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps getCaps() const { return _caps; }
-	const RDIBufferGL4 getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITextureGL4 getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBufferGL4 getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	// WARNING: Modifying internal states may lead to unexpected behavior and/or crashes
+	RDIBufferGL4 &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	RDITextureGL4 &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	RDIRenderBufferGL4 &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 //	friend class Renderer;
 

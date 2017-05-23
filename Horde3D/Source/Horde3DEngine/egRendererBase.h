@@ -1497,9 +1497,6 @@ public:
 // -----------------------------------------------------------------------------
 
 	const DeviceCaps getCaps() const { return _caps; }
-// 	const RDIBuffer getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-// 	const RDITexture getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-// 	const RDIRenderBuffer getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 	friend class Renderer;
 
