@@ -2,6 +2,7 @@
 #include "egModules.h"
 #include "egRenderer.h"
 #include "egCom.h"
+#include "utXML.h"
 
 #include <map>
 #include <memory.h>
@@ -42,12 +43,18 @@ ComputeBufferResource::~ComputeBufferResource()
 
 void ComputeBufferResource::initDefault()
 {
+	createBuffer( 1024, 0x0 );
+}
+
+
+void ComputeBufferResource::createBuffer( uint32 size, uint8 *data )
+{
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	if ( rdi->getCaps().computeShaders )
 	{
 		if ( _bufferID > 0 ) rdi->destroyBuffer( _bufferID );
-		_bufferID = rdi->createShaderStorageBuffer( _dataSize, 0x0 );
+		_bufferID = rdi->createShaderStorageBuffer( size, data );
 	}
 	else
 		Modules::log().writeError( "Compute shaders are not available. Compute buffer cannot be created." );
@@ -63,12 +70,44 @@ void ComputeBufferResource::release()
 }
 
 
+bool ComputeBufferResource::raiseError( const std::string &msg, int line )
+{
+	// Reset
+	release();
+	initDefault();
+
+	if ( line < 0 )
+		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), msg.c_str() );
+	else
+		Modules::log().writeError( "Compute buffer resource '%s' in line %i: %s", _name.c_str(), line, msg.c_str() );
+
+	return false;
+}
+
+
 bool ComputeBufferResource::load( const char *data, int size )
 {
-	//	if ( !Resource::load( data, size ) ) return false;
+	if ( !Resource::load( data, size ) ) return false;
 
-	// currently not implemented
+	XMLDoc doc;
+	doc.parseBuffer( data, size );
+	if ( doc.hasError() )
+		return raiseError( "XML parsing error" );
 
+	XMLNode rootNode = doc.getRootNode();
+	if ( strcmp( rootNode.getName(), "ComputeBuffer" ) != 0 )
+		return raiseError( "Not a compute buffer resource file" );
+
+	// Vertex bindings
+	XMLNode node1 = rootNode.getFirstChild( "Bindings" );
+	while ( !node1.isEmpty() )
+	{
+		if ( node1.getAttribute( "name" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'name'" );
+
+
+
+		node1 = node1.getNextSibling( "Bindings" );
+	}
 	return true;
 }
 
@@ -82,7 +121,7 @@ Resource *ComputeBufferResource::clone()
 	if ( !res->_bufferID )
 	{
 		// no compute shaders
-		delete res; res = 0;
+		delete res; res = 0x0;
 		return 0;
 	}
 
@@ -92,7 +131,7 @@ Resource *ComputeBufferResource::clone()
 	res->_useAsVertexBuf = _useAsVertexBuf;
 	res->_vlBindingsData = _vlBindingsData;
 	res->_geometryParamsSet = _geometryParamsSet;
-	res->_bufferRecreated = true; // specify that buffer should be recreated and not mapped
+	res->_bufferRecreated = true; 
 
 	if ( _useAsVertexBuf && _geometryParamsSet )
 	{
@@ -230,7 +269,7 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 					if ( _dataSize < ( uint32 ) value )
 					{
 						_dataSize = value;
-						initDefault();
+						createBuffer( _dataSize, 0x0 );
 						_bufferRecreated = true;
 					}
 					else _dataSize = value;

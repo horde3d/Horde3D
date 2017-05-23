@@ -79,6 +79,10 @@ protected:
 
 	bool createGeometry();
 
+	void createBuffer( uint32 size, uint8 *data );
+
+	bool raiseError( const std::string &msg, int line = -1 );
+
 private:
 
 	std::vector< VertexLayoutAttrib >	_vlBindingsData;  /* Vertex binding parameters, if buffer is used for drawing. */
