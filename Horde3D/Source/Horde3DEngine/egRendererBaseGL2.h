@@ -297,10 +297,10 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps getCaps() const { return _caps; }
-	const RDIBufferGL2 getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITextureGL2 getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBufferGL2 getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	// WARNING: Modifying internal states may lead to unexpected behavior and/or crashes
+	RDIBufferGL2 &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	RDITextureGL2 &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	RDIRenderBufferGL2 &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 //	friend class Renderer;
 
