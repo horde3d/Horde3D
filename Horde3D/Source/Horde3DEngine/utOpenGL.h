@@ -40,7 +40,12 @@ extern "C" GLAPI void* eglGetProcAddress(const char *procname);
 #   ifdef PLATFORM_MAC
 #      include <Carbon/Carbon.h>
 #   else
+#      ifdef HAVE_EGL
+#         include <EGL/egl.h>
+#         undef None // X.h defines None which conflicts with RenderingOrder::None
+#      else
 extern "C" void (*glXGetProcAddressARB( const unsigned char *procName ))( void );
+#      endif
 #   endif
 #endif
 
@@ -56,6 +61,7 @@ namespace glExt
 	extern bool ARB_texture_non_power_of_two;
 	extern bool ARB_timer_query;
 	extern bool ARB_texture_buffer_object;
+    extern bool OES_EGL_image;
 
 	extern int  majorVersion, minorVersion;
 }
@@ -321,7 +327,6 @@ GLAPI void GLAPIENTRY glBindTexture (GLenum target, GLuint texture);
 GLAPI void GLAPIENTRY glBlendFunc (GLenum sfactor, GLenum dfactor);
 GLAPI void GLAPIENTRY glClear (GLbitfield mask);
 GLAPI void GLAPIENTRY glClearColor (GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha);
-GLAPI void GLAPIENTRY glClearDepth (GLclampd depth);
 GLAPI void GLAPIENTRY glClearStencil (GLint s);
 GLAPI void GLAPIENTRY glColorMask (GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha);
 GLAPI void GLAPIENTRY glCopyTexImage1D (GLenum target, GLint level, GLenum internalFormat, GLint x, GLint y, GLsizei width, GLint border);
@@ -335,7 +340,6 @@ GLAPI void GLAPIENTRY glDepthMask (GLboolean flag);
 GLAPI void GLAPIENTRY glDepthRange (GLclampd zNear, GLclampd zFar);
 GLAPI void GLAPIENTRY glDisable (GLenum cap);
 GLAPI void GLAPIENTRY glDrawArrays (GLenum mode, GLint first, GLsizei count);
-GLAPI void GLAPIENTRY glDrawBuffer (GLenum mode);
 GLAPI void GLAPIENTRY glDrawElements (GLenum mode, GLsizei count, GLenum type, const GLvoid *indices);
 GLAPI void GLAPIENTRY glEnable (GLenum cap);
 GLAPI void GLAPIENTRY glFinish (void);
@@ -349,7 +353,6 @@ GLAPI void GLAPIENTRY glGetFloatv (GLenum pname, GLfloat *params);
 GLAPI void GLAPIENTRY glGetIntegerv (GLenum pname, GLint *params);
 GLAPI void GLAPIENTRY glGetPointerv (GLenum pname, GLvoid* *params);
 GLAPI const GLubyte * GLAPIENTRY glGetString (GLenum name);
-GLAPI void GLAPIENTRY glGetTexImage (GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels);
 GLAPI void GLAPIENTRY glGetTexLevelParameterfv (GLenum target, GLint level, GLenum pname, GLfloat *params);
 GLAPI void GLAPIENTRY glGetTexLevelParameteriv (GLenum target, GLint level, GLenum pname, GLint *params);
 GLAPI void GLAPIENTRY glGetTexParameterfv (GLenum target, GLenum pname, GLfloat *params);
@@ -362,7 +365,6 @@ GLAPI void GLAPIENTRY glLogicOp (GLenum opcode);
 GLAPI void GLAPIENTRY glPixelStoref (GLenum pname, GLfloat param);
 GLAPI void GLAPIENTRY glPixelStorei (GLenum pname, GLint param);
 GLAPI void GLAPIENTRY glPointSize (GLfloat size);
-GLAPI void GLAPIENTRY glPolygonMode (GLenum face, GLenum mode);
 GLAPI void GLAPIENTRY glPolygonOffset (GLfloat factor, GLfloat units);
 GLAPI void GLAPIENTRY glReadBuffer (GLenum mode);
 GLAPI void GLAPIENTRY glReadPixels (GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid *pixels);
@@ -386,6 +388,17 @@ GLAPI void GLAPIENTRY glViewport (GLint x, GLint y, GLsizei width, GLsizei heigh
 
 namespace h3dGL
 {
+
+typedef void (GLAPIENTRYP PFNGLGETTEXIMAGEPROC) (GLenum target, GLint level, GLenum format, GLenum type, GLvoid *pixels);
+typedef void (GLAPIENTRYP PFNGLPOLYGONMODEPROC)(GLenum face, GLenum mode);
+typedef void (GLAPIENTRYP PFNGLCLEARDEPTH) (GLclampd depth);
+typedef void (GLAPIENTRYP PFNGLDRAWBUFFERPROC) (GLenum mode);
+
+extern PFNGLGETTEXIMAGEPROC glGetTexImage;
+extern PFNGLPOLYGONMODEPROC glPolygonMode;
+extern PFNGLCLEARDEPTH glClearDepth;
+extern PFNGLDRAWBUFFERPROC glDrawBuffer;
+
 // GL 1.2
 #ifndef GL_VERSION_1_2
 #define GL_VERSION_1_2 1
@@ -2789,6 +2802,20 @@ typedef void ( GLAPIENTRYP PFNGLTEXBUFFERPROC )( GLenum target, GLenum internalf
 extern PFNGLTEXBUFFERPROC glTexBufferARB;
 
 #endif
+
+
+/* GL_OES_EGL_image */
+#ifndef GL_OES_EGL_image
+typedef void* GLeglImageOES;
+#endif
+
+#ifndef GL_OES_EGL_image
+#define GL_OES_EGL_image 1
+typedef void (GLAPIENTRYP PFNGLEGLIMAGETARGETTEXTURE2DOESPROC) (GLenum target, GLeglImageOES image);
+typedef void (GLAPIENTRYP PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC) (GLenum target, GLeglImageOES image);
+#endif
+
+extern PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;
 
 #ifndef GL_ARB_texture_rg
 #define GL_ARB_texture_rg 1

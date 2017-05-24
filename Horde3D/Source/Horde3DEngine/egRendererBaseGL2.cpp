@@ -203,6 +203,12 @@ bool RenderDeviceGL2::init()
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
 	
+    if( !version || !renderer || !vendor )
+    {
+        Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
+        return false;
+    }
+
 	Modules::log().writeInfo( "Initializing GL2 backend using OpenGL driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
 	
@@ -738,6 +744,21 @@ bool RenderDeviceGL2::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 	return true;
 }
 
+void RenderDeviceGL2::bindImageToTexture(uint32 texObj, void *eglImage)
+{
+	if( !glExt::OES_EGL_image )
+		Modules::log().writeError("OES_egl_image not supported");
+	else
+	{
+		const RDITextureGL2 &tex = _textures.getRef( texObj );
+		glActiveTexture( GL_TEXTURE15 );
+		glBindTexture( tex.type, tex.glObj );
+		glEGLImageTargetTexture2DOES( tex.type, eglImage );
+		glBindTexture( tex.type, 0 );
+		if( _texSlots[15].texObj )
+			glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+	}
+}
 
 // =================================================================================================
 // Shaders

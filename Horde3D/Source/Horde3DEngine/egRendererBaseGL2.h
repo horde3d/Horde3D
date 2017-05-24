@@ -13,12 +13,9 @@
 #ifndef _egRendererBaseGL2_H_
 #define _egRendererBaseGL2_H_
 
-//#include "egPrerequisites.h"
 #include "egRendererBase.h"
-//#include "utMath.h"
 #include "utOpenGL.h"
-//#include <string>
-//#include <vector>
+#include <string.h>
 
 
 namespace Horde3D {
@@ -248,6 +245,7 @@ public:
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
 // 	uint32 getTextureMem() const { return _textureMem; }
+    void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
@@ -301,10 +299,10 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps getCaps() const { return _caps; }
-	const RDIBufferGL2 getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITextureGL2 getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBufferGL2 getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	// WARNING: Modifying internal states may lead to unexpected behavior and/or crashes
+	RDIBufferGL2 &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	RDITextureGL2 &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	RDIRenderBufferGL2 &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 //	friend class Renderer;
 

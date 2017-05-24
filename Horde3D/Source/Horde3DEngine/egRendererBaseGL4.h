@@ -15,8 +15,7 @@
 
 #include "egRendererBase.h"
 #include "utOpenGL.h"
-#include <string>
-#include <vector>
+#include <string.h>
 
 
 namespace Horde3D {
@@ -238,6 +237,8 @@ public:
 	void destroyTexture( uint32 &texObj );
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
+	uint32 getTextureMem() const { return _textureMem; }
+	void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
@@ -295,10 +296,10 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps getCaps() const { return _caps; }
-	const RDIBufferGL4 getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITextureGL4 getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBufferGL4 getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	// WARNING: Modifying internal states may lead to unexpected behavior and/or crashes
+	RDIBufferGL4 &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	RDITextureGL4 &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	RDIRenderBufferGL4 &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 //	friend class Renderer;
 

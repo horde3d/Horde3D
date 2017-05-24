@@ -702,7 +702,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		{
 			if( materialRes->_samplers[j].name == sampler.id )
 			{
-				if( materialRes->_samplers[j].texRes->isLoaded() )
+                if( materialRes->_samplers[j].texRes && materialRes->_samplers[j].texRes->isLoaded() )
 					texRes = materialRes->_samplers[j].texRes;
 				break;
 			}

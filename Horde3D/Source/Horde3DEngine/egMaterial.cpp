@@ -305,7 +305,7 @@ int MaterialResource::getElemParamI( int elem, int elemIdx, int param ) const
 			switch( param )
 			{
 			case MaterialResData::SampTexResI:
-				return _samplers[elemIdx].texRes->getHandle();
+				return _samplers[elemIdx].texRes ? _samplers[elemIdx].texRes->getHandle() : 0;
 			}
 		}
 		break;
@@ -363,7 +363,7 @@ void MaterialResource::setElemParamI( int elem, int elemIdx, int param, int valu
 			{
 			case MaterialResData::SampTexResI:
 				Resource *res = Modules::resMan().resolveResHandle( value );
-				if( res != 0x0 && res->getType() == ResourceTypes::Texture )
+				if( res == 0 || (res != 0x0 && res->getType() == ResourceTypes::Texture) )
 					_samplers[elemIdx].texRes = (TextureResource *)res;
 				else
 					Modules::setError( "Invalid handle in h3dSetResParamI for H3DMatRes::SampTexResI" );
