@@ -98,16 +98,48 @@ bool ComputeBufferResource::load( const char *data, int size )
 	if ( strcmp( rootNode.getName(), "ComputeBuffer" ) != 0 )
 		return raiseError( "Not a compute buffer resource file" );
 
+	// Buffer size
+	if ( strcmp( rootNode.getAttribute( "dataSize", "" ), "" ) != 0 )
+	{
+		_dataSize = atoi( rootNode.getAttribute( "dataSize", "0" ) );
+
+		if ( _dataSize)
+		{
+		}
+	}
+
 	// Vertex bindings
+	int totalBindingsCount = rootNode.countChildNodes( "Bindings" );
+	if ( totalBindingsCount > 0 ) _vlBindingsData.resize( totalBindingsCount );
+
 	XMLNode node1 = rootNode.getFirstChild( "Bindings" );
 	while ( !node1.isEmpty() )
 	{
 		if ( node1.getAttribute( "name" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'name'" );
+		if ( node1.getAttribute( "offset" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'offset'" );
+		if ( node1.getAttribute( "size" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'size'" );
+		if ( node1.getAttribute( "attribNumber" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'attribNumber'" );
 
+		VertexLayoutAttrib layout;
+		layout.semanticName = node1.getAttribute( "name", "0" );
+		layout.offset = atoi( node1.getAttribute( "offset", "0" ) );
+		layout.size = atoi( node1.getAttribute( "size", "0" ) );
+		layout.vbSlot = 0;
 
+		int curAttribSlot = atoi( node1.getAttribute( "attribNumber" ) );
+		if ( curAttribSlot >= 0 && curAttribSlot < totalBindingsCount )
+		{
+			_vlBindingsData[ curAttribSlot ] = layout;
+		} 
+		else
+		{
+			return raiseError( "Incorrect attribNumber value" );
+		}
 
 		node1 = node1.getNextSibling( "Bindings" );
 	}
+
+
 	return true;
 }
 
