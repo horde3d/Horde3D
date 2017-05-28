@@ -246,10 +246,10 @@ void CodeResource::updateShaders()
 				
 				if ( ( context.vertCodeIdx >= 0 && shaderRes->getCode( context.vertCodeIdx )->hasDependency( this ) ) ||
 					 ( context.fragCodeIdx >= 0 && shaderRes->getCode( context.fragCodeIdx )->hasDependency( this ) ) ||
-					( context.geomCodeIdx >= 0 && shaderRes->getCode( context.geomCodeIdx )->hasDependency( this ) ) ||
-					( context.computeCodeIdx >= 0 && shaderRes->getCode( context.computeCodeIdx )->hasDependency( this ) ) ||
-					( context.tessCtlCodeIdx >= 0 && shaderRes->getCode( context.tessCtlCodeIdx )->hasDependency( this ) ) ||
-					( context.tessEvalCodeIdx >= 0 && shaderRes->getCode( context.tessEvalCodeIdx )->hasDependency( this ) ) )
+					 ( context.geomCodeIdx >= 0 && shaderRes->getCode( context.geomCodeIdx )->hasDependency( this ) ) ||
+					 ( context.computeCodeIdx >= 0 && shaderRes->getCode( context.computeCodeIdx )->hasDependency( this ) ) ||
+					 ( context.tessCtlCodeIdx >= 0 && shaderRes->getCode( context.tessCtlCodeIdx )->hasDependency( this ) ) ||
+					 ( context.tessEvalCodeIdx >= 0 && shaderRes->getCode( context.tessEvalCodeIdx )->hasDependency( this ) ) )
 				{
 					context.compiled = false;
 				}
