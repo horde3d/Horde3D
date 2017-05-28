@@ -72,6 +72,12 @@ void ComputeBufferResource::release()
 
 bool ComputeBufferResource::raiseError( const std::string &msg, int line )
 {
+	// Unmap buffer if it is mapped during loading
+	if ( _mapped )
+	{
+		unmapStream();
+	}
+
 	// Reset
 	release();
 	initDefault();
@@ -98,14 +104,23 @@ bool ComputeBufferResource::load( const char *data, int size )
 	if ( strcmp( rootNode.getName(), "ComputeBuffer" ) != 0 )
 		return raiseError( "Not a compute buffer resource file" );
 
-	// Buffer size
-	if ( strcmp( rootNode.getAttribute( "dataSize", "" ), "" ) != 0 )
-	{
-		_dataSize = atoi( rootNode.getAttribute( "dataSize", "0" ) );
+	if ( rootNode.getAttribute( "dataSize" ) == 0x0 ) return raiseError( "Missing ComputeBuffer attribute 'dataSize'" );
+	if ( rootNode.getAttribute( "drawable" ) == 0x0 ) return raiseError( "Missing ComputeBuffer attribute 'drawable'" );
 
-		if ( _dataSize)
-		{
-		}
+	// Buffer size
+	int size = atoi( rootNode.getAttribute( "dataSize", "" ) );
+	if ( size < 0 )
+	{
+		return raiseError( "Incorrect 'dataSize' value specified" );
+	}
+
+	setElemParamI( ComputeBufferResData::ComputeBufElem, 0, ComputeBufferResData::CompBufDataSizeI, size );
+
+	// Buffer is drawable
+	if ( _stricmp( rootNode.getAttribute( "drawable", "false" ), "true" ) == 0 ||
+		 _stricmp( rootNode.getAttribute( "drawable", "0" ), "1" ) == 0 )
+	{
+		_useAsVertexBuf = true;
 	}
 
 	// Vertex bindings
@@ -139,6 +154,68 @@ bool ComputeBufferResource::load( const char *data, int size )
 		node1 = node1.getNextSibling( "Bindings" );
 	}
 
+	if ( _useAsVertexBuf && !_vlBindingsData.empty() )
+	{
+		if ( !createGeometry() ) return false;
+	}
+
+	// Data
+	// Currently only float data is supported
+	XMLNode node1 = rootNode.getFirstChild( "Data" );
+	while ( !node1.isEmpty() )
+	{
+		// parser assumes that values are separated by ';' character
+		uint8 *bufData = ( uint8 *) mapStream( ComputeBufferResData::ComputeBufElem, 0, 0, false, true );
+		const char *strData = node1.getText();
+
+		uint8 *pBufData = bufData;
+		const char *pStrData = strData;
+		
+		int strDataSize = strlen( strData );
+		const char *end = strData + strDataSize;
+
+		const char *valueStartPos = pStrData;
+		const char *valueEndPos = 0x0;
+		int charCounter = 0;
+		int bytesCopied = 0;
+
+		while ( pStrData < end )
+		{
+			if ( *pStrData == ';' )
+			{
+				// convert and append data to buffer
+				if ( bytesCopied + 4 >= _dataSize ) return raiseError( "Data size in 'Data' section exceeds the specified buffer size" );
+
+				std::string val( valueStartPos, valueEndPos );
+				float fval = ( float ) atof( val.c_str() );
+
+				memcpy( pBufData, &fval, 4 );
+
+				if ( pStrData + 1 < end )
+				{
+					valueStartPos = pStrData + 1;
+					valueEndPos = valueStartPos;
+				}
+
+				pBufData += 4;
+				bytesCopied += 4;
+				charCounter = 0;
+			}
+			else
+			{
+				charCounter++;
+				
+				if ( charCounter < 32 ) valueEndPos++;
+				else 
+				{
+					return raiseError( "Incorrect value in 'Data' element" );
+				}
+			}
+	
+			pStrData++;
+		}
+
+	}
 
 	return true;
 }
@@ -190,7 +267,11 @@ bool ComputeBufferResource::createGeometry()
 	if ( !_vertexLayout )
 	{
 		_vertexLayout = rdi->registerVertexLayout( ( uint32 ) _vlBindingsData.size(), _vlBindingsData.data() );
-		if ( !_vertexLayout ) return false;
+		if ( !_vertexLayout )
+		{
+			Modules::log().writeDebugInfo( "Too many vertex layouts. Increase the max count of vertex layouts in renderer backend." );
+			return false;
+		}
 	}
 
 	// create new geometry with compute buffer used as vertex buffer
