@@ -16,7 +16,7 @@ using namespace std;
 // =================================================================================================
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
-	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ),
+	Resource( ResourceTypes::ComputeBuffer, name, flags ),
 	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _mapped( false ), _useAsVertexBuf( false ),
 	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ), _bufferRecreated( false )
 {
@@ -338,7 +338,7 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 				case ComputeBufferResData::CompBufDataSizeI:
 					return _dataSize;
 					break;
-				case ComputeBufferResData::CompBufUseAsVertexBufferI:
+				case ComputeBufferResData::CompBufDrawableI:
 					return _useAsVertexBuf;
 				default:
 					break;
@@ -389,7 +389,7 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 
 					return;
 
-				case ComputeBufferResData::CompBufUseAsVertexBufferI:
+				case ComputeBufferResData::CompBufDrawableI:
 					_useAsVertexBuf = value;
 					return;
 			}

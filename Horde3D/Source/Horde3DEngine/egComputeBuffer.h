@@ -29,7 +29,7 @@ struct ComputeBufferResData
 		ComputeBufElem = 1000,
 		DrawParamsElem,
 		CompBufDataSizeI,
-		CompBufUseAsVertexBufferI,
+		CompBufDrawableI,
 		DrawParamsNameStr,
 		DrawParamsSizeI,
 		DrawParamsOffsetI,

@@ -442,7 +442,7 @@ struct H3DComputeBufRes
 	ComputeBufElem				- General compute buffer configuration
 	DrawParamsElem				- Specifies parameters for shader bindings
 	CompBufDataSizeI			- Size of the buffer
-	CompBufUseAsVertexBufferI	- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
+	CompBufDrawableI			- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
 	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data)
 	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3
 	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
@@ -455,7 +455,7 @@ struct H3DComputeBufRes
 		ComputeBufElem = 1000,
 		DrawParamsElem,
 		CompBufDataSizeI,
-		CompBufUseAsVertexBufferI,
+		CompBufDrawableI,
 		DrawParamsNameStr,
 		DrawParamsSizeI,
 		DrawParamsOffsetI,

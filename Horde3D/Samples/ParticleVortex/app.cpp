@@ -70,8 +70,12 @@ bool ParticleVortexSample::initResources()
 
 	// 2. Specify compute buffer parameters
 
+	// Below is the code that manually sets the parameters of the compute buffer (recommended way)
+	// You can also load buffer parameters from file, although it may be slower due to parsing overhead
+
 	// Create compute buffer 
-	H3DRes compBuf = h3dAddResource( H3DResTypes::ComputeBuffer, "CompBuf", 0 );
+	// If you wish to load compute buffer data from file then exclude NoQuery flag
+	H3DRes compBuf = h3dAddResource( H3DResTypes::ComputeBuffer, "CompBuf", H3DResFlags::NoQuery );
 
 	// Generate random position data for particles
 	size_t particlesCount = 1000000;
@@ -114,7 +118,7 @@ bool ParticleVortexSample::initResources()
 	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufDataSizeI, ( int ) particlesCount * sizeof( ParticleData ) );
 
 	// Mark that compute buffer will be used for rendering as a vertex buffer
-	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufUseAsVertexBufferI, 1 );
+	h3dSetResParamI( compBuf, H3DComputeBufRes::ComputeBufElem, 0, H3DComputeBufRes::CompBufDrawableI, 1 );
 
 	// Set vertex binding parameters.
 	// Name - name of the parameter. Used for binding parameter to shader variable.
