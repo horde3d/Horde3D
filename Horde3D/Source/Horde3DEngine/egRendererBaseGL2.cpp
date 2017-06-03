@@ -687,7 +687,7 @@ void RenderDeviceGL2::destroyTexture( uint32& texObj )
 		return;
 	
 	const RDITextureGL2 &tex = _textures.getRef( texObj );
-	glDeleteTextures( 1, &tex.glObj );
+	if( tex.glObj ) glDeleteTextures( 1, &tex.glObj );
 
 	_textureMem -= tex.memSize;
 	_textures.remove( texObj );
