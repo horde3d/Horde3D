@@ -22,16 +22,18 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 {
 	initDefault();
 
-	_loaded = true;
+	if ( flags & ResourceFlags::NoQuery )
+		_loaded = true; // NoQuery means that compute buffer is being loaded manually, not from file
 }
 
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
-	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
+	Resource( ResourceTypes::ComputeBuffer, name, flags ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
 	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _dataSize( 1024 ), 
 	_writeRequested( false ), _bufferRecreated( false )
 {
-	_loaded = true;
+	if ( flags & ResourceFlags::NoQuery )
+		_loaded = true; // NoQuery means that compute buffer is being loaded manually, not from file
 }
 
 
@@ -95,6 +97,9 @@ bool ComputeBufferResource::load( const char *data, int size )
 {
 	if ( !Resource::load( data, size ) ) return false;
 
+	if ( !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
+		return raiseError( "Compute shaders are not supported on this render device" );
+
 	XMLDoc doc;
 	doc.parseBuffer( data, size );
 	if ( doc.hasError() )
@@ -142,9 +147,9 @@ bool ComputeBufferResource::load( const char *data, int size )
 		layout.vbSlot = 0;
 
 		int curAttribSlot = atoi( node1.getAttribute( "attribNumber" ) );
-		if ( curAttribSlot >= 0 && curAttribSlot < totalBindingsCount )
+		if ( curAttribSlot >= 0 && curAttribSlot <= totalBindingsCount )
 		{
-			_vlBindingsData[ curAttribSlot ] = layout;
+			_vlBindingsData[ curAttribSlot - 1 ] = layout;
 		} 
 		else
 		{
@@ -156,16 +161,21 @@ bool ComputeBufferResource::load( const char *data, int size )
 
 	if ( _useAsVertexBuf && !_vlBindingsData.empty() )
 	{
-		if ( !createGeometry() ) return false;
+		if ( !createGeometry() ) return raiseError( "Cannot create compute buffer" );
 	}
 
 	// Data
 	// Currently only float data is supported
+	int dataSectionsCount = rootNode.countChildNodes( "Data" );
+	if ( dataSectionsCount > 1 ) return raiseError( "More than one 'Data' section" );
+	
 	node1 = rootNode.getFirstChild( "Data" );
 	while ( !node1.isEmpty() )
 	{
 		// parser assumes that values are separated by ';' character
 		uint8 *bufData = ( uint8 *) mapStream( ComputeBufferResData::ComputeBufElem, 0, 0, false, true );
+		if ( !bufData ) return raiseError( "Cannot create compute buffer" );
+
 		const char *strData = node1.getText();
 
 		uint8 *pBufData = bufData;
@@ -175,7 +185,7 @@ bool ComputeBufferResource::load( const char *data, int size )
 		const char *end = strData + strDataSize;
 
 		const char *valueStartPos = pStrData;
-		const char *valueEndPos = 0x0;
+		const char *valueEndPos = pStrData;
 		uint32 charCounter = 0;
 		uint32 bytesCopied = 0;
 
@@ -184,7 +194,8 @@ bool ComputeBufferResource::load( const char *data, int size )
 			if ( *pStrData == ';' )
 			{
 				// convert and append data to buffer
-				if ( bytesCopied + 4 >= _dataSize ) return raiseError( "Data size in 'Data' section exceeds the specified buffer size" );
+				if ( bytesCopied + 4 > _dataSize ) 
+					return raiseError( "Data size in 'Data' section exceeds the specified buffer size" );
 
 				std::string val( valueStartPos, valueEndPos );
 				float fval = ( float ) atof( val.c_str() );
@@ -215,6 +226,9 @@ bool ComputeBufferResource::load( const char *data, int size )
 			pStrData++;
 		}
 
+		unmapStream();
+
+		node1 = node1.getNextSibling( "Data" );
 	}
 
 	return true;
