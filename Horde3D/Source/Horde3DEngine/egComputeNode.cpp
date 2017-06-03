@@ -31,8 +31,8 @@ ComputeNode::ComputeNode( const ComputeNodeTpl &computeTpl ) : SceneNode( comput
 
 	_renderable = true;
 
-	_localBBox.min = Vec3f( 0, 0, 0 );
-	_localBBox.max = Vec3f( 1, 1, 1 );
+	_localBBox.min = computeTpl.aabbMin;
+	_localBBox.max = computeTpl.aabbMax;
 }
 
 
@@ -44,10 +44,74 @@ ComputeNode::~ComputeNode()
 
 SceneNodeTpl *ComputeNode::parsingFunc( map< string, string > &attribs )
 {
-// 	map< string, string >::iterator itr;
-// 	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "", 0, 0 );
+	bool result = true;
 
-	return 0;
+	map< string, string >::iterator itr;
+	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "", nullptr, nullptr, 0, 0 );
+
+	itr = attribs.find( "computeBuffer" );
+	if ( itr != attribs.end() )
+	{
+		uint32 res = Modules::resMan().addResource( ResourceTypes::ComputeBuffer, itr->second, 0, false );
+		if ( res != 0 )
+			computeTpl->compBufRes = ( ComputeBufferResource * ) Modules::resMan().resolveResHandle( res );
+	}
+	else result = false;
+
+	itr = attribs.find( "material" );
+	if ( itr != attribs.end() )
+	{
+		uint32 res = Modules::resMan().addResource( ResourceTypes::Material, itr->second, 0, false );
+		if ( res != 0 )
+			computeTpl->matRes = ( MaterialResource * ) Modules::resMan().resolveResHandle( res );
+	}
+	else result = false;
+
+	itr = attribs.find( "drawType" );
+	if ( itr != attribs.end() )
+	{
+		if ( _stricmp( itr->second.c_str(), "triangles" ) == 0 ) computeTpl->drawType = 0; // triangles
+		else if ( _stricmp( itr->second.c_str(), "lines" ) == 0 ) computeTpl->drawType = 1; // lines
+		else if ( _stricmp( itr->second.c_str(), "points" ) == 0 ) computeTpl->drawType = 2; // points
+		else result = false;
+	}
+	else result = false;
+	
+	itr = attribs.find( "elementsCount" );
+	if ( itr != attribs.end() ) computeTpl->elementsCount = atoi( itr->second.c_str() );
+	else result = false;
+	
+	// AABB
+	itr = attribs.find( "aabbMinX" );
+	if ( itr != attribs.end() ) computeTpl->aabbMin.x = ( float ) atof( itr->second.c_str() );
+	else result = false;
+
+	itr = attribs.find( "aabbMinY" );
+	if ( itr != attribs.end() ) computeTpl->aabbMin.y = ( float ) atof( itr->second.c_str() );
+	else result = false;
+
+	itr = attribs.find( "aabbMinZ" );
+	if ( itr != attribs.end() ) computeTpl->aabbMin.z = ( float ) atof( itr->second.c_str() );
+	else result = false;
+
+	itr = attribs.find( "aabbMaxX" );
+	if ( itr != attribs.end() ) computeTpl->aabbMax.x = ( float ) atof( itr->second.c_str() );
+	else result = false;
+
+	itr = attribs.find( "aabbMaxY" );
+	if ( itr != attribs.end() ) computeTpl->aabbMax.y = ( float ) atof( itr->second.c_str() );
+	else result = false;
+
+	itr = attribs.find( "aabbMaxZ" );
+	if ( itr != attribs.end() ) computeTpl->aabbMax.z = ( float ) atof( itr->second.c_str() );
+	else result = false;
+
+	if ( !result )
+	{
+		delete computeTpl; computeTpl = 0x0;
+	}
+
+	return computeTpl;
 }
 
 

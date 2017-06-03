@@ -168,18 +168,6 @@ bool ParticleVortexSample::initResources()
 	// Set material uniforms that will not be changed during runtime
 	h3dSetMaterialUniform( _computeMatRes, "totalParticles", ( float ) particlesCount, 0, 0, 0 );
 
-    // Add light source
-// 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
-// 	h3dSetNodeTransform( light, 0, 20, 50, -30, 0, 0, 1, 1, 1 );
-// 	h3dSetNodeParamF( light, H3DLight::RadiusF, 0, 200 );
-// 	h3dSetNodeParamF( light, H3DLight::FovF, 0, 90 );
-// 	h3dSetNodeParamI( light, H3DLight::ShadowMapCountI, 3 );
-// 	h3dSetNodeParamF( light, H3DLight::ShadowSplitLambdaF, 0, 0.9f );
-// 	h3dSetNodeParamF( light, H3DLight::ShadowMapBiasF, 0, 0.001f );
-// 	h3dSetNodeParamF( light, H3DLight::ColorF3, 0, 0.9f );
-// 	h3dSetNodeParamF( light, H3DLight::ColorF3, 1, 0.7f );
-// 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
-
 	// Calculate number of groups for compute shader
 	size_t numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
 	double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );

@@ -2325,7 +2325,7 @@ DLL bool h3dHasEmitterFinished( H3DNode emitterNode );
 		name               - name of the node
 		materialRes        - handle to Material resource used for rendering
 		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
-		drawType		   - specifies how to treat data in the compute buffer
+		drawType		   - specifies how to treat data in the compute buffer. 0 - Triangles, 1 - Lines, 2 - Points
 		elementsCount	   - number of elements that need to be drawn
 		
 	Returns:

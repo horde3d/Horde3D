@@ -108,13 +108,13 @@ bool ComputeBufferResource::load( const char *data, int size )
 	if ( rootNode.getAttribute( "drawable" ) == 0x0 ) return raiseError( "Missing ComputeBuffer attribute 'drawable'" );
 
 	// Buffer size
-	int size = atoi( rootNode.getAttribute( "dataSize", "" ) );
-	if ( size < 0 )
+	int bufferSize = atoi( rootNode.getAttribute( "dataSize", "" ) );
+	if ( bufferSize < 0 )
 	{
 		return raiseError( "Incorrect 'dataSize' value specified" );
 	}
 
-	setElemParamI( ComputeBufferResData::ComputeBufElem, 0, ComputeBufferResData::CompBufDataSizeI, size );
+	setElemParamI( ComputeBufferResData::ComputeBufElem, 0, ComputeBufferResData::CompBufDataSizeI, bufferSize );
 
 	// Buffer is drawable
 	if ( _stricmp( rootNode.getAttribute( "drawable", "false" ), "true" ) == 0 ||
@@ -161,7 +161,7 @@ bool ComputeBufferResource::load( const char *data, int size )
 
 	// Data
 	// Currently only float data is supported
-	XMLNode node1 = rootNode.getFirstChild( "Data" );
+	node1 = rootNode.getFirstChild( "Data" );
 	while ( !node1.isEmpty() )
 	{
 		// parser assumes that values are separated by ';' character
@@ -171,13 +171,13 @@ bool ComputeBufferResource::load( const char *data, int size )
 		uint8 *pBufData = bufData;
 		const char *pStrData = strData;
 		
-		int strDataSize = strlen( strData );
+		size_t strDataSize = strlen( strData );
 		const char *end = strData + strDataSize;
 
 		const char *valueStartPos = pStrData;
 		const char *valueEndPos = 0x0;
-		int charCounter = 0;
-		int bytesCopied = 0;
+		uint32 charCounter = 0;
+		uint32 bytesCopied = 0;
 
 		while ( pStrData < end )
 		{
