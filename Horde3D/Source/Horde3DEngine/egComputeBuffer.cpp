@@ -18,7 +18,7 @@ using namespace std;
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
 	Resource( ResourceTypes::ComputeBuffer, name, flags ),
 	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _mapped( false ), _useAsVertexBuf( false ),
-	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ), _bufferRecreated( false )
+	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ), _bufferRecreated( false ), _manuallyUpdated( false )
 {
 	initDefault();
 
@@ -30,7 +30,7 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
 	Resource( ResourceTypes::ComputeBuffer, name, flags ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
 	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _dataSize( 1024 ), 
-	_writeRequested( false ), _bufferRecreated( false )
+	_writeRequested( false ), _bufferRecreated( false ), _manuallyUpdated( false )
 {
 	if ( flags & ResourceFlags::NoQuery )
 		_loaded = true; // NoQuery means that compute buffer is being loaded manually, not from file
@@ -65,9 +65,14 @@ void ComputeBufferResource::createBuffer( uint32 size, uint8 *data )
 
 void ComputeBufferResource::release()
 {
-	if ( _bufferID )
+	if ( _bufferID && !_manuallyUpdated )
 	{
 		Modules::renderer().getRenderDevice()->destroyBuffer( _bufferID );
+	}
+
+	if ( _geometryParamsSet && _geoID && !_manuallyUpdated )
+	{
+		Modules::renderer().getRenderDevice()->destroyGeometry( _geoID );
 	}
 }
 
@@ -165,7 +170,7 @@ bool ComputeBufferResource::load( const char *data, int size )
 	}
 
 	// Data
-	// Currently only float data is supported
+	// Currently only float values are supported
 	int dataSectionsCount = rootNode.countChildNodes( "Data" );
 	if ( dataSectionsCount > 1 ) return raiseError( "More than one 'Data' section" );
 	
@@ -198,7 +203,7 @@ bool ComputeBufferResource::load( const char *data, int size )
 					return raiseError( "Data size in 'Data' section exceeds the specified buffer size" );
 
 				std::string val( valueStartPos, valueEndPos );
-				float fval = ( float ) atof( val.c_str() );
+				float fval = ( float ) atof( val.c_str() ); // atof ignores \n \r \t and spaces
 
 				memcpy( pBufData, &fval, 4 );
 
@@ -216,7 +221,7 @@ bool ComputeBufferResource::load( const char *data, int size )
 			{
 				charCounter++;
 				
-				if ( charCounter < 32 ) valueEndPos++;
+				if ( charCounter <= 32 ) valueEndPos++;
 				else 
 				{
 					return raiseError( "Incorrect value in 'Data' element" );
@@ -226,6 +231,7 @@ bool ComputeBufferResource::load( const char *data, int size )
 			pStrData++;
 		}
 
+		// load data to render device
 		unmapStream();
 
 		node1 = node1.getNextSibling( "Data" );
@@ -317,6 +323,8 @@ bool ComputeBufferResource::setGeometry( uint32 geomID )
 		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect geometry specified." );
 		return false;
 	}
+	
+	_manuallyUpdated = true;
 
 	_geoID = geomID;
 	_useAsVertexBuf = true;
@@ -333,6 +341,8 @@ bool ComputeBufferResource::setBuffer( uint32 bufferID, uint32 bufSize )
 		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect buffer specified." );
 		return false;
 	}
+
+	_manuallyUpdated = true;
 
 	_bufferID = bufferID;
 	_dataSize = bufSize;

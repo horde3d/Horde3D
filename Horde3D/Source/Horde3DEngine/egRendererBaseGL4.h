@@ -21,7 +21,7 @@
 namespace Horde3D {
 namespace RDI_GL4 {
 
-const uint32 MaxNumVertexLayouts = 32;
+const uint32 MaxNumVertexLayouts = 64;
 const uint32 MaxComputeImages = 8;
 
 // =================================================================================================
