@@ -93,7 +93,6 @@ SceneNodeTpl *MeshNode::parsingFunc( map< string, string > &attribs )
 		{
 			meshTpl->tessellatable = 1;
 		}
-		else meshTpl->tessellatable = 0;
 	}
 
 	if( !result )
