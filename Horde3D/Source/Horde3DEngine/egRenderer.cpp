@@ -106,16 +106,25 @@ void Renderer::registerRenderFunc( int nodeType, RenderFunc rf )
 }
 
 
-unsigned char *Renderer::useScratchBuf( uint32 minSize )
+unsigned char * Renderer::useScratchBuf( uint32 minSize, uint32 alignment )
 {
 	if( _scratchBufSize < minSize )
 	{
 		delete[] _scratchBuf;
-		_scratchBuf = new unsigned char[minSize + 15];
+
+		uint32 padding = alignment > 1 ? alignment - 1 : 0;
+		_scratchBuf = new unsigned char[ minSize + padding ];
 		_scratchBufSize = minSize;
 	}
 
-	return _scratchBuf + (size_t)_scratchBuf % 16;  // 16 byte aligned
+	if ( alignment > 1 )
+	{
+		return _scratchBuf + ( size_t ) _scratchBuf % alignment;
+	} 
+	else
+	{
+		return _scratchBuf;
+	}
 }
 
 
@@ -252,7 +261,7 @@ bool Renderer::init( RenderBackendType::List type )
 	createPrimitives();
 
 	// Init scratch buffer with some default size
-	useScratchBuf( 4 * 1024*1024 );
+	useScratchBuf( 4 * 1024*1024, 16 );
 
 	// Reset states
 	finishRendering();
@@ -2056,7 +2065,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
 
 		// Sanity check
 		if ( !compNode->_compBufferRes->_useAsVertexBuf || !compNode->_compBufferRes->_geometryParamsSet || 
-			 compNode->_compBufferRes->_numElements == 0 || !compNode->_materialRes->isOfClass( theClass ) )
+			 compNode->_elementsCount == 0 || !compNode->_materialRes->isOfClass( theClass ) )
 			continue;
 
 		if ( debugView )
@@ -2075,7 +2084,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
 
 		// Specify drawing type
 		RDIPrimType drawType;
-		switch ( compNode->_compBufferRes->_drawType )
+		switch ( compNode->_drawType )
 		{
 			case 0: // Triangles
 				drawType = PRIM_TRILIST;
@@ -2119,13 +2128,12 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const stri
         rdi->setMemoryBarrier( VertexBufferBarrier );
 
 		// Render
-		rdi->draw( drawType, 0, compNode->_compBufferRes->_numElements );
+		rdi->draw( drawType, 0, compNode->_elementsCount );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
-		Modules::stats().incStat( EngineStats::TriCount, ( float ) compNode->_compBufferRes->_numElements );
+		Modules::stats().incStat( EngineStats::TriCount, ( float ) compNode->_elementsCount );
 	}
 
 	timer->endQuery();
-
 }
 
 // =================================================================================================

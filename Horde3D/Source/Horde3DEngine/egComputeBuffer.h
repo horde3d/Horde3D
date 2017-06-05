@@ -27,15 +27,13 @@ struct ComputeBufferResData
 	enum List
 	{
 		ComputeBufElem = 1000,
-		DrawTypeElem,
 		DrawParamsElem,
 		CompBufDataSizeI,
-		CompBufUseAsVertexBufferI,
-		DataDrawTypeI, // possible values: 0 - Triangles, 1 - Lines, 2 - Points
+		CompBufDrawableI,
 		DrawParamsNameStr,
 		DrawParamsSizeI,
 		DrawParamsOffsetI,
-		DrawParamsElementsCountI
+		DrawParamsCountI
 	};
 };
 
@@ -64,14 +62,14 @@ public:
 	uint32 getGeometry() { return _geoID; }
 
 	// internal use only (i.e. extensions)
-	bool overrideGeometry( uint32 geomID );
-	bool overrideBuffer( uint32 bufferID, uint32 bufSize );
+	bool setGeometry( uint32 geomID );
+	bool setBuffer( uint32 bufferID, uint32 bufSize );
 
 	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void setElemParamI( int elem, int elemIdx, int param, int value );
 	// 	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	// 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
-	// 	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
+ 	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 	void setElemParamStr( int elem, int elemIdx, int param, const char *value );
 
 	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
@@ -81,23 +79,26 @@ protected:
 
 	bool createGeometry();
 
+	void createBuffer( uint32 size, uint8 *data );
+
+	bool raiseError( const std::string &msg, int line = -1 );
+
 private:
 
-	std::vector< VertexLayoutAttrib > _dataParams;  /* Vertex binding parameters, if buffer is used for drawing. */
-	uint8					*_data;
+	std::vector< VertexLayoutAttrib >	_vlBindingsData;  /* Vertex binding parameters, if buffer is used for drawing. */
 
-	uint32					_dataSize;
-	uint32					_bufferID;
-	uint32					_geoID;
-	uint32					_numElements;
+	uint32								_dataSize;
+	uint32								_bufferID;
+	uint32								_geoID;
 
-	int16					_drawType;
-	uint16					_vertexLayout;
+	uint16								_vertexLayout;
 
-	bool					_writeRequested;
-	bool					_mapped;
-	bool					_geometryParamsSet;
-	uint8					_useAsVertexBuf;
+	bool								_writeRequested;
+	bool								_mapped;
+	bool								_geometryParamsSet;
+	bool								_bufferRecreated;
+	bool								_manuallyUpdated;
+	uint8								_useAsVertexBuf;
 
 	friend class Renderer;
 };
