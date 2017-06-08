@@ -973,7 +973,7 @@ DLL float h3dGetStat( H3DStats::List param, bool reset );
 		This function returns a value, indicating the support of a certain GPU capability.
 
 	Parameters:
-		param  - GPU feature
+		param  - requested GPU feature
 
 	Returns:
 		1, if feature is supported, 0 otherwise
