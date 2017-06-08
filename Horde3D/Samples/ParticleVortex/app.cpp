@@ -59,6 +59,10 @@ bool ParticleVortexSample::initResources()
     if ( !SampleApplication::initResources() )
         return false;
 
+	if ( !h3dGetDeviceCapabilities( H3DDeviceCapabilities::GeometryShaders ) &&
+	     !h3dGetDeviceCapabilities( H3DDeviceCapabilities::ComputeShaders ) )
+		return false;
+
     // 1. Add resources
 
 	// Shader for deferred shading

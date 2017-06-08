@@ -185,5 +185,23 @@ protected:
 	friend class ProfSample;
 };
 
+// =================================================================================================
+// Render Device Capabilities
+// =================================================================================================
+
+struct RenderDeviceCapabilities
+{
+	enum List
+	{
+		GeometryShaders = 200,
+		Tessellation,
+		Compute
+	};
+};
+
+// =================================================================================================
+
+float getRenderDeviceCapabilities( int param );
+
 }
 #endif // _egCom_H_

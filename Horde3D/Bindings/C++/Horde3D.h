@@ -159,6 +159,23 @@ struct H3DStats
 	};
 };
 
+struct H3DDeviceCapabilities
+{
+	/* Enum: H3DDeviceCapabilities
+	The available GPU capabilities.
+
+	GeometryShaders			- GPU supports runtime geometry generation via geometry shaders
+	TessellationShaders     - GPU supports tessellation
+	ComputeShaders		    - GPU supports general-purpose computing via compute shaders
+	*/
+	enum List
+	{
+		GeometryShaders = 200,
+		TessellationShaders,
+		ComputeShaders
+	};
+};
+
 struct H3DResTypes
 {
 	/* Enum: H3DResTypes
@@ -948,6 +965,20 @@ DLL bool h3dSetOption( H3DOptions::List param, float value );
 		current value of the specified statistic parameter
 */
 DLL float h3dGetStat( H3DStats::List param, bool reset );
+
+/* Function: h3dGetDeviceCapabilities
+		Checks whether GPU supports a certain feature.
+
+	Details:
+		This function returns a value, indicating the support of a certain GPU capability.
+
+	Parameters:
+		param  - requested GPU feature
+
+	Returns:
+		1, if feature is supported, 0 otherwise
+*/
+DLL float h3dGetDeviceCapabilities( H3DDeviceCapabilities::List param );
 
 /* Function: h3dShowOverlays
 		Displays overlays on the screen.

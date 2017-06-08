@@ -423,4 +423,32 @@ GPUTimer *StatManager::getGPUTimer( int param ) const
 	}
 }
 
+
+// *************************************************************************************************
+// Render device capabilities
+// *************************************************************************************************
+
+float getRenderDeviceCapabilities( int param )
+{
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+	if ( !rdi )
+	{
+		Modules::setError( "Render device not initialized!" );
+		return Math::NaN;
+	}
+
+	switch ( param )
+	{
+		case RenderDeviceCapabilities::GeometryShaders:
+			return rdi->getCaps().geometryShaders ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::Compute:
+			return rdi->getCaps().computeShaders ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::Tessellation:
+			return rdi->getCaps().tesselation ? 1.0f : 0.0f;
+		default:
+			Modules::setError( "Invalid param for h3dGetDeviceCapabilities" );
+			return Math::NaN;
+	}
+}
+
 }  // namespace

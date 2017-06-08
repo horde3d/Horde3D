@@ -196,6 +196,12 @@ DLLEXP float h3dGetStat( EngineStats::List param, bool reset )
 }
 
 
+DLLEXP float h3dGetDeviceCapabilities( RenderDeviceCapabilities::List param )
+{
+	return getRenderDeviceCapabilities( param );
+}
+
+
 DLLEXP void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG,
                              float colB, float colA, uint32 materialRes, int flags )
 {
