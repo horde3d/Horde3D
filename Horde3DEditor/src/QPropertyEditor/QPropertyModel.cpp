@@ -125,8 +125,8 @@ bool QPropertyModel::setData ( const QModelIndex & index, const QVariant & value
         if( item->value() != value )
         {
             item->setValue(value);
-            emit dataChanged(index, index);
         }
+        emit dataChanged(index, index);
         return true;
     }
     return false;
