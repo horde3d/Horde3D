@@ -88,8 +88,11 @@ SceneNodeTpl *MeshNode::parsingFunc( map< string, string > &attribs )
 	itr = attribs.find( "tessellatable" );
 	if ( itr != attribs.end() )
 	{
-		if ( itr->second == "true" || itr->second == "1" ) meshTpl->tessellatable = 1;
-		else meshTpl->tessellatable = 0;
+		if ( _stricmp( itr->second.c_str(), "true" ) == 0 ||
+		   	 _stricmp( itr->second.c_str(), "1" ) == 0 )
+		{
+			meshTpl->tessellatable = 1;
+		}
 	}
 
 	if( !result )

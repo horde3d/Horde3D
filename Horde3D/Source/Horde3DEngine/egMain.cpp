@@ -196,6 +196,12 @@ DLLEXP float h3dGetStat( EngineStats::List param, bool reset )
 }
 
 
+DLLEXP float h3dGetDeviceCapabilities( RenderDeviceCapabilities::List param )
+{
+	return getRenderDeviceCapabilities( param );
+}
+
+
 DLLEXP void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG,
                              float colB, float colA, uint32 materialRes, int flags )
 {
@@ -976,7 +982,8 @@ DLLEXP bool h3dHasEmitterFinished( NodeHandle emitterNode )
 }
 
 
-DLLEXP NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResHandle materialRes, ResHandle compBufferRes )
+DLLEXP NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResHandle materialRes, ResHandle compBufferRes,
+									 int drawType, int elementsCount )
 {
 	SceneNode *parentNode = Modules::sceneMan().resolveNodeHandle( parent );
 	APIFUNC_VALIDATE_NODE( parentNode, "h3dAddComputeNode", 0 );
@@ -985,7 +992,8 @@ DLLEXP NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResHan
 	Resource *cbRes = Modules::resMan().resolveResHandle( compBufferRes );
 	APIFUNC_VALIDATE_RES_TYPE( cbRes, ResourceTypes::ComputeBuffer, "h3dAddComputeNode", 0 );
 
-	ComputeNodeTpl tpl( safeStr( name, 0 ), ( ComputeBufferResource * ) cbRes, ( MaterialResource * ) matRes );
+	ComputeNodeTpl tpl( safeStr( name, 0 ), ( ComputeBufferResource * ) cbRes, ( MaterialResource * ) matRes, 
+						drawType, elementsCount );
 
 	SceneNode *sn = Modules::sceneMan().findType( SceneNodeTypes::Compute )->factoryFunc( tpl );
 	return Modules::sceneMan().addNode( sn, *parentNode );

@@ -159,6 +159,23 @@ struct H3DStats
 	};
 };
 
+struct H3DDeviceCapabilities
+{
+	/* Enum: H3DDeviceCapabilities
+	The available GPU capabilities.
+
+	GeometryShaders			- GPU supports runtime geometry generation via geometry shaders
+	TessellationShaders     - GPU supports tessellation
+	ComputeShaders		    - GPU supports general-purpose computing via compute shaders
+	*/
+	enum List
+	{
+		GeometryShaders = 200,
+		TessellationShaders,
+		ComputeShaders
+	};
+};
+
 struct H3DResTypes
 {
 	/* Enum: H3DResTypes
@@ -440,30 +457,26 @@ struct H3DComputeBufRes
 	The available ComputeBuffer resource accessors.
 
 	ComputeBufElem				- General compute buffer configuration
-	DrawTypeElem				- Specifies how to draw buffer data
 	DrawParamsElem				- Specifies parameters for shader bindings
 	CompBufDataSizeI			- Size of the buffer
-	CompBufUseAsVertexBufferI	- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
-	DataDrawTypeI				- Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
-	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data) [write-only]
-	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3 [write-only]
+	CompBufDrawableI			- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
+	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data)
+	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3
 	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
-	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12 [write-only]
-	DrawParamsElementsCountI	- Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
+	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12
+	DrawParamsCountI			- Total number of specified vertex binding parameters [read-only]
 
 	*/
 	enum List
 	{
 		ComputeBufElem = 1000,
-		DrawTypeElem,
 		DrawParamsElem,
 		CompBufDataSizeI,
-		CompBufUseAsVertexBufferI,
-		DataDrawTypeI,
+		CompBufDrawableI,
 		DrawParamsNameStr,
 		DrawParamsSizeI,
 		DrawParamsOffsetI,
-		DrawParamsElementsCountI
+		DrawParamsCountI
 	};
 };
 
@@ -709,13 +722,18 @@ struct H3DComputeNode
 	CompBufResI    - Compute buffer resource that is used as data storage
 	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
 	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+	DrawTypeI	   - Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
+	ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
+
 	*/
 	enum List
 	{
 		MatResI = 800,
 		CompBufResI,
 		AABBMinF,
-		AABBMaxF
+		AABBMaxF,
+		DrawTypeI,
+		ElementsCountI
 	};
 };
 
@@ -947,6 +965,20 @@ DLL bool h3dSetOption( H3DOptions::List param, float value );
 		current value of the specified statistic parameter
 */
 DLL float h3dGetStat( H3DStats::List param, bool reset );
+
+/* Function: h3dGetDeviceCapabilities
+		Checks whether GPU supports a certain feature.
+
+	Details:
+		This function returns a value, indicating the support of a certain GPU capability.
+
+	Parameters:
+		param  - requested GPU feature
+
+	Returns:
+		1, if feature is supported, 0 otherwise
+*/
+DLL float h3dGetDeviceCapabilities( H3DDeviceCapabilities::List param );
 
 /* Function: h3dShowOverlays
 		Displays overlays on the screen.
@@ -2324,8 +2356,10 @@ DLL bool h3dHasEmitterFinished( H3DNode emitterNode );
 		name               - name of the node
 		materialRes        - handle to Material resource used for rendering
 		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
-
+		drawType		   - specifies how to treat data in the compute buffer. 0 - Triangles, 1 - Lines, 2 - Points
+		elementsCount	   - number of elements that need to be drawn
+		
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes );
+DLL H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int drawType, int elementsCount );

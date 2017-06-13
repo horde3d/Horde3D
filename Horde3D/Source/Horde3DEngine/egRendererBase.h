@@ -273,6 +273,12 @@ struct RDIVertexLayout
 // 		TextureBuffer
 // 	};
 // };
+enum RDIBufferMappingTypes
+{
+	Read = 0,
+	Write,
+	ReadWrite
+};
 
 // ---------------------------------------------------------
 // Textures
@@ -501,7 +507,7 @@ enum RDIPrimType
 enum RDIDrawBarriers
 {
 	NotSet = 0,
-	VertexBufferBarrier,	// Wait till vertex buffer is updated by shaders
+	VertexBufferBarrier,		// Wait till vertex buffer is updated by shaders
 	IndexBufferBarrier,			// Wait till index buffer is updated by shaders
 	ImageBarrier				// Wait till image is updated by shaders
 };
@@ -530,6 +536,8 @@ private:
 	CreateMemberFunctionChecker( destroyBuffer );
 	CreateMemberFunctionChecker( destroyTextureBuffer );
 	CreateMemberFunctionChecker( updateBufferData );
+	CreateMemberFunctionChecker( mapBuffer );
+	CreateMemberFunctionChecker( unmapBuffer );
 
 	CreateMemberFunctionChecker( calcTextureSize );
 	CreateMemberFunctionChecker( createTexture );
@@ -592,7 +600,9 @@ private:
     typedef void( *PFN_DESTROYBUFFER )( void* const, uint32& bufObj );
     typedef void( *PFN_DESTROYTEXTUREBUFFER )( void* const, uint32& bufObj );
 	typedef void( *PFN_UPDATEBUFFERDATA )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
-	
+	typedef void*( *PFN_MAPBUFFER )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
+	typedef void( *PFN_UNMAPBUFFER )( void* const, uint32 geoObj, uint32 bufObj );
+
 	typedef uint32( *PFN_CALCTEXTURESIZE )( void* const, TextureFormats::List format, int width, int height, int depth );
 	typedef uint32( *PFN_CREATETEXTURE )( void* const, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 										  bool hasMips, bool genMips, bool compress, bool sRGB );
@@ -661,7 +671,9 @@ private:
 	PFN_DESTROYBUFFER			_pfnDestroyBuffer;
 	PFN_DESTROYTEXTUREBUFFER	_pfnDestroyTextureBuffer;
 	PFN_UPDATEBUFFERDATA		_pfnUpdateBufferData;
-	
+	PFN_MAPBUFFER				_pfnMapBuffer;
+	PFN_UNMAPBUFFER				_pfnUnmapBuffer;
+
 	// textures
 	PFN_CALCTEXTURESIZE			_pfnCalcTextureSize;
 	PFN_CREATETEXTURE			_pfnCreateTexture;
@@ -739,6 +751,7 @@ private:
 		static_cast< T* >( pObj )->beginRendering();
 	}
 
+
 	// buffers
 	template<typename T>
 	static uint32            createVertexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
@@ -811,6 +824,20 @@ private:
 	{
 		static_cast< T* >( pObj )->updateBufferData( geoObj, bufObj, offset, size, data );
 	}
+
+	template<typename T>
+	static void *            mapBuffer_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj, 
+												uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
+	{
+		return static_cast< T* >( pObj )->mapBuffer( geoObj, bufObj, offset, size, mapType );
+	}
+
+	template<typename T>
+	static void              unmapBuffer_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj )
+	{
+		static_cast< T* >( pObj )->unmapBuffer( geoObj, bufObj );
+	}
+
 
 	// textures
 	template<typename T>
@@ -924,6 +951,7 @@ private:
 		return static_cast< T* >( pObj )->getDefaultFSCode();
 	}
 	
+
 	// Render bufs
 	template<typename T>
 	static uint32            createRenderBuffer_Invoker( void* const pObj, uint32 width, uint32 height, TextureFormats::List format,
@@ -963,6 +991,7 @@ private:
 		static_cast< T* >( pObj )->getRenderBufferDimensions( rbObj, width, height );
 	}
 
+
 	// Queries
 	template<typename T>
 	static uint32            createOcclusionQuery_Invoker( void* const pObj )
@@ -999,6 +1028,7 @@ private:
 	{
 		return static_cast< T* >( pObj )->createGPUTimer();
 	}
+
 
 	// drawing
 	template<typename T>
@@ -1060,7 +1090,9 @@ protected:
         CheckMemberFunction( destroyBuffer, void( T::* )( uint32& ) );
         CheckMemberFunction( destroyTextureBuffer, void( T::* )( uint32& ) );
 		CheckMemberFunction( updateBufferData, void( T::* )( uint32, uint32, uint32, uint32, void * ) );
-		
+		CheckMemberFunction( mapBuffer, void*( T::* )( uint32, uint32, uint32, uint32, RDIBufferMappingTypes ) );
+		CheckMemberFunction( unmapBuffer, void( T::* )( uint32, uint32 ) );
+
 		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
 		CheckMemberFunction( createTexture, uint32( T::* )( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) );
 		CheckMemberFunction( uploadTextureData, void( T::* )( uint32, int, int, const void * ) );
@@ -1121,6 +1153,8 @@ protected:
 		_pfnDestroyBuffer = ( PFN_DESTROYBUFFER ) &destroyBuffer_Invoker < T >;
 		_pfnDestroyTextureBuffer = ( PFN_DESTROYTEXTUREBUFFER ) &destroyTextureBuffer_Invoker < T > ;
 		_pfnUpdateBufferData = ( PFN_UPDATEBUFFERDATA ) &updateBufferData_Invoker < T >;
+		_pfnMapBuffer = ( PFN_MAPBUFFER ) &mapBuffer_Invoker < T >;
+		_pfnUnmapBuffer = ( PFN_UNMAPBUFFER ) &unmapBuffer_Invoker < T >;
 
 		_pfnCalcTextureSize = ( PFN_CALCTEXTURESIZE ) &calcTextureSize_Invoker < T >;
 		_pfnCreateTexture = ( PFN_CREATETEXTURE ) &createTexture_Invoker < T >;
@@ -1254,6 +1288,15 @@ public:
 	{ 
 		( *_pfnUpdateBufferData )( this, geoObj, bufObj, offset, size, data );
 	}
+	void *mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
+	{
+		return ( *_pfnMapBuffer )( this, geoObj, bufObj, offset, size, mapType );
+	}
+	void unmapBuffer( uint32 geoObj, uint32 bufObj )
+	{
+		( *_pfnUnmapBuffer )( this, geoObj, bufObj );
+	}
+
 	uint32 getBufferMem() const 
 	{ 
 		return _bufferMem;

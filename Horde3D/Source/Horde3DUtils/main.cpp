@@ -165,7 +165,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 			inf.read( dataBuf, fileSize );
 			inf.close();
 			// Send resource data to engine
-			result &= h3dLoadResource( res, dataBuf, fileSize );
+			result &= h3dLoadResource( res, dataBuf, ( int ) fileSize );
 		}
 		else // Resource file not found
 		{
