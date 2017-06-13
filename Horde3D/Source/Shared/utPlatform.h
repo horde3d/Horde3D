@@ -17,6 +17,8 @@
 	#include <assert.h>
 #endif
 
+#include <strings.h>
+
 // Detect platform
 #if defined( WINCE )
 #	if !defined( PLATFORM_WIN_CE )
