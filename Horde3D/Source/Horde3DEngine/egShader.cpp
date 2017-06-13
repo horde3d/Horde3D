@@ -630,6 +630,7 @@ bool ShaderResource::parseFXSection( char *data )
 						if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
 						if( tok.checkToken( "Wrap" ) ) sampler.sampState |= SS_ADDR_WRAP;
 						else if( tok.checkToken( "Clamp" ) ) sampler.sampState |= SS_ADDR_CLAMP;
+						else if( tok.checkToken( "Border" ) ) sampler.sampState |= SS_ADDR_CLAMPCOL;
 						else return raiseError( "FX: invalid enum value", tok.getLine() );
 					}
 					else if( tok.checkToken( "Filter" ) )
