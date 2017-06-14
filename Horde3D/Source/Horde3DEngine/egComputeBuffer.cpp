@@ -65,13 +65,9 @@ void ComputeBufferResource::createBuffer( uint32 size, uint8 *data )
 
 void ComputeBufferResource::release()
 {
-	if ( _bufferID && !_manuallyUpdated )
-	{
-		Modules::renderer().getRenderDevice()->destroyBuffer( _bufferID );
-	}
-
 	if ( _geometryParamsSet && _geoID && !_manuallyUpdated )
 	{
+		// destroys buffer with _bufferID as well
 		Modules::renderer().getRenderDevice()->destroyGeometry( _geoID );
 	}
 }
