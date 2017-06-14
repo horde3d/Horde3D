@@ -59,6 +59,7 @@ set(HORDE3D_SOURCES
 	utImage.h
 	utTimer.h
 	utOpenGL.h
+        ../Shared/utPlatform.h
 	../../Bindings/C++/Horde3D.h
 
 	${HORDE3D_EXTENSION_SOURCES}

@@ -47,7 +47,7 @@ SceneNodeTpl *ComputeNode::parsingFunc( map< string, string > &attribs )
 	bool result = true;
 
 	map< string, string >::iterator itr;
-	ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "", nullptr, nullptr, 0, 0 );
+    ComputeNodeTpl *computeTpl = new ComputeNodeTpl( "", 0x0, 0x0, 0, 0 );
 
 	itr = attribs.find( "computeBuffer" );
 	if ( itr != attribs.end() )

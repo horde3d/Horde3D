@@ -17,8 +17,6 @@
 	#include <assert.h>
 #endif
 
-#include <strings.h>
-
 // Detect platform
 #if defined( WINCE )
 #	if !defined( PLATFORM_WIN_CE )
@@ -132,6 +130,10 @@ typedef unsigned long long uint64;
 // Support for MSVC static code analysis
 #if defined( _MSC_VER ) && defined( _PREFAST_ )
 #	define ASSERT( exp ) __analysis_assume( exp );
+#endif
+
+#if !defined( _MSC_VER )
+#include <strings.h>
 #endif
 
 // Static compile-time assertion

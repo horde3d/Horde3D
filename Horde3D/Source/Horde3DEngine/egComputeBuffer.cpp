@@ -555,7 +555,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 			_mapped = true;
 
 			// Ensure that we are getting data that is not updated right now by the GPU
-			rdi->setMemoryBarrier( RDIDrawBarriers::VertexBufferBarrier );
+            rdi->setMemoryBarrier( VertexBufferBarrier );
 
 			if ( read )
 			{
