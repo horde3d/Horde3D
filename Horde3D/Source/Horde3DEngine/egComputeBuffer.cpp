@@ -372,11 +372,11 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 			switch ( param )
 			{
 				case ComputeBufferResData::DrawParamsOffsetI:
-					if ( _vlBindingsData.empty() || elemIdx < 0 || elemIdx > _vlBindingsData.size() - 1 ) break;
+					if ( _vlBindingsData.empty() || elemIdx < 0 || ( size_t ) elemIdx > _vlBindingsData.size() - 1 ) break;
 
 					return _vlBindingsData.at( elemIdx ).offset;
 				case ComputeBufferResData::DrawParamsSizeI:
-					if ( _vlBindingsData.empty() || elemIdx < 0 || elemIdx > _vlBindingsData.size() - 1 )
+					if ( _vlBindingsData.empty() || elemIdx < 0 || ( size_t ) elemIdx > _vlBindingsData.size() - 1 )
 
 					return _vlBindingsData.at( elemIdx ).size;
 				case  ComputeBufferResData::DrawParamsCountI:
