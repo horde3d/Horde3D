@@ -501,7 +501,7 @@ enum RDIPrimType
 	PRIM_TRISTRIP,
 	PRIM_LINES,
 	PRIM_POINTS,
-	PRIM_PATCHES,
+	PRIM_PATCHES
 };
 
 enum RDIDrawBarriers
@@ -1539,7 +1539,7 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps getCaps() const { return _caps; }
+	const DeviceCaps &getCaps() const { return _caps; }
 
 	friend class Renderer;
 
