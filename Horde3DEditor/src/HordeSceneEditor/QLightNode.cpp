@@ -82,6 +82,8 @@ void QLightNode::addRepresentation()
 	h3dSetNodeParamF(m_hordeID, H3DLight::ColorF3, 1, c.greenF());
 	h3dSetNodeParamF(m_hordeID, H3DLight::ColorF3, 0, c.redF());
 	h3dSetNodeParamF(m_hordeID, H3DLight::RadiusF, 0, radius());
+	h3dSetNodeParamF(m_hordeID, H3DLight::ColorMultiplierF, 0, intensity());
+
 	// load transformation from file...
 	float x, y, z, rx, ry, rz, sx, sy, sz;
 	getTransformation(x,y,z,rx,ry,rz,sx,sy,sz);
@@ -281,6 +283,22 @@ void QLightNode::setRadius(float value)
 	}
 	else if (value != radius())
 		m_model->undoStack()->push(new QXmlNodePropertyCommand(tr("Set Radius"), this, "Radius", value, LightRadiusID));
+}
+
+float QLightNode::intensity() const
+{
+	return m_xmlNode.attribute( "colMult" ).toFloat();
+}
+
+void QLightNode::setIntensity( float value )
+{
+	if ( signalsBlocked() )
+	{
+		m_xmlNode.setAttribute( "colMult", value );
+		h3dSetNodeParamF( m_hordeID, H3DLight::ColorMultiplierF, 0, value );
+	}
+	else if ( value != radius() )
+		m_model->undoStack()->push( new QXmlNodePropertyCommand( tr( "Set Intensity" ), this, "Intensity", value, LightIntensityID ) );
 }
 
 int QLightNode::shadowMapCount() const
