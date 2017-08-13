@@ -103,7 +103,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 				if( !renderTarget ) return "Reference to undefined render target in SwitchTarget";
 			}
 
-			stage.commands.push_back( PipelineCommand( PipelineCommands::SwitchTarget ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::SwitchTarget ) );
 			stage.commands.back().params.resize( 1 );
 			stage.commands.back().params[0].setPtr( renderTarget );
 		}
@@ -115,7 +115,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			void *renderTarget = findRenderTarget( node1.getAttribute( "sourceRT" ) );
 			if( !renderTarget ) return "Reference to undefined render target in BindBuffer";
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::BindBuffer ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::BindBuffer ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 3 );
 			params[0].setPtr( renderTarget );
@@ -124,11 +124,11 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 		}
 		else if( strcmp( node1.getName(), "UnbindBuffers" ) == 0 )
 		{
-			stage.commands.push_back( PipelineCommand( PipelineCommands::UnbindBuffers ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::UnbindBuffers ) );
 		}
 		else if( strcmp( node1.getName(), "ClearTarget" ) == 0 )
 		{
-			stage.commands.push_back( PipelineCommand( PipelineCommands::ClearTarget ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::ClearTarget ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 9 );
 			params[0].setBool( false );
@@ -177,7 +177,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			else if( _stricmp( orderStr, "BACK_TO_FRONT" ) == 0 ) order = RenderingOrder::BackToFront;
 			else if( _stricmp( orderStr, "NONE" ) == 0 ) order = RenderingOrder::None;
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DrawGeometry ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DrawGeometry ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 3 );			
 			params[0].setString( node1.getAttribute( "context" ) );
@@ -188,7 +188,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 		{
 			if( !node1.getAttribute( "context" ) ) return "Missing DrawOverlays attribute 'context'";
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DrawOverlays ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DrawOverlays ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 1 );
 			params[0].setString( node1.getAttribute( "context" ) );
@@ -201,7 +201,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			uint32 matRes = Modules::resMan().addResource(
 				ResourceTypes::Material, node1.getAttribute( "material" ), 0, false );
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DrawQuad ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DrawQuad ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 2 );
 			params[0].setResource( Modules::resMan().resolveResHandle( matRes ) );
@@ -215,7 +215,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			else if( _stricmp( orderStr, "BACK_TO_FRONT" ) == 0 ) order = RenderingOrder::BackToFront;
 			else if( _stricmp( orderStr, "NONE" ) == 0 ) order = RenderingOrder::None;
 
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DoForwardLightLoop ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DoForwardLightLoop ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 4 );
 			params[0].setString( node1.getAttribute( "context", "" ) );
@@ -225,7 +225,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 		}
 		else if( strcmp( node1.getName(), "DoDeferredLightLoop" ) == 0 )
 		{
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DoDeferredLightLoop ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DoDeferredLightLoop ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 2 );
 			params[0].setString( node1.getAttribute( "context", "" ) );
@@ -259,7 +259,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			uint32 matRes = Modules::resMan().addResource(
 				ResourceTypes::Material, node1.getAttribute( "material" ), 0, false );
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::SetUniform ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::SetUniform ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 6 );
 			params[0].setResource( Modules::resMan().resolveResHandle( matRes ) );
@@ -268,6 +268,25 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			params[3].setFloat( (float)atof( node1.getAttribute( "b", "0" ) ) );
 			params[4].setFloat( (float)atof( node1.getAttribute( "c", "0" ) ) );
 			params[5].setFloat( (float)atof( node1.getAttribute( "d", "0" ) ) );
+		}
+		else
+		{
+			// check commands in extensions
+			if ( ExternalPipelineCommandsManager::registeredCommandsCount() > 0 )
+			{
+				bool result = true;
+			 	PipelineCommand cmd( DefaultPipelineCommands::ExternalCommand );
+				
+				const char *msg = ExternalPipelineCommandsManager::parseCommand( node1.getName(), &node1, cmd, result );
+				if ( result )
+				{
+					stage.commands.push_back( cmd );
+				}
+				else
+				{
+					return msg;
+				}
+			}
 		}
 
 		node1 = node1.getNextSibling();
@@ -412,7 +431,7 @@ bool PipelineResource::load( const char *data, int size )
 		{
 			_stages.push_back( PipelineStage() );
 			string errorMsg = parseStage( node2, _stages.back() );
-			if( errorMsg != "" ) 
+			if( !errorMsg.empty() ) 
 				return raiseError( "Error in stage '" + _stages.back().id + "': " + errorMsg );
 			
 			node2 = node2.getNextSibling( "Stage" );

@@ -240,13 +240,13 @@ bool Renderer::init( RenderBackendType::List type )
 	ParticleVert v2( 1, 1 );
 	ParticleVert v3( 0, 1 );
 	
-	ParticleVert *parVerts = new ParticleVert[ParticlesPerBatch * 4];
+	ParticleVert *parVerts = new ParticleVert[ ParticlesPerBatch * 4 ];
 	for( uint32 i = 0; i < ParticlesPerBatch; ++i )
 	{
-		parVerts[i * 4 + 0] = v0; parVerts[i * 4 + 0].index = (float)i;
-		parVerts[i * 4 + 1] = v1; parVerts[i * 4 + 1].index = (float)i;
-		parVerts[i * 4 + 2] = v2; parVerts[i * 4 + 2].index = (float)i;
-		parVerts[i * 4 + 3] = v3; parVerts[i * 4 + 3].index = (float)i;
+		parVerts[ i * 4 + 0 ] = v0; parVerts[ i * 4 + 0 ].index = ( float ) i;
+		parVerts[ i * 4 + 1 ] = v1; parVerts[ i * 4 + 1 ].index = ( float ) i;
+		parVerts[ i * 4 + 2 ] = v2; parVerts[ i * 4 + 2 ].index = ( float ) i;
+		parVerts[ i * 4 + 3 ] = v3; parVerts[ i * 4 + 3 ].index = ( float ) i;
 	}
 
 	_particleGeo = _renderDevice->beginCreatingGeometry( _vlParticle );
@@ -2182,7 +2182,7 @@ void Renderer::render( CameraNode *camNode )
 
 			switch( pc.command )
 			{
-			case PipelineCommands::SwitchTarget:
+			case DefaultPipelineCommands::SwitchTarget:
 				// Unbind all textures
 				bindPipeBuffer( 0x0, "", 0 );
 				
@@ -2206,45 +2206,45 @@ void Renderer::render( CameraNode *camNode )
 				}
 				break;
 
-			case PipelineCommands::BindBuffer:
+			case DefaultPipelineCommands::BindBuffer:
 				rt = (RenderTarget *)pc.params[0].getPtr();
 				bindPipeBuffer( rt->rendBuf, pc.params[1].getString(), (uint32)pc.params[2].getInt() );
 				break;
 
-			case PipelineCommands::UnbindBuffers:
+			case DefaultPipelineCommands::UnbindBuffers:
 				bindPipeBuffer( 0x0, "", 0 );
 				break;
 
-			case PipelineCommands::ClearTarget:
+			case DefaultPipelineCommands::ClearTarget:
 				clear( pc.params[0].getBool(), pc.params[1].getBool(), pc.params[2].getBool(),
 				       pc.params[3].getBool(), pc.params[4].getBool(), pc.params[5].getFloat(),
 				       pc.params[6].getFloat(), pc.params[7].getFloat(), pc.params[8].getFloat() );
 				break;
 
-			case PipelineCommands::DrawGeometry:
+			case DefaultPipelineCommands::DrawGeometry:
 				drawGeometry( pc.params[0].getString(), pc.params[1].getString(),
 				              (RenderingOrder::List)pc.params[2].getInt(), _curCamera->_occSet );
 				break;
 
-			case PipelineCommands::DrawOverlays:
+			case DefaultPipelineCommands::DrawOverlays:
 				drawOverlays( pc.params[0].getString() );
 				break;
 
-			case PipelineCommands::DrawQuad:
+			case DefaultPipelineCommands::DrawQuad:
 				drawFSQuad( pc.params[0].getResource(), pc.params[1].getString() );
 			break;
 
-			case PipelineCommands::DoForwardLightLoop:
+			case DefaultPipelineCommands::DoForwardLightLoop:
 				drawLightGeometry( pc.params[0].getString(), pc.params[1].getString(),
 				                   pc.params[2].getBool(), (RenderingOrder::List)pc.params[3].getInt(),
 								   _curCamera->_occSet );
 				break;
 
-			case PipelineCommands::DoDeferredLightLoop:
+			case DefaultPipelineCommands::DoDeferredLightLoop:
 				drawLightShapes( pc.params[0].getString(), pc.params[1].getBool(), _curCamera->_occSet );
 				break;
 
-			case PipelineCommands::SetUniform:
+			case DefaultPipelineCommands::SetUniform:
 				if( pc.params[0].getResource() && pc.params[0].getResource()->getType() == ResourceTypes::Material )
 				{
 					((MaterialResource *)pc.params[0].getResource())->setUniform( pc.params[1].getString(),
@@ -2252,6 +2252,8 @@ void Renderer::render( CameraNode *camNode )
 						pc.params[4].getFloat(), pc.params[5].getFloat() );
 				}
 				break;
+			case DefaultPipelineCommands::ExternalCommand:
+				ExternalPipelineCommandsManager::executeCommand( pc );
 			}
 		}
 	}

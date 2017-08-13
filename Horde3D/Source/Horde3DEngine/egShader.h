@@ -223,6 +223,17 @@ public:
 	static Resource *factoryFunc( const std::string &name, int flags )
 		{ return new ShaderResource( name, flags ); }
 
+	static void getPreambles( const std::string *vertPreamble, const std::string *fragPreamble, const std::string *geomPreamble,
+							  const std::string *tessCtlPreamble, const std::string *tessEvalPreamble, const std::string *computePreamble ) 
+	{
+		if ( vertPreamble ) vertPreamble = &_vertPreamble; 
+		if ( fragPreamble ) fragPreamble = &_fragPreamble;
+		if ( geomPreamble ) geomPreamble = &_geomPreamble;
+		if ( tessCtlPreamble ) tessCtlPreamble = &_tessCtlPreamble;
+		if ( tessEvalPreamble ) tessEvalPreamble = &_tessEvalPreamble;
+		if ( computePreamble ) computePreamble = &_computePreamble;
+	}
+
 	static void setPreambles( const std::string &vertPreamble, const std::string &fragPreamble, const std::string &geomPreamble,
 							  const std::string &tessCtlPreamble, const std::string &tessEvalPreamble, const std::string &computePreamble )
 	{
