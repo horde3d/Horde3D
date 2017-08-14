@@ -799,7 +799,6 @@ DLLEXP bool h3dutScreenshotRaw( unsigned char *rgb, int len_rgb )
     // Sanity check: User must have provided a buffer that can hold the entire
     // RGB image (each of the RGB components is an unsigned char).
     if (len_rgb < width * height * 3) {
-      printf("Error: rgb buffer has insufficient length\n");
       return false;
     }
 
