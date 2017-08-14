@@ -244,6 +244,40 @@ DLL void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, floa
 */
 DLL H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
 
+/* Function: h3dutGetScreenshotParam
+   Return width and height for current screenshot.
+
+   Details:
+   This function is useful in conjunction with h3dutScreenshotRaw to allocate
+   arrays with the correct size.
+
+   Parameters:
+   width: will contain the screenshot width
+   height: will contain the screenshot height
+
+   Returns:
+   None
+*/
+DLL void h3dutGetScreenshotParam( int *width,  int *height);
+
+/* Function: h3dutScreenshotRaw
+   Take screenshot and copy it to user provided `rgb` buffer.
+
+   Details:
+
+   The user must provide an RGB array and its size in bytes. The buffer must be
+   at least width * height * 3 bytes large. Use `h3dutGetScreenshotParam` to
+   determine the width and height.
+
+   Parameters:
+   rgb: buffer to hold the image (must be at least width * height * 3 bytes large)
+   rgb_len: length of `rgb` buffer in bytes.
+
+   Returns:
+   true if screenshot could be copied.
+*/
+DLL bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len);
+
 /*	Group: Overlays */
 /* Function: h3dutShowText
 		Shows text on the screen using a font texture.
