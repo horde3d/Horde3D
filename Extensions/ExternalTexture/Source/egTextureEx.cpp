@@ -44,7 +44,7 @@ bool TextureResourceEx::importTexGL(int texGL, int width, int height )
     {
         m_imported = false;
         RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
-        _texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
+        _texObject = rdi->createTexture( _texType, _width, _height, _depth == 0 ? 1 : _depth, _texFormat,
                                          false, false, false, _sRGB );
     }
     replaceTexObj( texGL );

@@ -1695,6 +1695,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 	GeometryResource *curGeoRes = 0x0;
 	MaterialResource *curMatRes = 0x0;
 
+	bool tessellationSupported = rdi->getCaps().tesselation;
+
 	// Loop over mesh queue
 	for( size_t i = firstItem; i <= lastItem; ++i )
 	{
@@ -1790,7 +1792,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const string &shad
 			}
 
 			// Change draw type for tessellatable models
-			if ( meshNode->getTessellationStatus() == 1 ) drawType = PRIM_PATCHES;
+			if ( meshNode->getTessellationStatus() == 1 && tessellationSupported ) drawType = PRIM_PATCHES;
 		}
 		else
 		{

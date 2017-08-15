@@ -36,8 +36,10 @@ class QLightNode : public QSceneNode
 
 	Q_PROPERTY(float Field_Of_View READ fov WRITE setFov DESIGNABLE true USER true)
 	Q_CLASSINFO("Field_Of_View", "minimum=0.0;maximum=360.0;");
-	Q_PROPERTY(float Radius READ radius WRITE setRadius DESIGNABLE true USER true)	
+	Q_PROPERTY(float Radius READ radius WRITE setRadius DESIGNABLE true USER true)
 	Q_PROPERTY(QColor Color READ color WRITE setColor DESIGNABLE true USER true)
+	Q_PROPERTY(float Intensity READ intensity WRITE setIntensity DESIGNABLE true USER true)
+	Q_CLASSINFO( "Intensity", "minimum=0.0;maximum=100.0;decimals=4;singleStep=0.1;");
 	Q_PROPERTY(int Shadow_Map_Count READ shadowMapCount WRITE setShadowMapCount DESIGNABLE true USER true)
 	Q_CLASSINFO("Shadow_Map_Count", "minimum=0;maximum=4;");
 	Q_PROPERTY(float Shadow_Map_Bias READ shadowMapBias WRITE setShadowMapBias DESIGNABLE true USER true)
@@ -79,6 +81,9 @@ public:
 
 	float radius() const;
 	void setRadius(float value);
+
+	float intensity() const;
+	void setIntensity( float value );
 
 	Material material() const;
 	void setMaterial(const Material& material);
