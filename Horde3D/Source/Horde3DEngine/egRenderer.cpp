@@ -62,7 +62,7 @@ Renderer::Renderer()
 	_occProxies[ 0 ].reserve( 200 ); // meshes
 	_occProxies[ 1 ].reserve( 100 ); // lights
 
-	_renderDevice = 0;
+	_renderDevice = 0x0;
 }
 
 
@@ -130,8 +130,7 @@ unsigned char * Renderer::useScratchBuf( uint32 minSize, uint32 alignment )
 
 bool Renderer::init( RenderBackendType::List type )
 {
-	if ( _renderDevice == 0 ) _renderDevice = createRenderDevice( type );
-
+	if ( _renderDevice == 0x0 ) _renderDevice = createRenderDevice( type );
 	if ( !_renderDevice ) return false;
 
 	// Init Render Device Interface

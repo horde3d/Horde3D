@@ -144,7 +144,8 @@ public:
 	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
 
 	unsigned char *useScratchBuf( uint32 minSize, uint32 alignment );
-	
+	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
+
 	bool init( RenderBackendType::List type );
 	void initStates();
 
@@ -195,7 +196,6 @@ public:
 	int getRenderDeviceType() { return _renderDeviceType; }
 
 protected:
-	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
 	
 	void createPrimitives();
 	
