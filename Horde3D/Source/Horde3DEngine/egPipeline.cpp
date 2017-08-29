@@ -25,6 +25,11 @@ namespace Horde3D {
 
 using namespace std;
 
+std::vector< PipelineCommandRegEntry > ExternalPipelineCommandsManager::_registeredCommands = {};
+
+// *************************************************************************************************
+// Class PipelineResource
+// *************************************************************************************************
 
 PipelineResource::PipelineResource( const string &name, int flags ) :
 	Resource( ResourceTypes::Pipeline, name, flags )
@@ -183,15 +188,6 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			params[0].setString( node1.getAttribute( "context" ) );
 			params[1].setString( node1.getAttribute( "class", "" ) );
 			params[2].setInt( order );
-		}
-		else if( strcmp( node1.getName(), "DrawOverlays" ) == 0 )
-		{
-			if( !node1.getAttribute( "context" ) ) return "Missing DrawOverlays attribute 'context'";
-			
-			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DrawOverlays ) );
-			vector< PipeCmdParam > &params = stage.commands.back().params;
-			params.resize( 1 );
-			params[0].setString( node1.getAttribute( "context" ) );
 		}
 		else if( strcmp( node1.getName(), "DrawQuad" ) == 0 )
 		{

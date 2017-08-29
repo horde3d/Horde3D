@@ -202,23 +202,6 @@ DLLEXP float h3dGetDeviceCapabilities( RenderDeviceCapabilities::List param )
 }
 
 
-DLLEXP void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG,
-                             float colB, float colA, uint32 materialRes, int flags )
-{
-	Resource *resObj = Modules::resMan().resolveResHandle( materialRes ); 
-	APIFUNC_VALIDATE_RES_TYPE( resObj, ResourceTypes::Material, "h3dShowOverlays", APIFUNC_RET_VOID );
-
-	float rgba[4] = { colR, colG, colB, colA };
-	Modules::renderer().showOverlays( verts, (uint32)vertCount, rgba, (MaterialResource *)resObj, flags );
-}
-
-
-DLLEXP void h3dClearOverlays()
-{
-	Modules::renderer().clearOverlays();
-}
-
-
 // =================================================================================================
 // Resource functions
 // =================================================================================================

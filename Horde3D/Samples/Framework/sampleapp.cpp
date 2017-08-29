@@ -25,6 +25,8 @@
 #include <math.h>
 #include <iomanip>
 
+#include "Horde3DOverlays.h"
+
 using namespace std;
 
 
@@ -644,6 +646,13 @@ bool SampleApplication::init()
 		std::cout << "Unable to initialize engine" << std::endl;
 		
 		h3dutDumpMessages();
+		return false;
+	}
+
+	// Samples require overlays extension in order to display information
+	if ( !h3dCheckExtension( "Overlays" ) )
+	{
+		std::cout << "Unable to find overlays extension" << std::endl;
 		return false;
 	}
 

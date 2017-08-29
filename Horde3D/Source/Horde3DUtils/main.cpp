@@ -32,6 +32,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include "Horde3DOverlays.h"
+
 using namespace Horde3D;
 using namespace std;
 

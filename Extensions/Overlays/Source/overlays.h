@@ -21,10 +21,10 @@ namespace Horde3DOverlays {
 
 struct OverlayBatch
 {
-	Horde3D::PMaterialResource  materialRes;
-	uint32             firstVert, vertCount;
-	float              colRGBA[ 4 ];
-	int                flags;
+	Horde3D::PMaterialResource		materialRes;
+	uint32							firstVert, vertCount;
+	float							colRGBA[ 4 ];
+	int								flags;
 
 	OverlayBatch() {}
 
@@ -41,12 +41,25 @@ struct OverlayVert
 	float  u, v;  // Texture coordinates
 };
 
+struct CachedUniformLocation
+{
+	Horde3D::MaterialResource	*material;
+	int							uniformLocation;
+
+	CachedUniformLocation() {}
+
+	CachedUniformLocation( Horde3D::MaterialResource *mat, int loc ) : material( mat ), uniformLocation( loc )
+	{
+
+	}
+};
+
 class OverlayRenderer
 {
 public:
 	
-	static const char *parsePipelineCommandFunc( const char *commandName, void *xmlNodeParams, PipelineCommand &cmd );
-	static void executePipelineCommandFunc( const PipelineCommand *commandParams );
+	static const char *parsePipelineCommandFunc( const char *commandName, void *xmlNodeParams, Horde3D::PipelineCommand &cmd );
+	static void executePipelineCommandFunc( const Horde3D::PipelineCommand *commandParams );
 
 	static bool init();
 	static void release();
@@ -57,9 +70,10 @@ public:
 	static void clearOverlays();
 
 	static void drawOverlays( const std::string &shaderContext );
-
+	static int getInternalUniformLocation( MaterialResource *mat );
 private:
 
+	static std::vector< CachedUniformLocation >	_cachedLocations;
 	static std::vector< OverlayBatch >			_overlayBatches;
 	static OverlayVert							*_overlayVerts;
 	static uint32								_overlayGeo;

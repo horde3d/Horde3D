@@ -1231,11 +1231,37 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 
 		if( Modules::config().dumpFailedShaders )
 		{
-			std::ofstream out0( "shdDumpVS.txt", ios::binary ), out1( "shdDumpFS.txt", ios::binary );
-			if( out0.good() ) out0 << _tmpCodeVS;
-			if( out1.good() ) out1 << _tmpCodeFS;
-			out0.close();
-			out1.close();
+			bool shaderAvailability[ 6 ] = { vsAvailable, fsAvailable, gsAvailable, tscAvailable, tseAvailable, csAvailable };
+			std::string dumpFileName;
+			std::string *output;
+
+			for ( size_t i = 0; i < 6; ++i )
+			{
+				if ( shaderAvailability[ i ] == true )
+				{
+					switch ( i )
+					{
+						case 0 : // vertex shader
+							dumpFileName = "shdDumpVS.txt"; output = &_tmpCodeVS;
+						case 1:  // fragment shader
+							dumpFileName = "shdDumpFS.txt"; output = &_tmpCodeFS;
+						case 2:  // geometry shader
+							dumpFileName = "shdDumpGS.txt"; output = &_tmpCodeGS;
+						case 3:  // tessellation control shader
+							dumpFileName = "shdDumpTSC.txt"; output = &_tmpCodeTSCtl;
+						case 4:  // tessellation evaluation shader
+							dumpFileName = "shdDumpTSE.txt"; output = &_tmpCodeTSEval;
+						case 5:  // compute shader
+							dumpFileName = "shdDumpCS.txt"; output = &_tmpCodeCS;
+						default:
+							break;
+					}
+
+					std::ofstream out( dumpFileName, ios::binary );
+					if ( out.good() ) out << *output;
+					out.close();
+				}
+			}
 		}
 	}
 	else

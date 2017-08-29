@@ -49,7 +49,7 @@ struct DefaultPipelineCommands
 		UnbindBuffers,
 		ClearTarget,
 		DrawGeometry,
-		DrawOverlays,
+//		DrawOverlays,
 		DrawQuad,
 		DoForwardLightLoop,
 		DoDeferredLightLoop,

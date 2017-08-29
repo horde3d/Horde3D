@@ -16,6 +16,7 @@
 #include "egRenderer.h"
 #include "extension.h"
 #include "overlays.h"
+#include "egResource.h"
 
 #include "utDebug.h"
 
@@ -27,27 +28,12 @@ namespace Horde3DOverlays {
 
 	bool ExtOverlays::init()
 	{
-		
-
-
-		// Upload default shader used for debug view
-		if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGL2 )
-		{
-			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-				vsTerrainDebugView, fsTerrainDebugView, 0, 0, 0, 0 );
-		}
-		else
-		{
-			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-				vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, 0, 0, 0, 0 );
-		}
-
-		return true;
+		return OverlayRenderer::init();
 	}
 
 	void ExtOverlays::release()
 	{
-
+		OverlayRenderer::release();
 	}
 
 }  // namespace
@@ -63,13 +49,13 @@ namespace Horde3DOverlays {
 		APIFUNC_VALIDATE_RES_TYPE( resObj, ResourceTypes::Material, "h3dShowOverlays", APIFUNC_RET_VOID );
 
 		float rgba[ 4 ] = { colR, colG, colB, colA };
-		Modules::renderer().showOverlays( verts, ( uint32 ) vertCount, rgba, ( MaterialResource * ) resObj, flags );
+		OverlayRenderer::showOverlays( verts, ( uint32 ) vertCount, rgba, ( MaterialResource * ) resObj, flags );
 	}
 
 
 	DLLEXP void h3dClearOverlays()
 	{
-		Modules::renderer().clearOverlays();
+		OverlayRenderer::clearOverlays();
 	}
 
 }  // namespace

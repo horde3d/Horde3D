@@ -144,7 +144,6 @@ struct ShaderCombination
 	int                 uni_lightPos, uni_lightDir, uni_lightColor;
 	int                 uni_shadowSplitDists, uni_shadowMats, uni_shadowMapSize, uni_shadowBias;
 	int                 uni_parPosArray, uni_parSizeAndRotArray, uni_parColorArray;
-	int                 uni_olayColor;
 
 	std::vector< int >  customSamplers;
 	std::vector< int >  customUniforms;
@@ -152,7 +151,11 @@ struct ShaderCombination
 
 
 	ShaderCombination() :
-		combMask( 0 ), shaderObj( 0 ), lastUpdateStamp( 0 )
+		combMask( 0 ), shaderObj( 0 ), lastUpdateStamp( 0 ), 
+		uni_frameBufSize( -1 ), uni_viewMat( -1 ), uni_viewMatInv( -1 ), uni_projMat( -1 ), uni_viewProjMat( -1 ), 
+		uni_viewProjMatInv( -1 ), uni_viewerPos( -1 ), uni_worldMat( -1 ), uni_worldNormalMat( -1 ), uni_nodeId( -1 ), uni_customInstData( -1 ),
+		uni_skinMatRows( -1 ), uni_lightPos( -1 ), uni_lightDir( -1 ), uni_lightColor( -1 ), uni_shadowSplitDists( -1 ), uni_shadowMats( -1 ), 
+		uni_shadowMapSize( -1 ), uni_shadowBias( -1 ), uni_parPosArray, uni_parSizeAndRotArray, uni_parColorArray( -1 )
 	{
 	}
 };

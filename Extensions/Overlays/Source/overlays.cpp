@@ -1,3 +1,15 @@
+// *************************************************************************************************
+//
+// Horde3D
+//   Next-Generation Graphics Engine
+// --------------------------------------
+// Copyright (C) 2006-2017 Nicolas Schulz and Horde3D team
+//
+// This software is distributed under the terms of the Eclipse Public License v1.0.
+// A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
+//
+// *************************************************************************************************
+
 #include "overlays.h"
 
 #include "egModules.h"
@@ -13,6 +25,16 @@ using namespace Horde3D;
 
 const uint32 MaxNumOverlayVerts = 2048;
 const uint32 QuadIdxBufCount = MaxNumOverlayVerts * 6;
+
+uint32 OverlayRenderer::_overlayGeo = 0;
+uint32 OverlayRenderer::_overlayVB = 0;
+int OverlayRenderer::_uni_olayColor = -1;
+int OverlayRenderer::_vlOverlay = -1;
+
+std::vector< CachedUniformLocation > OverlayRenderer::_cachedLocations;
+
+std::vector< OverlayBatch > OverlayRenderer::_overlayBatches = {};
+OverlayVert *OverlayRenderer::_overlayVerts = nullptr;
 
 const char * OverlayRenderer::parsePipelineCommandFunc( const char *commandName, void *xmlNodeParams, PipelineCommand &cmd )
 {
@@ -30,10 +52,12 @@ const char * OverlayRenderer::parsePipelineCommandFunc( const char *commandName,
 	return "";
 }
 
+
 void OverlayRenderer::executePipelineCommandFunc( const PipelineCommand *commandParams )
 {
 	drawOverlays( commandParams->params[ 0 ].getString() );
 }
+
 
 bool OverlayRenderer::init()
 {
@@ -69,10 +93,14 @@ bool OverlayRenderer::init()
 
 	rdi->finishCreatingGeometry( _overlayGeo );
 
+	_cachedLocations.reserve( 16 );
+
 	// Register new pipeline commands
 	ExternalPipelineCommandsManager::registerPipelineCommand( "DrawOverlays", OverlayRenderer::parsePipelineCommandFunc, 
 																			  OverlayRenderer::executePipelineCommandFunc );
+	return true;
 }
+
 
 void OverlayRenderer::release()
 {
@@ -83,7 +111,9 @@ void OverlayRenderer::release()
 
 	_overlayBatches.clear();
 	_overlayVB = 0;
+	_vlOverlay = -1;
 }
+
 
 void OverlayRenderer::showOverlays( const float *verts, uint32 vertCount, float *colRGBA,
 	MaterialResource *matRes, int flags )
@@ -135,13 +165,12 @@ void OverlayRenderer::drawOverlays( const string &shaderContext )
 	rdi->updateBufferData( _overlayGeo, _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
 
 	rdi->setGeometry( _overlayGeo );
-	ASSERT( QuadIndexBufCount >= MaxNumOverlayVerts * 6 );
+	ASSERT( QuadIdxBufCount >= MaxNumOverlayVerts * 6 );
 
 	float aspect = ( float ) curCamera->getViewportWidth() / ( float ) curCamera->getViewportHeight();
 	Modules::renderer().setupViewMatrices( Matrix4f(), Matrix4f::OrthoMat( 0, aspect, 1, 0, -1, 1 ) );
 
 	MaterialResource *curMatRes = 0x0;
-	ShaderCombination *curShader = Modules::renderer().getCurShader();
 
 	for ( size_t i = 0, s = _overlayBatches.size(); i < s; ++i )
 	{
@@ -157,7 +186,7 @@ void OverlayRenderer::drawOverlays( const string &shaderContext )
 			}
 
 			curMatRes = ob.materialRes;
-			_uni_olayColor = rdi->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "olayColor" );
+			_uni_olayColor = getInternalUniformLocation( ob.materialRes );
 		}
 
 		if ( _uni_olayColor >= 0 )
@@ -166,6 +195,24 @@ void OverlayRenderer::drawOverlays( const string &shaderContext )
 		// Draw batch
 		rdi->drawIndexed( PRIM_TRILIST, ob.firstVert * 6 / 4, ob.vertCount * 6 / 4, ob.firstVert, ob.vertCount );
 	}
+}
+
+
+int OverlayRenderer::getInternalUniformLocation(MaterialResource *mat)
+{
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+	ShaderCombination *curShader = Modules::renderer().getCurShader();
+
+	for ( size_t i = 0; i < _cachedLocations.size(); ++i )
+	{
+		if ( _cachedLocations[ i ].material == mat )
+		{
+			return _cachedLocations[ i ].uniformLocation;
+		}
+	}
+
+	// create new entry
+	_cachedLocations.push_back( CachedUniformLocation( mat, rdi->getShaderConstLoc( curShader->shaderObj, "olayColor" ) ) );
 }
 
 } // namespace

@@ -31,7 +31,6 @@ using namespace std;
 Renderer::Renderer()
 {
 	_scratchBuf = 0x0;
-	_overlayVerts = 0x0;
 	_scratchBufSize = 0;
 	_frameID = 1;
 	_defShadowMap = 0;
@@ -47,7 +46,6 @@ Renderer::Renderer()
 	_smSize = 0;
 	_shadowRB = 0;
 	_vlPosOnly = 0;
-	_vlOverlay = 0;
 	_vlModel = 0;
 	_vlParticle = 0;
 
@@ -55,7 +53,6 @@ Renderer::Renderer()
 	_cubeGeo = 0;
 	_sphereGeo = 0;
 	_coneGeo = 0;
-	_overlayGeo = 0;
 	_FSPolyGeo = 0;
 
 	// reserve memory for occlusion culling proxies
@@ -72,24 +69,18 @@ Renderer::~Renderer()
 	{
 		releaseShadowRB();
 		_renderDevice->destroyTexture( _defShadowMap );
-		// 	_renderDevice->destroyBuffer( _particleVBO );
 		releaseShaderComb( _defColorShader );
 
 		_renderDevice->destroyGeometry( _particleGeo );
-		// Particle and overlay share the index buffer,
-		// so avoid releasing the index buffer of _overlayGeo by setting it to zero
-		if( _overlayGeo ) _renderDevice->setGeomIndexParams( _overlayGeo, 0, IDXFMT_16 );
 		_renderDevice->destroyGeometry( _cubeGeo );
 		_renderDevice->destroyGeometry( _sphereGeo );
 		_renderDevice->destroyGeometry( _coneGeo );
-		_renderDevice->destroyGeometry( _overlayGeo );
 		_renderDevice->destroyGeometry( _FSPolyGeo );
 
 		releaseRenderDevice();
 	}
 
 	delete[] _scratchBuf;
-	delete[] _overlayVerts;
 }
 
 
@@ -167,12 +158,6 @@ bool Renderer::init( RenderBackendType::List type )
 	};
 	_vlPosOnly = _renderDevice->registerVertexLayout( 1, attribsPosOnly );
 
-	VertexLayoutAttrib attribsOverlay[2] = {
-		{"vertPos", 0, 2, 0},
-		{"texCoords0", 0, 2, 8}
-	};
-	_vlOverlay = _renderDevice->registerVertexLayout( 2, attribsOverlay );
-	
 	VertexLayoutAttrib attribsModel[7] = {
 		{"vertPos", 0, 3, 0},
 		{"normal", 1, 3, 0},
@@ -212,9 +197,7 @@ bool Renderer::init( RenderBackendType::List type )
 	_defShadowMap = _renderDevice->createTexture( TextureTypes::Tex2D, 4, 4, 1, TextureFormats::DEPTH, false, false, false, false );
 	_renderDevice->uploadTextureData( _defShadowMap, 0, 0, shadowTex );
 
-	// Create index buffer used for drawing overlay quads
-	_overlayGeo = _renderDevice->beginCreatingGeometry( _vlOverlay );
-
+	// Create index buffer used for drawing particles
 	uint16 *quadIndices = new uint16[ QuadIndexBufCount ];
 	for( uint32 i = 0; i < QuadIndexBufCount / 6; ++i )
 	{
@@ -224,15 +207,6 @@ bool Renderer::init( RenderBackendType::List type )
 	_quadIdxBuf = _renderDevice->createIndexBuffer( QuadIndexBufCount * sizeof( uint16 ), quadIndices );
 	delete[] quadIndices; quadIndices = 0x0;
 	
-	_overlayBatches.reserve( 64 );
-	_overlayVerts = new OverlayVert[ MaxNumOverlayVerts ];
-	_overlayVB = _renderDevice->createVertexBuffer( MaxNumOverlayVerts * sizeof( OverlayVert ), 0x0 );
-
-	_renderDevice->setGeomVertexParams( _overlayGeo, _overlayVB, 0, 0, sizeof( OverlayVert ) );
-	_renderDevice->setGeomIndexParams( _overlayGeo, _quadIdxBuf, IDXFMT_16 );
-
-	_renderDevice->finishCreatingGeometry( _overlayGeo );
-
 	// Create particle geometry array
 	ParticleVert v0( 0, 0 );
 	ParticleVert v1( 1, 0 );
@@ -337,9 +311,6 @@ uint32 Renderer::getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const
 			break;
 		case DefaultVertexLayouts::Model:
 			return _vlModel;
-			break;
-		case DefaultVertexLayouts::Overlay:
-			return _vlOverlay;
 			break;
 		default:
 			break;
@@ -447,9 +418,6 @@ void Renderer::drawAABB( const Vec3f &bbMin, const Vec3f &bbMax )
 	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
 	
 	_renderDevice->setGeometry( _cubeGeo );
-// 	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
 }
@@ -464,9 +432,6 @@ void Renderer::drawSphere( const Vec3f &pos, float radius )
 	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
 
 	_renderDevice->setGeometry( _sphereGeo );
-// 	_renderDevice->setVertexBuffer( 0, _vbSphere, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibSphere, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 128 * 3, 0, 126 );
 }
@@ -480,9 +445,6 @@ void Renderer::drawCone( float height, float radius, const Matrix4f &transMat )
 	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
 
 	_renderDevice->setGeometry( _coneGeo );
-// 	_renderDevice->setVertexBuffer( 0, _vbCone, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibCone, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 22 * 3, 0, 13 );
 }
@@ -538,8 +500,7 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 	sc.uni_parSizeAndRotArray = _renderDevice->getShaderConstLoc( shdObj, "parSizeAndRotArray" );
 	sc.uni_parColorArray = _renderDevice->getShaderConstLoc( shdObj, "parColorArray" );
 	
-	// Overlay-specific uniforms
-	sc.uni_olayColor = _renderDevice->getShaderConstLoc( shdObj, "olayColor" );
+	// Uniforms, requested by extensions
 
 	return true;
 }
@@ -1175,9 +1136,7 @@ void Renderer::drawOccProxies( uint32 list )
 	
 	setShaderComb( &Modules::renderer()._defColorShader );
 	commitGeneralUniforms();
-// 	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
+
 	_renderDevice->setGeometry( _cubeGeo );
 
 	// Draw occlusion proxies
@@ -1202,90 +1161,6 @@ void Renderer::drawOccProxies( uint32 list )
 	_renderDevice->setDepthMask( prevDepthMask );
 
 	_occProxies[list].resize( 0 );
-}
-
-
-// =================================================================================================
-// Overlays
-// =================================================================================================
-
-void Renderer::showOverlays( const float *verts, uint32 vertCount, float *colRGBA,
-                             MaterialResource *matRes, int flags )
-{
-	uint32 numOverlayVerts = 0;
-	if( !_overlayBatches.empty() )
-		numOverlayVerts = _overlayBatches.back().firstVert + _overlayBatches.back().vertCount;
-	
-	if( numOverlayVerts + vertCount > MaxNumOverlayVerts ) return;
-
-	memcpy( &_overlayVerts[numOverlayVerts], verts, vertCount * sizeof( OverlayVert ) );
-	
-	// Check if previous batch can be extended
-	if( !_overlayBatches.empty() )
-	{
-		OverlayBatch &prevBatch = _overlayBatches.back();
-		if( matRes == prevBatch.materialRes && flags == prevBatch.flags &&
-			memcmp( colRGBA, prevBatch.colRGBA, 4 * sizeof( float ) ) == 0 )
-		{
-			prevBatch.vertCount += vertCount;
-			return;
-		}
-	}
-	
-	// Create new batch
-	_overlayBatches.push_back( OverlayBatch( numOverlayVerts, vertCount, colRGBA, matRes, flags ) );
-}
-
-
-void Renderer::clearOverlays()
-{
-	_overlayBatches.resize( 0 );
-}
-
-
-void Renderer::drawOverlays( const string &shaderContext )
-{
-	uint32 numOverlayVerts = 0;
-	if( !_overlayBatches.empty() )
-		numOverlayVerts = _overlayBatches.back().firstVert + _overlayBatches.back().vertCount;
-	
-	if( numOverlayVerts == 0 ) return;
-	
-	// Upload overlay vertices
-	_renderDevice->updateBufferData( _overlayGeo, _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
-
-// 	_renderDevice->setVertexBuffer( 0, _overlayVB, 0, sizeof( OverlayVert ) );
-// 	_renderDevice->setIndexBuffer( _quadIdxBuf, IDXFMT_16 );
-	_renderDevice->setGeometry( _overlayGeo );
-	ASSERT( QuadIndexBufCount >= MaxNumOverlayVerts * 6 );
-
-	float aspect = (float)_curCamera->_vpWidth / (float)_curCamera->_vpHeight;
-	setupViewMatrices( Matrix4f(), Matrix4f::OrthoMat( 0, aspect, 1, 0, -1, 1 ) );
-	
-	MaterialResource *curMatRes = 0x0;
-	
-	for( size_t i = 0, s = _overlayBatches.size(); i < s; ++i )
-	{
-		OverlayBatch &ob = _overlayBatches[i];
-		
-		if( curMatRes != ob.materialRes )
-		{
-			if( !setMaterial( ob.materialRes, shaderContext ) )
-			{
-				// Unsuccessful material setting probably has destroyed the last setted material
-				curMatRes = 0x0;
-				continue;
-			}
-// 			_renderDevice->setVertexLayout( _vlOverlay );
-			curMatRes = ob.materialRes;
-		}
-		
-		if( _curShader->uni_olayColor >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_olayColor, CONST_FLOAT4, ob.colRGBA );
-		
-		// Draw batch
-		_renderDevice->drawIndexed( PRIM_TRILIST, ob.firstVert * 6/4, ob.vertCount * 6/4, ob.firstVert, ob.vertCount );
-	}
 }
 
 
@@ -2227,9 +2102,9 @@ void Renderer::render( CameraNode *camNode )
 				              (RenderingOrder::List)pc.params[2].getInt(), _curCamera->_occSet );
 				break;
 
-			case DefaultPipelineCommands::DrawOverlays:
-				drawOverlays( pc.params[0].getString() );
-				break;
+// 			case DefaultPipelineCommands::DrawOverlays:
+// 				drawOverlays( pc.params[0].getString() );
+// 				break;
 
 			case DefaultPipelineCommands::DrawQuad:
 				drawFSQuad( pc.params[0].getResource(), pc.params[1].getString() );
