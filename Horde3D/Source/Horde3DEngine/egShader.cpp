@@ -1242,17 +1242,17 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 					switch ( i )
 					{
 						case 0 : // vertex shader
-							dumpFileName = "shdDumpVS.txt"; output = &_tmpCodeVS;
+							dumpFileName = "shdDumpVS.txt"; output = &_tmpCodeVS; break;
 						case 1:  // fragment shader
-							dumpFileName = "shdDumpFS.txt"; output = &_tmpCodeFS;
+							dumpFileName = "shdDumpFS.txt"; output = &_tmpCodeFS; break;
 						case 2:  // geometry shader
-							dumpFileName = "shdDumpGS.txt"; output = &_tmpCodeGS;
+							dumpFileName = "shdDumpGS.txt"; output = &_tmpCodeGS; break;
 						case 3:  // tessellation control shader
-							dumpFileName = "shdDumpTSC.txt"; output = &_tmpCodeTSCtl;
+							dumpFileName = "shdDumpTSC.txt"; output = &_tmpCodeTSCtl; break;
 						case 4:  // tessellation evaluation shader
-							dumpFileName = "shdDumpTSE.txt"; output = &_tmpCodeTSEval;
+							dumpFileName = "shdDumpTSE.txt"; output = &_tmpCodeTSEval; break;
 						case 5:  // compute shader
-							dumpFileName = "shdDumpCS.txt"; output = &_tmpCodeCS;
+							dumpFileName = "shdDumpCS.txt"; output = &_tmpCodeCS; break;
 						default:
 							break;
 					}
