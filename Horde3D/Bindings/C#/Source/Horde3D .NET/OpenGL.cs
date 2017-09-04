@@ -67,7 +67,7 @@ namespace Horde3DNET
         }
 
         [Flags]
-        public enum PFD_FLAGS : uint
+        public enum PFD_FLAGS : UInt32
         {
             PFD_DOUBLEBUFFER = 0x00000001,
             PFD_STEREO = 0x00000002,
