@@ -1257,7 +1257,7 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 							break;
 					}
 
-					std::ofstream out( dumpFileName, ios::binary );
+                    std::ofstream out( dumpFileName.c_str(), ios::binary );
 					if ( out.good() ) out << *output;
 					out.close();
 				}
