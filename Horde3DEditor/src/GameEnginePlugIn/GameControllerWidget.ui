@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GameControllerWidget</class>
+ <widget class="QWidget" name="GameControllerWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>230</width>
+    <height>193</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>GameEntity:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1" colspan="3">
+    <widget class="QLineEdit" name="m_entityName">
+     <property name="toolTip">
+      <string>Specify a unique entity name for this object</string>
+     </property>
+     <property name="statusTip">
+      <string>Entity Name</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="4">
+    <widget class="AttachmentTreeView" name="m_attachmentTreeView">
+     <property name="statusTip">
+      <string>Game components aggregated in this entity</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QToolButton" name="m_addComponent">
+     <property name="toolTip">
+      <string>Add a new Game Component</string>
+     </property>
+     <property name="text">
+      <string>Add Component</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <spacer>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>51</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="2" column="3">
+    <widget class="QToolButton" name="m_removeComponent">
+     <property name="text">
+      <string>Remove Component</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0" colspan="2">
+    <widget class="QStackedWidget" name="m_componentWidgets">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="m_ttsWidgetContainer">
+      <layout class="QGridLayout" name="gridLayout_3">
+       <property name="margin">
+        <number>1</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="TTSWidget" name="m_ttsWidget" native="true"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_keyframeAnimWidgetContainer">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>2</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="KeyframeAnimationWidget" name="m_keyframeAnimWidget" native="true"/>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>2</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_crowdParticleWidgetContainer">
+      <layout class="QVBoxLayout">
+       <property name="margin">
+        <number>1</number>
+       </property>
+       <item>
+        <widget class="CrowdParticleWidget" name="m_crowdParticleWidget" native="true"/>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_physicsWidgetContainer">
+      <layout class="QGridLayout">
+       <property name="margin">
+        <number>1</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="PhysicsWidget" name="m_physicsWidget" native="true"/>
+       </item>
+       <item row="0" column="1">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>2</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>2</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_soundWidgetContainer">
+      <layout class="QGridLayout">
+       <item row="0" column="0">
+        <widget class="SoundWidget" name="m_soundWidget" native="true"/>
+       </item>
+       <item row="0" column="1">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_crowdVisibilityWidgetContainer">
+      <layout class="QGridLayout">
+       <property name="margin">
+        <number>1</number>
+       </property>
+       <item row="0" column="0">
+        <widget class="CrowdVisibilityWidget" name="m_crowdVisibilityWidget" native="true"/>
+       </item>
+       <item row="0" column="1">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>2</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>2</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_phonemeEditorWidgetContainer">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <property name="margin">
+        <number>1</number>
+       </property>
+       <item row="0" column="0">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeType">
+          <enum>QSizePolicy::MinimumExpanding</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>2</width>
+           <height>2</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="0" column="1">
+        <widget class="PhonemeEditorWidget" name="m_phonemeEditorWidget" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_emptyWidget"/>
+    </widget>
+   </item>
+  </layout>
+  <action name="m_actionAddPhysicsComponent">
+   <property name="text">
+    <string>Add Physics Component</string>
+   </property>
+  </action>
+  <action name="m_actionAddTTSComponent">
+   <property name="text">
+    <string>Add TTS Component</string>
+   </property>
+  </action>
+  <action name="m_actionAddKeyframeAnimComponent">
+   <property name="text">
+    <string>Add Keyframe Animation Component</string>
+   </property>
+  </action>
+  <action name="m_actionAddCrowdParticleComponent">
+   <property name="text">
+    <string>Add Crowd Particle Component</string>
+   </property>
+  </action>
+  <action name="m_actionAddCrowdVisNodeComponent">
+   <property name="text">
+    <string>Add Crowd Visibility Node Component</string>
+   </property>
+  </action>
+  <action name="m_actionAddSound3DComponent">
+   <property name="text">
+    <string>Add Sound3D Component</string>
+   </property>
+  </action>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>AttachmentTreeView</class>
+   <extends>QTreeView</extends>
+   <header>AttachmentTreeView.h</header>
+  </customwidget>
+  <customwidget>
+   <class>PhysicsWidget</class>
+   <extends>QWidget</extends>
+   <header>PhysicsWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>TTSWidget</class>
+   <extends>QWidget</extends>
+   <header>TTSWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>KeyframeAnimationWidget</class>
+   <extends>QWidget</extends>
+   <header>KeyframeAnimationWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CrowdParticleWidget</class>
+   <extends>QWidget</extends>
+   <header>CrowdParticleWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>CrowdVisibilityWidget</class>
+   <extends>QWidget</extends>
+   <header>CrowdVisibilityWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>SoundWidget</class>
+   <extends>QWidget</extends>
+   <header>SoundWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>PhonemeEditorWidget</class>
+   <extends>QWidget</extends>
+   <header>PhonemeEditorWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

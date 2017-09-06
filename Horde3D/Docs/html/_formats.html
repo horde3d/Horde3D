@@ -26,9 +26,10 @@ maps need to be flipped manually in the shaders.</p>
 are some limitations concerning exotic formats like 1 bpp textures.</p>
 <ul>
     <li>DDS (pixel formats: RGB8, RGBA8, RGBA16F, DXT1, DXT3, DXT5 and a few other)</li>
-	<li>JPEG (non-progressive)</li>
+	<li>JPEG (baseline & progressive)</li>
     <li>PNG</li>
     <li>TGA</li>
+	<li>GIF</li>
 	<li>BMP (non-RLE)</li>
     <li>PSD (RGB format only)</li>
     <li>HDR</li>
@@ -92,6 +93,22 @@ In Horde3D materials are specified with an XML syntax.</p>
                 <tr>
                     <td><b>name</b></td>
                     <td>name of the shader flag to be set {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+	<tr>
+        <td><b>DataBuffer</b></td>
+        <td>
+            buffer used for compute purposes {*}
+            <table>
+                <tr>
+                    <td><b>name</b></td>
+                    <td>name of the buffer that will be used by the shader {required}</td>
+                </tr>
+				<tr>
+                    <td><b>source</b></td>
+                    <td>(file-)name of the compute buffer that contains the data {required}</td>
                 </tr>
             </table>
         </td>
@@ -170,7 +187,7 @@ In Horde3D materials are specified with an XML syntax.</p>
 <div class="codebox">
 <pre>
 &lt;Material class="Translucent.MyClass"&gt;
-    &lt;Shader source="myshader.shader.xml" /&gt;
+    &lt;Shader source="myshader.shader" /&gt;
     &lt;Sampler name="albedoMap" map="mytex.jpg" /&gt;
     &lt;Uniform name="myColor" a="1.0" b="1.0" c="0.5" /&gt;
 &lt;/Material&gt;
@@ -303,6 +320,10 @@ In Horde3D materials are specified with an XML syntax.</p>
                     <td><b>lodLevel</b></td>
                     <td>see <a href="_api.html#H3DMesh">MeshNodeParams</a> {optional}</td>
                 </tr>
+				<tr>
+                    <td><b>tessellatable</b></td>
+                    <td>see <a href="_api.html#H3DMesh">MeshNodeParams</a> {optional}</td>
+                </tr>
             </table>
         </td>
     </tr>
@@ -353,6 +374,10 @@ In Horde3D materials are specified with an XML syntax.</p>
                 </tr>
                 <tr>
                     <td><b>col_B</b></td>
+                    <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
+                </tr>
+				<tr>
+                    <td><b>col_mult</b></td>
                     <td>see <a href="_api.html#H3DLight">LightNodeParams</a> {optional}</td>
                 </tr>
                 <tr>
@@ -473,6 +498,55 @@ In Horde3D materials are specified with an XML syntax.</p>
            </table>
        </td>
     </tr>
+	<tr>
+        <td><b>Compute</b></td>
+        <td>
+            Compute scene node. Used for visualization of compute buffer data {*}
+            <table>
+                <tr>
+                    <td><b>material</b></td>
+                    <td>(file-)name of material resource {required}</td>
+                </tr>
+                <tr>
+                    <td><b>computeBuffer</b></td>
+                    <td>(file-)name of compute buffer resource {required}</td>
+                </tr>
+                <tr>
+                    <td><b>elementsCount</b></td>
+                    <td>number of vertices to draw {required}</td>
+                </tr>
+                <tr>
+                    <td><b>drawType</b></td>
+                    <td>specifies how to treat data in compute buffer. Possible values: triangles, lines, points {required}</td>
+                </tr>
+                
+                <tr>
+                    <td><b>aabbMinX</b></td>
+                    <td>X position of the first point used for AABB creation {required}</td>
+                </tr>
+                <tr>
+                    <td><b>aabbMinY</b></td>
+                    <td>Y position of the first point used for AABB creation {required}</td>
+                </tr>
+                <tr>
+                    <td><b>aabbMinZ</b></td>
+                    <td>Z position of the first point used for AABB creation {required}</td>
+                </tr>
+                <tr>
+                    <td><b>aabbMaxX</b></td>
+                    <td>X position of the second point used for AABB creation {required}</td>
+                </tr>
+                <tr>
+                    <td><b>aabbMaxY</b></td>
+                    <td>Y position of the second point used for AABB creation {required}</td>
+                </tr>
+                <tr>
+                    <td><b>aabbMaxZ</b></td>
+                    <td>Z position of the second point used for AABB creation {required}</td>
+                </tr>
+           </table>
+       </td>
+    </tr>
 </table>
 </div>
 <p>The XML document can have an arbitrary scene node as root element.</p>
@@ -553,6 +627,82 @@ defining its properties over the life time. The following channels are available
 </div>
 
 
+<h2>ComputeBuffer Files</h2>
+<p><i>Filename-extension: .compute.xml</i></p>
+<p>ComputeBuffer files are used to configure buffers that are processed on the GPU. The results of computing can also be visualized via
+Compute node. Currently only <b>float data</b> can be stored in compute buffer.</p>
+
+<p>The following XML node elements with the described attributes are supported for a ComputeBuffer file:</p>
+<div class="descbox">
+<table>
+    <tr>
+        <td><b>ComputeBuffer</b></td>
+        <td>
+			root element of the document {1}
+			<table>
+                <tr>
+                    <td><b>dataSize</b></td>
+                    <td>size of data to be processed (in bytes) {required}</td>
+                </tr>
+                <tr>
+                    <td><b>drawable</b></td>
+                    <td>specifies whether buffer contents can be renderer via Compute node {required}</td>
+                </tr>
+            </table>
+		</td>
+    </tr>
+    <tr>
+        <td><b>Bindings</b></td>
+        <td>
+            configuration of a vertex bindings (used for drawing)
+            <table>
+                <tr>
+                    <td><b>name</b></td>
+                    <td>id of the binding {required}</td>
+                </tr>
+                <tr>
+                    <td><b>offset</b></td>
+                    <td>number of bytes from the start of the buffer or previous vertex attribute {required}</td>
+                </tr>
+                <tr>
+                    <td><b>size</b></td>
+                    <td>number of components that are handled by this binding (for example, 4 means four floats) {required}</td>
+                </tr>
+                <tr>
+                    <td><b>attribNumber</b></td>
+                    <td>position of attributes in the buffer. Starts from 1 {required}</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+	<tr>
+        <td><b>Data</b></td>
+        <td>
+            data that will be stored in compute buffer. Only float type data is supported. Values are separated with semicolon (<b>;</b>) symbol.
+			Last value should also be appended with <b>;</b> symbol. New line, space and tabulation symbols are ignored. 
+        </td>
+    </tr>
+</table>
+</div>
+
+<h4>Sample</h4>
+<div class="codebox">
+<pre>
+&lt;ComputeBuffer dataSize="800000" drawable="True"&gt;
+    &lt;Bindings name="partPosition" offset="0" size="4" attribNumber="1" /&gt;
+    &lt;Bindings name="partVelocity" offset="16" size="4" attribNumber="2" /&gt;
+    &lt;Data&gt;
+	-51.5535;-12.7655;70.6242;1;0.807698;0;2.94798;0;
+	-24.599;-5.81407;-11.7187;1;-0.430079;0;4.51396;0;
+	6.09182;-5.38925;-24.9027;1;-0.971359;0;-1.18809;0;
+	19.7755;5.50008;58.1599;1;0.946767;0;-1.6096;0;
+	9.45681;0.459008;-34.2102;1;-0.963852;0;-1.3322;0;
+    &lt;/Data&gt;
+&lt;/ComputeBuffer&gt;
+</pre>
+</div>
+
+
 <h2>Geometry</h2>
 <p><i>Filename-extensions: .geo</i></p>
 <p>The file format for geometry is a binary format and has to be created with a suitable tool
@@ -560,7 +710,7 @@ like the Collada Converter described above.
 A geometry resource contains the raw vertex data with optional morph targets organized as streams. Furthermore
 it contains the triangle data as well as information about the skeleton of a model.</p>
 
-<p><b>Important Note:</b> Currently the maximum number of joints for skeletal animation is limited to 75.</p>
+<p><b>Important Note:</b> Currently the maximum number of joints for skeletal animation is limited to 75 for OpenGL 2 and 330 for OpenGL 4.</p>
 
 <h3>Version 5</h3>
 <p>The file format is based on streams. The streams are written in that order:

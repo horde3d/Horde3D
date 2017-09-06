@@ -12,7 +12,7 @@ using System.Security.Permissions;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Horde3D.NET.dll")]
-[assembly: AssemblyCopyright("Copyright: Martin Burkhard")]
+[assembly: AssemblyCopyright("Copyright ©  2006-2016 Nicolas Schulz, Martin Burkhard and Horde3D team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyDefaultAlias("Horde3D.NET")]

@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/Icons" >
+        <file>Resources/Cam2Node.png</file>
+        <file>Resources/Front.png</file>
+        <file>Resources/Fullscreen.png</file>
+        <file>Resources/Icon.png</file>
+        <file>Resources/Move.png</file>
+        <file>Resources/New.png</file>
+        <file>Resources/Node2Cam.png</file>
+        <file>Resources/Open.png</file>
+        <file>Resources/Repository.png</file>
+        <file>Resources/Right.png</file>
+        <file>Resources/RootIcon.png</file>
+        <file>Resources/Rotate.png</file>
+        <file>Resources/Save.png</file>
+        <file>Resources/Top.png</file>
+        <file>Resources/Wireframe.png</file>
+        <file>Resources/logo.png</file>
+        <file>Resources/scale.png</file>
+    </qresource>
+</RCC>

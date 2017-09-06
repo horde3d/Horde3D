@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -117,7 +117,7 @@ SceneNode *CameraNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 }
 
 
-int CameraNode::getParamI( int param )
+int CameraNode::getParamI( int param ) const
 {
 	switch( param )
 	{
@@ -202,7 +202,7 @@ void CameraNode::setParamI( int param, int value )
 }
 
 
-float CameraNode::getParamF( int param, int compIdx )
+float CameraNode::getParamF( int param, int compIdx ) const
 {
 	switch( param )
 	{
@@ -269,14 +269,15 @@ void CameraNode::setupViewParams( float fov, float aspect, float nearPlane, floa
 	_frustTop = ymax;
 	_frustNear = nearPlane;
 	_frustFar = farPlane;
-
-	// setting view params implicitly disables the manual projection matrix
-	_manualProjMat = false;
 	
+	// setting view params implicitly disables the manual projection matrix 
+	_manualProjMat = false;
+
 	markDirty();
 }
 
-void CameraNode::setProjectionMatrix( float* projMat ) 
+
+void CameraNode::setProjectionMatrix( float* projMat )
 {
 	memcpy( _projMat.x, projMat, 16 * sizeof( float ) );
 	_manualProjMat = true;
@@ -294,14 +295,14 @@ void CameraNode::onPostUpdate()
 	_viewMat = _absTrans.inverted();
 	
 	// Calculate projection matrix if not using a manually set one
-	if( !_manualProjMat )
+	if ( !_manualProjMat )
 	{
-		if( !_orthographic )
+		if ( !_orthographic )
 			_projMat = Matrix4f::PerspectiveMat( _frustLeft, _frustRight, _frustBottom, _frustTop, _frustNear, _frustFar );
 		else
 			_projMat = Matrix4f::OrthoMat( _frustLeft, _frustRight, _frustBottom, _frustTop, _frustNear, _frustFar );
 	}
-
+	
 	// Update frustum
 	_frustum.buildViewFrustum( _viewMat, _projMat );
 }

@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -242,7 +242,7 @@ struct DaeTriGroup
 	}
 
 
-	Vec3f getPos( int posIndex )
+	Vec3f getPos( int posIndex ) const
 	{
 		Vec3f v;
 		
@@ -255,7 +255,7 @@ struct DaeTriGroup
 		return v;
 	}
 
-	Vec3f getNormal( int normIndex )
+	Vec3f getNormal( int normIndex ) const
 	{
 		Vec3f v;
 		
@@ -271,7 +271,7 @@ struct DaeTriGroup
 		return v;
 	}
 
-	Vec3f getTexCoords( int texIndex, unsigned int set )
+	Vec3f getTexCoords( int texIndex, unsigned int set ) const
 	{
 		Vec3f v;
 		
@@ -410,7 +410,7 @@ struct DaeGeometry
 	}
 
 
-	Vec3f getPos( int posIndex )
+	Vec3f getPos( int posIndex ) const
 	{
 		Vec3f v;
 		
@@ -438,7 +438,7 @@ public:
 	}
 	
 
-	DaeGeometry *findGeometry( const std::string &id )
+	DaeGeometry *findGeometry( const std::string &id ) const
 	{
 		if( id == "" ) return 0x0;
 		

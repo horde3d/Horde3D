@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -71,17 +71,17 @@ public:
 	static SceneNodeTpl *parsingFunc( std::map<std::string, std::string > &attribs );
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
 	
-	int getParamI( int param );
+	int getParamI( int param ) const;
 	void setParamI( int param, int value );
-	float getParamF( int param, int compIdx );
+	float getParamF( int param, int compIdx ) const;
 	void setParamF( int param, int compIdx, float value );
-	const char *getParamStr( int param );
+	const char *getParamStr( int param ) const;
 	void setParamStr( int param, const char *value );
 
-	void calcScreenSpaceAABB( const Matrix4f &mat, float &x, float &y, float &w, float &h );
+	void calcScreenSpaceAABB( const Matrix4f &mat, float &x, float &y, float &w, float &h ) const;
 
-	const Frustum &getFrustum() { return _frustum; }
-	const Matrix4f &getViewMat() { return _viewMat; }
+	const Frustum &getFrustum() const { return _frustum; }
+	const Matrix4f &getViewMat() const { return _viewMat; }
 
 private:
 	LightNode( const LightNodeTpl &lightTpl );

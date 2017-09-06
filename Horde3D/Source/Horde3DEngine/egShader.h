@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -17,9 +17,13 @@
 #include "egResource.h"
 #include "egTexture.h"
 #include <set>
-
+#include <vector>
+#include <string>
 
 namespace Horde3D {
+
+// forward declarations
+class Tokenizer;
 
 // =================================================================================================
 // Code Resource
@@ -42,12 +46,12 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	bool hasDependency( CodeResource *codeRes );
+	bool hasDependency( CodeResource *codeRes ) const;
 	bool tryLinking( uint32 *flagMask );
-	std::string assembleCode();
+	std::string assembleCode() const;
 
-	bool isLoaded() { return _loaded; }
-	const std::string &getCode() { return _code; }
+	bool isLoaded() const { return _loaded; }
+	const std::string &getCode() const { return _code; }
 
 private:
 	bool raiseError( const std::string &msg );
@@ -88,11 +92,16 @@ struct BlendModes
 {
 	enum List
 	{
-		Replace,
-		Blend,
-		Add,
-		AddBlended,
-		Mult
+		Zero = 0,
+		One,
+		SrcAlpha,
+		OneMinusSrcAlpha,
+		DestAlpha,
+		OneMinusDestAlpha,
+		DestColor,
+		SrcColor,
+		OneMinusDestColor,
+		OneMinusSrcColor
 	};
 };
 
@@ -139,6 +148,7 @@ struct ShaderCombination
 
 	std::vector< int >  customSamplers;
 	std::vector< int >  customUniforms;
+	std::vector< int >  customBuffers;
 
 
 	ShaderCombination() :
@@ -154,28 +164,36 @@ struct ShaderContext
 	uint32                            flagMask;
 	
 	// RenderConfig
-	BlendModes::List                  blendMode;
+	BlendModes::List                  blendStateSrc;
+	BlendModes::List				  blendStateDst;
 	TestModes::List                   depthFunc;
 	CullModes::List                   cullMode;
+	uint16							  tessVerticesInPatchCount;
 	bool                              depthTest;
 	bool                              writeDepth;
 	bool                              alphaToCoverage;
+	bool							  blendingEnabled;
 	
 	// Shaders
 	std::vector< ShaderCombination >  shaderCombs;
-	int                               vertCodeIdx, fragCodeIdx;
+	int                               vertCodeIdx, fragCodeIdx, geomCodeIdx, tessCtlCodeIdx, tessEvalCodeIdx, computeCodeIdx;
 	bool                              compiled;
 
 
 	ShaderContext() :
-		blendMode( BlendModes::Replace ), depthFunc( TestModes::LessEqual ),
-		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ),
-		vertCodeIdx( -1 ), fragCodeIdx( -1 ), compiled( false )
+		blendStateSrc( BlendModes::Zero ), blendStateDst( BlendModes::Zero ), depthFunc( TestModes::LessEqual ),
+		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ), tessVerticesInPatchCount( 1 ),
+		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false ),
+		blendingEnabled( false )
 	{
 	}
 };
 
 // =================================================================================================
+struct ShaderBuffer
+{
+	std::string            id;
+};
 
 struct ShaderSampler
 {
@@ -184,10 +202,10 @@ struct ShaderSampler
 	PTextureResource       defTex;
 	int                    texUnit;
 	uint32                 sampState;
-
+	uint32				   usage;
 
 	ShaderSampler() :
-		texUnit( -1 ), sampState( 0 )
+		texUnit( -1 ), sampState( 0 ), type( TextureTypes::Tex2D ), usage( 0 )
 	{
 	}
 };
@@ -199,33 +217,40 @@ struct ShaderUniform
 	unsigned char  size;
 };
 
-
 class ShaderResource : public Resource
 {
 public:
 	static Resource *factoryFunc( const std::string &name, int flags )
 		{ return new ShaderResource( name, flags ); }
 
-	static void setPreambles( const std::string &vertPreamble, const std::string &fragPreamble )
-		{ _vertPreamble = vertPreamble; _fragPreamble = fragPreamble; }
+	static void setPreambles( const std::string &vertPreamble, const std::string &fragPreamble, const std::string &geomPreamble,
+							  const std::string &tessCtlPreamble, const std::string &tessEvalPreamble, const std::string &computePreamble )
+	{
+		_vertPreamble = vertPreamble; _fragPreamble = fragPreamble; 
+		_geomPreamble = geomPreamble; 
+		_tessCtlPreamble = tessCtlPreamble; _tessEvalPreamble = tessEvalPreamble; 
+		_computePreamble = computePreamble;
+	}
 
 	static uint32 calcCombMask( const std::vector< std::string > &flags );
 	
 	ShaderResource( const std::string &name, int flags );
 	~ShaderResource();
 	
+	static void initializationFunc();
 	void initDefault();
 	void release();
 	bool load( const char *data, int size );
+
 	void preLoadCombination( uint32 combMask );
 	void compileContexts();
 	ShaderCombination *getCombination( ShaderContext &context, uint32 combMask );
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
-	float getElemParamF( int elem, int elemIdx, int param, int compIdx );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
+	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
-	const char *getElemParamStr( int elem, int elemIdx, int param );
+	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 
 	ShaderContext *findContext( const std::string &name )
 	{
@@ -241,15 +266,20 @@ public:
 private:
 	bool raiseError( const std::string &msg, int line = -1 );
 	bool parseFXSection( char *data );
-	void compileCombination( ShaderContext &context, ShaderCombination &sc );
+
+	bool parseFXSectionContext( Tokenizer &tok, const char * identifier, int targetRenderBackend );
+
+	bool compileCombination( ShaderContext &context, ShaderCombination &sc );
 	
 private:
-	static std::string            _vertPreamble, _fragPreamble;
-	static std::string            _tmpCode0, _tmpCode1;
-	
+	static std::string            _vertPreamble, _fragPreamble, _geomPreamble, _tessCtlPreamble, _tessEvalPreamble, _computePreamble;
+	static std::string            _tmpCodeVS, _tmpCodeFS, _tmpCodeGS, _tmpCodeCS, _tmpCodeTSCtl, _tmpCodeTSEval;
+	static bool					  _defaultPreambleSet;
+
 	std::vector< ShaderContext >  _contexts;
 	std::vector< ShaderSampler >  _samplers;
 	std::vector< ShaderUniform >  _uniforms;
+	std::vector< ShaderBuffer >   _buffers;
 	std::vector< CodeResource >   _codeSections;
 	std::set< uint32 >            _preLoadList;
 

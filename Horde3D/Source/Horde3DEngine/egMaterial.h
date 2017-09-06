@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -17,7 +17,7 @@
 #include "egResource.h"
 #include "egShader.h"
 #include "egTexture.h"
-
+#include "egComputeBuffer.h"
 
 namespace Horde3D {
 
@@ -43,6 +43,13 @@ struct MaterialResData
 };
 
 // =================================================================================================
+
+struct MatBuffer
+{
+	std::string				name;
+	PComputeBufferResource  compBufRes;
+};
+
 
 struct MatSampler
 {
@@ -82,14 +89,14 @@ public:
 	void release();
 	bool load( const char *data, int size );
 	bool setUniform( const std::string &name, float a, float b, float c, float d );
-	bool isOfClass( const std::string &theClass );
+	bool isOfClass( const std::string &theClass ) const;
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void setElemParamI( int elem, int elemIdx, int param, int value );
-	float getElemParamF( int elem, int elemIdx, int param, int compIdx );
+	float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
-	const char *getElemParamStr( int elem, int elemIdx, int param );
+	const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 	void setElemParamStr( int elem, int elemIdx, int param, const char *value );
 
 private:
@@ -99,6 +106,7 @@ private:
 	PShaderResource             _shaderRes;
 	uint32                      _combMask;
 	std::string                 _class;
+	std::vector< MatBuffer >	_buffers;
 	std::vector< MatSampler >   _samplers;
 	std::vector< MatUniform >   _uniforms;
 	std::vector< std::string >  _shaderFlags;

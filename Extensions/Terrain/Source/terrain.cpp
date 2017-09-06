@@ -2,13 +2,14 @@
 //
 // Horde3D Terrain Extension
 // --------------------------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz and Volker Wiendl
+// Copyright (C) 2006-2016 Nicolas Schulz, Volker Wiendl and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
 //
 // *************************************************************************************************
 
+#include "utEndian.h"
 #include "terrain.h"
 #include "egModules.h"
 #include "egCom.h"
@@ -37,10 +38,31 @@ const char *vsTerrainDebugView =
 	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
 	"}";
 
+const char *vsTerrainDebugViewGL4 =
+	"#version 330\n"
+	"uniform mat4 viewProjMat;\n"
+	"uniform mat4 worldMat;\n"
+	"uniform vec4 terBlockParams;\n"
+	"layout(location = 0) in vec3 vertPos;\n"
+	"layout(location = 1) in float terHeight;\n"
+	"void main() {\n"
+	"	gl_Position = viewProjMat * worldMat *"
+	"		vec4( vertPos.x * terBlockParams.z + terBlockParams.x, terHeight, "
+	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
+	"}";
+
 const char *fsTerrainDebugView =
 	"uniform vec4 color;\n"
 	"void main() {\n"
 	"	gl_FragColor = color;\n"
+	"}\n";
+
+const char *fsTerrainDebugViewGL4 =
+	"#version 330\n"
+	"uniform vec4 color;\n"
+	"out vec4 fragColor;\n"
+	"void main() {\n"
+	"	fragColor = color;\n"
 	"}\n";
 
 uint32 TerrainNode::vlTerrain;
@@ -51,7 +73,7 @@ TerrainNode::TerrainNode( const TerrainNodeTpl &terrainTpl ) :
 	SceneNode( terrainTpl ), _materialRes( terrainTpl.matRes ), _blockSize( terrainTpl.blockSize ),
 	_skirtHeight( terrainTpl.skirtHeight ), _lodThreshold( 1.0f / terrainTpl.meshQuality ),
 	_hmapSize( 0 ), _heightData( 0x0 ), _maxLevel( 0 ), _heightArray( 0x0 ), _vertexBuffer( 0 ),
-	_indexBuffer( 0 )
+	_indexBuffer( 0 ), _geometry( 0 )
 {
 	_renderable = true;
 	if( terrainTpl.hmapRes != 0x0 ) updateHeightData( *terrainTpl.hmapRes );
@@ -135,6 +157,8 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
                                     int level, float scale, const Vec3f &localCamPos, const Frustum *frust1,
                                     const Frustum *frust2, int uni_terBlockParams )
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	const float halfU = (minU + maxU) / 2.0f;
 	const float halfV = (minV + maxV) / 2.0f;
 
@@ -164,7 +188,7 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 		if( uni_terBlockParams >= 0 )
 		{
 			float values[4] = { minU, minV, scale, scale };
-			gRDI->setShaderConst( uni_terBlockParams, CONST_FLOAT4, values );  // Bias and scale
+			rdi->setShaderConst( uni_terBlockParams, CONST_FLOAT4, values );  // Bias and scale
 		}
 	
 		const uint32 size = terrain->_blockSize + 2;
@@ -197,10 +221,10 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 			}
 		}
 		
-		gRDI->updateBufferData(
+		rdi->updateBufferData( terrain->_geometry,
 			terrain->_vertexBuffer, terrain->getVertexCount() * sizeof( float ) * 3,
 			terrain->getVertexCount() * sizeof( float ), terrain->_heightArray );
-		gRDI->drawIndexed( PRIM_TRISTRIP, 0, terrain->getIndexCount(), 0, terrain->getVertexCount() );
+		rdi->drawIndexed( PRIM_TRISTRIP, 0, terrain->getIndexCount(), 0, terrain->getVertexCount() );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
 		Modules::stats().incStat( EngineStats::TriCount, (terrain->_blockSize + 1) * (terrain->_blockSize + 1) * 2.0f );
 	}
@@ -245,6 +269,8 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 	CameraNode *curCam = Modules::renderer().getCurCamera();
 	if( curCam == 0x0 ) return;
 
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
 
 	// Loop through terrain queue
@@ -261,27 +287,28 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 		{
 			Modules::renderer().setShaderComb( &debugViewShader );
 			Modules::renderer().commitGeneralUniforms();
-			int loc = gRDI->getShaderConstLoc( debugViewShader.shaderObj, "color" );
+			int loc = rdi->getShaderConstLoc( debugViewShader.shaderObj, "color" );
 			float color[4] = { 0.5f, 0.75f, 1, 1 };
-			gRDI->setShaderConst( loc, CONST_FLOAT4, color );
+			rdi->setShaderConst( loc, CONST_FLOAT4, color );
 		}
 		
-		int uni_terBlockParams = gRDI->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
+		int uni_terBlockParams = rdi->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
 
 		Vec3f localCamPos( curCam->getAbsTrans().x[12], curCam->getAbsTrans().x[13], curCam->getAbsTrans().x[14] );
 		localCamPos = terrain->_absTrans.inverted() * localCamPos;
 		
 		// Bind geometry and apply vertex layout
-		gRDI->setIndexBuffer( terrain->_indexBuffer, IDXFMT_16 );
-		gRDI->setVertexBuffer( 0, terrain->_vertexBuffer, 0, 12 );
-		gRDI->setVertexBuffer( 1, terrain->_vertexBuffer, terrain->getVertexCount() * 12, 4 );
-		gRDI->setVertexLayout( vlTerrain );
-	
+// 		rdi->setIndexBuffer( terrain->_indexBuffer, IDXFMT_16 );
+// 		rdi->setVertexBuffer( 0, terrain->_vertexBuffer, 0, 12 );
+// 		rdi->setVertexBuffer( 1, terrain->_vertexBuffer, terrain->getVertexCount() * 12, 4 );
+// 		rdi->setVertexLayout( vlTerrain );
+		rdi->setGeometry( terrain->_geometry );
+
 		// Set uniforms
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
 		if( curShader->uni_worldMat >= 0 )
 		{
-			gRDI->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &terrain->_absTrans.x[0] );
+			rdi->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &terrain->_absTrans.x[0] );
 		}
 		if( curShader->uni_worldNormalMat >= 0 )
 		{
@@ -289,17 +316,17 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 			float normalMat[9] = { normalMat4.x[0], normalMat4.x[1], normalMat4.x[2],
 			                       normalMat4.x[4], normalMat4.x[5], normalMat4.x[6],
 			                       normalMat4.x[8], normalMat4.x[9], normalMat4.x[10] };
-			gRDI->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
+			rdi->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
 		}
 		if( curShader->uni_nodeId >= 0 )
 		{
 			float id = (float)terrain->getHandle();
-			gRDI->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
 		}
 
 		drawTerrainBlock( terrain, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, localCamPos, frust1, frust2, uni_terBlockParams );
 
-		gRDI->setVertexLayout( 0 );
+// 		rdi->setVertexLayout( 0 );
 	}
 }
 
@@ -446,18 +473,29 @@ uint16 *TerrainNode::createIndices()
 
 void TerrainNode::recreateVertexBuffer()
 {
-	gRDI->destroyBuffer( _vertexBuffer );
-	gRDI->destroyBuffer( _indexBuffer );
-	
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+// 	rdi->destroyBuffer( _vertexBuffer );
+// 	rdi->destroyBuffer( _indexBuffer );
+	rdi->destroyGeometry( _geometry );
+
+	_geometry = rdi->beginCreatingGeometry( vlTerrain );
+
 	delete[] _heightArray; _heightArray = 0x0;
-	_heightArray = new float[getVertexCount()];
+	_heightArray = new float[ getVertexCount() ];
 	float *posArray = createVertices();
-	_vertexBuffer = gRDI->createVertexBuffer( getVertexCount() * sizeof( float ) * 4, posArray );
+	_vertexBuffer = rdi->createVertexBuffer( getVertexCount() * sizeof( float ) * 4, posArray );
 	delete[] posArray;
 
 	uint16 *indices = createIndices();
-	_indexBuffer = gRDI->createIndexBuffer( getIndexCount() * sizeof( short ), indices );
+	_indexBuffer = rdi->createIndexBuffer( getIndexCount() * sizeof( short ), indices );
 	delete[] indices;
+
+	rdi->setGeomIndexParams( _geometry, _indexBuffer, IDXFMT_16 );
+	rdi->setGeomVertexParams( _geometry, _vertexBuffer, 0, 0, 12 );
+	rdi->setGeomVertexParams( _geometry, _vertexBuffer, 1, getVertexCount() * 12, 4 );
+
+	rdi->finishCreatingGeometry( _geometry );
 }
 
 
@@ -528,7 +566,7 @@ void TerrainNode::createBlockTree()
 }
 
 
-int TerrainNode::getParamI( int param )
+int TerrainNode::getParamI( int param ) const
 {
 	switch( param )
 	{
@@ -586,7 +624,7 @@ void TerrainNode::setParamI( int param, int value )
 }
 
 
-float TerrainNode::getParamF( int param, int compIdx )
+float TerrainNode::getParamF( int param, int compIdx ) const
 {
 	switch( param )
 	{
@@ -798,7 +836,7 @@ uint32 TerrainNode::calculateGeometryBlockCount( float lodThreshold, float minU,
 
 
 void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float minV, float maxU,
-	float maxV, int level, float scale, float *&vertData, unsigned int *&indexData, uint32 &indexOffset )
+	float maxV, int level, float scale, float *&vertData, uint32 *&indexData, uint32 &indexOffset )
 {
 	const float halfU = (minU + maxU) / 2.0f;
 	const float halfV = (minV + maxV) / 2.0f;
@@ -831,14 +869,14 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 				const float newV = (t * scale + minV) * _hmapSize + 0.5f;
 				uint32 index = ftoi_t( newV ) * (_hmapSize + 1) + ftoi_t( newU );
 
-				*vertData++ = (s * scale + minU);
+                vertData = (float*) elemset_le(vertData, (s * scale + minU));
 
 				if( v == 0 || v == size - 1 || u == 0 || u == size - 1 )
-					*vertData++ = maxf( _heightData[index] / 65535.0f - _skirtHeight, 0 );
+					vertData = (float*) elemset_le(vertData, (maxf( _heightData[index] / 65535.0f - _skirtHeight, 0 )));
 				else
-					*vertData++ = _heightData[index] / 65535.0f;
+					vertData = (float*) elemset_le(vertData, (_heightData[index] / 65535.0f));
 
-				*vertData++ = (t * scale + minV);
+                vertData = (float*) elemset_le(vertData, (t * scale + minV));
 			}
 		}
 
@@ -846,13 +884,13 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 		{
 			for( uint32 u = 0; u < size - 1; ++u )
 			{
-				*indexData++ = indexOffset + v * size + u;
-				*indexData++ = indexOffset + (v + 1) * size + u;
-				*indexData++ = indexOffset + (v + 1) * size + u + 1;
+                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
 
-				*indexData++ = indexOffset + v * size + u;
-				*indexData++ = indexOffset + (v + 1) * size + u + 1;
-				*indexData++ = indexOffset + v * size + u + 1;
+                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
+                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u + 1);
 			}
 		}
 		indexOffset += size * size;
@@ -905,24 +943,24 @@ ResHandle TerrainNode::createGeometryResource( const string &name, float lodThre
 
 	// Create geometry data block
 	char *data = new char[size];
-
 	char *pData = data;
-	// Write Horde flag
-	pData[0] = 'H'; pData[1] = '3'; pData[2] = 'D'; pData[3] = 'G'; pData += 4;
-	// Set version to 5 
-	*( (uint32 *)pData ) = 5; pData += sizeof( uint32 );
+
+    // Write Horde flag
+    pData = elemcpyd_le((char*)(pData), "H3DG", 4);
+	// Set version to 5
+	pData = elemset_le((uint32 *)(pData), 5u);
 	// Set joint count (zero for terrains)
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le((uint32 *)(pData), 0u);
 	// Set number of streams
-	*( (uint32 *)pData ) = 1; pData += sizeof( uint32 );
+	pData = elemset_le((uint32 *)(pData), 1u);
 	// Write size of each stream
-	*( (uint32 *)pData ) = streamSize; pData += sizeof( uint32 );
+	pData = elemset_le((uint32 *)(pData), streamSize);
 	
 	// Beginning of stream data
 	// Stream ID
-	*( (uint32 *)pData ) = 0; pData += sizeof( uint32 );
+	pData = elemset_le((uint32 *)(pData), 0u);
 	// set stream element size
-	*( (uint32 *)pData ) = streamElementSize; pData += sizeof( uint32 );
+	pData = elemset_le((uint32 *)(pData), streamElementSize);
 
 	uint32 index = 0;
 	float *vertexData = (float *)pData;
@@ -935,13 +973,13 @@ ResHandle TerrainNode::createGeometryResource( const string &name, float lodThre
 	pData += streamSize * streamElementSize;
 
 	// Set number of indices
-	*( (uint32 *) pData ) = indexCount; pData += sizeof( uint32 );
+	pData = elemset_le((uint32 *)(pData), indexCount);
 	
 	// Skip index data
 	pData += indexCount * sizeof( uint32 );				
 
 	// Set number of morph targets
-	*( (uint32 *) pData ) = 0;	pData += sizeof( uint32 );
+    pData = elemset_le((uint32 *)(pData), 0u);
 
 	ResHandle res = Modules::resMan().addResource( ResourceTypes::Geometry, name, 0, true );
 	resObj = Modules::resMan().resolveResHandle( res );

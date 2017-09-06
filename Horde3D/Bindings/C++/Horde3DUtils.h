@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2009 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -244,6 +244,40 @@ DLL void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, floa
 */
 DLL H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
 
+/* Function: h3dutGetScreenshotParam
+   Return width and height for current screenshot.
+
+   Details:
+   This function is useful in conjunction with h3dutScreenshotRaw to allocate
+   arrays with the correct size.
+
+   Parameters:
+   width: will contain the screenshot width
+   height: will contain the screenshot height
+
+   Returns:
+   None
+*/
+DLL void h3dutGetScreenshotParam( int *width,  int *height);
+
+/* Function: h3dutScreenshotRaw
+   Take screenshot and copy it to user provided `rgb` buffer.
+
+   Details:
+
+   The user must provide an RGB array and its size in bytes. The buffer must be
+   at least width * height * 3 bytes large. Use `h3dutGetScreenshotParam` to
+   determine the width and height.
+
+   Parameters:
+   rgb: buffer to hold the image (must be at least width * height * 3 bytes large)
+   rgb_len: length of `rgb` buffer in bytes.
+
+   Returns:
+   true if screenshot could be copied.
+*/
+DLL bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len);
+
 /*	Group: Overlays */
 /* Function: h3dutShowText
 		Shows text on the screen using a font texture.
@@ -266,6 +300,29 @@ DLL H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
 */
 DLL void h3dutShowText( const char *text, float x, float y, float size,
                         float colR, float colG, float colB, H3DRes fontMaterialRes );
+
+/* Function: h3dutShowInfoBox
+		Shows a customizable info box on the screen.
+	
+	Details:
+		This utility function displays an info box with custom text for the current frame on the screen.
+	
+	Parameters:
+	    x, y              - position of the top left corner of the box;
+		                    for more details on coordinate system see overlay documentation
+		width             - maximum width of info box
+		title             - title string of info box
+		numRows           - Number of info rows
+		column1           - list of strings to print in first column (=numRows)
+		column2           - list of strings to print in second column (=numRows)
+		panelMaterialRes  - material resource used for drawing info box
+		
+	Returns:
+		nothing
+*/
+DLL void h3dutShowInfoBox( float x, float y, float width, const char *title,
+                           int numRows, const char **column1, const char **column2,
+                           H3DRes fontMaterialRes, H3DRes panelMaterialRes );
 
 /* Function: h3dutShowFrameStats
 		Shows frame statistics on the screen.

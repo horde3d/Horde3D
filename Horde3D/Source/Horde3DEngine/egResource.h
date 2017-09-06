@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -39,7 +39,8 @@ struct ResourceTypes
 		Shader,
 		Texture,
 		ParticleEffect,
-		Pipeline
+		Pipeline,
+		ComputeBuffer
 	};
 };
 
@@ -71,24 +72,24 @@ public:
 	virtual bool load( const char *data, int size );
 	void unload();
 	
-	int findElem( int elem, int param, const char *value );
-	virtual int getElemCount( int elem );
-	virtual int getElemParamI( int elem, int elemIdx, int param );
+	int findElem( int elem, int param, const char *value ) const;
+	virtual int getElemCount( int elem ) const;
+	virtual int getElemParamI( int elem, int elemIdx, int param ) const;
 	virtual void setElemParamI( int elem, int elemIdx, int param, int value );
-	virtual float getElemParamF( int elem, int elemIdx, int param, int compIdx );
+	virtual float getElemParamF( int elem, int elemIdx, int param, int compIdx ) const;
 	virtual void setElemParamF( int elem, int elemIdx, int param, int compIdx, float value );
-	virtual const char *getElemParamStr( int elem, int elemIdx, int param );
+	virtual const char *getElemParamStr( int elem, int elemIdx, int param ) const;
 	virtual void setElemParamStr( int elem, int elemIdx, int param, const char *value );
 	virtual void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
 	virtual void unmapStream();
 
-	int &getType() { return _type; }
-	int getFlags() { return _flags; }
-	const std::string &getName() { return _name; }
-	ResHandle getHandle() { return _handle; }
-	bool isLoaded() { return _loaded; }
+	int getType() const { return _type; }
+	int getFlags() const { return _flags; }
+	const std::string &getName() const { return _name; }
+	ResHandle getHandle() const { return _handle; }
+	bool isLoaded() const { return _loaded; }
 	void addRef() { ++_refCount; }
-	void subRef() { --_refCount; }
+    void subRef() { --_refCount; ASSERT(_refCount >= 0 ); }
 
 protected:
 	int                  _type;
@@ -119,7 +120,7 @@ public:
 	operator T*() const { return _ptr; }
     operator const T*() const { return _ptr; }
 	operator bool() const { return _ptr != 0x0; }
-	T *getPtr() { return _ptr; }
+	T *getPtr() const { return _ptr; }
 	
 	SmartResPtr &operator=( const SmartResPtr &smp ) { return *this = smp._ptr; }
 	SmartResPtr &operator=( T *ptr )
@@ -166,17 +167,17 @@ public:
 	void registerResType( int resType, const std::string &typeString, ResTypeInitializationFunc inf,
 	                      ResTypeReleaseFunc rf, ResTypeFactoryFunc ff );
 	
-	Resource *getNextResource( int type, ResHandle start );
-	Resource *findResource( int type, const std::string &name );
+	Resource *getNextResource( int type, ResHandle start ) const;
+	Resource *findResource( int type, const std::string &name ) const;
 	ResHandle addResource( int type, const std::string &name, int flags, bool userCall );
 	ResHandle addNonExistingResource( Resource &resource, bool userCall );
 	ResHandle cloneResource( Resource &sourceRes, const std::string &name );
 	int removeResource( Resource &resource, bool userCall );
 	void clear();
-	ResHandle queryUnloadedResource( int index );
+	ResHandle queryUnloadedResource( int index ) const;
 	void releaseUnusedResources();
 
-	Resource *resolveResHandle( ResHandle handle )
+	Resource *resolveResHandle( ResHandle handle ) const
 		{ return (handle != 0 && (unsigned)(handle - 1) < _resources.size()) ? _resources[handle - 1] : 0x0; }
 
 	std::vector < Resource * > &getResources() { return _resources; }

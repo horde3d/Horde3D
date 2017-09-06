@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -231,6 +231,26 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			params[0].setString( node1.getAttribute( "context", "" ) );
 			params[1].setBool( _stricmp( node1.getAttribute( "noShadows", "false" ), "true" ) == 0 );
 		}
+// 		else if ( strcmp( node1.getName(), "DispatchComputeShader" ) == 0 )
+// 		{
+// 			if ( !node1.getAttribute( "material" ) ) return "Missing DispatchComputeShader attribute 'material'";
+// 			if ( !node1.getAttribute( "context" ) ) return "Missing DispatchComputeShader attribute 'context'";
+// 			if ( !node1.getAttribute( "x" ) ) return "Missing DispatchComputeShader attribute 'x'";
+// 			if ( !node1.getAttribute( "y" ) ) return "Missing DispatchComputeShader attribute 'y'";
+// 			if ( !node1.getAttribute( "z" ) ) return "Missing DispatchComputeShader attribute 'z'";
+// 
+// 			uint32 matRes = Modules::resMan().addResource(
+// 				ResourceTypes::Material, node1.getAttribute( "material" ), 0, false );
+// 
+// 			stage.commands.push_back( PipelineCommand( PipelineCommands::DispatchComputeShader ) );
+// 			vector< PipeCmdParam > &params = stage.commands.back().params;
+// 			params.resize( 5 );
+// 			params[ 0 ].setResource( Modules::resMan().resolveResHandle( matRes ) );
+// 			params[ 1 ].setString( node1.getAttribute( "context", "" ) );
+// 			params[ 2 ].setInt( atoi( node1.getAttribute( "x", "0" ) ) );
+// 			params[ 3 ].setInt( atoi( node1.getAttribute( "y", "0" ) ) );
+// 			params[ 4 ].setInt( atoi( node1.getAttribute( "z", "0" ) ) );
+// 		}
 		else if( strcmp( node1.getName(), "SetUniform" ) == 0 )
 		{
 			if( !node1.getAttribute( "material" ) ) return "Missing SetUniform attribute 'material'";
@@ -276,7 +296,7 @@ void PipelineResource::addRenderTarget( const string &id, bool depthBuf, uint32 
 }
 
 
-RenderTarget *PipelineResource::findRenderTarget( const string &id )
+RenderTarget *PipelineResource::findRenderTarget( const string &id ) const
 {
 	if( id == "" ) return 0x0;
 	
@@ -284,7 +304,7 @@ RenderTarget *PipelineResource::findRenderTarget( const string &id )
 	{
 		if( _renderTargets[i].id == id )
 		{
-			return &_renderTargets[i];
+			return (RenderTarget*)&_renderTargets[i];
 		}
 	}
 	
@@ -294,6 +314,8 @@ RenderTarget *PipelineResource::findRenderTarget( const string &id )
 
 bool PipelineResource::createRenderTargets()
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{
 		RenderTarget &rt = _renderTargets[i];
@@ -302,7 +324,7 @@ bool PipelineResource::createRenderTargets()
 		if( width == 0 ) width = ftoi_r( _baseWidth * rt.scale );
 		if( height == 0 ) height = ftoi_r( _baseHeight * rt.scale );
 		
-		rt.rendBuf = gRDI->createRenderBuffer(
+		rt.rendBuf = rdi->createRenderBuffer(
 			width, height, rt.format, rt.hasDepthBuf, rt.numColBufs, rt.samples );
 		if( rt.rendBuf == 0 ) return false;
 	}
@@ -313,11 +335,13 @@ bool PipelineResource::createRenderTargets()
 
 void PipelineResource::releaseRenderTargets()
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{
 		RenderTarget &rt = _renderTargets[i];
 		if( rt.rendBuf )
-			gRDI->destroyRenderBuffer( rt.rendBuf );
+			rdi->destroyRenderBuffer( rt.rendBuf );
 	}
 }
 
@@ -415,7 +439,7 @@ void PipelineResource::resize( uint32 width, uint32 height )
 }
 
 
-int PipelineResource::getElemCount( int elem )
+int PipelineResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -427,7 +451,7 @@ int PipelineResource::getElemCount( int elem )
 }
 
 
-int PipelineResource::getElemParamI( int elem, int elemIdx, int param )
+int PipelineResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -468,7 +492,7 @@ void PipelineResource::setElemParamI( int elem, int elemIdx, int param, int valu
 }
 
 
-const char *PipelineResource::getElemParamStr( int elem, int elemIdx, int param )
+const char *PipelineResource::getElemParamStr( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -489,7 +513,7 @@ const char *PipelineResource::getElemParamStr( int elem, int elemIdx, int param 
 
 
 bool PipelineResource::getRenderTargetData( const string &target, int bufIndex, int *width, int *height,
-                                            int *compCount, void *dataBuffer, int bufferSize )
+                                            int *compCount, void *dataBuffer, int bufferSize ) const
 {
 	uint32 rbObj = 0;
 	if( target != "" )
@@ -499,8 +523,8 @@ bool PipelineResource::getRenderTargetData( const string &target, int bufIndex, 
 		else rbObj = rt->rendBuf;
 	}
 	
-	return gRDI->getRenderBufferData(
-		rbObj, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+	return Modules::renderer().getRenderDevice()->getRenderBufferData( rbObj, bufIndex, width, height, 
+																	   compCount, dataBuffer, bufferSize );
 }
 
 }  // namespace

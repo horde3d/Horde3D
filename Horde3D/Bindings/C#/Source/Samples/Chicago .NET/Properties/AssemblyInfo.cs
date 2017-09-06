@@ -25,7 +25,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Chicago .NET")]
-[assembly: AssemblyCopyright("Copyright ©  2006-07 Nicolas Schulz and Martin Burkhard")]
+[assembly: AssemblyCopyright("Copyright ©  2006-2016 Nicolas Schulz, Martin Burkhard and Horde3D team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

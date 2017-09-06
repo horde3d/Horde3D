@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -37,8 +37,7 @@ struct TextureResData
 		TexSliceCountI,
 		ImgWidthI,
 		ImgHeightI,
-		ImgPixelStream,
-		TexNativeRefI
+		ImgPixelStream
 	};
 };
 
@@ -61,19 +60,19 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	int getElemCount( int elem );
-	int getElemParamI( int elem, int elemIdx, int param );
+	int getElemCount( int elem ) const;
+	int getElemParamI( int elem, int elemIdx, int param ) const;
 	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
 	void unmapStream();
 
-	TextureTypes::List getTexType() { return _texType; }
-	TextureFormats::List getTexFormat() { return _texFormat; }
+	TextureTypes::List getTexType() const { return _texType; }
+	TextureFormats::List getTexFormat() const { return _texFormat; }
 	uint32 getWidth() const { return _width; }
 	uint32 getHeight() const { return _height; }
 	uint32 getDepth() const { return _depth; }
-	uint32 getTexObject() { return _texObject; }
-	uint32 getRBObject()  { return _rbObj; }
-	bool hasMipMaps() { return _hasMipMaps; }
+	uint32 getTexObject() const { return _texObject; }
+	uint32 getRBObject() const { return _rbObj; }
+	bool hasMipMaps() const { return _hasMipMaps; }
 
 public:
 	static uint32 defTex2DObject;
@@ -82,10 +81,10 @@ public:
 
 protected:
 	bool raiseError( const std::string &msg );
-	bool checkDDS( const char *data, int size );
+	bool checkDDS( const char *data, int size ) const;
 	bool loadDDS( const char *data, int size );
 	bool loadSTBI( const char *data, int size );
-	int getMipCount();
+	int getMipCount() const;
 	
 protected:
 	static unsigned char  *mappedData;
@@ -98,7 +97,6 @@ protected:
 	uint32                _rbObj;  // Used when texture is renderable
 	bool                  _sRGB;
 	bool                  _hasMipMaps;
-	uint32                _texNativeRef; // Raw OpenGL texture id
 
 	friend class ResourceManager;
 };

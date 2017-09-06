@@ -1,0 +1,33 @@
+# WARNING: this file should be included by root CMakeLists.txt.
+
+MACRO(EXTENSION_DIRECTORIES dir result)
+  FILE(GLOB children ${dir}/*)
+  SET(dirlist "")
+  FOREACH(child ${children})
+    IF( IS_DIRECTORY "${child}" )
+        LIST(APPEND dirlist ${child})
+    ENDIF()
+  ENDFOREACH()
+  SET(${result} ${dirlist})
+ENDMACRO()
+
+# Accumulate list of sources of extension modules.
+set(HORDE3D_EXTENSION_INSTALLS)
+set(HORDE3D_EXTENSION_INCLUDE_DIRS)
+set(HORDE3D_EXTENSION_LIBS)
+
+# Common paths of engine headers.
+INCLUDE_DIRECTORIES(
+    "${CMAKE_CURRENT_SOURCE_DIR}/Horde3D/Source/Horde3DEngine"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Horde3D/Source/Shared"
+)
+
+EXTENSION_DIRECTORIES( "Extensions" directories)
+
+FOREACH(dir ${directories})
+    add_subdirectory(${dir})
+ENDFOREACH()
+
+# Create "egExtensions.cpp".
+CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_include.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_include.h)
+CONFIGURE_FILE(Horde3D/Source/Horde3DEngine/egExtensions_auto_install.h.in ${CMAKE_BINARY_DIR}/egExtensions_auto_install.h)
