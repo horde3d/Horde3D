@@ -3,7 +3,7 @@
 // h3d .NET wrapper
 // ----------------------------------
 // Copyright (C) 2007 Martin Burkhard
-// Copyright (C) 2009-2016 Volker Wiendl and Horde3D team
+// Copyright (C) 2009-2017 Volker Wiendl and Horde3D team
 //
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
@@ -77,6 +77,9 @@ namespace Horde3DNET
 
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         internal static extern float h3dGetStat(int param, [MarshalAs(UnmanagedType.U1)]bool reset);
+
+        [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        internal static extern float h3dGetDeviceCapabilities(int param);
 
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         internal static extern void h3dShowOverlays(float[] verts, int vertCount, float colR, float colG, float colB, float colA, int material, int flags );
@@ -310,8 +313,10 @@ namespace Horde3DNET
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]        
         internal static extern void h3dGetCameraProjMat(int node, float[] projMat);
 
+        [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dSetCameraProjMat(int node, float[] projMat);
 
-	    // Emitter specific
+        // Emitter specific
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         internal static extern int h3dAddEmitterNode(int parent, string name,
 								       int matRes, int effectRes,
@@ -326,8 +331,8 @@ namespace Horde3DNET
 
         // Emitter specific
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
-        internal static extern int h3dAddComputeNode(int parent, string name,
-                                                     int matRes, int compBufRes);
+        internal static extern int h3dAddComputeNode(int parent, string name, int matRes, 
+                                                     int compBufRes, int drawType, int elementsCount);
 
     }
 }

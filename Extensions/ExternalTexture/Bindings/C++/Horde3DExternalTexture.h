@@ -51,5 +51,21 @@
 	Returns:
                  true in case of success, false otherwise
 */
-
 DLL bool h3dextImportTexture( H3DRes texRes, int texID );
+
+/* Function: h3dextGetGLTextureID
+                Retrieve the native OpenGL Texture name of a Horde3D texture resource
+
+        Details:
+                Calling this function will return the native OpenGL texture name of a Horde3D texture.
+                While this method contradicts the philosophy of having Horde3D as a backend independent
+                rendering engine, it might be handy for interfacing with other render libraries. So
+                this extension allows retrieving the OpenGL texture name for OpenGL2 and OpenGL 4 render backends.
+
+        Parameters:
+                texRes       - handle to an existing Horde3D texture resource
+
+        Returns:
+                 the OpenGL texture name (uint32)
+*/
+DLL int h3dextGetGLTextureID( H3DRes texRes );
