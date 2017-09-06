@@ -52,5 +52,19 @@ DLLEXP bool h3dextImportTexture( Horde3D::ResHandle texRes, int texID )
     return texEx->importTexGL( texID, 0, 0 );
 }
 
+// Public C API
+DLLEXP int h3dextGetGLTextureID( Horde3D::ResHandle texRes )
+{
+    Resource *res = Modules::resMan().resolveResHandle(texRes);
+    if( res == 0x0 || res->getType() != ResourceTypes::Texture )
+    {
+        Modules::log().writeError("Error getting texture resource");
+        return 0;
+    }
+
+    TextureResourceEx* texEx = static_cast<TextureResourceEx*>(res);
+    return texEx->getGLTexID();
+}
+
 
 }  // namespace
