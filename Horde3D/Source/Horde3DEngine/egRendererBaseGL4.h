@@ -331,20 +331,22 @@ protected:
 
 protected:
 
-	RDIVertexLayout		              _vertexLayouts[MaxNumVertexLayouts];
-	RDIObjects< RDIBufferGL4 >        _buffers;
-	RDIObjects< RDITextureGL4 >       _textures;
-	RDIObjects< RDITextureBufferGL4 > _textureBuffs;
-	RDIObjects< RDIShaderGL4 >        _shaders;
-	RDIObjects< RDIRenderBufferGL4 >  _rendBufs;
-	RDIObjects< RDIGeometryInfoGL4 >  _vaos;
+	RDIVertexLayout                    _vertexLayouts[MaxNumVertexLayouts];
+	RDIObjects< RDIBufferGL4 >         _buffers;
+	RDIObjects< RDITextureGL4 >        _textures;
+	RDIObjects< RDITextureBufferGL4 >  _textureBuffs;
+	RDIObjects< RDIShaderGL4 >         _shaders;
+	RDIObjects< RDIRenderBufferGL4 >   _rendBufs;
+	RDIObjects< RDIGeometryInfoGL4 >   _vaos;
 	std::vector< RDIShaderStorageGL4 > _storageBufs;
 
- 	uint32                _indexFormat;
- 	uint32                _activeVertexAttribsMask;
+ 	uint32                             _indexFormat;
+ 	uint32                             _activeVertexAttribsMask;
 
-	uint16				  _lastTessPatchVertsValue;
-	uint16				  _maxComputeBufferAttachments;
+	uint16                             _lastTessPatchVertsValue;
+	uint16                             _maxComputeBufferAttachments;
+
+	bool                               _doubleBuffered;
 };
 
 } // namespace RDI_GL4
