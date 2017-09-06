@@ -366,6 +366,7 @@ protected:
  	uint32                _indexFormat;
  	uint32                _activeVertexAttribsMask;
 // 	uint32                _pendingMask;
+	bool                               _doubleBuffered;
 };
 
 } // namespace RDI_GL2

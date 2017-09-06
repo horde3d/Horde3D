@@ -181,6 +181,7 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_maxTexSlots = 32; // texture units per stage
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
+	_doubleBuffered = false;
 	// add default geometry for resetting
 	RDIGeometryInfoGL4 defGeom;
 	defGeom.atrribsBinded = true;
@@ -199,6 +200,11 @@ void RenderDeviceGL4::initStates()
 	GLint value;
 	glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
 	_defaultFBOMultisampled = value > 0;
+	GLboolean doubleBuffered;
+	glGetBooleanv( GL_DOUBLEBUFFER, &doubleBuffered );
+	_doubleBuffered = doubleBuffered;
+	// Get the currently bound frame buffer object to avoid reset to invalid FBO
+	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
 }
 
 
@@ -210,11 +216,11 @@ bool RenderDeviceGL4::init()
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
 
-    if( !version || !renderer || !vendor )
-    {
-        Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
-        return false;
-    }
+	if( !version || !renderer || !vendor )
+	{
+		Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
+		return false;
+	}
 	
 	Modules::log().writeInfo( "Initializing GL4 backend using OpenGL driver '%s' by '%s' on '%s'",
 							  version, vendor, renderer );
@@ -273,6 +279,9 @@ bool RenderDeviceGL4::init()
 
 	// Find maximum number of storage buffers in compute shader
 	glGetIntegerv( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, (GLint *) &_maxComputeBufferAttachments );
+	// Init states before creating test render buffer, to
+	// ensure binding the current FBO again
+	initStates();
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
 	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
@@ -283,8 +292,7 @@ bool RenderDeviceGL4::init()
 	}
 	else
 		destroyRenderBuffer( testBuf );
-	
-	initStates();
+		
 	resetStates();
 
 	return true;
@@ -1483,7 +1491,13 @@ void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
 	if( rbObj == 0 )
 	{
 		glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
-		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+		if( _defaultFBO == 0 )
+		{
+			if( _doubleBuffered )
+				glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+			else
+				glDrawBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
+		}
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
 		if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
@@ -1526,7 +1540,13 @@ bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *widt
 		x = _vpX; y = _vpY; w = _vpWidth; h = _vpHeight;
 
 		glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
-		if( bufIndex != 32 ) glReadBuffer( GL_BACK_LEFT );
+		if( bufIndex != 32 )
+		{
+			if( _doubleBuffered )
+				glReadBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+			else
+				glReadBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
+		}
 		//format = GL_BGRA;
 		//type = GL_UNSIGNED_BYTE;
 	}
