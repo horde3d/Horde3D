@@ -392,7 +392,6 @@ struct H3DTexRes
 		TexSliceCountI,
 		ImgWidthI,
 		ImgHeightI,
-		ImgPixelStream
 	};
 };
 
