@@ -63,8 +63,9 @@ struct RDIBufferGL4
 	uint32  type;
 	uint32  glObj;
 	uint32  size;
+	int		geometryRefCount;
 
-	RDIBufferGL4() : type( 0 ), glObj( 0 ), size( 0 ) {}
+	RDIBufferGL4() : type( 0 ), glObj( 0 ), size( 0 ), geometryRefCount( 0 ) {}
 };
 
 struct RDIVertBufSlotGL4
@@ -329,6 +330,7 @@ protected:
 
 	inline uint32 createBuffer( uint32 type, uint32 size, const void *data );
 
+	inline void	  decreaseBufferRefCount( uint32 bufObj );
 protected:
 
 	RDIVertexLayout                    _vertexLayouts[MaxNumVertexLayouts];
