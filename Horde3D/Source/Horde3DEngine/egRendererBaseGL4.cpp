@@ -202,7 +202,7 @@ void RenderDeviceGL4::initStates()
 	_defaultFBOMultisampled = value > 0;
 	GLboolean doubleBuffered;
 	glGetBooleanv( GL_DOUBLEBUFFER, &doubleBuffered );
-	_doubleBuffered = doubleBuffered;
+	_doubleBuffered = doubleBuffered != 0;
 	// Get the currently bound frame buffer object to avoid reset to invalid FBO
 	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
 }
@@ -401,6 +401,9 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
 {
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+	RDIBufferGL4 &buf = _buffers.getRef( vbo );
+
+	buf.geometryRefCount++;
 
 	RDIVertBufSlotGL4 attribInfo;
 	attribInfo.vbObj = vbo;
@@ -413,7 +416,9 @@ void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbS
 void RenderDeviceGL4::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
 {
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+	RDIBufferGL4 &buf = _buffers.getRef( indBuf );
 
+	buf.geometryRefCount++;
 	curVao.indexBuf = indBuf;
 	curVao.indexBuf32Bit = ( format == IDXFMT_32 ? true : false );
 }
@@ -432,15 +437,36 @@ void RenderDeviceGL4::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers
 	{
 		for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
 		{
+			decreaseBufferRefCount( curVao.vertexBufInfo[ i ].vbObj );
 			destroyBuffer( curVao.vertexBufInfo[ i ].vbObj );
 		}
 
+		decreaseBufferRefCount( curVao.indexBuf );
 		destroyBuffer( curVao.indexBuf );
+	}
+	else
+	{
+		for ( size_t i = 0; i < curVao.vertexBufInfo.size(); ++i )
+		{
+			decreaseBufferRefCount( curVao.vertexBufInfo[ i ].vbObj );
+		}
+		decreaseBufferRefCount( curVao.indexBuf );
 	}
 
 	_vaos.remove( geoObj );
 	geoObj = 0;
 }
+
+
+void RenderDeviceGL4::decreaseBufferRefCount( uint32 bufObj )
+{
+	if ( bufObj == 0 ) return;
+	
+	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+
+	buf.geometryRefCount--;
+}
+
 
 uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
 {
@@ -532,11 +558,15 @@ void RenderDeviceGL4::destroyBuffer( uint32& bufObj )
 		return;
 	
 	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
-	glDeleteBuffers( 1, &buf.glObj );
 
-	_bufferMem -= buf.size;
-	_buffers.remove( bufObj );
-	bufObj = 0;
+	if ( buf.geometryRefCount < 1 )
+	{
+		glDeleteBuffers( 1, &buf.glObj );
+
+		_bufferMem -= buf.size;
+		_buffers.remove( bufObj );
+		bufObj = 0;
+	}
 }
 
 
@@ -1293,13 +1323,13 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 		// Attach color buffers
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
-			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 			// Create a color texture
 			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
 			RDITextureGL4 &tex = _textures.getRef( texObj );
+			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 			// Attach the texture
 			glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + j, GL_TEXTURE_2D, tex.glObj, 0 );
 
