@@ -75,8 +75,9 @@ struct RDIBufferGL2
 	uint32  type;
 	uint32  glObj;
 	uint32  size;
+	int		geometryRefCount;
 
-	RDIBufferGL2() : type( 0 ), glObj( 0 ), size( 0 ) {}
+	RDIBufferGL2() : type( 0 ), glObj( 0 ), size( 0 ), geometryRefCount( 0 ) {}
 };
 
 struct RDIVertBufSlotGL2
@@ -330,6 +331,8 @@ protected:
 	void applySamplerState( RDITextureGL2 &tex );
 	void applyRenderStates();
 
+	inline void	  decreaseBufferRefCount( uint32 bufObj );
+
 protected:
 
 // 	DeviceCaps    _caps;
@@ -366,6 +369,7 @@ protected:
  	uint32                _indexFormat;
  	uint32                _activeVertexAttribsMask;
 // 	uint32                _pendingMask;
+	bool                               _doubleBuffered;
 };
 
 } // namespace RDI_GL2

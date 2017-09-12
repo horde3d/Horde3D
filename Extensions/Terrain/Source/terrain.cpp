@@ -294,7 +294,8 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 		
 		int uni_terBlockParams = rdi->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
 
-		Vec3f localCamPos( curCam->getAbsTrans().x[12], curCam->getAbsTrans().x[13], curCam->getAbsTrans().x[14] );
+		Matrix4f &camTransformation = curCam->getAbsTrans();
+		Vec3f localCamPos( camTransformation.x[12], camTransformation.x[13], camTransformation.x[14] );
 		localCamPos = terrain->_absTrans.inverted() * localCamPos;
 		
 		// Bind geometry and apply vertex layout
@@ -331,7 +332,7 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 }
 
 
-bool TerrainNode::canAttach( SceneNode &parent )
+bool TerrainNode::canAttach( SceneNode &parent ) const
 {
 	return true;
 }
@@ -385,7 +386,7 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 		// Init default data
 		_hmapSize = 32;
 		_heightData = new uint16[ (_hmapSize + 1) * (_hmapSize + 1)];
-		memset( _heightData, 0, (_hmapSize + 1) * (_hmapSize + 1) );
+		memset( _heightData, 0, (_hmapSize + 1) * (_hmapSize + 1) * sizeof( uint16 ) );
 		return false;
 	}
 }
@@ -462,7 +463,9 @@ uint16 *TerrainNode::createIndices()
 		}
 
 		// Add degenerated triangle
-		*indexItr++ = *(indexItr - 1); 
+//		*indexItr++ = *(indexItr - 1); 
+		*indexItr = *( indexItr - 1 );
+		indexItr++;
 
 		forward = !forward;
 	}
@@ -918,7 +921,7 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 
 ResHandle TerrainNode::createGeometryResource( const string &name, float lodThreshold )
 {
-	if( name == "" ) return 0;
+	if( name.empty() ) return 0;
 
 	Resource *resObj = Modules::resMan().findResource( ResourceTypes::Geometry, name );
 	if (resObj != 0x0)

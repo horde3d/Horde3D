@@ -26,10 +26,12 @@ public:
 
     void release();
 
-    bool importTexGL(int texGL , int width, int height);
+    bool importTexGL(uint32 texGL , int width, int height);
+
+    uint32 getGLTexID();
 
 private:    
-    void replaceTexObj( int texObj );
+    void replaceTexObj(uint32 texObj );
 
     bool  m_imported;
 

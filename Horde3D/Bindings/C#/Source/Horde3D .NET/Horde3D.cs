@@ -120,6 +120,22 @@ namespace Horde3DNET
         }
 
         /// <summary>
+        ///
+        /// Enum: H3DDeviceCapabilities
+        ///   The available GPU capabilities.
+        ///
+        ///   GeometryShaders			- GPU supports runtime geometry generation via geometry shaders
+        ///   TessellationShaders       - GPU supports tessellation
+        ///   ComputeShaders		    - GPU supports general-purpose computing via compute shaders
+        /// </summary>
+        public enum H3DDeviceCapabilities
+        {
+            GeometryShaders = 200,
+            TessellationShaders,
+            ComputeShaders
+        };
+
+        /// <summary>
         /// Enum: H3DResTypes
         ///           The available resource types.        		
         ///       Undefined       - An undefined resource, returned by getResourceType in case of error
@@ -372,31 +388,26 @@ namespace Horde3DNET
         ///  Enum: H3DComputeBufRes
         ///        The available ComputeBuffer resource accessors.
         ///        
-        /// ComputeBufElem				- General compute buffer configuration
-        ///	DrawTypeElem				- Specifies how to draw buffer data
-        ///	DrawParamsElem				- Specifies parameters for shader bindings
-        ///	CompBufDataSizeI			- Size of the buffer
-        ///	CompBufUseAsVertexBufferI	- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
-        ///	DataDrawTypeI				- Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
-        ///	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data) [write-only]
-        ///	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3 [write-only]
-        ///	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
-        ///	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12 [write-only]
-        ///	DrawParamsElementsCountI	- Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
-
+        ///     ComputeBufElem				- General compute buffer configuration
+        ///     DrawParamsElem				- Specifies parameters for shader bindings
+        ///     CompBufDataSizeI			- Size of the buffer
+        ///     CompBufDrawableI			- Use this compute buffer as a source of vertices for drawing[0, 1]. Default - 0
+        ///     DrawParamsNameStr           - Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data)
+        /// 	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3
+        /// 	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
+        /// 	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12
+        /// 	DrawParamsCountI			- Total number of specified vertex binding parameters [read-only]
         /// </summary>
         public enum H3DComputeBufRes
         {
             ComputeBufElem = 1000,
-            DrawTypeElem,
             DrawParamsElem,
             CompBufDataSizeI,
-            CompBufUseAsVertexBufferI,
-            DataDrawTypeI,
+            CompBufDrawableI,
             DrawParamsNameStr,
             DrawParamsSizeI,
             DrawParamsOffsetI,
-            DrawParamsElementsCountI
+            DrawParamsCountI
         }
 
         /// <summary>
@@ -489,14 +500,14 @@ namespace Horde3DNET
         /// Enum: H3DMesh
         ///    The available Mesh node parameters.
 
-        /// MatResI      - Material resource used for the mesh
-        /// BatchStartI  - First triangle index of mesh in Geometry resource of parent Model node [read-only]
-        /// BatchCountI  - Number of triangle indices used for drawing mesh [read-only]
-        /// VertRStartI  - First vertex in Geometry resource of parent Model node [read-only]
-        /// VertREndI    - Last vertex in Geometry resource of parent Model node [read-only]
-        /// LodLevelI    - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
-        ///                the model's current LOD level which is calculated based on the LOD distances (default: 0)
-        /// TessellatableI - specify if mesh can be tessellated (default: 0)
+        /// MatResI         - Material resource used for the mesh
+        /// BatchStartI     - First triangle index of mesh in Geometry resource of parent Model node [read-only]
+        /// BatchCountI     - Number of triangle indices used for drawing mesh [read-only]
+        /// VertRStartI     - First vertex in Geometry resource of parent Model node [read-only]
+        /// VertREndI       - Last vertex in Geometry resource of parent Model node [read-only]
+        /// LodLevelI       - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
+        ///                   the model's current LOD level which is calculated based on the LOD distances (default: 0)
+        /// TessellatableI  - specify if mesh can be tessellated (default: 0)
         /// </summary>
         public enum H3DMesh
         {
@@ -617,16 +628,20 @@ namespace Horde3DNET
         ///    The available compute node parameters.
 
         /// MatResI        - Material resource used for rendering
-        ///	CompBufResI    - Compute buffer resource that is used as data storage
-        ///	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
-        ///	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+        /// CompBufResI    - Compute buffer resource that is used as data storage
+        /// AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
+        /// AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+        /// DrawTypeI	   - Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
+        /// ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
         /// </summary>
         public enum H3DComputeNode
         {
             MatResI = 800,
             CompBufResI,
             AABBMinF,
-            AABBMaxF
+            AABBMaxF,
+            DrawTypeI,
+            ElementsCountI
         }
 
         /// <summary>
@@ -802,6 +817,17 @@ namespace Horde3DNET
         public static float getStat(H3DStats param, bool reset)
         {
             return NativeMethodsEngine.h3dGetStat((int)param, reset);
+        }
+
+        /// <summary>
+        /// Checks whether GPU supports a certain feature.
+        /// </summary>
+        /// This function returns a value, indicating the support of a certain GPU capability.
+        /// <param name="param">requested GPU feature</param>
+        /// <returns>1, if feature is supported, 0 otherwise</returns>
+        public static float getDeviceCapabilities(H3DDeviceCapabilities param)
+        {
+            return NativeMethodsEngine.h3dGetDeviceCapabilities((int)param);
         }
 
         /// <summary>
@@ -1919,7 +1945,19 @@ namespace Horde3DNET
             NativeMethodsEngine.h3dGetCameraProjMat(node, projMat);
         }
 
+        /// <summary>
+        /// This function sets the camera projection matrix used for bringing the geometry to
+		/// screen space.
+        /// </summary>
+        /// <param name="node">handle to Camera node</param>
+        /// <param name="projMat">pointer to float array with 16 elements</param>
+        /// <returns>true in case of success, otherwise false</returns>
+        public static void setCameraProjMat(int node, float[] projMat)
+        {
+            if (projMat.Length != 16) throw new ArgumentOutOfRangeException("projMat", Resources.MatrixOutOfRangeExceptionString);
 
+            NativeMethodsEngine.h3dSetCameraProjMat(node, projMat);
+        }
 
         // Emitter specific
         /// <summary>
@@ -1971,13 +2009,15 @@ namespace Horde3DNET
         /// <param name="parent">handle to parent node to which the new node will be attached</param>
         /// <param name="name">name of the node</param>
         /// <param name="matRes">handle to material resource used for rendering</param>
-        /// <param name="compBufferRes">handle to ComputeBuffer resource that is used as vertex storage</param>
+        /// <param name="compBufRes">handle to ComputeBuffer resource that is used as vertex storage</param>
+        /// <param name="drawType">specifies how to treat data in the compute buffer. 0 - Triangles, 1 - Lines, 2 - Points</param>
+        /// <param name="elementsCount">number of elements that need to be drawn</param>
         /// <returns>handle to the created node or 0 in case of failure</returns>
-        public static int addComputeNode(int parent, string name, int matRes, int compBufRes)
+        public static int addComputeNode(int parent, string name, int matRes, int compBufRes, int drawType, int elementsCount)
         {
             if (name == null) throw new ArgumentNullException("name", Resources.StringNullExceptionString);
 
-            return (int)NativeMethodsEngine.h3dAddComputeNode(parent, name, matRes, compBufRes);
+            return (int)NativeMethodsEngine.h3dAddComputeNode(parent, name, matRes, compBufRes, drawType, elementsCount);
         }
     }
 

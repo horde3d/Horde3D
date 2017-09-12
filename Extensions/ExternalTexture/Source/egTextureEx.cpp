@@ -34,7 +34,7 @@ void TextureResourceEx::release()
     TextureResource::release();
 }
 
-bool TextureResourceEx::importTexGL(int texGL, int width, int height )
+bool TextureResourceEx::importTexGL(uint32 texGL, int width, int height )
 {
     _loaded = true;
     _width = width;
@@ -51,7 +51,31 @@ bool TextureResourceEx::importTexGL(int texGL, int width, int height )
     m_imported = true;
 }
 
-void TextureResourceEx::replaceTexObj( int texObj )
+uint32 TextureResourceEx::getGLTexID()
+{
+    if( !_texObject )
+        return 0;
+    switch ( Modules::renderer().getRenderDeviceType() )
+    {
+    case RenderBackendType::OpenGL2:
+    {
+        RDI_GL2::RenderDeviceGL2 *rdi = ( RDI_GL2::RenderDeviceGL2 * ) Modules::renderer().getRenderDevice();
+        RDI_GL2::RDITextureGL2& tex = rdi->getTexture( _texObject );
+        return tex.glObj;
+    }
+    case RenderBackendType::OpenGL4:
+    {
+        RDI_GL4::RenderDeviceGL4 *rdi = ( RDI_GL4::RenderDeviceGL4 * ) Modules::renderer().getRenderDevice();
+        RDI_GL4::RDITextureGL4& tex = rdi->getTexture( _texObject );
+        return tex.glObj;
+    }
+    default:
+        Modules::log().writeError("Render backend not supported");
+        return 0;
+    }
+}
+
+void TextureResourceEx::replaceTexObj( uint32 texObj )
 {
     switch ( Modules::renderer().getRenderDeviceType() )
     {

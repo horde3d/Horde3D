@@ -38,7 +38,7 @@ namespace Horde3DNET.Samples.TesselatorNet
 
         // Engine objects
         private int _fontMatRes, _panelMatRes, _logoMatRes;
-        private int _computeMatRes;
+//        private int _computeMatRes;
         
         private int _statMode = 0;
         //horde3d 1.0
@@ -231,6 +231,12 @@ namespace Horde3DNET.Samples.TesselatorNet
                 return false;
             }
 
+            if (h3d.getDeviceCapabilities(h3d.H3DDeviceCapabilities.GeometryShaders) == 0 ||
+                 h3d.getDeviceCapabilities(h3d.H3DDeviceCapabilities.TessellationShaders) == 0)
+            {
+                return false;
+            }
+
             // Set options
             h3d.setOption(h3d.H3DOptions.LoadTextures, 1);
             h3d.setOption(h3d.H3DOptions.TexCompression, 0);
@@ -313,7 +319,7 @@ namespace Horde3DNET.Samples.TesselatorNet
 
             Horde3DUtils.showFrameStats(_fontMatRes, _panelMatRes, _statMode);
 
-            Horde3DUtils.showText( "Up/Down arrows to modify tessellation level", 1.1f, 0.01f, 0.032f, 1, 1, 1, _fontMatRes);
+            Horde3DUtils.showText( "Up/Down arrows to modify tessellation level", 1.0f, 0.01f, 0.032f, 1, 1, 1, _fontMatRes);
 
             // Show logo                        
             float ww = h3d.getNodeParamI(_cam, (int)h3d.H3DCamera.ViewportWidthI) / (float)h3d.getNodeParamI(_cam, (int)h3d.H3DCamera.ViewportHeightI);

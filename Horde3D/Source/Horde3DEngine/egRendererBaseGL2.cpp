@@ -176,6 +176,7 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_maxTexSlots = 16; // for OpenGL 2 there are always 16 texture slots
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
+	_doubleBuffered = false;
 	// add default geometry for resetting
 	_geometryInfo.add( RDIGeometryInfoGL2() );
 }
@@ -192,6 +193,11 @@ void RenderDeviceGL2::initStates()
 	GLint value;
 	glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
 	_defaultFBOMultisampled = value > 0;
+	GLboolean doubleBuffered;
+	glGetBooleanv( GL_DOUBLEBUFFER, &doubleBuffered );
+	_doubleBuffered = doubleBuffered != 0;
+	// Get the currently bound frame buffer object to avoid reset to invalid FBO
+	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
 }
 
 
@@ -202,12 +208,12 @@ bool RenderDeviceGL2::init()
 	char *vendor = (char *)glGetString( GL_VENDOR );
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
-	
-    if( !version || !renderer || !vendor )
-    {
-        Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
-        return false;
-    }
+
+	if( !version || !renderer || !vendor )
+	{
+		Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
+		return false;
+	}
 
 	Modules::log().writeInfo( "Initializing GL2 backend using OpenGL driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
@@ -268,6 +274,10 @@ bool RenderDeviceGL2::init()
 	_caps.maxJointCount = 75;
 	_caps.maxTexUnitCount = 16;
 
+	// Init states before creating test render buffer, to
+	// ensure binding the current FBO again
+	initStates();
+
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
 	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
@@ -279,7 +289,6 @@ bool RenderDeviceGL2::init()
 	else
 		destroyRenderBuffer( testBuf );
 	
-	initStates();
 	resetStates();
 
 	return true;
@@ -333,7 +342,9 @@ void RenderDeviceGL2::finishCreatingGeometry( uint32 geoObj )
 void RenderDeviceGL2::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
 {
 	RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( geoObj );
+	RDIBufferGL2 &buf = _buffers.getRef( vbo );
 
+	buf.geometryRefCount++;
 // 	if ( geo.vertexBufInfo.size() - 1 >= vbSlot )
 // 	{
 // 		// parameters found, change them
@@ -353,7 +364,9 @@ void RenderDeviceGL2::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbS
 void RenderDeviceGL2::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
 {
 	RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( geoObj );
+	RDIBufferGL2 &buf = _buffers.getRef( indBuf );
 
+	buf.geometryRefCount++;
 	geo.indexBufIdx = indBuf;
 	geo.indexBuf32Bit = format == IDXFMT_32 ? true : false;
 }
@@ -369,25 +382,50 @@ void RenderDeviceGL2::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers
 	{
 		for ( unsigned int i = 0; i < geo.vertexBufInfo.size(); ++i )
 		{
+			decreaseBufferRefCount( geo.vertexBufInfo[ i ].vbObj );
 			destroyBuffer( geo.vertexBufInfo[ i ].vbObj );
 		}
 
+		decreaseBufferRefCount( geo.indexBufIdx );
 		destroyBuffer( geo.indexBufIdx );
+	}
+	else
+	{
+		// just decrease reference count
+		for ( unsigned int i = 0; i < geo.vertexBufInfo.size(); ++i )
+		{
+			decreaseBufferRefCount( geo.vertexBufInfo[ i ].vbObj );
+		}
+
+		decreaseBufferRefCount( geo.indexBufIdx );
 	}
 	
 	_geometryInfo.remove( geoObj );
 	geoObj = 0;
 }
 
+
+void RenderDeviceGL2::decreaseBufferRefCount( uint32 bufObj )
+{
+	if ( bufObj == 0 ) return;
+
+	RDIBufferGL2 &buf = _buffers.getRef( bufObj );
+
+	buf.geometryRefCount--;
+}
+
+
 uint32 RenderDeviceGL2::createVertexBuffer( uint32 size, const void *data )
 {
 	return createBuffer( GL_ARRAY_BUFFER, size, data );
 }
 
+
 uint32 RenderDeviceGL2::createIndexBuffer( uint32 size, const void *data )
 {
 	return createBuffer( GL_ELEMENT_ARRAY_BUFFER, size, data );;
 }
+
 
 uint32 RenderDeviceGL2::createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
 {
@@ -431,6 +469,7 @@ uint32 RenderDeviceGL2::createTextureBuffer( TextureFormats::List format, uint32
 	return _textureBuffs.add( buf );
 }
 
+
 uint32 RenderDeviceGL2::createShaderStorageBuffer( uint32 size, const void *data )
 {
 	H3D_UNUSED_VAR( size );
@@ -440,6 +479,7 @@ uint32 RenderDeviceGL2::createShaderStorageBuffer( uint32 size, const void *data
 
 	return 0;
 }
+
 
 uint32 RenderDeviceGL2::createBuffer( uint32 bufType, uint32 size, const void *data )
 {
@@ -456,24 +496,30 @@ uint32 RenderDeviceGL2::createBuffer( uint32 bufType, uint32 size, const void *d
 	return _buffers.add( buf );
 }
 
+
 void RenderDeviceGL2::destroyBuffer( uint32& bufObj )
 {
 	if( bufObj == 0 )
 		return;
 	
 	RDIBufferGL2 &buf = _buffers.getRef( bufObj );
-	glDeleteBuffers( 1, &buf.glObj );
 
-	_bufferMem -= buf.size;
-	_buffers.remove( bufObj );
-	bufObj = 0;
+	if ( buf.geometryRefCount < 1 )
+	{
+		glDeleteBuffers( 1, &buf.glObj );
+
+		_bufferMem -= buf.size;
+		_buffers.remove( bufObj );
+		bufObj = 0;
+	}
 }
 
 
 void RenderDeviceGL2::destroyTextureBuffer( uint32& bufObj )
 {
-
+	
 }
+
 
 void RenderDeviceGL2::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
@@ -492,6 +538,7 @@ void RenderDeviceGL2::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 	glBufferSubData( buf.type, offset, size, data );
 }
 
+
 void * RenderDeviceGL2::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
 {
 	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
@@ -501,6 +548,7 @@ void * RenderDeviceGL2::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, 
 
 	return glMapBuffer( buf.type, bufferMappingTypes[ mapType ] );
 }
+
 
 void RenderDeviceGL2::unmapBuffer( uint32 geoObj, uint32 bufObj )
 {
@@ -1057,13 +1105,13 @@ uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, Texture
 		// Attach color buffers
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
-			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
 			// Create a color texture
 			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
 			RDITextureGL2 &tex = _textures.getRef( texObj );
+			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
 			// Attach the texture
 			glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + j, GL_TEXTURE_2D, tex.glObj, 0 );
 
@@ -1253,10 +1301,16 @@ void RenderDeviceGL2::setRenderBuffer( uint32 rbObj )
 	if( rbObj == 0 )
 	{
 		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+		if( _defaultFBO == 0 )
+		{
+			if( _doubleBuffered )
+				glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+			else
+				glDrawBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
+		}
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
-        if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
+		if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
 		else glDisable( GL_MULTISAMPLE );
 	}
 	else
@@ -1296,7 +1350,13 @@ bool RenderDeviceGL2::getRenderBufferData( uint32 rbObj, int bufIndex, int *widt
 		x = _vpX; y = _vpY; w = _vpWidth; h = _vpHeight;
 
 		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-		if( bufIndex != 32 ) glReadBuffer( GL_BACK_LEFT );
+		if( bufIndex != 32 )
+		{
+			if( _doubleBuffered )
+				glReadBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+			else
+				glReadBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
+		}
 		//format = GL_BGRA;
 		//type = GL_UNSIGNED_BYTE;
 	}

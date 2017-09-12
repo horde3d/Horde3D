@@ -63,8 +63,9 @@ struct RDIBufferGL4
 	uint32  type;
 	uint32  glObj;
 	uint32  size;
+	int		geometryRefCount;
 
-	RDIBufferGL4() : type( 0 ), glObj( 0 ), size( 0 ) {}
+	RDIBufferGL4() : type( 0 ), glObj( 0 ), size( 0 ), geometryRefCount( 0 ) {}
 };
 
 struct RDIVertBufSlotGL4
@@ -329,22 +330,25 @@ protected:
 
 	inline uint32 createBuffer( uint32 type, uint32 size, const void *data );
 
+	inline void	  decreaseBufferRefCount( uint32 bufObj );
 protected:
 
-	RDIVertexLayout		              _vertexLayouts[MaxNumVertexLayouts];
-	RDIObjects< RDIBufferGL4 >        _buffers;
-	RDIObjects< RDITextureGL4 >       _textures;
-	RDIObjects< RDITextureBufferGL4 > _textureBuffs;
-	RDIObjects< RDIShaderGL4 >        _shaders;
-	RDIObjects< RDIRenderBufferGL4 >  _rendBufs;
-	RDIObjects< RDIGeometryInfoGL4 >  _vaos;
+	RDIVertexLayout                    _vertexLayouts[MaxNumVertexLayouts];
+	RDIObjects< RDIBufferGL4 >         _buffers;
+	RDIObjects< RDITextureGL4 >        _textures;
+	RDIObjects< RDITextureBufferGL4 >  _textureBuffs;
+	RDIObjects< RDIShaderGL4 >         _shaders;
+	RDIObjects< RDIRenderBufferGL4 >   _rendBufs;
+	RDIObjects< RDIGeometryInfoGL4 >   _vaos;
 	std::vector< RDIShaderStorageGL4 > _storageBufs;
 
- 	uint32                _indexFormat;
- 	uint32                _activeVertexAttribsMask;
+ 	uint32                             _indexFormat;
+ 	uint32                             _activeVertexAttribsMask;
 
-	uint16				  _lastTessPatchVertsValue;
-	uint16				  _maxComputeBufferAttachments;
+	uint16                             _lastTessPatchVertsValue;
+	uint16                             _maxComputeBufferAttachments;
+
+	bool                               _doubleBuffered;
 };
 
 } // namespace RDI_GL4
