@@ -1981,8 +1981,11 @@ namespace Horde3D
 		luaL_openlib(L, 0, LuaBindings::horde3d_meta_methods,  0); /* fill metatable */
 		luaL_openlib(L, 0, LuaBindings::horde3d_utils_methods, 1); /* fill function methods table */
 		lua_settable(L, LUA_GLOBALSINDEX); /* add function to globals */
-#else
-        // TODO
+#else      
+        luaL_newlib(L,LuaBindings::horde3d_methods);
+        lua_setglobal(L, "Horde3D");
+        luaL_newlib(L,LuaBindings::horde3d_utils_methods);
+        lua_setglobal(L, "Horde3DUtils");
 #endif
 	}
 
