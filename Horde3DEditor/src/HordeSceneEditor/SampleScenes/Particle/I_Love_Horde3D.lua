@@ -10,14 +10,14 @@ if (os.clock() > lasttime + 0.2) then
  lasttime = os.clock()
 end
 
-  camX = math.cos(os.clock() * 0.2) 
-  camZ = math.sin(os.clock() * 0.2) 
+ -- camX = math.cos(os.clock() * 0.2) 
+ -- camZ = math.sin(os.clock() * 0.2) 
 
-  camRY = math.acos(camZ) * 180 / 3.141592
-  if (camX < 0) then
-     camRY = 360 - camRY
-  end
-  Horde3D.setNodeTransform(5, camX * 20, 5, camZ * 20, 0, camRY, 0, 1, 1, 1)
+  --camRY = math.acos(camZ) * 180 / 3.141592
+  --if (camX < 0) then
+  --   camRY = 360 - camRY
+  --end
+  --Horde3D.setNodeTransform(5, camX * 20, 5, camZ * 20, 0, camRY, 0, 1, 1, 1)
 
 if (t >= 1) then
    t = -1

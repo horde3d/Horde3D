@@ -1,6 +1,6 @@
-<ParticleEffect lifeMin="1.5" lifeMax="3.0">
+<ParticleEffect lifeMin="1.5" lifeMax="15.0">
 		
-		<ChannelOverLife channel="moveVel" startMin="3.0" startMax="3.0" endRate="0.0" />
+		<ChannelOverLife channel="moveVel" startMin="0.0" startMax="0.0" endRate="0.0" />
 		<ChannelOverLife channel="rotVel" startMin="210" startMax="210" endRate="0.57" />
 		<ChannelOverLife channel="size" startMin="0.4" startMax="0.4" endRate="1.0" />
 		

@@ -451,7 +451,7 @@ uint16 *TerrainNode::createIndices()
 	bool forward = true;
 
 	// Create indices for triangle strip
-	for( uint32 v = 0; v < size - 1; ++v )
+	for( uint32 v = 0; v < size - 1; ++v, ++indexItr )
 	{
 		for( uint32 u = 0; u < size; ++u )
 		{
@@ -463,9 +463,7 @@ uint16 *TerrainNode::createIndices()
 		}
 
 		// Add degenerated triangle
-//		*indexItr++ = *(indexItr - 1); 
-		*indexItr = *( indexItr - 1 );
-		indexItr++;
+		*indexItr = *(indexItr - 1);
 
 		forward = !forward;
 	}

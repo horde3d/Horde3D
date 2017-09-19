@@ -52,7 +52,7 @@ You need to have a C++ compiler and [CMake 2.8+](http://www.cmake.org/) installe
 
 - [Qt Creator](http://qt-project.org/downloads#qt-creator): open `CMakeLists.txt` as new project, follow the instructions, hit build and you're done.
 - [Visual Studio](http://www.microsoft.com/visualstudio/eng/products/visual-studio-express-products): start `cmake-gui`, choose OGDF as source path, `build-vs` as build path, press generate, open `build-vs\Horde3D.sln` and start compiling. You could also generate the solution from the command line running ``mkdir build-vs && cd build-vs && cmake -G "Visual Studio XYZ" ..``, where XYZ is the correct identifier for the desired version of Visual Studio (i.e. `8 2005` for VS 2005, `9 2008` for VS 2008, `10` for VS 2010, `11` for VS 2011, etc. Please run ``cmake --help`` for more info).
-- [Xcode] (https://developer.apple.com/xcode/): open up a terminal, navigate to the repository and run ``mkdir build-xcode && cd build-xcode && cmake -G "Xcode" ..``, then open the generated project file inside Xcode.
+- [Xcode](https://developer.apple.com/xcode/): open up a terminal, navigate to the repository and run ``mkdir build-xcode && cd build-xcode && cmake -G "Xcode" ..``, then open the generated project file inside Xcode.
 - [Makefiles](http://www.gnu.org/software/make/): open up a terminal, navigate to the repository and run ``mkdir build-make && cd build-make && cmake -G "Unix Makefiles" .. && make`` (hint: use `export JOBS=MAX` to speed things up).
 - [Ninja](http://martine.github.io/ninja/): open up a terminal, navigate to the repository and run ``mkdir build-ninja && cd build-ninja && cmake -G "Ninja" .. && ninja``.
 
