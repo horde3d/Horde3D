@@ -212,7 +212,10 @@ int OverlayRenderer::getInternalUniformLocation(MaterialResource *mat)
 	}
 
 	// create new entry
-	_cachedLocations.push_back( CachedUniformLocation( mat, rdi->getShaderConstLoc( curShader->shaderObj, "olayColor" ) ) );
+	CachedUniformLocation loc( mat, rdi->getShaderConstLoc( curShader->shaderObj, "olayColor" ) );
+	_cachedLocations.push_back( loc );
+
+	return loc.uniformLocation;
 }
 
 } // namespace

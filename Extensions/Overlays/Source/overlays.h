@@ -70,7 +70,7 @@ public:
 	static void clearOverlays();
 
 	static void drawOverlays( const std::string &shaderContext );
-	static int getInternalUniformLocation( MaterialResource *mat );
+	static int getInternalUniformLocation( Horde3D::MaterialResource *mat );
 private:
 
 	static std::vector< CachedUniformLocation >	_cachedLocations;
