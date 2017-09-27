@@ -20,6 +20,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <functional>
 
 namespace Horde3D {
 
@@ -99,10 +100,34 @@ struct PipeSamplerBinding
 	uint32  bufIndex;
 };
 
-struct ExternalUniform
+struct EngineUniform
 {
-	char    uniformName[ 64 ];
-	int		uniformLoc;
+	std::string uniformName;
+	size_t	hash;
+
+	EngineUniform( const char *uniName ) 
+	{
+		uniformName.assign( uniName );
+		hash = std::hash< std::string >{}( uniformName );
+	}
+
+	bool operator==( const EngineUniform &uni ) const
+	{
+		return hash == uni.hash;
+	}
+};
+
+struct DefaultShaderUniforms
+{
+	int                 frameBufSize = -1;
+	int                 viewMat = -1, viewMatInv = -1, projMat = -1, viewProjMat = -1, 
+						viewProjMatInv = -1, viewerPos = -1;
+
+	int                 worldMat = -1, worldNormalMat = -1, nodeId = -1, customInstData = -1;
+	int                 skinMatRows = -1;
+	int                 lightPos = -1, lightDir = -1, lightColor = -1;
+	int                 shadowSplitDists = -1, shadowMats = -1, shadowMapSize = -1, shadowBias = -1;
+	int                 parPosArray = -1, parSizeAndRotArray = -1, parColorArray = -1;
 };
 
 struct DefaultVertexLayouts
@@ -123,6 +148,10 @@ public:
 
 	void registerRenderFunc( int nodeType, RenderFunc rf );
 
+	int registerEngineUniform( const char *uniName );
+	int getEngineUniform( const char *uniName );
+	uint32 totalEngineUniforms() { return ( uint32 )_engineUniforms.size(); }
+	
 	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
 
 	unsigned char *useScratchBuf( uint32 minSize, uint32 alignment );
@@ -198,12 +227,14 @@ protected:
 	void renderDebugView();
 	void finishRendering();
 
-	RenderDeviceInterface *createRenderDevice( int type );
+	RenderDeviceInterface	*createRenderDevice( int type );
+	void					releaseRenderDevice();
 
-	void		  releaseRenderDevice();
 protected:
 	
 	RenderDeviceInterface		       *_renderDevice;
+
+	DefaultShaderUniforms			   _uni; // indices of engine uniforms in ShaderCombination uniLoc array
 
 	std::vector< RenderFuncListItem >  _renderFuncRegistry;
 	
@@ -211,7 +242,7 @@ protected:
 	std::vector< char >                _occSets;  // Actually bool
 	std::vector< OccProxy >            _occProxies[2];  // 0: renderables, 1: lights
 
-	std::vector< ExternalUniform >	   _externalUniforms; // uniforms, that are internal to extensions
+	std::vector< EngineUniform >	   _engineUniforms; // uniforms, that are used internally by the engine and extensions
 
 	Matrix4f                           _viewMat, _viewMatInv, _projMat, _viewProjMat, _viewProjMatInv;
 
@@ -230,6 +261,7 @@ protected:
 	uint32                             _defShadowMap;
 	uint32                             _quadIdxBuf;
 	uint32                             _particleVBO;
+
 	MaterialResource                   *_curStageMatLink;
 	CameraNode                         *_curCamera;
 	LightNode                          *_curLight;

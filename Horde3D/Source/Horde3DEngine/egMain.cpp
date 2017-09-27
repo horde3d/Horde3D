@@ -164,7 +164,7 @@ DLLEXP void h3dClear()
 
 DLLEXP const char *h3dGetMessage( int *level, float *time )
 {
-	static string msgText;
+//	static string msgText;
 	static LogMessage msg;
 	
 	if( Modules::log().getMessage( msg ) )
