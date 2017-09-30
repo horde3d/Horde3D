@@ -79,7 +79,7 @@ public:
 	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
-	virtual bool canAttach( SceneNode &parent );
+	virtual bool canAttach( SceneNode &parent ) const;
 	virtual int getParamI( int param ) const;
 	virtual void setParamI( int param, int value );
 	virtual float getParamF( int param, int compIdx ) const;
