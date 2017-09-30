@@ -274,7 +274,7 @@ bool RenderDeviceGL4::init()
 	_caps.tesselation = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
 	_caps.computeShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 3;
 	_caps.instancing = true;
-	_caps.maxJointCount = 75; // currently, will be changed soon
+	_caps.maxJointCount = 330;
 	_caps.maxTexUnitCount = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 
 	// Find maximum number of storage buffers in compute shader
