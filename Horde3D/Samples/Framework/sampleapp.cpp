@@ -289,7 +289,7 @@ int SampleApplication::run()
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
-            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, &fpsValue, _fontMatRes, _panelMatRes );
+            h3dShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, &fpsValue, _fontMatRes, _panelMatRes );
 
             render();
             finalize();
@@ -415,7 +415,7 @@ void SampleApplication::render()
 	h3dSetNodeTransform( _cam, _x, _y, _z, _rx ,_ry, 0, 1, 1, 1 );
 	
 	// Show stats
-	h3dutShowFrameStats( _fontMatRes, _panelMatRes, _statMode );
+	h3dShowFrameStats( _fontMatRes, _panelMatRes, _statMode );
 	if( _statMode > 0 )
     {
         std::string piperes_name = "Pipeline: forward";
@@ -426,7 +426,7 @@ void SampleApplication::render()
         else if( _curPipeline == 2 )
             piperes_name = "Pipeline: HDR";
 
-        h3dutShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
         
         char buf[64];
         if ( _sampleCount == 0 ) {
@@ -434,7 +434,7 @@ void SampleApplication::render()
         } else {
             sprintf( buf, "MSAA: %d", _sampleCount );
         }
-        h3dutShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 
     const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
@@ -443,7 +443,7 @@ void SampleApplication::render()
     // Show help
     if( _showHelpPanel )
     {
-        h3dutShowInfoBox( ww-0.48f, 0.03f, 0.45f, "Help", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
+        h3dShowInfoBox( ww-0.48f, 0.03f, 0.45f, "Help", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
     }
 
     // Show logo

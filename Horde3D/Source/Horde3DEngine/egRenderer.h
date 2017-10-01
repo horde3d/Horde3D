@@ -151,7 +151,8 @@ public:
 	int registerEngineUniform( const char *uniName );
 	int getEngineUniform( const char *uniName );
 	uint32 totalEngineUniforms() { return ( uint32 )_engineUniforms.size(); }
-	
+	DefaultShaderUniforms &getDefShaderUniIndices() { return _uni; }
+
 	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
 
 	unsigned char *useScratchBuf( uint32 minSize, uint32 alignment );

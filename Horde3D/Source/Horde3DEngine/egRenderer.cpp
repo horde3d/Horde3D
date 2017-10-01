@@ -63,7 +63,7 @@ Renderer::Renderer()
 	_engineUniforms.reserve( 25 );
 
 	// General uniforms
-	registerEngineUniform( "shadowMap" );
+//	registerEngineUniform( "shadowMap" );
 
 	// Misc general uniforms
 	_uni.frameBufSize = registerEngineUniform( "frameBufSize" );
@@ -538,7 +538,7 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 
 	sc.uniLocs.reserve( _engineUniforms.size() );
 
-	for ( size_t i = 1; i < _engineUniforms.size(); ++i ) // skipping first element because it has a special check above
+	for ( size_t i = 0; i < _engineUniforms.size(); ++i ) 
 	{
 		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
 	}
@@ -795,10 +795,12 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		}
 	}
 
+	size_t uniOffset = _engineUniforms.size();
+
 	// Set custom uniforms
 	for( size_t i = 0, si = shaderRes->_uniforms.size(); i < si; ++i )
 	{
-		if( _curShader->uniLocs[i] < 0 ) continue;
+		if( _curShader->uniLocs[ i + uniOffset ] < 0 ) continue;
 		
 		float *unifData = 0x0;
 
@@ -823,10 +825,10 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 			switch( shaderRes->_uniforms[i].size )
 			{
 			case 1:
-				_renderDevice->setShaderConst( _curShader->uniLocs[i], CONST_FLOAT, unifData );
+				_renderDevice->setShaderConst( _curShader->uniLocs[ i + uniOffset ], CONST_FLOAT, unifData );
 				break;
 			case 4:
-				_renderDevice->setShaderConst( _curShader->uniLocs[i], CONST_FLOAT4, unifData );
+				_renderDevice->setShaderConst( _curShader->uniLocs[ i + uniOffset ], CONST_FLOAT4, unifData );
 				break;
 			}
 		}
