@@ -21,6 +21,8 @@
 #include <math.h>
 #include <iomanip>
 
+#include "Horde3DOverlays.h"
+
 using namespace std;
 
 
@@ -163,6 +165,6 @@ void KnightSample::update()
 		// Display weight
 		_text.str( "" );
 		_text << fixed << setprecision( 2 ) << "Weight: " << _weight;
-        h3dutShowText( _text.str().c_str(), 0.175f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( _text.str().c_str(), 0.175f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 }
