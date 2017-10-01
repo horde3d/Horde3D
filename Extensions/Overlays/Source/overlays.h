@@ -41,18 +41,26 @@ struct OverlayVert
 	float  u, v;  // Texture coordinates
 };
 
-struct CachedUniformLocation
+struct InfoBox
 {
-	Horde3D::MaterialResource	*material;
-	int							uniformLocation;
-
-	CachedUniformLocation() {}
-
-	CachedUniformLocation( Horde3D::MaterialResource *mat, int loc ) : material( mat ), uniformLocation( loc )
-	{
-
-	}
+	Horde3D::MaterialResource	*fontMatRes;
+	float						x, y_row0;
+	float						width;
+	int							row;
 };
+
+// struct CachedUniformLocation
+// {
+// 	Horde3D::MaterialResource	*material;
+// 	int							uniformLocation;
+// 
+// 	CachedUniformLocation() {}
+// 
+// 	CachedUniformLocation( Horde3D::MaterialResource *mat, int loc ) : material( mat ), uniformLocation( loc )
+// 	{
+// 
+// 	}
+// };
 
 class OverlayRenderer
 {
@@ -66,16 +74,23 @@ public:
 
 	static void showOverlays( const float *verts, uint32 vertCount, float *colRGBA,
 							  Horde3D::MaterialResource *matRes, int flags );
-
 	static void clearOverlays();
-
 	static void drawOverlays( const std::string &shaderContext );
-	static int getInternalUniformLocation( Horde3D::MaterialResource *mat );
+
+	static void showText( const char *text, float x, float y, float size, float colR,
+		float colG, float colB, Horde3D::MaterialResource *fontMatRes );
+
+	static void beginInfoBox( float x, float y, float width, int numRows, const char *title, 
+					   Horde3D::MaterialResource *fontMatRes, Horde3D::MaterialResource *boxMatRes );
+	static void addInfoBoxRow( const char *column1, const char *column2 );
+	static void showFrameStats( Horde3D::MaterialResource *fontMatRes, Horde3D::MaterialResource *panelMatRes, int mode );
+	//	static int getInternalUniformLocation( Horde3D::MaterialResource *mat );
 private:
 
-	static std::vector< CachedUniformLocation >	_cachedLocations;
+//	static std::vector< CachedUniformLocation >	_cachedLocations;
 	static std::vector< OverlayBatch >			_overlayBatches;
 	static OverlayVert							*_overlayVerts;
+	static InfoBox								_infoBox;
 	static uint32								_overlayGeo;
 	static uint32								_overlayVB;
 
