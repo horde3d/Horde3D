@@ -67,6 +67,7 @@ const char *fsTerrainDebugViewGL4 =
 
 uint32 TerrainNode::vlTerrain;
 ShaderCombination TerrainNode::debugViewShader;
+int TerrainNode::uni_terBlockParams = -1;
 
 
 TerrainNode::TerrainNode( const TerrainNodeTpl &terrainTpl ) :
@@ -155,7 +156,7 @@ void TerrainNode::onPostUpdate()
 
 void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV, float maxU, float maxV,
                                     int level, float scale, const Vec3f &localCamPos, const Frustum *frust1,
-                                    const Frustum *frust2, int uni_terBlockParams )
+                                    const Frustum *frust2, int terBlockParamsUni )
 {
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
@@ -185,10 +186,10 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 	if( p < terrain->_lodThreshold || level == terrain->_maxLevel )
 	{
 		// Render terrain block
-		if( uni_terBlockParams >= 0 )
+		if( terBlockParamsUni >= 0 )
 		{
 			float values[4] = { minU, minV, scale, scale };
-			rdi->setShaderConst( uni_terBlockParams, CONST_FLOAT4, values );  // Bias and scale
+			rdi->setShaderConst( terBlockParamsUni, CONST_FLOAT4, values );  // Bias and scale
 		}
 	
 		const uint32 size = terrain->_blockSize + 2;
@@ -256,7 +257,7 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 		for( uint32 i = 0; i < 4; ++i )
 		{
 			drawTerrainBlock( terrain, blocks[i].x, blocks[i].y, blocks[i].z, blocks[i].w,
-			                  level + 1, scale, localCamPos, frust1, frust2, uni_terBlockParams );
+			                  level + 1, scale, localCamPos, frust1, frust2, terBlockParamsUni );
 		}
 	}
 }
@@ -272,6 +273,7 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
+	DefaultShaderUniforms &uni = Modules::renderer().getDefShaderUniIndices();
 
 	// Loop through terrain queue
 	for( uint32 i = firstItem; i <= lastItem; ++i )
@@ -292,7 +294,7 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 			rdi->setShaderConst( loc, CONST_FLOAT4, color );
 		}
 		
-		int uni_terBlockParams = rdi->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
+//		int uni_terBlockParams = rdi->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
 
 		Matrix4f &camTransformation = curCam->getAbsTrans();
 		Vec3f localCamPos( camTransformation.x[12], camTransformation.x[13], camTransformation.x[14] );
@@ -307,25 +309,27 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 
 		// Set uniforms
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
-		if( curShader->uni_worldMat >= 0 )
+		int terBlockUni = curShader->uniLocs[ uni_terBlockParams ];
+
+		if( curShader->uniLocs[ uni.worldMat ] >= 0 )
 		{
-			rdi->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &terrain->_absTrans.x[0] );
+			rdi->setShaderConst( curShader->uniLocs[ uni.worldMat ], CONST_FLOAT44, &terrain->_absTrans.x[0] );
 		}
-		if( curShader->uni_worldNormalMat >= 0 )
+		if( curShader->uniLocs[ uni.worldNormalMat ] >= 0 )
 		{
 			Matrix4f normalMat4 = terrain->_absTrans.inverted().transposed();
 			float normalMat[9] = { normalMat4.x[0], normalMat4.x[1], normalMat4.x[2],
 			                       normalMat4.x[4], normalMat4.x[5], normalMat4.x[6],
 			                       normalMat4.x[8], normalMat4.x[9], normalMat4.x[10] };
-			rdi->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
+			rdi->setShaderConst( curShader->uniLocs[ uni.worldNormalMat ], CONST_FLOAT33, normalMat );
 		}
-		if( curShader->uni_nodeId >= 0 )
+		if( curShader->uniLocs[ uni.nodeId ]>= 0 )
 		{
 			float id = (float)terrain->getHandle();
-			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uniLocs[ uni.nodeId ], CONST_FLOAT, &id );
 		}
 
-		drawTerrainBlock( terrain, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, localCamPos, frust1, frust2, uni_terBlockParams );
+		drawTerrainBlock( terrain, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, localCamPos, frust1, frust2, terBlockUni );
 
 // 		rdi->setVertexLayout( 0 );
 	}
