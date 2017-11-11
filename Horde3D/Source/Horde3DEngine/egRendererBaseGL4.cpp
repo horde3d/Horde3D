@@ -53,6 +53,8 @@ static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTU
 
 static const uint32 memoryBarrierType[ 3 ] = { GL_BUFFER_UPDATE_BARRIER_BIT | GL_SHADER_STORAGE_BARRIER_BIT, GL_ELEMENT_ARRAY_BARRIER_BIT, GL_SHADER_IMAGE_ACCESS_BARRIER_BIT };
 
+static const uint32 bufferMappingTypes[ 3 ] = { GL_MAP_READ_BIT, GL_MAP_WRITE_BIT, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT };
+
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
@@ -179,6 +181,7 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_maxTexSlots = 32; // texture units per stage
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
+	_doubleBuffered = false;
 	// add default geometry for resetting
 	RDIGeometryInfoGL4 defGeom;
 	defGeom.atrribsBinded = true;
@@ -197,6 +200,11 @@ void RenderDeviceGL4::initStates()
 	GLint value;
 	glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
 	_defaultFBOMultisampled = value > 0;
+	GLboolean doubleBuffered;
+	glGetBooleanv( GL_DOUBLEBUFFER, &doubleBuffered );
+	_doubleBuffered = doubleBuffered != 0;
+	// Get the currently bound frame buffer object to avoid reset to invalid FBO
+	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
 }
 
 
@@ -207,6 +215,12 @@ bool RenderDeviceGL4::init()
 	char *vendor = (char *)glGetString( GL_VENDOR );
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
+
+	if( !version || !renderer || !vendor )
+	{
+		Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
+		return false;
+	}
 	
 	Modules::log().writeInfo( "Initializing GL4 backend using OpenGL driver '%s' by '%s' on '%s'",
 							  version, vendor, renderer );
@@ -260,12 +274,14 @@ bool RenderDeviceGL4::init()
 	_caps.tesselation = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
 	_caps.computeShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 3;
 	_caps.instancing = true;
-	_caps.maxJointCount = 75; // currently, will be changed soon
+	_caps.maxJointCount = 330;
 	_caps.maxTexUnitCount = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 
 	// Find maximum number of storage buffers in compute shader
-	glGetIntegeri_v( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, 0, (GLint *) &_maxComputeBufferAttachments );
-	
+	glGetIntegerv( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, (GLint *) &_maxComputeBufferAttachments );
+	// Init states before creating test render buffer, to
+	// ensure binding the current FBO again
+	initStates();
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
 	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
@@ -276,8 +292,7 @@ bool RenderDeviceGL4::init()
 	}
 	else
 		destroyRenderBuffer( testBuf );
-	
-	initStates();
+		
 	resetStates();
 
 	return true;
@@ -387,6 +402,9 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
 {
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+	RDIBufferGL4 &buf = _buffers.getRef( vbo );
+
+	buf.geometryRefCount++;
 
 	RDIVertBufSlotGL4 attribInfo;
 	attribInfo.vbObj = vbo;
@@ -399,7 +417,9 @@ void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbS
 void RenderDeviceGL4::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
 {
 	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+	RDIBufferGL4 &buf = _buffers.getRef( indBuf );
 
+	buf.geometryRefCount++;
 	curVao.indexBuf = indBuf;
 	curVao.indexBuf32Bit = ( format == IDXFMT_32 ? true : false );
 }
@@ -418,15 +438,36 @@ void RenderDeviceGL4::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers
 	{
 		for ( unsigned int i = 0; i < curVao.vertexBufInfo.size(); ++i )
 		{
+			decreaseBufferRefCount( curVao.vertexBufInfo[ i ].vbObj );
 			destroyBuffer( curVao.vertexBufInfo[ i ].vbObj );
 		}
 
+		decreaseBufferRefCount( curVao.indexBuf );
 		destroyBuffer( curVao.indexBuf );
+	}
+	else
+	{
+		for ( size_t i = 0; i < curVao.vertexBufInfo.size(); ++i )
+		{
+			decreaseBufferRefCount( curVao.vertexBufInfo[ i ].vbObj );
+		}
+		decreaseBufferRefCount( curVao.indexBuf );
 	}
 
 	_vaos.remove( geoObj );
 	geoObj = 0;
 }
+
+
+void RenderDeviceGL4::decreaseBufferRefCount( uint32 bufObj )
+{
+	if ( bufObj == 0 ) return;
+	
+	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+
+	buf.geometryRefCount--;
+}
+
 
 uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
 {
@@ -518,11 +559,15 @@ void RenderDeviceGL4::destroyBuffer( uint32& bufObj )
 		return;
 	
 	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
-	glDeleteBuffers( 1, &buf.glObj );
 
-	_bufferMem -= buf.size;
-	_buffers.remove( bufObj );
-	bufObj = 0;
+	if ( buf.geometryRefCount < 1 )
+	{
+		glDeleteBuffers( 1, &buf.glObj );
+
+		_bufferMem -= buf.size;
+		_buffers.remove( bufObj );
+		bufObj = 0;
+	}
 }
 
 
@@ -542,12 +587,9 @@ void RenderDeviceGL4::destroyTextureBuffer( uint32& bufObj )
 
 void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
-//	const RDIGeometryInfoGL4 &geo = _vaos.getRef( geoObj );
 	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
 	
-//	glBindVertexArray( geo.vao );
-
 	glBindBuffer( buf.type, buf.glObj );
 	
 	if( offset == 0 && size == buf.size )
@@ -555,22 +597,35 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 		// Replacing the whole buffer can help the driver to avoid pipeline stalls
 		glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
 
-// 		glBindBuffer( buf.type, 0 );
-// 		glBindVertexArray( 0 );
-
 		return;
 	}
 	
-
-//	float *bufMem = (float *) glMapBufferRange( buf.type, offset, size, GL_MAP_READ_BIT );
-
-// 	memcpy( bufMem, data, size );
-// 
-// 	glUnmapBuffer( buf.type );
 	glBufferSubData( buf.type, offset, size, data );
+}
 
-// 	glBindBuffer( buf.type, 0 );
-// 	glBindVertexArray( 0 );
+void * RenderDeviceGL4::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
+{
+	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+	ASSERT( offset + size <= buf.size );
+
+	glBindBuffer( buf.type, buf.glObj );
+	
+	if ( offset == 0 && size == buf.size && mapType == Write )
+	{
+		return glMapBufferRange( buf.type, offset, size, bufferMappingTypes[ mapType ] | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+	}
+
+	return glMapBufferRange( buf.type, offset, size, bufferMappingTypes[ mapType ] );
+}
+
+void RenderDeviceGL4::unmapBuffer( uint32 geoObj, uint32 bufObj )
+{
+	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+
+	// multiple buffers can be mapped at the same time, so bind the one that needs to be unmapped
+	glBindBuffer( buf.type, buf.glObj );
+
+	glUnmapBuffer( buf.type );
 }
 
 
@@ -748,7 +803,7 @@ void RenderDeviceGL4::destroyTexture( uint32& texObj )
 		return;
 	
 	const RDITextureGL4 &tex = _textures.getRef( texObj );
-	glDeleteTextures( 1, &tex.glObj );
+	if( tex.glObj ) glDeleteTextures( 1, &tex.glObj );
 
 	_textureMem -= tex.memSize;
 	_textures.remove( texObj );
@@ -805,6 +860,22 @@ bool RenderDeviceGL4::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 	return true;
 }
 
+void RenderDeviceGL4::bindImageToTexture(uint32 texObj, void *eglImage)
+{
+	if( !glExt::OES_EGL_image )
+		Modules::log().writeError("OES_egl_image not supported");
+	else
+	{
+		const RDITextureGL4 &tex = _textures.getRef( texObj );
+		glActiveTexture( GL_TEXTURE15 );
+		glBindTexture( tex.type, tex.glObj );
+		glEGLImageTargetTexture2DOES( tex.type, eglImage );
+		checkError();
+		glBindTexture( tex.type, 0 );
+		if( _texSlots[15].texObj )
+			glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+	}
+}
 
 // =================================================================================================
 // Shaders
@@ -1253,13 +1324,13 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 		// Attach color buffers
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
-			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 			// Create a color texture
 			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
 			RDITextureGL4 &tex = _textures.getRef( texObj );
+			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 			// Attach the texture
 			glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + j, GL_TEXTURE_2D, tex.glObj, 0 );
 
@@ -1451,7 +1522,13 @@ void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
 	if( rbObj == 0 )
 	{
 		glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
-		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+		if( _defaultFBO == 0 )
+		{
+			if( _doubleBuffered )
+				glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+			else
+				glDrawBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
+		}
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
 		if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
@@ -1494,7 +1571,13 @@ bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *widt
 		x = _vpX; y = _vpY; w = _vpWidth; h = _vpHeight;
 
 		glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
-		if( bufIndex != 32 ) glReadBuffer( GL_BACK_LEFT );
+		if( bufIndex != 32 )
+		{
+			if( _doubleBuffered )
+				glReadBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+			else
+				glReadBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
+		}
 		//format = GL_BGRA;
 		//type = GL_UNSIGNED_BYTE;
 	}

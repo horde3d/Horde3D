@@ -165,7 +165,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 			inf.read( dataBuf, fileSize );
 			inf.close();
 			// Send resource data to engine
-			result &= h3dLoadResource( res, dataBuf, fileSize );
+			result &= h3dLoadResource( res, dataBuf, ( int ) fileSize );
 		}
 		else // Resource file not found
 		{
@@ -783,6 +783,51 @@ DLLEXP H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy )
 			return 0;
 	}
 
+}
+
+
+DLLEXP void h3dutGetScreenshotParam( int *width,  int *height ) {
+  h3dGetRenderTargetData( 0, "", 0, width, height, 0x0, 0x0, 0 );
+}
+
+DLLEXP bool h3dutScreenshotRaw( unsigned char *rgb, int len_rgb )
+  {
+    // Ask Horde for the width and height of the screenshot.
+    int width, height;
+    h3dGetRenderTargetData( 0, "", 0, &width, &height, 0x0, 0x0, 0 );
+
+    // Sanity check: User must have provided a buffer that can hold the entire
+    // RGB image (each of the RGB components is an unsigned char).
+    if (len_rgb < width * height * 3) {
+      return false;
+    }
+
+    // Ensure we have enough space in the auxiliary buffer. This buffer must be
+    // large enough to store each RGBA component as a *float* - *not* an
+    // unsinged char.
+    static vector<float> f32buf;
+    f32buf.reserve(width * height * 4);
+
+    // Determine the size of the pixel buffer in *bytes*. This is somewhat
+    // unintuitive because Horde returns each of the RGBA components as a
+    // float32, not an unsigned integer.
+    const int num_bytes = width * height * 4 * sizeof(float);
+
+  // Copy the pixels (RGBA, float32) into the auxiliary buffer.
+  h3dGetRenderTargetData( 0, "", 0, 0x0, 0x0, 0x0, &f32buf[0], num_bytes);
+
+  // Unpack the image from the auxiliary RGBA (float32) buffer into the user
+  // provide RGB (uint8) array.
+	for( int y = 0; y < height; ++y ) {
+      for( int x = 0; x < width; ++x ) {
+        int idx = y * width + x;
+        rgb[3 * idx + 0] = ftoi_r( clamp( f32buf[4 * idx + 0], 0.f, 1.f ) * 255.f );
+        rgb[3 * idx + 1] = ftoi_r( clamp( f32buf[4 * idx + 1], 0.f, 1.f ) * 255.f );
+        rgb[3 * idx + 2] = ftoi_r( clamp( f32buf[4 * idx + 2], 0.f, 1.f ) * 255.f );
+      }
+  }
+
+  return true;
 }
 
 

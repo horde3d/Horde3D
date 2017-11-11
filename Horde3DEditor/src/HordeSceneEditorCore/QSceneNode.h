@@ -173,6 +173,7 @@ protected:
 		LightRadiusID,
 		LightMaterialID,
 		LightShadowMapLambdaID,
+		LightIntensityID,
 		MeshMaterialID,
 		LodLevelID,
 		SoftwareSkinningID,

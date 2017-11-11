@@ -76,9 +76,6 @@ Renderer::~Renderer()
 		releaseShaderComb( _defColorShader );
 
 		_renderDevice->destroyGeometry( _particleGeo );
-		// Particle and overlay share the index buffer,
-		// so avoid releasing the index buffer of _overlayGeo by setting it to zero
-		if( _overlayGeo ) _renderDevice->setGeomIndexParams( _overlayGeo, 0, IDXFMT_16 );
 		_renderDevice->destroyGeometry( _cubeGeo );
 		_renderDevice->destroyGeometry( _sphereGeo );
 		_renderDevice->destroyGeometry( _coneGeo );
@@ -106,16 +103,25 @@ void Renderer::registerRenderFunc( int nodeType, RenderFunc rf )
 }
 
 
-unsigned char *Renderer::useScratchBuf( uint32 minSize )
+unsigned char * Renderer::useScratchBuf( uint32 minSize, uint32 alignment )
 {
 	if( _scratchBufSize < minSize )
 	{
 		delete[] _scratchBuf;
-		_scratchBuf = new unsigned char[minSize + 15];
+
+		uint32 padding = alignment > 1 ? alignment - 1 : 0;
+		_scratchBuf = new unsigned char[ minSize + padding ];
 		_scratchBufSize = minSize;
 	}
 
-	return _scratchBuf + (size_t)_scratchBuf % 16;  // 16 byte aligned
+	if ( alignment > 1 )
+	{
+		return _scratchBuf + ( size_t ) _scratchBuf % alignment;
+	} 
+	else
+	{
+		return _scratchBuf;
+	}
 }
 
 
@@ -252,7 +258,7 @@ bool Renderer::init( RenderBackendType::List type )
 	createPrimitives();
 
 	// Init scratch buffer with some default size
-	useScratchBuf( 4 * 1024*1024 );
+	useScratchBuf( 4 * 1024*1024, 16 );
 
 	// Reset states
 	finishRendering();
@@ -693,7 +699,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		{
 			if( materialRes->_samplers[j].name == sampler.id )
 			{
-				if( materialRes->_samplers[j].texRes->isLoaded() )
+                if( materialRes->_samplers[j].texRes && materialRes->_samplers[j].texRes->isLoaded() )
 					texRes = materialRes->_samplers[j].texRes;
 				break;
 			}
@@ -1687,6 +1693,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 	GeometryResource *curGeoRes = 0x0;
 	MaterialResource *curMatRes = 0x0;
 
+	bool tessellationSupported = rdi->getCaps().tesselation;
+
 	// Loop over mesh queue
 	for( size_t i = firstItem; i <= lastItem; ++i )
 	{
@@ -1782,7 +1790,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 			}
 
 			// Change draw type for tessellatable models
-			if ( meshNode->getTessellationStatus() == 1 ) drawType = PRIM_PATCHES;
+			if ( meshNode->getTessellationStatus() == 1 && tessellationSupported ) drawType = PRIM_PATCHES;
 		}
 		else
 		{
@@ -2056,7 +2064,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 
 		// Sanity check
 		if ( !compNode->_compBufferRes->_useAsVertexBuf || !compNode->_compBufferRes->_geometryParamsSet || 
-			 compNode->_compBufferRes->_numElements == 0 || !compNode->_materialRes->isOfClass( theClass ) )
+			 compNode->_elementsCount == 0 || !compNode->_materialRes->isOfClass( theClass ) )
 			continue;
 
 		if ( debugView )
@@ -2075,7 +2083,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 
 		// Specify drawing type
 		RDIPrimType drawType;
-		switch ( compNode->_compBufferRes->_drawType )
+		switch ( compNode->_drawType )
 		{
 			case 0: // Triangles
 				drawType = PRIM_TRILIST;
@@ -2119,13 +2127,12 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
         rdi->setMemoryBarrier( VertexBufferBarrier );
 
 		// Render
-		rdi->draw( drawType, 0, compNode->_compBufferRes->_numElements );
+		rdi->draw( drawType, 0, compNode->_elementsCount );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
-		Modules::stats().incStat( EngineStats::TriCount, ( float ) compNode->_compBufferRes->_numElements );
+		Modules::stats().incStat( EngineStats::TriCount, ( float ) compNode->_elementsCount );
 	}
 
 	timer->endQuery();
-
 }
 
 // =================================================================================================

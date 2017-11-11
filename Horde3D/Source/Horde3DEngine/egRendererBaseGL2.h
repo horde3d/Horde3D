@@ -13,12 +13,9 @@
 #ifndef _egRendererBaseGL2_H_
 #define _egRendererBaseGL2_H_
 
-//#include "egPrerequisites.h"
 #include "egRendererBase.h"
-//#include "utMath.h"
 #include "utOpenGL.h"
-//#include <string>
-//#include <vector>
+#include <string.h>
 
 
 namespace Horde3D {
@@ -78,8 +75,9 @@ struct RDIBufferGL2
 	uint32  type;
 	uint32  glObj;
 	uint32  size;
+	int		geometryRefCount;
 
-	RDIBufferGL2() : type( 0 ), glObj( 0 ), size( 0 ) {}
+	RDIBufferGL2() : type( 0 ), glObj( 0 ), size( 0 ), geometryRefCount( 0 ) {}
 };
 
 struct RDIVertBufSlotGL2
@@ -235,7 +233,9 @@ public:
 	void destroyBuffer(uint32 &bufObj );
 	void destroyTextureBuffer(uint32 &bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
-// 	uint32 getBufferMem() const { return _bufferMem; }
+	void *mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
+	void unmapBuffer( uint32 geoObj, uint32 bufObj );
+	// 	uint32 getBufferMem() const { return _bufferMem; }
 
 	// Textures
 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
@@ -246,6 +246,7 @@ public:
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
 // 	uint32 getTextureMem() const { return _textureMem; }
+    void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
@@ -299,10 +300,10 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps getCaps() const { return _caps; }
-	const RDIBufferGL2 getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITextureGL2 getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBufferGL2 getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	// WARNING: Modifying internal states may lead to unexpected behavior and/or crashes
+	RDIBufferGL2 &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	RDITextureGL2 &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	RDIRenderBufferGL2 &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 //	friend class Renderer;
 
@@ -329,6 +330,8 @@ protected:
 	bool applyVertexLayout( const RDIGeometryInfoGL2 &geo );
 	void applySamplerState( RDITextureGL2 &tex );
 	void applyRenderStates();
+
+	inline void	  decreaseBufferRefCount( uint32 bufObj );
 
 protected:
 
@@ -366,6 +369,7 @@ protected:
  	uint32                _indexFormat;
  	uint32                _activeVertexAttribsMask;
 // 	uint32                _pendingMask;
+	bool                               _doubleBuffered;
 };
 
 } // namespace RDI_GL2

@@ -132,6 +132,10 @@ typedef unsigned long long uint64;
 #	define ASSERT( exp ) __analysis_assume( exp );
 #endif
 
+#if !defined( _MSC_VER )
+#include <strings.h>
+#endif
+
 // Static compile-time assertion
 namespace StaticAssert
 {

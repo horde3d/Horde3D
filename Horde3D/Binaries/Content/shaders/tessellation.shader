@@ -49,9 +49,9 @@ OpenGL4
 	context SHADOWMAP
 	{
 		VertexShader = compile GLSL VS_SHADOWMAP_GL4;
-		GeometryShader = compile GLSL GS_WIREFRAME_GL4;
-		TessControlShader = compile GLSL TS_CONTROL_GL4;
-		TessEvalShader = compile GLSL TS_EVAL_GL4;
+		GeometryShader = compile GLSL GS_WIREFRAME_SHADOW_GL4;
+		TessControlShader = compile GLSL TS_CONTROL_SHADOW_GL4;
+		TessEvalShader = compile GLSL TS_EVAL_SHADOW_GL4;
 		PixelShader = compile GLSL FS_SHADOWMAP_GL4;
 		
 		TessPatchVertices = 3;
@@ -152,6 +152,37 @@ void main()
     }
 }
 
+
+[[TS_CONTROL_SHADOW_GL4]]
+// =================================================================================================
+layout( vertices = 3 ) out;
+in vec4 pos[];
+in vec3 normalVS[];
+in vec3 lightVec[];
+out vec4 controlPos[];
+out vec3 normalTsc[];
+out vec3 lightVecTsc[];
+
+uniform float tessLevelInner;
+uniform float tessLevelOuter;
+
+
+void main()
+{
+    controlPos[ gl_InvocationID ] = pos[ gl_InvocationID ];
+	normalTsc[ gl_InvocationID ] = normalVS[ gl_InvocationID ];
+	lightVecTsc[ gl_InvocationID ] = lightVec[ gl_InvocationID ];
+	
+    if ( gl_InvocationID == 0) 
+	{
+        gl_TessLevelInner[0] = tessLevelInner;
+        gl_TessLevelOuter[0] = tessLevelOuter;
+        gl_TessLevelOuter[1] = tessLevelOuter;
+        gl_TessLevelOuter[2] = tessLevelOuter;
+    }
+}
+
+
 [[TS_EVAL_GL4]]
 // =================================================================================================
 #include "shaders/utilityLib/vertCommon.glsl"
@@ -185,6 +216,46 @@ void main()
     evalPos = vec4( normalize(p0 + p1 + p2), 1 );
     gl_Position = viewProjMat * calcWorldPos( evalPos );
 }
+
+
+[[TS_EVAL_SHADOW_GL4]]
+// =================================================================================================
+#include "shaders/utilityLib/vertCommon.glsl"
+
+layout(triangles, equal_spacing, ccw) in;
+in vec4 controlPos[];
+in vec3 normalTsc[];
+in vec3 lightVecTsc[];
+
+out vec4 evalPos;
+out vec3 patchDistance;
+out vec3 normalTEval;
+out vec3 lightVecTEval;
+
+uniform mat4 viewProjMat;
+uniform vec3 viewerPos;
+
+vec3 interpolateNormals( vec3 v1, vec3 v2, vec3 v3 )
+{
+	return vec3(gl_TessCoord.x) * v1 + vec3(gl_TessCoord.y) * v2 + vec3(gl_TessCoord.z) * v3;
+}
+
+void main()
+{
+    vec3 p0 = gl_TessCoord.x * controlPos[0].xyz;
+    vec3 p1 = gl_TessCoord.y * controlPos[1].xyz;
+    vec3 p2 = gl_TessCoord.z * controlPos[2].xyz;
+    
+	normalTEval = interpolateNormals( calcWorldVec( normalTsc[ 0 ] ), calcWorldVec( normalTsc[ 1 ] ), calcWorldVec( normalTsc[ 2 ] ) );
+	normalTEval = normalize( normalTEval );
+	
+	lightVecTEval = vec3( normalize( gl_TessCoord.x * lightVecTsc[0].xyz + gl_TessCoord.y * lightVecTsc[1].xyz + gl_TessCoord.z * lightVecTsc[2].xyz) );
+	
+	patchDistance = gl_TessCoord;
+    evalPos = vec4( normalize(p0 + p1 + p2), 1 );
+    gl_Position = viewProjMat * calcWorldPos( evalPos );
+}
+
 
 [[GS_WIREFRAME_GL4]]
 // =================================================================================================
@@ -236,6 +307,64 @@ void main()
 
     EndPrimitive();
 }
+
+
+[[GS_WIREFRAME_SHADOW_GL4]]
+// =================================================================================================
+
+#include "shaders/utilityLib/vertCommon.glsl"
+
+//uniform mat3 worldNormalMat;
+// uniform mat4 viewMat;
+
+layout(triangles) in;
+layout(triangle_strip, max_vertices = 3) out;
+in vec4 evalPos[3];
+in vec3 patchDistance[3];
+in vec3 normalTEval[ 3 ];
+in vec3 lightVecTEval[ 3 ];
+
+out vec3 facetNormal;
+out vec3 patchDistanceGS;
+out vec3 triDistance;
+out vec4 vertPosGS;
+out vec4 vsPosGS;
+out vec3 lightVec;
+
+void main()
+{
+//    vec3 A = evalPos[2].xyz - evalPos[0].xyz;
+//    vec3 B = evalPos[1].xyz - evalPos[0].xyz;
+// vec3 A = evalPos[1].xyz - evalPos[0].xyz;
+// vec3 B = evalPos[2].xyz - evalPos[0].xyz;
+
+	
+	facetNormal = normalTEval[ 0 ];
+	
+    patchDistanceGS = patchDistance[0];
+    triDistance = vec3(1, 0, 0);
+	vertPosGS = gl_in[0].gl_Position;
+	vsPosGS = calcViewPos( vertPosGS );
+	lightVec = lightVecTEval[ 0 ];
+    gl_Position = gl_in[0].gl_Position; EmitVertex();
+
+    patchDistanceGS = patchDistance[1];
+    triDistance = vec3(0, 1, 0);
+	vertPosGS = gl_in[1].gl_Position;
+	vsPosGS = calcViewPos( vertPosGS );
+	lightVec = lightVecTEval[ 1 ];
+    gl_Position = gl_in[1].gl_Position; EmitVertex();
+
+    patchDistanceGS = patchDistance[2];
+    triDistance = vec3(0, 0, 1);
+	vertPosGS = gl_in[2].gl_Position;
+	vsPosGS = calcViewPos( vertPosGS );
+	lightVec = lightVecTEval[ 2 ];
+    gl_Position = gl_in[2].gl_Position; EmitVertex();
+
+    EndPrimitive();
+}
+
 
 [[FS_LIGHTING_GL4]]
 // =================================================================================================

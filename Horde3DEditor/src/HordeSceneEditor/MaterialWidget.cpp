@@ -158,27 +158,36 @@ void MaterialWidget::save()
     {
         QDomDocument cleanMaterial = m_materialXml.cloneNode( true ).toDocument();
         QDomNodeList samplers = cleanMaterial.documentElement().elementsByTagName( "Sampler" );
-        for( int i = 0; i < samplers.count();  )
+        for( int i = samplers.count() - 1; i >= 0; --i )
         {
             if( samplers.at( i ).toElement().attribute( "map" ).isEmpty() )
                 cleanMaterial.documentElement().removeChild( samplers.at( i ) );
-            else
-                ++i;
         }
 
         QDomNodeList shaderFlags = cleanMaterial.documentElement().elementsByTagName( "ShaderFlag" );
-        for( int i = 0; i < shaderFlags.count(); )
+        for( int i = shaderFlags.count() - 1; i >= 0; --i)
         {
             if( shaderFlags.at( i ).toElement().attribute( "name" ).isEmpty() )
                 cleanMaterial.documentElement().removeChild( shaderFlags.at( i ) );
-            else
-                ++i;
         }
 
         if (m_className->text().isEmpty())
             cleanMaterial.documentElement().removeAttribute("class");
         else
             cleanMaterial.documentElement().setAttribute("class", m_className->text());
+
+        H3DRes shaderHandle = h3dGetResParamI( m_matHandle, H3DMatRes::MaterialElem, 0, H3DMatRes::MatShaderI );
+        QDomNodeList uniforms = cleanMaterial.documentElement().elementsByTagName("Uniform");
+        for( int i = uniforms.count() - 1; i >= 0; --i )
+        {
+            if( uniforms.at(i).toElement().attribute("a").toFloat() == h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, 0, H3DShaderRes::UnifDefValueF4, 0 ) &&
+                uniforms.at(i).toElement().attribute("b").toFloat() == h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, 0, H3DShaderRes::UnifDefValueF4, 1 ) &&
+                uniforms.at(i).toElement().attribute("c").toFloat() == h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, 0, H3DShaderRes::UnifDefValueF4, 2 ) &&
+                uniforms.at(i).toElement().attribute("d").toFloat() == h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, 0, H3DShaderRes::UnifDefValueF4, 3 ) )
+            {
+                cleanMaterial.documentElement().removeChild(uniforms.at(i));
+            }
+        }
         QFile file( QDir::current().absoluteFilePath(m_currentMaterialFile));
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
         {
@@ -253,7 +262,9 @@ void MaterialWidget::uniformChanged(int)
 
 void MaterialWidget::uniformDataChanged()
 {
-    //QUniform* uniform = static_cast<QUniform*>(m_uniformCombo->itemData(m_uniformCombo->currentIndex()).value<void*>());
+    QUniform* uniform = static_cast<QUniform*>(m_uniformCombo->itemData(m_uniformCombo->currentIndex()).value<void*>());
+    if( uniform )
+        h3dSetMaterialUniform( m_matHandle, qPrintable(uniform->name()), uniform->a(), uniform->b(), uniform->c(), uniform->d() );
     m_saveButton->setEnabled(true);
 }
 
@@ -379,6 +390,9 @@ void MaterialWidget::syncWithShader()
     int shaderHandle = h3dFindResource(H3DResTypes::Shader, qPrintable( m_shader->currentText() ) );
     if( !shaderHandle )
     {
+        // Decrease reference count of manually loaded shader
+        if( m_shaderHandle )
+            h3dRemoveResource( m_shaderHandle );
 
         shaderHandle = m_shaderHandle = h3dAddResource( H3DResTypes::Shader, qPrintable( m_shader->currentText() ), 0 );
         h3dLoadResource( m_shaderHandle, shaderData.constData(), shaderData.size() );
@@ -458,7 +472,8 @@ void MaterialWidget::syncWithShader()
             uniform.setAttribute( "b", h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 1 ) );
             uniform.setAttribute( "c", h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 2 ) );
             uniform.setAttribute( "d", h3dGetResParamF( shaderHandle, H3DShaderRes::UniformElem, i, H3DShaderRes::UnifDefValueF4, 3 ) );
-            uni = new QUniform( uniform, true, m_uniformCombo );
+            m_materialXml.documentElement().appendChild(uniform);
+            uni = new QUniform( uniform, true, m_uniformCombo );            
         }
         m_uniformCombo->addItem( uni->name(), QVariant::fromValue<void*>( uni ) );
     }

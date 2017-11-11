@@ -2,6 +2,7 @@
 #include "egModules.h"
 #include "egRenderer.h"
 #include "egCom.h"
+#include "utXML.h"
 
 #include <map>
 #include <memory.h>
@@ -15,22 +16,26 @@ using namespace std;
 // =================================================================================================
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
-	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ),
-	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _data( 0 ), _mapped( false ), _numElements( 0 ), _useAsVertexBuf( false ),
-	_vertexLayout( 0 ), _drawType( -1 ), _geoID( 0 ), _geometryParamsSet( false )
+	Resource( ResourceTypes::ComputeBuffer, name, flags ),
+	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _mapped( false ), _useAsVertexBuf( false ),
+	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ), _bufferRecreated( false ), _manuallyUpdated( false )
 {
 	initDefault();
 
-	_loaded = true;
+	if ( flags & ResourceFlags::NoQuery )
+		_loaded = true; // NoQuery means that compute buffer is being loaded manually, not from file
 }
 
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
-	Resource( ResourceTypes::ComputeBuffer, name, flags & ResourceFlags::NoQuery ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
-	_useAsVertexBuf( true ), _drawType( -1 ), _vertexLayout( 0 ), _mapped( false ), _data( 0 ), _dataSize( 1024 )
+	Resource( ResourceTypes::ComputeBuffer, name, flags ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
+	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _dataSize( 1024 ), 
+	_writeRequested( false ), _bufferRecreated( false ), _manuallyUpdated( false )
 {
-	_loaded = true;
+	if ( flags & ResourceFlags::NoQuery )
+		_loaded = true; // NoQuery means that compute buffer is being loaded manually, not from file
 }
+
 
 ComputeBufferResource::~ComputeBufferResource()
 {
@@ -40,13 +45,18 @@ ComputeBufferResource::~ComputeBufferResource()
 
 void ComputeBufferResource::initDefault()
 {
+	createBuffer( 1024, 0x0 );
+}
+
+
+void ComputeBufferResource::createBuffer( uint32 size, uint8 *data )
+{
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	if ( rdi->getCaps().computeShaders )
 	{
 		if ( _bufferID > 0 ) rdi->destroyBuffer( _bufferID );
-		_bufferID = rdi->createShaderStorageBuffer( _dataSize, 0 );
-		_data = new uint8[ _dataSize ];
+		_bufferID = rdi->createShaderStorageBuffer( size, data );
 	}
 	else
 		Modules::log().writeError( "Compute shaders are not available. Compute buffer cannot be created." );
@@ -55,19 +65,173 @@ void ComputeBufferResource::initDefault()
 
 void ComputeBufferResource::release()
 {
-	if ( _bufferID )
+	if ( _geometryParamsSet && _geoID && !_manuallyUpdated )
 	{
-		Modules::renderer().getRenderDevice()->destroyBuffer( _bufferID );
-		delete[] _data; _data = 0;
+		// destroys buffer with _bufferID as well
+		Modules::renderer().getRenderDevice()->destroyGeometry( _geoID );
 	}
+}
+
+
+bool ComputeBufferResource::raiseError( const std::string &msg, int line )
+{
+	// Unmap buffer if it is mapped during loading
+	if ( _mapped )
+	{
+		unmapStream();
+	}
+
+	// Reset
+	release();
+	initDefault();
+
+	if ( line < 0 )
+		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), msg.c_str() );
+	else
+		Modules::log().writeError( "Compute buffer resource '%s' in line %i: %s", _name.c_str(), line, msg.c_str() );
+
+	return false;
 }
 
 
 bool ComputeBufferResource::load( const char *data, int size )
 {
-	//	if ( !Resource::load( data, size ) ) return false;
+	if ( !Resource::load( data, size ) ) return false;
 
-	// currently not implemented
+	if ( !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
+		return raiseError( "Compute shaders are not supported on this render device" );
+
+	XMLDoc doc;
+	doc.parseBuffer( data, size );
+	if ( doc.hasError() )
+		return raiseError( "XML parsing error" );
+
+	XMLNode rootNode = doc.getRootNode();
+	if ( strcmp( rootNode.getName(), "ComputeBuffer" ) != 0 )
+		return raiseError( "Not a compute buffer resource file" );
+
+	if ( rootNode.getAttribute( "dataSize" ) == 0x0 ) return raiseError( "Missing ComputeBuffer attribute 'dataSize'" );
+	if ( rootNode.getAttribute( "drawable" ) == 0x0 ) return raiseError( "Missing ComputeBuffer attribute 'drawable'" );
+
+	// Buffer size
+	int bufferSize = atoi( rootNode.getAttribute( "dataSize", "" ) );
+	if ( bufferSize < 0 )
+	{
+		return raiseError( "Incorrect 'dataSize' value specified" );
+	}
+
+	setElemParamI( ComputeBufferResData::ComputeBufElem, 0, ComputeBufferResData::CompBufDataSizeI, bufferSize );
+
+	// Buffer is drawable
+	if ( _stricmp( rootNode.getAttribute( "drawable", "false" ), "true" ) == 0 ||
+		 _stricmp( rootNode.getAttribute( "drawable", "0" ), "1" ) == 0 )
+	{
+		_useAsVertexBuf = true;
+	}
+
+	// Vertex bindings
+	int totalBindingsCount = rootNode.countChildNodes( "Bindings" );
+	if ( totalBindingsCount > 0 ) _vlBindingsData.resize( totalBindingsCount );
+
+	XMLNode node1 = rootNode.getFirstChild( "Bindings" );
+	while ( !node1.isEmpty() )
+	{
+		if ( node1.getAttribute( "name" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'name'" );
+		if ( node1.getAttribute( "offset" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'offset'" );
+		if ( node1.getAttribute( "size" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'size'" );
+		if ( node1.getAttribute( "attribNumber" ) == 0x0 ) return raiseError( "Missing Bindings attribute 'attribNumber'" );
+
+		VertexLayoutAttrib layout;
+		layout.semanticName = node1.getAttribute( "name", "0" );
+		layout.offset = atoi( node1.getAttribute( "offset", "0" ) );
+		layout.size = atoi( node1.getAttribute( "size", "0" ) );
+		layout.vbSlot = 0;
+
+		int curAttribSlot = atoi( node1.getAttribute( "attribNumber" ) );
+		if ( curAttribSlot >= 0 && curAttribSlot <= totalBindingsCount )
+		{
+			_vlBindingsData[ curAttribSlot - 1 ] = layout;
+		} 
+		else
+		{
+			return raiseError( "Incorrect attribNumber value" );
+		}
+
+		node1 = node1.getNextSibling( "Bindings" );
+	}
+
+	if ( _useAsVertexBuf && !_vlBindingsData.empty() )
+	{
+		if ( !createGeometry() ) return raiseError( "Cannot create compute buffer" );
+	}
+
+	// Data
+	// Currently only float values are supported
+	int dataSectionsCount = rootNode.countChildNodes( "Data" );
+	if ( dataSectionsCount > 1 ) return raiseError( "More than one 'Data' section" );
+	
+	node1 = rootNode.getFirstChild( "Data" );
+	while ( !node1.isEmpty() )
+	{
+		// parser assumes that values are separated by ';' character
+		uint8 *bufData = ( uint8 *) mapStream( ComputeBufferResData::ComputeBufElem, 0, 0, false, true );
+		if ( !bufData ) return raiseError( "Cannot create compute buffer" );
+
+		const char *strData = node1.getText();
+
+		uint8 *pBufData = bufData;
+		const char *pStrData = strData;
+		
+		size_t strDataSize = strlen( strData );
+		const char *end = strData + strDataSize;
+
+		const char *valueStartPos = pStrData;
+		const char *valueEndPos = pStrData;
+		uint32 charCounter = 0;
+		uint32 bytesCopied = 0;
+
+		while ( pStrData < end )
+		{
+			if ( *pStrData == ';' )
+			{
+				// convert and append data to buffer
+				if ( bytesCopied + 4 > _dataSize ) 
+					return raiseError( "Data size in 'Data' section exceeds the specified buffer size" );
+
+				std::string val( valueStartPos, valueEndPos );
+				float fval = ( float ) atof( val.c_str() ); // atof ignores \n \r \t and spaces
+
+				memcpy( pBufData, &fval, 4 );
+
+				if ( pStrData + 1 < end )
+				{
+					valueStartPos = pStrData + 1;
+					valueEndPos = valueStartPos;
+				}
+
+				pBufData += 4;
+				bytesCopied += 4;
+				charCounter = 0;
+			}
+			else
+			{
+				charCounter++;
+				
+				if ( charCounter <= 32 ) valueEndPos++;
+				else 
+				{
+					return raiseError( "Incorrect value in 'Data' element" );
+				}
+			}
+	
+			pStrData++;
+		}
+
+		// load data to render device
+		unmapStream();
+
+		node1 = node1.getNextSibling( "Data" );
+	}
 
 	return true;
 }
@@ -82,18 +246,17 @@ Resource *ComputeBufferResource::clone()
 	if ( !res->_bufferID )
 	{
 		// no compute shaders
-		delete res; res = 0;
+		delete res; res = 0x0;
 		return 0;
 	}
 
 	// set resource parameters
 	res->_dataSize = _dataSize;
-	res->_drawType = _drawType;
 	res->_vertexLayout = _vertexLayout;
 	res->_useAsVertexBuf = _useAsVertexBuf;
-	res->_dataParams = _dataParams;
-	res->_numElements = _numElements;
+	res->_vlBindingsData = _vlBindingsData;
 	res->_geometryParamsSet = _geometryParamsSet;
+	res->_bufferRecreated = true; 
 
 	if ( _useAsVertexBuf && _geometryParamsSet )
 	{
@@ -101,15 +264,12 @@ Resource *ComputeBufferResource::clone()
 		createGeometry();
 	}
 
-	// delete small start buffer & copy data from original buffer. 
-	// WARNING: currently there is no way to get data that is modified by compute shader (GPU side)
-	delete[] res->_data;
-	res->_data = new uint8[ res->_dataSize ];
-
-	memcpy( res->_data, _data, _dataSize );
-
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
-	rdi->updateBufferData( 0, res->_bufferID, 0, res->_dataSize, res->_data );
+
+	// map original buffer and copy its contents to the new buffer
+	uint8 *data = ( uint8 * ) mapStream( ComputeBufferResData::ComputeBufElem, 0, 0, true, false );
+	rdi->updateBufferData( 0, res->_bufferID, 0, res->_dataSize, data );
+	unmapStream();
 
 	return res;
 }
@@ -122,21 +282,25 @@ bool ComputeBufferResource::createGeometry()
 	// register new vertex layout, so that shaders could use the buffer data, if needed
 	if ( !_vertexLayout )
 	{
-		_vertexLayout = rdi->registerVertexLayout( _dataParams.size(), _dataParams.data() );
-		if ( !_vertexLayout ) return false;
+		_vertexLayout = rdi->registerVertexLayout( ( uint32 ) _vlBindingsData.size(), _vlBindingsData.data() );
+		if ( !_vertexLayout )
+		{
+			Modules::log().writeDebugInfo( "Too many vertex layouts. Increase the max count of vertex layouts in renderer backend." );
+			return false;
+		}
 	}
 
-	// create new geometry with compute buffer as vertex buffer
+	// create new geometry with compute buffer used as vertex buffer
 	_geoID = rdi->beginCreatingGeometry( _vertexLayout );
 
 	// calculate stride
 	// only float parameter type is currently supported, if buffer is used as vertex buffer
 	uint32 stride = 0;
-	for ( size_t i = 0; i < _dataParams.size(); ++i )
+	for ( size_t i = 0; i < _vlBindingsData.size(); ++i )
 	{
-		stride += _dataParams[ i ].offset;
+		stride += _vlBindingsData[ i ].offset;
 	}
-	stride += sizeof( float ) * _dataParams.at( _dataParams.size() - 1 ).size;
+	stride += sizeof( float ) * _vlBindingsData.at( _vlBindingsData.size() - 1 ).size;
 
 	rdi->setGeomVertexParams( _geoID, _bufferID, 0, 0, stride );
 	rdi->finishCreatingGeometry( _geoID );
@@ -148,13 +312,15 @@ bool ComputeBufferResource::createGeometry()
 }
 
 
-bool ComputeBufferResource::overrideGeometry( uint32 geomID )
+bool ComputeBufferResource::setGeometry( uint32 geomID )
 {
 	if ( geomID == 0 ) // incorrect geometry
 	{
 		Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect geometry specified." );
 		return false;
 	}
+	
+	_manuallyUpdated = true;
 
 	_geoID = geomID;
 	_useAsVertexBuf = true;
@@ -164,7 +330,7 @@ bool ComputeBufferResource::overrideGeometry( uint32 geomID )
 }
 
 
-bool ComputeBufferResource::overrideBuffer( uint32 bufferID, uint32 bufSize )
+bool ComputeBufferResource::setBuffer( uint32 bufferID, uint32 bufSize )
 {
 	if ( bufferID == 0 || bufSize == 0 )
 	{
@@ -172,15 +338,10 @@ bool ComputeBufferResource::overrideBuffer( uint32 bufferID, uint32 bufSize )
 		return false;
 	}
 
-	_bufferID = bufferID;
-	
-	if ( _dataSize < bufSize )
-	{
-		delete[] _data;
+	_manuallyUpdated = true;
 
-		_data = new uint8[ bufSize ];
-		_dataSize = bufSize;
-	}
+	_bufferID = bufferID;
+	_dataSize = bufSize;
 
 	return true;
 }
@@ -197,21 +358,8 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 				case ComputeBufferResData::CompBufDataSizeI:
 					return _dataSize;
 					break;
-				case ComputeBufferResData::CompBufUseAsVertexBufferI:
+				case ComputeBufferResData::CompBufDrawableI:
 					return _useAsVertexBuf;
-				default:
-					break;
-			}
-
-			break;
-		}
-
-		case ComputeBufferResData::DrawTypeElem:
-		{
-			switch ( param )
-			{
-				case ComputeBufferResData::DataDrawTypeI:
-					return _drawType;
 				default:
 					break;
 			}
@@ -223,8 +371,16 @@ int ComputeBufferResource::getElemParamI( int elem, int elemIdx, int param ) con
 		{
 			switch ( param )
 			{
-				case ComputeBufferResData::DrawParamsElementsCountI:
-					return _numElements;
+				case ComputeBufferResData::DrawParamsOffsetI:
+					if ( _vlBindingsData.empty() || elemIdx < 0 || ( size_t ) elemIdx > _vlBindingsData.size() - 1 ) break;
+
+					return _vlBindingsData.at( elemIdx ).offset;
+				case ComputeBufferResData::DrawParamsSizeI:
+					if ( _vlBindingsData.empty() || elemIdx < 0 || ( size_t ) elemIdx > _vlBindingsData.size() - 1 )
+
+					return _vlBindingsData.at( elemIdx ).size;
+				case  ComputeBufferResData::DrawParamsCountI:
+					return (int) _vlBindingsData.size();
 				default:
 					break;
 			}
@@ -245,35 +401,17 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 				case ComputeBufferResData::CompBufDataSizeI:
 					if ( _dataSize < ( uint32 ) value )
 					{
-						delete[] _data;
-
 						_dataSize = value;
-						initDefault();
+						createBuffer( _dataSize, 0x0 );
+						_bufferRecreated = true;
 					}
 					else _dataSize = value;
 
 					return;
 
-				case ComputeBufferResData::CompBufUseAsVertexBufferI:
+				case ComputeBufferResData::CompBufDrawableI:
 					_useAsVertexBuf = value;
 					return;
-			}
-			break;
-
-		case ComputeBufferResData::DrawTypeElem:
-			switch ( param )
-			{
-				case ComputeBufferResData::DataDrawTypeI:
-					if ( value < 0 || value > 2 ) // Triangles - 0, Lines - 1, Points - 2
-					{
-						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "wrong draw type specified." );
-						break;
-					}
-
-					_drawType = value;
-					return;
-				default:
-					break;
 			}
 			break;
 
@@ -286,45 +424,39 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 			switch ( param )
 			{
 				case ComputeBufferResData::DrawParamsSizeI:
-					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
+					if ( _vlBindingsData.empty() || elemIdx == _vlBindingsData.size() )
 					{
 						params.size = value;
-						_dataParams.push_back( params );
+						_vlBindingsData.push_back( params );
 					}
-					else if ( ( uint32 ) elemIdx > _dataParams.size() )
+					else if ( ( uint32 ) elemIdx > _vlBindingsData.size() )
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
-						break;
 					}
 					else
 					{
-						_dataParams.at( elemIdx ).size = value;
+						_vlBindingsData.at( elemIdx ).size = value;
 					}
 
 					return;
 
 				case ComputeBufferResData::DrawParamsOffsetI:
-					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
+					if ( _vlBindingsData.empty() || elemIdx == _vlBindingsData.size() )
 					{
 						params.offset = value;
-						_dataParams.push_back( params );
+						_vlBindingsData.push_back( params );
 					}
-					else if ( ( uint32 ) elemIdx > _dataParams.size() )
+					else if ( ( uint32 ) elemIdx > _vlBindingsData.size() )
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
-						break;
 					}
 					else
 					{
-						_dataParams.at( elemIdx ).offset = value;
+						_vlBindingsData.at( elemIdx ).offset = value;
 					}
 
-					return;
-
-				case ComputeBufferResData::DrawParamsElementsCountI:
-					_numElements = value;
 					return;
 
 				default:
@@ -336,6 +468,33 @@ void ComputeBufferResource::setElemParamI( int elem, int elemIdx, int param, int
 	}
 
 	Resource::setElemParamI( elem, elemIdx, param, value );
+}
+
+
+const char *ComputeBufferResource::getElemParamStr( int elem, int elemIdx, int param ) const
+{
+	switch ( elem )
+	{
+		case ComputeBufferResData::DrawParamsElem:
+			switch ( param )
+			{
+				case ComputeBufferResData::DrawParamsNameStr:
+					if ( _vlBindingsData.empty() || elemIdx < 0 || (unsigned ) elemIdx > _vlBindingsData.size() - 1 )
+					{
+						// incorrect elemIdx
+						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
+						return "";
+					}
+
+					return _vlBindingsData.at( elemIdx ).semanticName.c_str();
+				default:
+					break;
+			}
+		default:
+			break;
+	}
+
+	return Resource::getElemParamStr( elem, elemIdx, param );
 }
 
 
@@ -352,20 +511,19 @@ void ComputeBufferResource::setElemParamStr( int elem, int elemIdx, int param, c
 					params.vbSlot = 0; // always zero because only one buffer can be specified at a time
 					params.offset = params.size = 0;
 
-					if ( _dataParams.empty() || elemIdx == _dataParams.size() )
+					if ( _vlBindingsData.empty() || elemIdx == _vlBindingsData.size() )
 					{
 						params.semanticName = value;
-						_dataParams.push_back( params );
+						_vlBindingsData.push_back( params );
 					}
-					else if ( ( uint32 ) elemIdx > _dataParams.size() )
+					else if ( ( uint32 ) elemIdx > _vlBindingsData.size() )
 					{
 						// incorrect elemIdx
 						Modules::log().writeError( "Compute buffer resource '%s': %s", _name.c_str(), "incorrect elemIdx specified." );
-						break;
 					}
 					else
 					{
-						_dataParams.at( elemIdx ).semanticName = value;
+						_vlBindingsData.at( elemIdx ).semanticName = value;
 					}
 
 					return;
@@ -388,23 +546,33 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 	{
 		if ( elem == ComputeBufferResData::ComputeBufElem )
 		{
-//			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
-
-			// 			_mappedData = Modules::renderer().useScratchBuf( _dataSize );
-
-			if ( read )
-			{
-				// currently reading back is not supported
-				_writeRequested = false;
-				return 0;
-			}
-
-			if ( write )
-				_writeRequested = true;
+			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 			_mapped = true;
 
-			return _data;
+			// Ensure that we are getting data that is not updated right now by the GPU
+            rdi->setMemoryBarrier( VertexBufferBarrier );
+
+			if ( read )
+			{
+				_writeRequested = false;
+				return rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Read );
+			}
+
+			if ( write )
+			{
+				_writeRequested = true;
+
+				if ( _bufferRecreated )
+				{
+					return Modules::renderer().useScratchBuf( _dataSize, 1 );
+				} 
+				else
+				{
+					return rdi->mapBuffer( 0, _bufferID, 0, _dataSize, Write );
+				}
+			}
+
 		}
 	}
 
@@ -414,7 +582,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 
 void ComputeBufferResource::unmapStream()
 {
-	if ( _bufferID != 0 && _writeRequested )
+	if ( _mapped && _bufferID != 0 )
 	{
 		RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
@@ -424,11 +592,22 @@ void ComputeBufferResource::unmapStream()
 			createGeometry();
 		}
 
-		rdi->updateBufferData( 0, _bufferID, 0, _dataSize, _data );
+		if ( _bufferRecreated )
+		{
+			// GL4: for some reason NVIDIA hardware has a significant performance drop if you upload 
+			// a large chunk of data to a not initialized buffer (with 0x0 as data) with buffer map
+			// but has no performance drop if you upload it with BufferData. Therefore this workaround with scratch buffer is used.
+			rdi->updateBufferData( _geoID, _bufferID, 0, _dataSize, Modules::renderer().useScratchBuf( _dataSize, 1 ) );
+
+			_bufferRecreated = false;
+		} 
+		else
+		{
+			rdi->unmapBuffer( 0, _bufferID );
+		}
 	}
 
 	_mapped = false;
 }
 
 } // namespace
-

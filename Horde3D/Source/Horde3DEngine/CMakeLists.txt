@@ -59,6 +59,7 @@ set(HORDE3D_SOURCES
 	utImage.h
 	utTimer.h
 	utOpenGL.h
+        ../Shared/utPlatform.h
 	../../Bindings/C++/Horde3D.h
 
 	${HORDE3D_EXTENSION_SOURCES}
@@ -81,7 +82,11 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	FIND_PACKAGE(OpenGL REQUIRED)
-	target_link_libraries(Horde3D ${OPENGL_gl_LIBRARY} ${HORDE3D_EXTENSION_LIBS})
+        FIND_PACKAGE(EGL )
+        if( EGL_FOUND )
+            add_definitions( -DHAVE_EGL ${EGL_DEFINITIONS} )
+        endif( EGL_FOUND )
+        target_link_libraries(Horde3D ${OPENGL_gl_LIBRARY} ${EGL_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
 	install(TARGETS Horde3D
 		RUNTIME DESTINATION bin
 		LIBRARY DESTINATION lib

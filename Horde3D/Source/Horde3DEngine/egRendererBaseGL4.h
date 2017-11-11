@@ -15,14 +15,13 @@
 
 #include "egRendererBase.h"
 #include "utOpenGL.h"
-#include <string>
-#include <vector>
+#include <string.h>
 
 
 namespace Horde3D {
 namespace RDI_GL4 {
 
-const uint32 MaxNumVertexLayouts = 32;
+const uint32 MaxNumVertexLayouts = 64;
 const uint32 MaxComputeImages = 8;
 
 // =================================================================================================
@@ -64,8 +63,9 @@ struct RDIBufferGL4
 	uint32  type;
 	uint32  glObj;
 	uint32  size;
+	int		geometryRefCount;
 
-	RDIBufferGL4() : type( 0 ), glObj( 0 ), size( 0 ) {}
+	RDIBufferGL4() : type( 0 ), glObj( 0 ), size( 0 ), geometryRefCount( 0 ) {}
 };
 
 struct RDIVertBufSlotGL4
@@ -227,17 +227,19 @@ public:
 	void destroyBuffer(uint32 &bufObj );
 	void destroyTextureBuffer( uint32& bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
-	uint32 getBufferMem() const { return _bufferMem; }
+	void *mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
+	void unmapBuffer( uint32 geoObj, uint32 bufObj );
 
 	// Textures
 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 	                      bool hasMips, bool genMips, bool compress, bool sRGB );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
-	void destroyTexture(uint32 &texObj );
+	void destroyTexture( uint32 &texObj );
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	bool getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer );
 	uint32 getTextureMem() const { return _textureMem; }
+	void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
@@ -295,10 +297,10 @@ public:
 // Getters
 // -----------------------------------------------------------------------------
 
-	const DeviceCaps getCaps() const { return _caps; }
-	const RDIBufferGL4 getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	const RDITextureGL4 getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	const RDIRenderBufferGL4 getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	// WARNING: Modifying internal states may lead to unexpected behavior and/or crashes
+	RDIBufferGL4 &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	RDITextureGL4 &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	RDIRenderBufferGL4 &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
 //	friend class Renderer;
 
@@ -328,22 +330,25 @@ protected:
 
 	inline uint32 createBuffer( uint32 type, uint32 size, const void *data );
 
+	inline void	  decreaseBufferRefCount( uint32 bufObj );
 protected:
 
-	RDIVertexLayout		              _vertexLayouts[MaxNumVertexLayouts];
-	RDIObjects< RDIBufferGL4 >        _buffers;
-	RDIObjects< RDITextureGL4 >       _textures;
-	RDIObjects< RDITextureBufferGL4 > _textureBuffs;
-	RDIObjects< RDIShaderGL4 >        _shaders;
-	RDIObjects< RDIRenderBufferGL4 >  _rendBufs;
-	RDIObjects< RDIGeometryInfoGL4 >  _vaos;
+	RDIVertexLayout                    _vertexLayouts[MaxNumVertexLayouts];
+	RDIObjects< RDIBufferGL4 >         _buffers;
+	RDIObjects< RDITextureGL4 >        _textures;
+	RDIObjects< RDITextureBufferGL4 >  _textureBuffs;
+	RDIObjects< RDIShaderGL4 >         _shaders;
+	RDIObjects< RDIRenderBufferGL4 >   _rendBufs;
+	RDIObjects< RDIGeometryInfoGL4 >   _vaos;
 	std::vector< RDIShaderStorageGL4 > _storageBufs;
 
- 	uint32                _indexFormat;
- 	uint32                _activeVertexAttribsMask;
+ 	uint32                             _indexFormat;
+ 	uint32                             _activeVertexAttribsMask;
 
-	uint16				  _lastTessPatchVertsValue;
-	uint16				  _maxComputeBufferAttachments;
+	uint16                             _lastTessPatchVertsValue;
+	uint16                             _maxComputeBufferAttachments;
+
+	bool                               _doubleBuffered;
 };
 
 } // namespace RDI_GL4

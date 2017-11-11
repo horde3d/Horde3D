@@ -246,10 +246,10 @@ void CodeResource::updateShaders()
 				
 				if ( ( context.vertCodeIdx >= 0 && shaderRes->getCode( context.vertCodeIdx )->hasDependency( this ) ) ||
 					 ( context.fragCodeIdx >= 0 && shaderRes->getCode( context.fragCodeIdx )->hasDependency( this ) ) ||
-					( context.geomCodeIdx >= 0 && shaderRes->getCode( context.geomCodeIdx )->hasDependency( this ) ) ||
-					( context.computeCodeIdx >= 0 && shaderRes->getCode( context.computeCodeIdx )->hasDependency( this ) ) ||
-					( context.tessCtlCodeIdx >= 0 && shaderRes->getCode( context.tessCtlCodeIdx )->hasDependency( this ) ) ||
-					( context.tessEvalCodeIdx >= 0 && shaderRes->getCode( context.tessEvalCodeIdx )->hasDependency( this ) ) )
+					 ( context.geomCodeIdx >= 0 && shaderRes->getCode( context.geomCodeIdx )->hasDependency( this ) ) ||
+					 ( context.computeCodeIdx >= 0 && shaderRes->getCode( context.computeCodeIdx )->hasDependency( this ) ) ||
+					 ( context.tessCtlCodeIdx >= 0 && shaderRes->getCode( context.tessCtlCodeIdx )->hasDependency( this ) ) ||
+					 ( context.tessEvalCodeIdx >= 0 && shaderRes->getCode( context.tessEvalCodeIdx )->hasDependency( this ) ) )
 				{
 					context.compiled = false;
 				}
@@ -630,6 +630,7 @@ bool ShaderResource::parseFXSection( char *data )
 						if( !tok.checkToken( "=" ) ) return raiseError( "FX: expected '='", tok.getLine() );
 						if( tok.checkToken( "Wrap" ) ) sampler.sampState |= SS_ADDR_WRAP;
 						else if( tok.checkToken( "Clamp" ) ) sampler.sampState |= SS_ADDR_CLAMP;
+						else if( tok.checkToken( "Border" ) ) sampler.sampState |= SS_ADDR_CLAMPCOL;
 						else return raiseError( "FX: invalid enum value", tok.getLine() );
 					}
 					else if( tok.checkToken( "Filter" ) )
@@ -1230,11 +1231,37 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 
 		if( Modules::config().dumpFailedShaders )
 		{
-			std::ofstream out0( "shdDumpVS.txt", ios::binary ), out1( "shdDumpFS.txt", ios::binary );
-			if( out0.good() ) out0 << _tmpCodeVS;
-			if( out1.good() ) out1 << _tmpCodeFS;
-			out0.close();
-			out1.close();
+			bool shaderAvailability[ 6 ] = { vsAvailable, fsAvailable, gsAvailable, tscAvailable, tseAvailable, csAvailable };
+			std::string dumpFileName;
+			std::string *output;
+
+			for ( size_t i = 0; i < 6; ++i )
+			{
+				if ( shaderAvailability[ i ] == true )
+				{
+					switch ( i )
+					{
+						case 0: // vertex shader
+							dumpFileName = "shdDumpVS.txt"; output = &_tmpCodeVS; break;
+						case 1:  // fragment shader
+							dumpFileName = "shdDumpFS.txt"; output = &_tmpCodeFS; break;
+						case 2:  // geometry shader
+							dumpFileName = "shdDumpGS.txt"; output = &_tmpCodeGS; break;
+						case 3:  // tessellation control shader
+							dumpFileName = "shdDumpTSC.txt"; output = &_tmpCodeTSCtl; break;
+						case 4:  // tessellation evaluation shader
+							dumpFileName = "shdDumpTSE.txt"; output = &_tmpCodeTSEval; break;
+						case 5:  // compute shader
+							dumpFileName = "shdDumpCS.txt"; output = &_tmpCodeCS; break;
+						default:
+							break;
+					}
+
+                    std::ofstream out( dumpFileName.c_str(), ios::binary );
+					if ( out.good() ) out << *output;
+					out.close();
+				}
+			}
 		}
 	}
 	else

@@ -108,6 +108,12 @@ namespace Horde3DNET.Samples.ParticleVortexNet
                 return false;
             }
 
+            if ( h3d.getDeviceCapabilities(h3d.H3DDeviceCapabilities.GeometryShaders ) == 0 ||
+                 h3d.getDeviceCapabilities(h3d.H3DDeviceCapabilities.ComputeShaders) == 0 )
+            {
+                return false;
+            }
+
             // Set options
             h3d.setOption(h3d.H3DOptions.LoadTextures, 1);
             h3d.setOption(h3d.H3DOptions.TexCompression, 0);
@@ -185,13 +191,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
 	        h3d.setResParamI( compBuf, (int) h3d.H3DComputeBufRes.ComputeBufElem, 0, (int) h3d.H3DComputeBufRes.CompBufDataSizeI, particlesCount * 32 );
 
 	        // Mark that compute buffer will be used for rendering as a vertex buffer
-	        h3d.setResParamI( compBuf, (int) h3d.H3DComputeBufRes.ComputeBufElem, 0, (int) h3d.H3DComputeBufRes.CompBufUseAsVertexBufferI, 1 );
-
-	        // Set preferred draw type (for this example we draw with points - 2)
-	        h3d.setResParamI( compBuf, (int) h3d.H3DComputeBufRes.DrawTypeElem, 0, (int) h3d.H3DComputeBufRes.DataDrawTypeI, 2 );
-
-	        // Set number of elements to draw (for this example we draw 1000000 points)
-	        h3d.setResParamI( compBuf, (int) h3d.H3DComputeBufRes.DrawParamsElem, 0, (int) h3d.H3DComputeBufRes.DrawParamsElementsCountI, 1000000 );
+	        h3d.setResParamI( compBuf, (int) h3d.H3DComputeBufRes.ComputeBufElem, 0, (int) h3d.H3DComputeBufRes.CompBufDrawableI, 1 );
 
 	        // Set vertex binding parameters.
 	        // Name - name of the parameter. Used for binding parameter to shader variable.
@@ -237,7 +237,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             /////////////
             // Add scene nodes
             // In order to draw the results of compute buffer we need a compute node
-	        _compNode = h3d.addComputeNode( h3d.H3DRootNode, "Vortex", computeDrawMatRes, compBuf );
+	        _compNode = h3d.addComputeNode( h3d.H3DRootNode, "Vortex", computeDrawMatRes, compBuf, 2, particlesCount );
 
 	        // Set node AABB size because currently there is no way to do it otherwise
             h3d.setNodeParamF(_compNode, (int)h3d.H3DComputeNode.AABBMinF, 0, -30.0f); // x
