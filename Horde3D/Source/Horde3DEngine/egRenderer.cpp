@@ -2188,8 +2188,10 @@ void Renderer::render( CameraNode *camNode )
 						pc.params[4].getFloat(), pc.params[5].getFloat() );
 				}
 				break;
+
 			case DefaultPipelineCommands::ExternalCommand:
 				ExternalPipelineCommandsManager::executeCommand( pc );
+				break;
 			}
 		}
 	}
