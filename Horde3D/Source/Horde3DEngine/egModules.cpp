@@ -166,7 +166,7 @@ bool Modules::init( int backendType )
 void Modules::release()
 {
 	// Remove overlays since they reference resources and resource manager is removed before renderer
-	if( _renderer ) _renderer->clearOverlays();
+//	if( _renderer ) _renderer->clearOverlays();
 	
 	// Order of destruction is important
 	delete _extensionManager; _extensionManager = 0x0;

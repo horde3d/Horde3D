@@ -256,7 +256,7 @@ void AnimationController::registerNode( IAnimatableNode *node )
 
 void AnimationController::mapAnimRes( uint32 node, uint32 stage )
 {
-	static std::string maskStart, maskEnd;
+//	static std::string maskStart, maskEnd;
 	
 	_dirty = true;
 	

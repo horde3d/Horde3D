@@ -40,7 +40,7 @@ struct PipelineResData
 
 // =================================================================================================
 
-struct PipelineCommands
+struct DefaultPipelineCommands
 {
 	enum List
 	{
@@ -49,11 +49,12 @@ struct PipelineCommands
 		UnbindBuffers,
 		ClearTarget,
 		DrawGeometry,
-		DrawOverlays,
+//		DrawOverlays,
 		DrawQuad,
 		DoForwardLightLoop,
 		DoDeferredLightLoop,
-		SetUniform
+		SetUniform,
+		ExternalCommand = 256 // must be the last command
 	};
 };
 
@@ -109,12 +110,14 @@ protected:
 
 struct PipelineCommand
 {
-	PipelineCommands::List       command;
-	std::vector< PipeCmdParam >  params;
+	std::vector< PipeCmdParam >			params;
+	DefaultPipelineCommands::List       command;
+	int									externalCommandID;
 
-	PipelineCommand( PipelineCommands::List	command )
+	PipelineCommand( DefaultPipelineCommands::List command )
 	{
 		this->command = command;
+		externalCommandID = -1;
 	}
 };
 
@@ -151,6 +154,75 @@ struct RenderTarget
 		scale = 0;
 		format = TextureFormats::Unknown;
 	}
+};
+
+// =================================================================================================
+
+typedef const char *( *parsePipelineCommandFunc )( const char *commandName, void *xmlNodeParams, PipelineCommand &cmd );
+typedef void( *executePipelineCommandFunc )( const PipelineCommand *commandParams );
+
+struct PipelineCommandRegEntry
+{
+	std::string					comNameString;
+	parsePipelineCommandFunc	parseFunc;    // Called when pipeline command is parsed
+	executePipelineCommandFunc	executeFunc;  // Called when pipeline command is executed during rendering
+};
+
+class ExternalPipelineCommandsManager
+{
+public:
+
+	static void registerPipelineCommand( const std::string &commandName,  
+										 parsePipelineCommandFunc pf, executePipelineCommandFunc ef )
+	{
+		ASSERT( !commandName.empty() )
+		ASSERT( pf != 0x0 )
+		ASSERT( ef != 0x0 )
+
+		PipelineCommandRegEntry entry;
+		entry.comNameString = commandName;
+		entry.parseFunc = pf;
+		entry.executeFunc = ef;
+		_registeredCommands.emplace_back( entry );
+	}
+
+	static uint32 registeredCommandsCount() { return ( uint32 ) _registeredCommands.size(); }
+
+	static const char *parseCommand( const char *commandName, void *xmlData, PipelineCommand &cmd, bool &success )
+	{
+		for ( size_t i = 0; i < _registeredCommands.size(); ++i )
+		{
+			PipelineCommandRegEntry &entry = _registeredCommands[ i ];
+			if ( entry.comNameString.compare( commandName ) == 0 && entry.parseFunc != 0x0 )
+			{
+				const char *msg = entry.parseFunc( commandName, xmlData, cmd );
+				if ( strlen( msg ) == 0 )
+				{
+					cmd.externalCommandID = ( int ) i;
+				}
+				else
+				{
+					success = false;
+				}
+				
+				return msg;
+			}
+		}
+
+		return ""; // pipeline command skipped
+	}
+
+	static void executeCommand( const PipelineCommand &command )
+	{
+		if ( command.externalCommandID != -1 )
+		{
+			_registeredCommands[ command.externalCommandID ].executeFunc( &command );
+		}
+	}
+
+private:
+
+	static std::vector< PipelineCommandRegEntry >  _registeredCommands;
 };
 
 // =================================================================================================

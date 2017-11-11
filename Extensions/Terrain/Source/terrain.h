@@ -95,6 +95,7 @@ public:
 public:
 	static uint32 vlTerrain;
 	static ShaderCombination debugViewShader;
+	static int uni_terBlockParams;
 
 protected:
 	TerrainNode( const TerrainNodeTpl &terrainTpl );

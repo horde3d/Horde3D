@@ -31,7 +31,6 @@ using namespace std;
 Renderer::Renderer()
 {
 	_scratchBuf = 0x0;
-	_overlayVerts = 0x0;
 	_scratchBufSize = 0;
 	_frameID = 1;
 	_defShadowMap = 0;
@@ -47,7 +46,6 @@ Renderer::Renderer()
 	_smSize = 0;
 	_shadowRB = 0;
 	_vlPosOnly = 0;
-	_vlOverlay = 0;
 	_vlModel = 0;
 	_vlParticle = 0;
 
@@ -55,14 +53,51 @@ Renderer::Renderer()
 	_cubeGeo = 0;
 	_sphereGeo = 0;
 	_coneGeo = 0;
-	_overlayGeo = 0;
 	_FSPolyGeo = 0;
 
 	// reserve memory for occlusion culling proxies
 	_occProxies[ 0 ].reserve( 200 ); // meshes
 	_occProxies[ 1 ].reserve( 100 ); // lights
 
-	_renderDevice = 0;
+	// create default engine uniforms that will be automatically searched for in every shader
+	_engineUniforms.reserve( 25 );
+
+	// General uniforms
+//	registerEngineUniform( "shadowMap" );
+
+	// Misc general uniforms
+	_uni.frameBufSize = registerEngineUniform( "frameBufSize" );
+
+	// View/projection uniforms
+	_uni.viewMat = registerEngineUniform( "viewMat" );
+	_uni.viewMatInv = registerEngineUniform( "viewMatInv" );
+	_uni.projMat = registerEngineUniform( "projMat" );
+	_uni.viewProjMat = registerEngineUniform( "viewProjMat" );
+	_uni.viewProjMatInv = registerEngineUniform( "viewProjMatInv" );
+	_uni.viewerPos = registerEngineUniform( "viewerPos" );
+
+	// Per-instance uniforms
+	_uni.worldMat = registerEngineUniform( "worldMat" );
+	_uni.worldNormalMat = registerEngineUniform( "worldNormalMat" );
+	_uni.nodeId = registerEngineUniform( "nodeId" );
+	_uni.customInstData = registerEngineUniform( "customInstData[0]" );
+	_uni.skinMatRows = registerEngineUniform( "skinMatRows[0]" );
+
+	// Lighting uniforms
+	_uni.lightPos = registerEngineUniform( "lightPos" );
+	_uni.lightDir = registerEngineUniform( "lightDir" );
+	_uni.lightColor = registerEngineUniform( "lightColor" );
+	_uni.shadowSplitDists = registerEngineUniform( "shadowSplitDists" );
+	_uni.shadowMats = registerEngineUniform( "shadowMats" );
+	_uni.shadowMapSize = registerEngineUniform( "shadowMapSize" );
+	_uni.shadowBias = registerEngineUniform( "shadowBias" );
+
+	// Particle-specific uniforms
+	_uni.parPosArray = registerEngineUniform( "parPosArray" );
+	_uni.parSizeAndRotArray = registerEngineUniform( "parSizeAndRotArray" );
+	_uni.parColorArray = registerEngineUniform( "parColorArray" );
+
+	_renderDevice = 0x0;
 }
 
 
@@ -72,21 +107,18 @@ Renderer::~Renderer()
 	{
 		releaseShadowRB();
 		_renderDevice->destroyTexture( _defShadowMap );
-		// 	_renderDevice->destroyBuffer( _particleVBO );
 		releaseShaderComb( _defColorShader );
 
 		_renderDevice->destroyGeometry( _particleGeo );
 		_renderDevice->destroyGeometry( _cubeGeo );
 		_renderDevice->destroyGeometry( _sphereGeo );
 		_renderDevice->destroyGeometry( _coneGeo );
-		_renderDevice->destroyGeometry( _overlayGeo );
 		_renderDevice->destroyGeometry( _FSPolyGeo );
 
 		releaseRenderDevice();
 	}
 
 	delete[] _scratchBuf;
-	delete[] _overlayVerts;
 }
 
 
@@ -100,6 +132,36 @@ void Renderer::registerRenderFunc( int nodeType, RenderFunc rf )
 	item.nodeType = nodeType;
 	item.renderFunc = rf;
 	_renderFuncRegistry.push_back( item );
+}
+
+
+int Renderer::registerEngineUniform( const char *uniName )
+{
+	EngineUniform uni( uniName );
+	auto it = std::find( _engineUniforms.begin(), _engineUniforms.end(), uni );
+	if ( it != _engineUniforms.end() )
+	{
+		return ( int ) ( it - _engineUniforms.begin() ); // get index of the already registered uniform
+	} 
+	else
+	{
+		_engineUniforms.emplace_back( uni );
+
+		return ( int) ( _engineUniforms.size() - 1 );
+	}
+}
+
+
+int Renderer::getEngineUniform( const char *uniName )
+{
+	EngineUniform uni( uniName );
+	auto it = std::find( _engineUniforms.begin(), _engineUniforms.end(), uni );
+	if ( it != _engineUniforms.end() )
+	{
+		return ( int ) ( it - _engineUniforms.begin() ); // get index of the already registered uniform
+	}
+
+	return -1;
 }
 
 
@@ -127,8 +189,7 @@ unsigned char * Renderer::useScratchBuf( uint32 minSize, uint32 alignment )
 
 bool Renderer::init( RenderBackendType::List type )
 {
-	if ( _renderDevice == 0 ) _renderDevice = createRenderDevice( type );
-
+	if ( _renderDevice == 0x0 ) _renderDevice = createRenderDevice( type );
 	if ( !_renderDevice ) return false;
 
 	// Init Render Device Interface
@@ -165,12 +226,6 @@ bool Renderer::init( RenderBackendType::List type )
 	};
 	_vlPosOnly = _renderDevice->registerVertexLayout( 1, attribsPosOnly );
 
-	VertexLayoutAttrib attribsOverlay[2] = {
-		{"vertPos", 0, 2, 0},
-		{"texCoords0", 0, 2, 8}
-	};
-	_vlOverlay = _renderDevice->registerVertexLayout( 2, attribsOverlay );
-	
 	VertexLayoutAttrib attribsModel[7] = {
 		{"vertPos", 0, 3, 0},
 		{"normal", 1, 3, 0},
@@ -210,9 +265,7 @@ bool Renderer::init( RenderBackendType::List type )
 	_defShadowMap = _renderDevice->createTexture( TextureTypes::Tex2D, 4, 4, 1, TextureFormats::DEPTH, false, false, false, false );
 	_renderDevice->uploadTextureData( _defShadowMap, 0, 0, shadowTex );
 
-	// Create index buffer used for drawing overlay quads
-	_overlayGeo = _renderDevice->beginCreatingGeometry( _vlOverlay );
-
+	// Create index buffer used for drawing particles
 	uint16 *quadIndices = new uint16[ QuadIndexBufCount ];
 	for( uint32 i = 0; i < QuadIndexBufCount / 6; ++i )
 	{
@@ -222,28 +275,19 @@ bool Renderer::init( RenderBackendType::List type )
 	_quadIdxBuf = _renderDevice->createIndexBuffer( QuadIndexBufCount * sizeof( uint16 ), quadIndices );
 	delete[] quadIndices; quadIndices = 0x0;
 	
-	_overlayBatches.reserve( 64 );
-	_overlayVerts = new OverlayVert[ MaxNumOverlayVerts ];
-	_overlayVB = _renderDevice->createVertexBuffer( MaxNumOverlayVerts * sizeof( OverlayVert ), 0x0 );
-
-	_renderDevice->setGeomVertexParams( _overlayGeo, _overlayVB, 0, 0, sizeof( OverlayVert ) );
-	_renderDevice->setGeomIndexParams( _overlayGeo, _quadIdxBuf, IDXFMT_16 );
-
-	_renderDevice->finishCreatingGeometry( _overlayGeo );
-
 	// Create particle geometry array
 	ParticleVert v0( 0, 0 );
 	ParticleVert v1( 1, 0 );
 	ParticleVert v2( 1, 1 );
 	ParticleVert v3( 0, 1 );
 	
-	ParticleVert *parVerts = new ParticleVert[ParticlesPerBatch * 4];
+	ParticleVert *parVerts = new ParticleVert[ ParticlesPerBatch * 4 ];
 	for( uint32 i = 0; i < ParticlesPerBatch; ++i )
 	{
-		parVerts[i * 4 + 0] = v0; parVerts[i * 4 + 0].index = (float)i;
-		parVerts[i * 4 + 1] = v1; parVerts[i * 4 + 1].index = (float)i;
-		parVerts[i * 4 + 2] = v2; parVerts[i * 4 + 2].index = (float)i;
-		parVerts[i * 4 + 3] = v3; parVerts[i * 4 + 3].index = (float)i;
+		parVerts[ i * 4 + 0 ] = v0; parVerts[ i * 4 + 0 ].index = ( float ) i;
+		parVerts[ i * 4 + 1 ] = v1; parVerts[ i * 4 + 1 ].index = ( float ) i;
+		parVerts[ i * 4 + 2 ] = v2; parVerts[ i * 4 + 2 ].index = ( float ) i;
+		parVerts[ i * 4 + 3 ] = v3; parVerts[ i * 4 + 3 ].index = ( float ) i;
 	}
 
 	_particleGeo = _renderDevice->beginCreatingGeometry( _vlParticle );
@@ -335,9 +379,6 @@ uint32 Renderer::getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const
 			break;
 		case DefaultVertexLayouts::Model:
 			return _vlModel;
-			break;
-		case DefaultVertexLayouts::Overlay:
-			return _vlOverlay;
 			break;
 		default:
 			break;
@@ -442,12 +483,9 @@ void Renderer::drawAABB( const Vec3f &bbMin, const Vec3f &bbMax )
 	
 	Matrix4f mat = Matrix4f::TransMat( bbMin.x, bbMin.y, bbMin.z ) *
 		Matrix4f::ScaleMat( bbMax.x - bbMin.x, bbMax.y - bbMin.y, bbMax.z - bbMin.z );
-	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
+	_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.worldMat ], CONST_FLOAT44, &mat.x[ 0 ] );
 	
 	_renderDevice->setGeometry( _cubeGeo );
-// 	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
 }
@@ -459,12 +497,9 @@ void Renderer::drawSphere( const Vec3f &pos, float radius )
 
 	Matrix4f mat = Matrix4f::TransMat( pos.x, pos.y, pos.z ) *
 	               Matrix4f::ScaleMat( radius, radius, radius );
-	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
+	_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.worldMat ], CONST_FLOAT44, &mat.x[ 0 ] );
 
 	_renderDevice->setGeometry( _sphereGeo );
-// 	_renderDevice->setVertexBuffer( 0, _vbSphere, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibSphere, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 128 * 3, 0, 126 );
 }
@@ -475,12 +510,9 @@ void Renderer::drawCone( float height, float radius, const Matrix4f &transMat )
 	ASSERT( _curShader != 0x0 );
 
 	Matrix4f mat = transMat * Matrix4f::ScaleMat( radius, radius, height );
-	_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[ 0 ] );
+	_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.worldMat ], CONST_FLOAT44, &mat.x[ 0 ] );
 
 	_renderDevice->setGeometry( _coneGeo );
-// 	_renderDevice->setVertexBuffer( 0, _vbCone, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibCone, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
 
 	_renderDevice->drawIndexed( PRIM_TRILIST, 0, 22 * 3, 0, 13 );
 }
@@ -504,40 +536,46 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 	int loc =_renderDevice-> getShaderSamplerLoc( shdObj, "shadowMap" );
 	if( loc >= 0 ) _renderDevice->setShaderSampler( loc, 12 );
 
-	// Misc general uniforms
-	sc.uni_frameBufSize = _renderDevice->getShaderConstLoc( shdObj, "frameBufSize" );
-	
-	// View/projection uniforms
-	sc.uni_viewMat = _renderDevice->getShaderConstLoc( shdObj, "viewMat" );
-	sc.uni_viewMatInv = _renderDevice->getShaderConstLoc( shdObj, "viewMatInv" );
-	sc.uni_projMat = _renderDevice->getShaderConstLoc( shdObj, "projMat" );
-	sc.uni_viewProjMat = _renderDevice->getShaderConstLoc( shdObj, "viewProjMat" );
-	sc.uni_viewProjMatInv = _renderDevice->getShaderConstLoc( shdObj, "viewProjMatInv" );
-	sc.uni_viewerPos = _renderDevice->getShaderConstLoc( shdObj, "viewerPos" );
-	
-	// Per-instance uniforms
-	sc.uni_worldMat = _renderDevice->getShaderConstLoc( shdObj, "worldMat" );
-	sc.uni_worldNormalMat = _renderDevice->getShaderConstLoc( shdObj, "worldNormalMat" );
-	sc.uni_nodeId = _renderDevice->getShaderConstLoc( shdObj, "nodeId" );
-	sc.uni_customInstData = _renderDevice->getShaderConstLoc( shdObj, "customInstData[0]" );
-	sc.uni_skinMatRows = _renderDevice->getShaderConstLoc( shdObj, "skinMatRows[0]" );
-	
-	// Lighting uniforms
-	sc.uni_lightPos = _renderDevice->getShaderConstLoc( shdObj, "lightPos" );
-	sc.uni_lightDir = _renderDevice->getShaderConstLoc( shdObj, "lightDir" );
-	sc.uni_lightColor = _renderDevice->getShaderConstLoc( shdObj, "lightColor" );
-	sc.uni_shadowSplitDists = _renderDevice->getShaderConstLoc( shdObj, "shadowSplitDists" );
-	sc.uni_shadowMats = _renderDevice->getShaderConstLoc( shdObj, "shadowMats" );
-	sc.uni_shadowMapSize = _renderDevice->getShaderConstLoc( shdObj, "shadowMapSize" );
-	sc.uni_shadowBias = _renderDevice->getShaderConstLoc( shdObj, "shadowBias" );
-	
-	// Particle-specific uniforms
-	sc.uni_parPosArray = _renderDevice->getShaderConstLoc( shdObj, "parPosArray" );
-	sc.uni_parSizeAndRotArray = _renderDevice->getShaderConstLoc( shdObj, "parSizeAndRotArray" );
-	sc.uni_parColorArray = _renderDevice->getShaderConstLoc( shdObj, "parColorArray" );
-	
-	// Overlay-specific uniforms
-	sc.uni_olayColor = _renderDevice->getShaderConstLoc( shdObj, "olayColor" );
+	sc.uniLocs.reserve( _engineUniforms.size() );
+
+	for ( size_t i = 0; i < _engineUniforms.size(); ++i ) 
+	{
+		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
+	}
+
+// 	Misc general uniforms
+// 	sc.uni_frameBufSize = _renderDevice->getShaderConstLoc( shdObj, "frameBufSize" );
+// 	
+// 	// View/projection uniforms
+// 	sc.uni_viewMat = _renderDevice->getShaderConstLoc( shdObj, "viewMat" );
+// 	sc.uni_viewMatInv = _renderDevice->getShaderConstLoc( shdObj, "viewMatInv" );
+// 	sc.uni_projMat = _renderDevice->getShaderConstLoc( shdObj, "projMat" );
+// 	sc.uni_viewProjMat = _renderDevice->getShaderConstLoc( shdObj, "viewProjMat" );
+// 	sc.uni_viewProjMatInv = _renderDevice->getShaderConstLoc( shdObj, "viewProjMatInv" );
+// 	sc.uni_viewerPos = _renderDevice->getShaderConstLoc( shdObj, "viewerPos" );
+// 	
+// 	// Per-instance uniforms
+// 	sc.uni_worldMat = _renderDevice->getShaderConstLoc( shdObj, "worldMat" );
+// 	sc.uni_worldNormalMat = _renderDevice->getShaderConstLoc( shdObj, "worldNormalMat" );
+// 	sc.uni_nodeId = _renderDevice->getShaderConstLoc( shdObj, "nodeId" );
+// 	sc.uni_customInstData = _renderDevice->getShaderConstLoc( shdObj, "customInstData[0]" );
+// 	sc.uni_skinMatRows = _renderDevice->getShaderConstLoc( shdObj, "skinMatRows[0]" );
+// 	
+// 	// Lighting uniforms
+// 	sc.uni_lightPos = _renderDevice->getShaderConstLoc( shdObj, "lightPos" );
+// 	sc.uni_lightDir = _renderDevice->getShaderConstLoc( shdObj, "lightDir" );
+// 	sc.uni_lightColor = _renderDevice->getShaderConstLoc( shdObj, "lightColor" );
+// 	sc.uni_shadowSplitDists = _renderDevice->getShaderConstLoc( shdObj, "shadowSplitDists" );
+// 	sc.uni_shadowMats = _renderDevice->getShaderConstLoc( shdObj, "shadowMats" );
+// 	sc.uni_shadowMapSize = _renderDevice->getShaderConstLoc( shdObj, "shadowMapSize" );
+// 	sc.uni_shadowBias = _renderDevice->getShaderConstLoc( shdObj, "shadowBias" );
+// 	
+// 	// Particle-specific uniforms
+// 	sc.uni_parPosArray = _renderDevice->getShaderConstLoc( shdObj, "parPosArray" );
+// 	sc.uni_parSizeAndRotArray = _renderDevice->getShaderConstLoc( shdObj, "parSizeAndRotArray" );
+// 	sc.uni_parColorArray = _renderDevice->getShaderConstLoc( shdObj, "parColorArray" );
+// 	
+// 	// Uniforms, requested by extensions
 
 	return true;
 }
@@ -568,65 +606,65 @@ void Renderer::commitGeneralUniforms()
 	// Note: Make sure that all functions which modify one of the following params increase the stamp
 	if( _curShader->lastUpdateStamp != _curShaderUpdateStamp )
 	{
-		if( _curShader->uni_frameBufSize >= 0 )
+		if( _curShader->uniLocs[ _uni.frameBufSize ] >= 0 )
 		{
 			float dimensions[2] = { (float)_renderDevice->_fbWidth, (float)_renderDevice->_fbHeight };
-			_renderDevice->setShaderConst( _curShader->uni_frameBufSize, CONST_FLOAT2, dimensions );
+			_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.frameBufSize ], CONST_FLOAT2, dimensions );
 		}
 		
 		// Viewer params
-		if( _curShader->uni_viewMat >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_viewMat, CONST_FLOAT44, _viewMat.x );
+		if( _curShader->uniLocs[ _uni.viewMat ] >= 0 )
+			_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.viewMat ], CONST_FLOAT44, _viewMat.x );
 		
-		if( _curShader->uni_viewMatInv >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_viewMatInv, CONST_FLOAT44, _viewMatInv.x );
+		if( _curShader->uniLocs[ _uni.viewMatInv ] >= 0 )
+			_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.viewMatInv ], CONST_FLOAT44, _viewMatInv.x );
 		
-		if( _curShader->uni_projMat >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_projMat, CONST_FLOAT44, _projMat.x );
+		if( _curShader->uniLocs[ _uni.projMat ] >= 0 )
+			_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.projMat ], CONST_FLOAT44, _projMat.x );
 		
-		if( _curShader->uni_viewProjMat >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_viewProjMat, CONST_FLOAT44, _viewProjMat.x );
+		if( _curShader->uniLocs[ _uni.viewProjMat ] >= 0 )
+			_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.viewProjMat ], CONST_FLOAT44, _viewProjMat.x );
 
-		if( _curShader->uni_viewProjMatInv >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_viewProjMatInv, CONST_FLOAT44, _viewProjMatInv.x );
+		if( _curShader->uniLocs[ _uni.viewProjMatInv ] >= 0 )
+			_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.viewProjMatInv ], CONST_FLOAT44, _viewProjMatInv.x );
 		
-		if( _curShader->uni_viewerPos >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_viewerPos, CONST_FLOAT3, &_viewMatInv.x[12] );
+		if( _curShader->uniLocs[ _uni.viewerPos ] >= 0 )
+			_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.viewerPos ], CONST_FLOAT3, &_viewMatInv.x[12] );
 		
 		// Light params
 		if( _curLight != 0x0 )
 		{
-			if( _curShader->uni_lightPos >= 0 )
+			if( _curShader->uniLocs[ _uni.lightPos ] >= 0 )
 			{
 				float data[4] = { _curLight->_absPos.x, _curLight->_absPos.y,
 				                  _curLight->_absPos.z, _curLight->_radius };
-				_renderDevice->setShaderConst( _curShader->uni_lightPos, CONST_FLOAT4, data );
+				_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.lightPos ], CONST_FLOAT4, data );
 			}
 			
-			if( _curShader->uni_lightDir >= 0 )
+			if( _curShader->uniLocs[ _uni.lightDir ] >= 0 )
 			{
 				float data[4] = { _curLight->_spotDir.x, _curLight->_spotDir.y,
 				                  _curLight->_spotDir.z, cosf( degToRad( _curLight->_fov / 2.0f ) ) };
-				_renderDevice->setShaderConst( _curShader->uni_lightDir, CONST_FLOAT4, data );
+				_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.lightDir ], CONST_FLOAT4, data );
 			}
 			
-			if( _curShader->uni_lightColor >= 0 )
+			if( _curShader->uniLocs[ _uni.lightColor ] >= 0 )
 			{
 				Vec3f col = _curLight->_diffuseCol * _curLight->_diffuseColMult;
-				_renderDevice->setShaderConst( _curShader->uni_lightColor, CONST_FLOAT3, &col.x );
+				_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.lightColor ], CONST_FLOAT3, &col.x );
 			}
 			
-			if( _curShader->uni_shadowSplitDists >= 0 )
-				_renderDevice->setShaderConst( _curShader->uni_shadowSplitDists, CONST_FLOAT4, &_splitPlanes[1] );
+			if( _curShader->uniLocs[ _uni.shadowSplitDists ] >= 0 )
+				_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.shadowSplitDists ], CONST_FLOAT4, &_splitPlanes[1] );
 
-			if( _curShader->uni_shadowMats >= 0 )
-				_renderDevice->setShaderConst( _curShader->uni_shadowMats, CONST_FLOAT44, &_lightMats[0].x[0], 4 );
+			if( _curShader->uniLocs[ _uni.shadowMats ] >= 0 )
+				_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.shadowMats ], CONST_FLOAT44, &_lightMats[0].x[0], 4 );
 			
-			if( _curShader->uni_shadowMapSize >= 0 )
-				_renderDevice->setShaderConst( _curShader->uni_shadowMapSize, CONST_FLOAT, &_smSize );
+			if( _curShader->uniLocs[ _uni.shadowMapSize ] >= 0 )
+				_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.shadowMapSize ], CONST_FLOAT, &_smSize );
 			
-			if( _curShader->uni_shadowBias >= 0 )
-				_renderDevice->setShaderConst( _curShader->uni_shadowBias, CONST_FLOAT, &_curLight->_shadowMapBias );
+			if( _curShader->uniLocs[ _uni.shadowBias ] >= 0 )
+				_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.shadowBias ], CONST_FLOAT, &_curLight->_shadowMapBias );
 		}
 
 		_curShader->lastUpdateStamp = _curShaderUpdateStamp;
@@ -686,7 +724,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 	// Setup texture samplers
 	for( size_t i = 0, si = shaderRes->_samplers.size(); i < si; ++i )
 	{
-		if( _curShader->customSamplers[i] < 0 ) continue;
+		if( _curShader->samplersLocs[i] < 0 ) continue;
 		
 		ShaderSampler &sampler = shaderRes->_samplers[i];
 		TextureResource *texRes = 0x0;
@@ -757,10 +795,12 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		}
 	}
 
+	size_t uniOffset = _engineUniforms.size();
+
 	// Set custom uniforms
 	for( size_t i = 0, si = shaderRes->_uniforms.size(); i < si; ++i )
 	{
-		if( _curShader->customUniforms[i] < 0 ) continue;
+		if( _curShader->uniLocs[ i + uniOffset ] < 0 ) continue;
 		
 		float *unifData = 0x0;
 
@@ -785,10 +825,10 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 			switch( shaderRes->_uniforms[i].size )
 			{
 			case 1:
-				_renderDevice->setShaderConst( _curShader->customUniforms[i], CONST_FLOAT, unifData );
+				_renderDevice->setShaderConst( _curShader->uniLocs[ i + uniOffset ], CONST_FLOAT, unifData );
 				break;
 			case 4:
-				_renderDevice->setShaderConst( _curShader->customUniforms[i], CONST_FLOAT4, unifData );
+				_renderDevice->setShaderConst( _curShader->uniLocs[ i + uniOffset ], CONST_FLOAT4, unifData );
 				break;
 			}
 		}
@@ -797,7 +837,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 	// Set custom buffers
 	for ( size_t i = 0; i < shaderRes->_buffers.size(); ++i )
 	{
-		if ( _curShader->customBuffers[ i ] < 0 ) continue;
+		if ( _curShader->bufferLocs[ i ] < 0 ) continue;
 		
 		ComputeBufferResource *buf = 0;
 
@@ -815,7 +855,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 
 		if ( buf )
 		{
-			_renderDevice->setStorageBuffer( _curShader->customBuffers[ i ], buf->_bufferID );
+			_renderDevice->setStorageBuffer( _curShader->bufferLocs[ i ], buf->_bufferID );
 		}
 	}
 
@@ -1173,9 +1213,7 @@ void Renderer::drawOccProxies( uint32 list )
 	
 	setShaderComb( &Modules::renderer()._defColorShader );
 	commitGeneralUniforms();
-// 	_renderDevice->setVertexBuffer( 0, _vbCube, 0, 12 );
-// 	_renderDevice->setIndexBuffer( _ibCube, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
+
 	_renderDevice->setGeometry( _cubeGeo );
 
 	// Draw occlusion proxies
@@ -1187,7 +1225,7 @@ void Renderer::drawOccProxies( uint32 list )
 		
 		Matrix4f mat = Matrix4f::TransMat( proxy.bbMin.x, proxy.bbMin.y, proxy.bbMin.z ) *
 			Matrix4f::ScaleMat( proxy.bbMax.x - proxy.bbMin.x, proxy.bbMax.y - proxy.bbMin.y, proxy.bbMax.z - proxy.bbMin.z );
-		_renderDevice->setShaderConst( _curShader->uni_worldMat, CONST_FLOAT44, &mat.x[0] );
+		_renderDevice->setShaderConst( _curShader->uniLocs[ _uni.worldMat ], CONST_FLOAT44, &mat.x[0] );
 
 		// Draw AABB
 		_renderDevice->drawIndexed( PRIM_TRILIST, 0, 36, 0, 8 );
@@ -1200,90 +1238,6 @@ void Renderer::drawOccProxies( uint32 list )
 	_renderDevice->setDepthMask( prevDepthMask );
 
 	_occProxies[list].resize( 0 );
-}
-
-
-// =================================================================================================
-// Overlays
-// =================================================================================================
-
-void Renderer::showOverlays( const float *verts, uint32 vertCount, float *colRGBA,
-                             MaterialResource *matRes, int flags )
-{
-	uint32 numOverlayVerts = 0;
-	if( !_overlayBatches.empty() )
-		numOverlayVerts = _overlayBatches.back().firstVert + _overlayBatches.back().vertCount;
-	
-	if( numOverlayVerts + vertCount > MaxNumOverlayVerts ) return;
-
-	memcpy( &_overlayVerts[numOverlayVerts], verts, vertCount * sizeof( OverlayVert ) );
-	
-	// Check if previous batch can be extended
-	if( !_overlayBatches.empty() )
-	{
-		OverlayBatch &prevBatch = _overlayBatches.back();
-		if( matRes == prevBatch.materialRes && flags == prevBatch.flags &&
-			memcmp( colRGBA, prevBatch.colRGBA, 4 * sizeof( float ) ) == 0 )
-		{
-			prevBatch.vertCount += vertCount;
-			return;
-		}
-	}
-	
-	// Create new batch
-	_overlayBatches.push_back( OverlayBatch( numOverlayVerts, vertCount, colRGBA, matRes, flags ) );
-}
-
-
-void Renderer::clearOverlays()
-{
-	_overlayBatches.resize( 0 );
-}
-
-
-void Renderer::drawOverlays( const string &shaderContext )
-{
-	uint32 numOverlayVerts = 0;
-	if( !_overlayBatches.empty() )
-		numOverlayVerts = _overlayBatches.back().firstVert + _overlayBatches.back().vertCount;
-	
-	if( numOverlayVerts == 0 ) return;
-	
-	// Upload overlay vertices
-	_renderDevice->updateBufferData( _overlayGeo, _overlayVB, 0, MaxNumOverlayVerts * sizeof( OverlayVert ), _overlayVerts );
-
-// 	_renderDevice->setVertexBuffer( 0, _overlayVB, 0, sizeof( OverlayVert ) );
-// 	_renderDevice->setIndexBuffer( _quadIdxBuf, IDXFMT_16 );
-	_renderDevice->setGeometry( _overlayGeo );
-	ASSERT( QuadIndexBufCount >= MaxNumOverlayVerts * 6 );
-
-	float aspect = (float)_curCamera->_vpWidth / (float)_curCamera->_vpHeight;
-	setupViewMatrices( Matrix4f(), Matrix4f::OrthoMat( 0, aspect, 1, 0, -1, 1 ) );
-	
-	MaterialResource *curMatRes = 0x0;
-	
-	for( size_t i = 0, s = _overlayBatches.size(); i < s; ++i )
-	{
-		OverlayBatch &ob = _overlayBatches[i];
-		
-		if( curMatRes != ob.materialRes )
-		{
-			if( !setMaterial( ob.materialRes, shaderContext ) )
-			{
-				// Unsuccessful material setting probably has destroyed the last setted material
-				curMatRes = 0x0;
-				continue;
-			}
-// 			_renderDevice->setVertexLayout( _vlOverlay );
-			curMatRes = ob.materialRes;
-		}
-		
-		if( _curShader->uni_olayColor >= 0 )
-			_renderDevice->setShaderConst( _curShader->uni_olayColor, CONST_FLOAT4, ob.colRGBA );
-		
-		// Draw batch
-		_renderDevice->drawIndexed( PRIM_TRILIST, ob.firstVert * 6/4, ob.vertCount * 6/4, ob.firstVert, ob.vertCount );
-	}
 }
 
 
@@ -1694,6 +1648,7 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 	MaterialResource *curMatRes = 0x0;
 
 	bool tessellationSupported = rdi->getCaps().tesselation;
+	DefaultShaderUniforms &uni = Modules::renderer()._uni;
 
 	// Loop over mesh queue
 	for( size_t i = firstItem; i <= lastItem; ++i )
@@ -1752,24 +1707,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 			ASSERT( curGeoRes != 0x0 );
 		
 			rdi->setGeometry( curGeoRes->getGeometryInfo() );
-
-			// Indices
-// 			rdi->setIndexBuffer( curGeoRes->getIndexBuf(),
-// 			                      curGeoRes->_16BitIndices ? IDXFMT_16 : IDXFMT_32 );
-// 
-// 			// Vertices
-// 			uint32 posVBuf = curGeoRes->getPosVBuf();
-// 			uint32 tanVBuf = curGeoRes->getTanVBuf();
-// 			uint32 staticVBuf = curGeoRes->getStaticVBuf();
-// 			
-// 			rdi->setVertexBuffer( 0, posVBuf, 0, sizeof( Vec3f ) );
-// 			rdi->setVertexBuffer( 1, tanVBuf, 0, sizeof( VertexDataTan ) );
-// 			rdi->setVertexBuffer( 2, tanVBuf, sizeof( Vec3f ), sizeof( VertexDataTan ) );
-// 			rdi->setVertexBuffer( 3, staticVBuf, 0, sizeof( VertexDataStatic ) );
 		}
 
-// 		rdi->setVertexLayout( Modules::renderer()._vlModel );
-		
 		ShaderCombination *prevShader = Modules::renderer().getCurShader();
 		
 		RDIPrimType drawType = PRIM_TRILIST;
@@ -1816,12 +1755,12 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 		if( modelChanged || curShader != prevShader )
 		{
 			// Skeleton
-			if( curShader->uni_skinMatRows >= 0 && !modelNode->_skinMatRows.empty() )
+			if( curShader->uniLocs[ uni.skinMatRows ] >= 0 && !modelNode->_skinMatRows.empty() )
 			{
 				// Note:	OpenGL 2.1 supports mat4x3 but it is internally realized as mat4 on most
 				//			hardware so it would require 4 instead of 3 uniform slots per joint
 				
-				rdi->setShaderConst( curShader->uni_skinMatRows, CONST_FLOAT4,
+				rdi->setShaderConst( curShader->uniLocs[ uni.skinMatRows ], CONST_FLOAT4,
 				                      &modelNode->_skinMatRows[0], (int)modelNode->_skinMatRows.size() );
 			}
 
@@ -1829,27 +1768,27 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 		}
 
 		// World transformation
-		if( curShader->uni_worldMat >= 0 )
+		if( curShader->uniLocs[ uni.worldMat ] >= 0 )
 		{
-			rdi->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &meshNode->_absTrans.x[0] );
+			rdi->setShaderConst( curShader->uniLocs[ uni.worldMat ], CONST_FLOAT44, &meshNode->_absTrans.x[0] );
 		}
-		if( curShader->uni_worldNormalMat >= 0 )
+		if( curShader->uniLocs[ uni.worldNormalMat ] >= 0 )
 		{
 			// TODO: Optimize this
 			Matrix4f normalMat4 = meshNode->_absTrans.inverted().transposed();
 			float normalMat[9] = { normalMat4.x[0], normalMat4.x[1], normalMat4.x[2],
 			                       normalMat4.x[4], normalMat4.x[5], normalMat4.x[6],
 			                       normalMat4.x[8], normalMat4.x[9], normalMat4.x[10] };
-			rdi->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
+			rdi->setShaderConst( curShader->uniLocs[ uni.worldNormalMat ], CONST_FLOAT33, normalMat );
 		}
-		if( curShader->uni_nodeId >= 0 )
+		if( curShader->uniLocs[ uni.nodeId ] >= 0 )
 		{
 			float id = (float)meshNode->getHandle();
-			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uniLocs[ uni.nodeId ], CONST_FLOAT, &id );
 		}
-		if( curShader->uni_customInstData >= 0 )
+		if( curShader->uniLocs[ uni.customInstData ] >= 0 )
 		{
-			rdi->setShaderConst( curShader->uni_customInstData, CONST_FLOAT4,
+			rdi->setShaderConst( curShader->uniLocs[ uni.customInstData ], CONST_FLOAT4,
 			                      &modelNode->_customInstData[0].x, ModelCustomVecCount );
 		}
 
@@ -1890,10 +1829,10 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
 
 	// Bind particle geometry
-// 	rdi->setVertexBuffer( 0, Modules::renderer().getParticleVBO(), 0, sizeof( ParticleVert ) );
-// 	rdi->setIndexBuffer( Modules::renderer().getQuadIdxBuf(), IDXFMT_16 );
 	rdi->setGeometry( Modules::renderer().getParticleGeometry() );
 	ASSERT( QuadIndexBufCount >= ParticlesPerBatch * 6 );
+
+	DefaultShaderUniforms &uni = Modules::renderer()._uni;
 
 	// Loop through emitter queue
 	for( uint32 i = firstItem; i <= lastItem; ++i )
@@ -1946,18 +1885,15 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 			curMatRes = emitter->_materialRes;
 		}
 
-		// Set vertex layout
-// 		rdi->setVertexLayout( Modules::renderer()._vlParticle );
-		
 		if( queryObj )
 			rdi->beginQuery( queryObj );
 		
 		// Shader uniforms
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
-		if( curShader->uni_nodeId >= 0 )
+		if( curShader->uniLocs[ uni.nodeId ] >= 0 )
 		{
 			float id = (float)emitter->getHandle();
-			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uniLocs[ uni.nodeId ], CONST_FLOAT, &id );
 		}
 
 		// Divide particles in batches and render them
@@ -1976,14 +1912,14 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 			if( allDead ) continue;
 
 			// Render batch
-			if( curShader->uni_parPosArray >= 0 )
-				rdi->setShaderConst( curShader->uni_parPosArray, CONST_FLOAT3,
+			if( curShader->uniLocs[ uni.parPosArray ] >= 0 )
+				rdi->setShaderConst( curShader->uniLocs[ uni.parPosArray ], CONST_FLOAT3,
 				                      (float *)emitter->_parPositions + j*ParticlesPerBatch*3, ParticlesPerBatch );
-			if( curShader->uni_parSizeAndRotArray >= 0 )
-				rdi->setShaderConst( curShader->uni_parSizeAndRotArray, CONST_FLOAT2,
+			if( curShader->uniLocs[ uni.parSizeAndRotArray ] >= 0 )
+				rdi->setShaderConst( curShader->uniLocs[ uni.parSizeAndRotArray ], CONST_FLOAT2,
 				                      (float *)emitter->_parSizesANDRotations + j*ParticlesPerBatch*2, ParticlesPerBatch );
-			if( curShader->uni_parColorArray >= 0 )
-				rdi->setShaderConst( curShader->uni_parColorArray, CONST_FLOAT4,
+			if( curShader->uniLocs[ uni.parColorArray ] >= 0 )
+				rdi->setShaderConst( curShader->uniLocs[ uni.parColorArray ], CONST_FLOAT4,
 				                      (float *)emitter->_parColors + j*ParticlesPerBatch*4, ParticlesPerBatch );
 
 			rdi->drawIndexed( PRIM_TRILIST, 0, ParticlesPerBatch * 6, 0, ParticlesPerBatch * 4 );
@@ -2010,14 +1946,14 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 			if( !allDead )
 			{
 				// Render batch
-				if( curShader->uni_parPosArray >= 0 )
-					rdi->setShaderConst( curShader->uni_parPosArray, CONST_FLOAT3,
+				if( curShader->uniLocs[ uni.parPosArray ] >= 0 )
+					rdi->setShaderConst( curShader->uniLocs[ uni.parPosArray ], CONST_FLOAT3,
 					                      (float *)emitter->_parPositions + offset*3, count );
-				if( curShader->uni_parSizeAndRotArray >= 0 )
-					rdi->setShaderConst( curShader->uni_parSizeAndRotArray, CONST_FLOAT2,
+				if( curShader->uniLocs[ uni.parSizeAndRotArray ] >= 0 )
+					rdi->setShaderConst( curShader->uniLocs[ uni.parSizeAndRotArray ], CONST_FLOAT2,
 					                      (float *)emitter->_parSizesANDRotations + offset*2, count );
-				if( curShader->uni_parColorArray >= 0 )
-					rdi->setShaderConst( curShader->uni_parColorArray, CONST_FLOAT4,
+				if( curShader->uniLocs[ uni.parColorArray ] >= 0 )
+					rdi->setShaderConst( curShader->uniLocs[ uni.parColorArray ], CONST_FLOAT4,
 					                      (float *)emitter->_parColors + offset*4, count );
 				
 				rdi->drawIndexed( PRIM_TRILIST, 0, count * 6, 0, count * 4 );
@@ -2036,7 +1972,6 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 	if( occSet >= 0 )
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
 	
-// 	rdi->setVertexLayout( 0 );
 }
 
 
@@ -2056,6 +1991,8 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 
 	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::ComputeGPUTime );
 	if ( Modules::config().gatherTimeStats ) timer->beginQuery( Modules::renderer().getFrameID() );
+
+	DefaultShaderUniforms &uni = Modules::renderer()._uni;
 
 	// Loop over compute node queue
 	for ( size_t i = firstItem; i <= lastItem; ++i )
@@ -2113,14 +2050,14 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 
 		// Set uniforms
 		// World transformation
-		if ( curShader->uni_worldMat >= 0 )
+		if ( curShader->uniLocs[ uni.worldMat ] >= 0 )
 		{
-			rdi->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &compNode->_absTrans.x[ 0 ] );
+			rdi->setShaderConst( curShader->uniLocs[ uni.worldMat ], CONST_FLOAT44, &compNode->_absTrans.x[ 0 ] );
 		}
-		if ( curShader->uni_nodeId >= 0 )
+		if ( curShader->uniLocs[ uni.nodeId ] >= 0 )
 		{
 			float id = ( float ) compNode->getHandle();
-			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uniLocs[ uni.nodeId ], CONST_FLOAT, &id );
 		}
 		
 		// Wait for completion of compute operation (writing to buffer)
@@ -2181,7 +2118,7 @@ void Renderer::render( CameraNode *camNode )
 
 			switch( pc.command )
 			{
-			case PipelineCommands::SwitchTarget:
+			case DefaultPipelineCommands::SwitchTarget:
 				// Unbind all textures
 				bindPipeBuffer( 0x0, "", 0 );
 				
@@ -2205,51 +2142,55 @@ void Renderer::render( CameraNode *camNode )
 				}
 				break;
 
-			case PipelineCommands::BindBuffer:
+			case DefaultPipelineCommands::BindBuffer:
 				rt = (RenderTarget *)pc.params[0].getPtr();
 				bindPipeBuffer( rt->rendBuf, pc.params[1].getString(), (uint32)pc.params[2].getInt() );
 				break;
 
-			case PipelineCommands::UnbindBuffers:
+			case DefaultPipelineCommands::UnbindBuffers:
 				bindPipeBuffer( 0x0, "", 0 );
 				break;
 
-			case PipelineCommands::ClearTarget:
+			case DefaultPipelineCommands::ClearTarget:
 				clear( pc.params[0].getBool(), pc.params[1].getBool(), pc.params[2].getBool(),
 				       pc.params[3].getBool(), pc.params[4].getBool(), pc.params[5].getFloat(),
 				       pc.params[6].getFloat(), pc.params[7].getFloat(), pc.params[8].getFloat() );
 				break;
 
-			case PipelineCommands::DrawGeometry:
-				drawGeometry( pc.params[0].getString(), pc.params[1].getInt(),
+			case DefaultPipelineCommands::DrawGeometry:
+				drawGeometry( pc.params[0].getString(), pc.params[1].getString(),
 				              (RenderingOrder::List)pc.params[2].getInt(), _curCamera->_occSet );
 				break;
 
-			case PipelineCommands::DrawOverlays:
-				drawOverlays( pc.params[0].getString() );
-				break;
+// 			case DefaultPipelineCommands::DrawOverlays:
+// 				drawOverlays( pc.params[0].getString() );
+// 				break;
 
-			case PipelineCommands::DrawQuad:
+			case DefaultPipelineCommands::DrawQuad:
 				drawFSQuad( pc.params[0].getResource(), pc.params[1].getString() );
 			break;
 
-			case PipelineCommands::DoForwardLightLoop:
-				drawLightGeometry( pc.params[0].getString(), pc.params[1].getInt(),
+			case DefaultPipelineCommands::DoForwardLightLoop:
+				drawLightGeometry( pc.params[0].getString(), pc.params[1].getString(),
 				                   pc.params[2].getBool(), (RenderingOrder::List)pc.params[3].getInt(),
 								   _curCamera->_occSet );
 				break;
 
-			case PipelineCommands::DoDeferredLightLoop:
+			case DefaultPipelineCommands::DoDeferredLightLoop:
 				drawLightShapes( pc.params[0].getString(), pc.params[1].getBool(), _curCamera->_occSet );
 				break;
 
-			case PipelineCommands::SetUniform:
+			case DefaultPipelineCommands::SetUniform:
 				if( pc.params[0].getResource() && pc.params[0].getResource()->getType() == ResourceTypes::Material )
 				{
 					((MaterialResource *)pc.params[0].getResource())->setUniform( pc.params[1].getString(),
 						pc.params[2].getFloat(), pc.params[3].getFloat(),
 						pc.params[4].getFloat(), pc.params[5].getFloat() );
 				}
+				break;
+				
+			case DefaultPipelineCommands::ExternalCommand:
+				ExternalPipelineCommandsManager::executeCommand( pc );
 				break;
 			}
 		}
@@ -2298,7 +2239,7 @@ void Renderer::renderDebugView()
 	setMaterial( 0x0, "" );
 	setShaderComb( &_defColorShader );
 	commitGeneralUniforms();
-	_renderDevice->setShaderConst( _defColorShader.uni_worldMat, CONST_FLOAT44, &Matrix4f().x[0] );
+	_renderDevice->setShaderConst( _defColorShader.uniLocs[ _uni.worldMat ], CONST_FLOAT44, &Matrix4f().x[0] );
 	color[0] = 0.4f; color[1] = 0.4f; color[2] = 0.4f; color[3] = 1;
 	_renderDevice->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
 	for( uint32 i = 0, s = (uint32)Modules::sceneMan().getRenderQueue().size(); i < s; ++i )
