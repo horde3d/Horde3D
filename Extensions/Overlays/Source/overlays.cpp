@@ -106,8 +106,8 @@ bool OverlayRenderer::init()
 	_uni_olayColor = Modules::renderer().registerEngineUniform( "olayColor" );
 
 	// Register new pipeline commands
-	ExternalPipelineCommandsManager::registerPipelineCommand( "DrawOverlays", OverlayRenderer::parsePipelineCommandFunc, 
-																			  OverlayRenderer::executePipelineCommandFunc );
+	Modules::pipeMan().registerPipelineCommand( "DrawOverlays", OverlayRenderer::parsePipelineCommandFunc, 
+												OverlayRenderer::executePipelineCommandFunc );
 	return true;
 }
 

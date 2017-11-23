@@ -2190,7 +2190,7 @@ void Renderer::render( CameraNode *camNode )
 				break;
 
 			case DefaultPipelineCommands::ExternalCommand:
-				ExternalPipelineCommandsManager::executeCommand( pc );
+				Modules::pipeMan().executeCommand( pc );
 				break;
 			}
 		}

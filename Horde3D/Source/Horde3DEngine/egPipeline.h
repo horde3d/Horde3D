@@ -172,57 +172,21 @@ class ExternalPipelineCommandsManager
 {
 public:
 
-	static void registerPipelineCommand( const std::string &commandName,  
-										 parsePipelineCommandFunc pf, executePipelineCommandFunc ef )
-	{
-		ASSERT( !commandName.empty() )
-		ASSERT( pf != 0x0 )
-		ASSERT( ef != 0x0 )
+	ExternalPipelineCommandsManager() {};
+	~ExternalPipelineCommandsManager() {};
 
-		PipelineCommandRegEntry entry;
-		entry.comNameString = commandName;
-		entry.parseFunc = pf;
-		entry.executeFunc = ef;
-		_registeredCommands.emplace_back( entry );
-	}
+	void registerPipelineCommand( const std::string &commandName,  
+								  parsePipelineCommandFunc pf, executePipelineCommandFunc ef );
 
-	static uint32 registeredCommandsCount() { return ( uint32 ) _registeredCommands.size(); }
+	uint32 registeredCommandsCount() { return ( uint32 ) _registeredCommands.size(); }
 
-	static const char *parseCommand( const char *commandName, void *xmlData, PipelineCommand &cmd, bool &success )
-	{
-		for ( size_t i = 0; i < _registeredCommands.size(); ++i )
-		{
-			PipelineCommandRegEntry &entry = _registeredCommands[ i ];
-			if ( entry.comNameString.compare( commandName ) == 0 && entry.parseFunc != 0x0 )
-			{
-				const char *msg = entry.parseFunc( commandName, xmlData, cmd );
-				if ( strlen( msg ) == 0 )
-				{
-					cmd.externalCommandID = ( int ) i;
-				}
-				else
-				{
-					success = false;
-				}
-				
-				return msg;
-			}
-		}
+	const char *parseCommand( const char *commandName, void *xmlData, PipelineCommand &cmd, bool &success );
 
-		return ""; // pipeline command skipped
-	}
-
-	static void executeCommand( const PipelineCommand &command )
-	{
-		if ( command.externalCommandID != -1 )
-		{
-			_registeredCommands[ command.externalCommandID ].executeFunc( &command );
-		}
-	}
+	void executeCommand( const PipelineCommand &command );
 
 private:
 
-	static std::vector< PipelineCommandRegEntry >  _registeredCommands;
+	std::vector< PipelineCommandRegEntry >  _registeredCommands;
 };
 
 // =================================================================================================
