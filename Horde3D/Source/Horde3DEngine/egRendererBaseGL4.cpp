@@ -250,12 +250,7 @@ bool RenderDeviceGL4::init()
 		Modules::log().writeError( "Extension EXT_texture_compression_s3tc not supported" );
 		failed = true;
 	}
-	if( !glExt::EXT_texture_sRGB )
-	{
-		Modules::log().writeError( "Extension EXT_texture_sRGB not supported" );
-		failed = true;
-	}
-	
+		
 	if( failed )
 	{
 		Modules::log().writeError( "Failed to init renderer backend (OpenGL %d.%d), retrying with legacy OpenGL 2.1 backend", 
