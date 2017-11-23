@@ -458,7 +458,7 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 }
 
 // =================================================================================================
-// MaterialClassDatabase
+// MaterialClassCollection
 // =================================================================================================
 std::vector< MaterialHierarchy > MaterialClassCollection::_matHierarchy;
 
@@ -502,7 +502,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 	size_t numberOfLevels = ( size_t ) std::count( matClass.begin(), matClass.end(), '.' ) + 1;
 	if ( numberOfLevels > H3D_MATERIAL_HIERARCHY_LEVELS )
 	{
-		Modules::setError( "Number of hierarchy levels in material class exceed the maximum value. Material class cannot be registered." );
+		Modules::setError( "Number of hierarchy levels in material class exceeds the maximum value. Material class cannot be registered." );
 		return 0;
 	}
 
@@ -584,7 +584,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 			}
 		}
 
-		_matHierarchy.push_back( hierarchy );
+		_matHierarchy.push_back( std::move( hierarchy ) );
 	}
 
 	int result = inversed ? ( _matHierarchy.size() - 1 ) * -1 : _matHierarchy.size() - 1;
@@ -629,7 +629,7 @@ bool MaterialClassCollection::isOfClass( int requestedMaterialClass, int current
 	if ( requestedMaterialClass < 0 ) 
 	{
 		exclusion = true;
-		requestedMaterialClass *= -1;
+		requestedMaterialClass *= -1; // make variable positive as it is used later for array index comparison
 	}
 
 	ASSERT( ( size_t ) requestedMaterialClass < _matHierarchy.size() );
