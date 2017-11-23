@@ -464,7 +464,9 @@ void Converter::processJoints()
 		_joints[i]->invBindMat = _joints[i]->matAbs.inverted();
 	}
 
-	if( _joints.size() + 1 > 75 ) log( "Warning: Model has more than 75 joints" );
+	if( _joints.size() + 1 > 75 ) log( "Warning: Model has more than 75 joints. It may render incorrectly if used with OpenGL 2 render backend." );
+	if ( _joints.size() + 1 > 330 ) log( "Warning: Model has more than 330 joints. Currently it is not supported." );
+
 }
 
 
