@@ -28,14 +28,7 @@
 
 
 // Extensions
-#ifdef CMAKE
-	#include "egExtensions_auto_include.h"
-#else
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	#include "Terrain/Source/extension.h"
-	#pragma comment( lib, "Extension_Terrain.lib" )
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#endif
+#include "egExtensions_auto_include.h"
 
 #include "utDebug.h"
 
@@ -56,13 +49,7 @@ ExternalPipelineCommandsManager		*Modules::_extCmdPipeMan = 0x0;
 
 void Modules::installExtensions()
 {
-#ifdef CMAKE
 	#include "egExtensions_auto_install.h"
-#else
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-	extMan().installExtension( new Horde3DTerrain::ExtTerrain() );
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#endif
 }
 
 
