@@ -15,6 +15,7 @@
 
 #include "egPrerequisites.h"
 #include "egMaterial.h"
+#include <string.h>
 #include <string>
 #include <vector>
 
@@ -40,7 +41,7 @@ struct PipelineResData
 
 // =================================================================================================
 
-struct PipelineCommands
+struct DefaultPipelineCommands
 {
 	enum List
 	{
@@ -49,11 +50,12 @@ struct PipelineCommands
 		UnbindBuffers,
 		ClearTarget,
 		DrawGeometry,
-		DrawOverlays,
+//		DrawOverlays,
 		DrawQuad,
 		DoForwardLightLoop,
 		DoDeferredLightLoop,
-		SetUniform
+		SetUniform,
+		ExternalCommand = 256 // must be the last command
 	};
 };
 
@@ -109,12 +111,14 @@ protected:
 
 struct PipelineCommand
 {
-	PipelineCommands::List       command;
-	std::vector< PipeCmdParam >  params;
+	std::vector< PipeCmdParam >			params;
+	DefaultPipelineCommands::List       command;
+	int									externalCommandID;
 
-	PipelineCommand( PipelineCommands::List	command )
+	PipelineCommand( DefaultPipelineCommands::List command )
 	{
 		this->command = command;
+		externalCommandID = -1;
 	}
 };
 
@@ -151,6 +155,39 @@ struct RenderTarget
 		scale = 0;
 		format = TextureFormats::Unknown;
 	}
+};
+
+// =================================================================================================
+
+typedef const char *( *parsePipelineCommandFunc )( const char *commandName, void *xmlNodeParams, PipelineCommand &cmd );
+typedef void( *executePipelineCommandFunc )( const PipelineCommand *commandParams );
+
+struct PipelineCommandRegEntry
+{
+	std::string					comNameString;
+	parsePipelineCommandFunc	parseFunc;    // Called when pipeline command is parsed
+	executePipelineCommandFunc	executeFunc;  // Called when pipeline command is executed during rendering
+};
+
+class ExternalPipelineCommandsManager
+{
+public:
+
+	ExternalPipelineCommandsManager() {};
+	~ExternalPipelineCommandsManager() {};
+
+	void registerPipelineCommand( const std::string &commandName,  
+								  parsePipelineCommandFunc pf, executePipelineCommandFunc ef );
+
+	uint32 registeredCommandsCount() { return ( uint32 ) _registeredCommands.size(); }
+
+	const char *parseCommand( const char *commandName, void *xmlData, PipelineCommand &cmd, bool &success );
+
+	void executeCommand( const PipelineCommand &command );
+
+private:
+
+	std::vector< PipelineCommandRegEntry >  _registeredCommands;
 };
 
 // =================================================================================================

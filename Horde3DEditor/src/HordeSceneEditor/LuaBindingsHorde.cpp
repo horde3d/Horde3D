@@ -279,33 +279,33 @@ namespace Horde3D
 		Returns:
 		nothing
 		*/
-		int  lua_showOverlays( lua_State *L )			
-		{
-			float x_ll = static_cast<float>(luaL_checknumber(L,1));
-			float y_ll = static_cast<float>(luaL_checknumber(L,2));
-			float u_ll = static_cast<float>(luaL_checknumber(L,3));
-			float v_ll = static_cast<float>(luaL_checknumber(L,4));
-			float x_lr = static_cast<float>(luaL_checknumber(L,5));
-			float y_lr = static_cast<float>(luaL_checknumber(L,6));
-			float u_lr = static_cast<float>(luaL_checknumber(L,7));
-			float v_lr = static_cast<float>(luaL_checknumber(L,8));
-			float x_ur = static_cast<float>(luaL_checknumber(L,9));
-			float y_ur = static_cast<float>(luaL_checknumber(L,10));
-			float u_ur = static_cast<float>(luaL_checknumber(L,11));
-			float v_ur = static_cast<float>(luaL_checknumber(L,12));
-			float x_ul = static_cast<float>(luaL_checknumber(L,13));
-			float y_ul = static_cast<float>(luaL_checknumber(L,14));
-			float u_ul = static_cast<float>(luaL_checknumber(L,15));
-			float v_ul = static_cast<float>(luaL_checknumber(L,16));
-			float colR = static_cast<float>(luaL_checknumber(L,17));
-			float colG = static_cast<float>(luaL_checknumber(L,18));
-			float colB = static_cast<float>(luaL_checknumber(L,19));
-			float colA = static_cast<float>(luaL_checknumber(L,20));
-			H3DRes material = luaL_checkint(L, 20);
-			int layer = luaL_checkint(L, 22);
-			//h3dShowOverlays(x_ll, y_ll, u_ll, v_ll, x_lr, y_lr, u_lr, v_lr, x_ur, y_ur, u_ur, v_ur, x_ul, y_ul, u_ul, v_ul, colR, colG, colB, colA, material, layer);
-			return 0;
-		}
+// 		int  lua_showOverlays( lua_State *L )			
+// 		{
+// 			float x_ll = static_cast<float>(luaL_checknumber(L,1));
+// 			float y_ll = static_cast<float>(luaL_checknumber(L,2));
+// 			float u_ll = static_cast<float>(luaL_checknumber(L,3));
+// 			float v_ll = static_cast<float>(luaL_checknumber(L,4));
+// 			float x_lr = static_cast<float>(luaL_checknumber(L,5));
+// 			float y_lr = static_cast<float>(luaL_checknumber(L,6));
+// 			float u_lr = static_cast<float>(luaL_checknumber(L,7));
+// 			float v_lr = static_cast<float>(luaL_checknumber(L,8));
+// 			float x_ur = static_cast<float>(luaL_checknumber(L,9));
+// 			float y_ur = static_cast<float>(luaL_checknumber(L,10));
+// 			float u_ur = static_cast<float>(luaL_checknumber(L,11));
+// 			float v_ur = static_cast<float>(luaL_checknumber(L,12));
+// 			float x_ul = static_cast<float>(luaL_checknumber(L,13));
+// 			float y_ul = static_cast<float>(luaL_checknumber(L,14));
+// 			float u_ul = static_cast<float>(luaL_checknumber(L,15));
+// 			float v_ul = static_cast<float>(luaL_checknumber(L,16));
+// 			float colR = static_cast<float>(luaL_checknumber(L,17));
+// 			float colG = static_cast<float>(luaL_checknumber(L,18));
+// 			float colB = static_cast<float>(luaL_checknumber(L,19));
+// 			float colA = static_cast<float>(luaL_checknumber(L,20));
+// 			H3DRes material = luaL_checkint(L, 20);
+// 			int layer = luaL_checkint(L, 22);
+// 			h3dShowOverlays(x_ll, y_ll, u_ll, v_ll, x_lr, y_lr, u_lr, v_lr, x_ur, y_ur, u_ur, v_ur, x_ul, y_ul, u_ul, v_ul, colR, colG, colB, colA, material, layer);
+// 			return 0;
+// 		}
 
 		/* 	Function: clearOverlays
 		Removes all overlays.
@@ -318,11 +318,11 @@ namespace Horde3D
 		Returns:
 		nothing
 		*/
-                int  lua_clearOverlays( lua_State * )
-		{
-			h3dClearOverlays();
-			return 0;
-		}
+//         int  lua_clearOverlays( lua_State * )
+// 		{
+// 			h3dClearOverlays();
+// 			return 0;
+// 		}
 
 		/* Group: General resource management functions */
 		/* 	Function: getResourceType
@@ -1874,8 +1874,8 @@ namespace Horde3D
 			{"getMessage", lua_getMessage},
 			{"getOption", lua_getOption},
 			{"setOption", lua_setOption},
-			{"showOverlays", lua_showOverlays},			
-			{"clearOverlays", lua_clearOverlays},
+// 			{"showOverlays", lua_showOverlays},			
+// 			{"clearOverlays", lua_clearOverlays},
 			{"getResType", lua_getResType},			
 			{"findResource", lua_findResource},
 			{"addResource", lua_addResource},

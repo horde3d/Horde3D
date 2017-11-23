@@ -30,6 +30,8 @@ bool ExtTerrain::init()
 		TerrainNode::parsingFunc, TerrainNode::factoryFunc );
 	Modules::renderer().registerRenderFunc( SNT_TerrainNode, TerrainNode::renderFunc );
 
+	TerrainNode::uni_terBlockParams = Modules::renderer().registerEngineUniform( "terBlockParams" );
+
 	// Create vertex layout
 	VertexLayoutAttrib attribs[2] = {
 		{"vertPos", 0, 3, 0},

@@ -94,6 +94,11 @@ public:
 	const Matrix4f &getViewMat() const { return _viewMat; }
 	const Matrix4f &getProjMat() const { return _projMat; }
 	const Vec3f &getAbsPos() const { return _absPos; }
+	
+	const int getViewportX() const { return _vpX; }
+	const int getViewportY() const { return _vpY; }
+	const int getViewportWidth() const { return _vpWidth; }
+	const int getViewportHeight() const { return _vpHeight; }
 
 private:
 	CameraNode( const CameraNodeTpl &cameraTpl );
