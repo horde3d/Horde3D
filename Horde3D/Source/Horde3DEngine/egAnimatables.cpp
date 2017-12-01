@@ -31,7 +31,7 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 	SceneNode( meshTpl ),
 	_materialRes( meshTpl.matRes ), _batchStart( meshTpl.batchStart ), _batchCount( meshTpl.batchCount ),
 	_vertRStart( meshTpl.vertRStart ), _vertREnd( meshTpl.vertREnd ), _lodLevel( meshTpl.lodLevel ),
-	_parentModel( 0x0 ), _tessellatable( meshTpl.tessellatable )
+	_tessellatable( meshTpl.tessellatable ), _parentModel( 0x0 )
 {
 	_renderable = true;
 	_lodSupported = true;

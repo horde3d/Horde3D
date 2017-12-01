@@ -185,7 +185,7 @@ struct RDIRenderBufferGL2
 	uint32  depthTex, colTexs[MaxColorAttachmentCount];
 	uint32  depthBuf, colBufs[MaxColorAttachmentCount];  // Used for multisampling
 
-	RDIRenderBufferGL2() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 ), samples( 0 )
+	RDIRenderBufferGL2() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), samples( 0 ), depthTex( 0 ), depthBuf( 0 )
 	{
 		for( uint32 i = 0; i < MaxColorAttachmentCount; ++i ) colTexs[i] = colBufs[i] = 0;
 	}
