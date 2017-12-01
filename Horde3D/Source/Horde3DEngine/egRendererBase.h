@@ -36,7 +36,7 @@ namespace Horde3D {
 #define CreateMemberFunctionChecker( FNNAME )                            \
   template<typename T> struct has_member_##FNNAME;                       \
                                                                          \
-  template<typename R, typename C> class has_member_##FNNAME<R C::*> {   \
+  template<typename R, typename C> struct has_member_##FNNAME<R C::*> {  \
      private:                                                            \
         template<R C::*> struct helper;                                  \
         template<typename T> static char check(helper<&T::FNNAME>*);     \
