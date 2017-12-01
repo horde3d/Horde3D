@@ -911,8 +911,9 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 	fwrite_le(&count, 1, f);
 
 	// Write default identity matrix
+    Matrix4f identity;
 	for( unsigned int j = 0; j < 16; ++j )
-		fwrite_le<float>(&Matrix4f().x[j], 1, f);
+		fwrite_le<float>(&identity.x[j], 1, f);
 
 	for( unsigned int i = 0; i < _joints.size(); ++i )
 	{
