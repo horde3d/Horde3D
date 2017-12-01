@@ -17,8 +17,8 @@ using namespace std;
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags ) :
 	Resource( ResourceTypes::ComputeBuffer, name, flags ),
-	_dataSize( 1024 ), _writeRequested( false ), _bufferID( 0 ), _mapped( false ), _useAsVertexBuf( false ),
-	_vertexLayout( 0 ), _geoID( 0 ), _geometryParamsSet( false ), _bufferRecreated( false ), _manuallyUpdated( false )
+	_dataSize( 1024 ), _bufferID( 0 ), _geoID( 0 ), _vertexLayout( 0 ), _writeRequested( false ), _mapped( false ),
+	_geometryParamsSet( false ), _bufferRecreated( false ), _manuallyUpdated( false ), _useAsVertexBuf( false )
 {
 	initDefault();
 
@@ -28,9 +28,9 @@ ComputeBufferResource::ComputeBufferResource( const std::string &name, int flags
 
 
 ComputeBufferResource::ComputeBufferResource( const std::string &name, uint32 bufferID, uint32 geometryID, int flags ) : 
-	Resource( ResourceTypes::ComputeBuffer, name, flags ), _bufferID( bufferID ), _geoID( geometryID ), _geometryParamsSet( true ),
-	_useAsVertexBuf( true ), _vertexLayout( 0 ), _mapped( false ), _dataSize( 1024 ), 
-	_writeRequested( false ), _bufferRecreated( false ), _manuallyUpdated( false )
+    Resource( ResourceTypes::ComputeBuffer, name, flags ),
+    _dataSize( 1024 ), _bufferID( bufferID ), _geoID( geometryID ), _vertexLayout( 0 ), _writeRequested( false ), _mapped( false ),
+    _geometryParamsSet( true ), _bufferRecreated( false ), _manuallyUpdated( false ), _useAsVertexBuf( true )
 {
 	if ( flags & ResourceFlags::NoQuery )
 		_loaded = true; // NoQuery means that compute buffer is being loaded manually, not from file
