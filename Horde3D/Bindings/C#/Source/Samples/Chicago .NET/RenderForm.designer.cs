@@ -51,23 +51,25 @@ namespace Horde3DNET.Samples.ChicagoNET
             // 
             this.renderPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             this.renderPanel.Location = new System.Drawing.Point(0, 0);
+            this.renderPanel.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.renderPanel.Name = "renderPanel";
-            this.renderPanel.Size = new System.Drawing.Size(800, 600);
+            this.renderPanel.Size = new System.Drawing.Size(1262, 673);
             this.renderPanel.TabIndex = 0;
             // 
             // RenderForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 600);
+            this.ClientSize = new System.Drawing.Size(1262, 673);
             this.Controls.Add(this.renderPanel);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "RenderForm";
-            this.Text = "Chicago - Horde3D .NET Sample (beta)";
+            this.Text = "Chicago - Horde3D .NET Sample";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.RenderForm_FormClosed);
-            this.Resize += new System.EventHandler(this.RenderForm_Resize);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RenderForm_KeyDown);
             this.Load += new System.EventHandler(this.RenderForm_Load);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RenderForm_KeyDown);
+            this.Resize += new System.EventHandler(this.RenderForm_Resize);
             this.ResumeLayout(false);
 
         }

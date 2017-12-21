@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -150,7 +150,7 @@ bool ParticleEffectResource::load( const char *data, int size )
 }
 
 
-int ParticleEffectResource::getElemCount( int elem )
+int ParticleEffectResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -170,7 +170,7 @@ int ParticleEffectResource::getElemCount( int elem )
 }
 
 
-float ParticleEffectResource::getElemParamF( int elem, int elemIdx, int param, int compIdx )
+float ParticleEffectResource::getElemParamF( int elem, int elemIdx, int param, int compIdx ) const
 {
 	ParticleChannel *chan = 0x0;
 	
@@ -186,28 +186,28 @@ float ParticleEffectResource::getElemParamF( int elem, int elemIdx, int param, i
 		}
 		break;
 	case ParticleEffectResData::ChanMoveVelElem:
-		chan = &_moveVel;
+		chan = (ParticleChannel*)&_moveVel;
 		break;
 	case ParticleEffectResData::ChanRotVelElem:
-		chan = &_rotVel;
+		chan = (ParticleChannel*)&_rotVel;
 		break;
 	case ParticleEffectResData::ChanDragElem:
-		chan = &_drag;
+		chan = (ParticleChannel*)&_drag;
 		break;
 	case ParticleEffectResData::ChanSizeElem:
-		chan = &_size;
+		chan = (ParticleChannel*)&_size;
 		break;
 	case ParticleEffectResData::ChanColRElem:
-		chan = &_colR;
+		chan = (ParticleChannel*)&_colR;
 		break;
 	case ParticleEffectResData::ChanColGElem:
-		chan = &_colG;
+		chan = (ParticleChannel*)&_colG;
 		break;
 	case ParticleEffectResData::ChanColBElem:
-		chan = &_colB;
+		chan = (ParticleChannel*)&_colB;
 		break;
 	case ParticleEffectResData::ChanColAElem:
-		chan = &_colA;
+		chan = (ParticleChannel*)&_colA;
 		break;
 	}
 
@@ -322,10 +322,12 @@ EmitterNode::EmitterNode( const EmitterNodeTpl &emitterTpl ) :
 
 EmitterNode::~EmitterNode()
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _occQueries.size(); ++i )
 	{
 		if( _occQueries[i] != 0 )
-			gRDI->destroyQuery( _occQueries[i] );
+			rdi->destroyQuery( _occQueries[i] );
 	}
 	
 	delete[] _particles;
@@ -426,7 +428,7 @@ void EmitterNode::setMaxParticleCount( uint32 maxParticleCount )
 }
 
 
-int EmitterNode::getParamI( int param )
+int EmitterNode::getParamI( int param ) const
 {
 	switch( param )
 	{
@@ -478,7 +480,7 @@ void EmitterNode::setParamI( int param, int value )
 }
 
 
-float EmitterNode::getParamF( int param, int compIdx )
+float EmitterNode::getParamF( int param, int compIdx ) const
 {
 	switch( param )
 	{
@@ -670,7 +672,7 @@ void EmitterNode::update( float timeDelta )
 }
 
 
-bool EmitterNode::hasFinished()
+bool EmitterNode::hasFinished() const
 {
 	if( _respawnCount < 0 ) return false;
 

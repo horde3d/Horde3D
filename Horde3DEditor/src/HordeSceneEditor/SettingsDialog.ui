@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SettingsDialog</class>
+ <widget class="QDialog" name="SettingsDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>615</width>
+    <height>314</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Settings</string>
+  </property>
+  <layout class="QVBoxLayout">
+   <item>
+    <widget class="QTabWidget" name="m_settingTabWidget">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="m_editorSettingsWidget">
+      <attribute name="title">
+       <string>General</string>
+      </attribute>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_10">
+         <property name="text">
+          <string>Style:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="m_styleCombo"/>
+       </item>
+       <item row="0" column="3">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>171</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="whatsThis">
+          <string>The directory specified here will be searched for additionally editor plugins</string>
+         </property>
+         <property name="text">
+          <string>Plugin Path:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1" colspan="3">
+        <widget class="QLineEdit" name="m_plugInPath"/>
+       </item>
+       <item row="1" column="4">
+        <widget class="QToolButton" name="m_setPluginPath">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_17">
+         <property name="text">
+          <string>Repository Path:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1" colspan="3">
+        <widget class="QLineEdit" name="m_repositoryPath"/>
+       </item>
+       <item row="2" column="4">
+        <widget class="QToolButton" name="m_setRepositoryPath">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Max. Undo Steps:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QSpinBox" name="m_undoSteps">
+         <property name="minimumSize">
+          <size>
+           <width>71</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Indicates the maximum number of steps that can be undone. 
+Note that if you set this to unlimited the editor may consume much memory if you perform many operations on one single scene.</string>
+         </property>
+         <property name="wrapping">
+          <bool>true</bool>
+         </property>
+         <property name="specialValueText">
+          <string>Unlimited</string>
+         </property>
+         <property name="minimum">
+          <number>0</number>
+         </property>
+         <property name="maximum">
+          <number>1000</number>
+         </property>
+         <property name="value">
+          <number>250</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="3">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>171</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="whatsThis">
+          <string>The application specified here will be used when you click the edit button next to a shader in the editor</string>
+         </property>
+         <property name="text">
+          <string>Shader Editor:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1" colspan="3">
+        <widget class="QLineEdit" name="m_shaderEditor"/>
+       </item>
+       <item row="4" column="4">
+        <widget class="QToolButton" name="m_setShaderEditor">
+         <property name="text">
+          <string>...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Mouse Buttons:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1" colspan="4">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>481</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="6" column="0" colspan="4">
+        <layout class="QHBoxLayout">
+         <item>
+          <widget class="QLabel" name="label_12">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Camera Control:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="m_cameraMoveButton">
+           <item>
+            <property name="text">
+             <string>Left Button</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Right Button</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Middle Button</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_13">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Select:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="m_selectButton">
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>Left Button</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Right Button</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Middle Button</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_14">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Reset Selection:</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="m_resetSelectButton">
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>Left Button</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Right Button</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Middle Button</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="7" column="0" colspan="4">
+        <widget class="QCheckBox" name="m_glClear">
+         <property name="text">
+          <string>Clear GL context before rendering</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="2">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>21</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="m_dialogWidget">
+      <attribute name="title">
+       <string>Confirm Dialogs</string>
+      </attribute>
+      <layout class="QGridLayout">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_15">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>This option specifies the editor's behavior if the transformation of a scene graph node is not in sync with the transformation stored in the scene graph node representation. This may happen, if you have changed the transformation by using some lua code or a custom plugin</string>
+         </property>
+         <property name="statusTip">
+          <string>This option specifies the editor's behavior if the transformation of a scene graph node is not in sync with the transformation stored in the scene graph node representation. This may happen, if you have changed the transformation by using some lua code or a custom plugin</string>
+         </property>
+         <property name="whatsThis">
+          <string>This option specifies the editor's behavior if the transformation of a scene graph node is not in sync with the transformation stored in the scene graph node representation. This may happen, if you have changed the transformation by using some lua code or a custom plugin</string>
+         </property>
+         <property name="text">
+          <string>Transformation Mismatch Behavior:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QComboBox" name="m_transMismatchBehavior">
+         <item>
+          <property name="text">
+           <string>Ask</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Use current transformation</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Reset to scene graph transformation</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_16">
+         <property name="toolTip">
+          <string>Specifies the behavior if the scene description file (.scn file) has been changed outside of the editor. It is not recommended to use the &quot;Always reload&quot; option, since sometimes a change is detected although you have only pressed the save button within the editor.</string>
+         </property>
+         <property name="whatsThis">
+          <string>Specifies the behavior if the scene description file (.scn file) has been changed outside of the editor. It is not recommended to use the &quot;Always reload&quot; option, since sometimes a change is detected although you have only pressed the save button within the editor.</string>
+         </property>
+         <property name="text">
+          <string>Scene File Changed:</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="m_sceneFileChangedBehavior">
+         <item>
+          <property name="text">
+           <string>Ask</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Ignore</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>Always reload (not recommended)</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>205</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>205</x>
+     <y>35</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>SettingsDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>205</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>205</x>
+     <y>35</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

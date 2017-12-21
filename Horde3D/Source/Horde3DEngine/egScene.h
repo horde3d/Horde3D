@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -45,7 +45,8 @@ struct SceneNodeTypes
 		Joint,
 		Light,
 		Camera,
-		Emitter
+		Emitter,
+		Compute
 	};
 };
 
@@ -98,39 +99,42 @@ public:
 	SceneNode( const SceneNodeTpl &tpl );
 	virtual ~SceneNode();
 
-	void getTransform( Vec3f &trans, Vec3f &rot, Vec3f &scale );	// Not virtual for performance
+	void getTransform( Vec3f &trans, Vec3f &rot, Vec3f &scale ) const;	// Not virtual for performance
 	void setTransform( Vec3f trans, Vec3f rot, Vec3f scale );	// Not virtual for performance
 	void setTransform( const Matrix4f &mat );
 	void getTransMatrices( const float **relMat, const float **absMat ) const;
 
-	int getFlags() { return _flags; }
+	int getFlags() const { return _flags; }
 	void setFlags( int flags, bool recursive );
 
-	virtual int getParamI( int param );
+	virtual int getParamI( int param ) const;
 	virtual void setParamI( int param, int value );
-	virtual float getParamF( int param, int compIdx );
+	virtual float getParamF( int param, int compIdx ) const;
 	virtual void setParamF( int param, int compIdx, float value );
-	virtual const char *getParamStr( int param );
+	virtual const char *getParamStr( int param ) const;
 	virtual void setParamStr( int param, const char* value );
 
-	virtual uint32 calcLodLevel( const Vec3f &viewPoint );
+	virtual uint32 calcLodLevel( const Vec3f &viewPoint ) const;
+	virtual bool checkLodCorrectness( uint32 lodLevel ) const;
 
-	virtual bool canAttach( SceneNode &parent );
+	bool checkLodSupport() { return _lodSupported; }
+
+	virtual bool canAttach( SceneNode &parent ) const;
 	void markDirty();
 	void updateTree();
 	virtual bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
 
 	virtual void setCustomInstData( float *data, uint32 count ) {}
 
-	int getType() { return _type; };
-	NodeHandle getHandle() { return _handle; }
-	SceneNode *getParent() { return _parent; }
-	const std::string &getName() { return _name; }
+	int getType() const { return _type; };
+	NodeHandle getHandle() const { return _handle; }
+	SceneNode *getParent() const { return _parent; }
+	const std::string getName() const { return _name; }
 	std::vector< SceneNode * > &getChildren() { return _children; }
 	Matrix4f &getRelTrans() { return _relTrans; }
 	Matrix4f &getAbsTrans() { return _absTrans; }
 	BoundingBox &getBBox() { return _bBox; }
-	const std::string &getAttachmentString() { return _attachment; }
+	const std::string &getAttachmentString() const { return _attachment; }
 	void setAttachmentString( const char* attachmentData ) { _attachment = attachmentData; }
 	bool checkTransformFlag( bool reset )
 		{ bool b = _transformed; if( reset ) _transformed = false; return b; }
@@ -145,7 +149,12 @@ protected:
 
 protected:
 	Matrix4f                    _relTrans, _absTrans;  // Transformation matrices
+	std::vector< SceneNode * >  _children;  // Child nodes
+	std::string                 _name;
+	std::string                 _attachment;  // User defined data
+	BoundingBox                 _bBox;  // AABB in world space
 	SceneNode                   *_parent;  // Parent node
+
 	int                         _type;
 	NodeHandle                  _handle;
 	uint32                      _sgHandle;  // Spatial graph handle
@@ -154,12 +163,8 @@ protected:
 	bool                        _dirty;  // Does the node need to be updated?
 	bool                        _transformed;
 	bool                        _renderable;
+	bool						_lodSupported;
 
-	BoundingBox                 _bBox;  // AABB in world space
-
-	std::vector< SceneNode * >  _children;  // Child nodes
-	std::string                 _name;
-	std::string                 _attachment;  // User defined data
 
 	friend class SceneManager;
 	friend class SpatialGraph;
@@ -282,19 +287,19 @@ public:
 	
 	int findNodes( SceneNode &startNode, const std::string &name, int type );
 	void clearFindResults() { _findResults.resize( 0 ); }
-	SceneNode *getFindResult( int index ) { return (unsigned)index < _findResults.size() ? _findResults[index] : 0x0; }
+	SceneNode *getFindResult( int index ) const { return (unsigned)index < _findResults.size() ? _findResults[index] : 0x0; }
 	
 	int castRay( SceneNode &node, const Vec3f &rayOrig, const Vec3f &rayDir, int numNearest );
 	bool getCastRayResult( int index, CastRayResult &crr );
 
 	int checkNodeVisibility( SceneNode &node, CameraNode &cam, bool checkOcclusion, bool calcLod );
 
-	SceneNode &getRootNode() { return *_nodes[0]; }
-	SceneNode &getDefCamNode() { return *_nodes[1]; }
-	std::vector< SceneNode * > &getLightQueue() { return _spatialGraph->getLightQueue(); }
-	RenderQueue &getRenderQueue() { return _spatialGraph->getRenderQueue(); }
+	SceneNode &getRootNode() const { return *_nodes[0]; }
+	SceneNode &getDefCamNode() const { return *_nodes[1]; }
+	std::vector< SceneNode * > &getLightQueue() const { return _spatialGraph->getLightQueue(); }
+	RenderQueue &getRenderQueue() const { return _spatialGraph->getRenderQueue(); }
 	
-	SceneNode *resolveNodeHandle( NodeHandle handle )
+	SceneNode *resolveNodeHandle( NodeHandle handle ) const
 		{ return (handle != 0 && (unsigned)(handle - 1) < _nodes.size()) ? _nodes[handle - 1] : 0x0; }
 
 protected:

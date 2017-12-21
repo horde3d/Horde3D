@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -207,7 +207,7 @@ struct DaeNode
 	}
 
 	
-	Matrix4f assembleMatrix()
+	Matrix4f assembleMatrix() const
 	{
 		Matrix4f mat;
 		
@@ -237,7 +237,7 @@ struct DaeNode
 	}
 
 
-	Matrix4f assembleAnimMatrix()
+	Matrix4f assembleAnimMatrix() const
 	{
 		Matrix4f mat;
 		
@@ -311,7 +311,7 @@ struct DaeLibVisScenes
 	}
 	
 
-	DaeVisualScene *findVisualScene( const std::string &id )
+	DaeVisualScene *findVisualScene( const std::string &id ) const
 	{
 		if( id == "" ) return 0x0;
 		

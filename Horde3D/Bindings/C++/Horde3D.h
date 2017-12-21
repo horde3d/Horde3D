@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2009 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -58,8 +58,23 @@ typedef int H3DNode;
 */
 const H3DNode H3DRootNode = 1;
 
-
 /* Group: Enumerations */
+struct H3DRenderDevice
+{
+	/* Enum: H3DRenderDevice
+	The available engine Renderer backends.
+
+	OpenGL2				- use OpenGL 2 as renderer backend (can be used to force OpenGL 2 when higher version is undesirable)
+	OpenGL4				- use OpenGL 4 as renderer backend (falls back to OpenGL 2 in case of error)
+	*/
+	enum List
+	{
+		OpenGL2 = 2,
+		OpenGL4 = 4
+	};
+};
+
+
 struct H3DOptions
 {
 	/* Enum: H3DOptions
@@ -69,7 +84,7 @@ struct H3DOptions
 		                      (hence more important) are published in the message queue. (Default: 4)
 		MaxNumMessages      - Defines the maximum number of messages that can be stored in the message queue (Default: 512)
 		TrilinearFiltering  - Enables or disables trilinear filtering for textures. (Values: 0, 1; Default: 1)
-		MaxAnisotropy       - Sets the maximum quality for anisotropic filtering. (Values: 1, 2, 4, 8; Default: 1)
+		MaxAnisotropy       - Sets the maximum quality for anisotropic filtering. (Values: 1, 2, 4, 8, 16; Default: 1)
 		TexCompression      - Enables or disables texture compression; only affects textures that are
 		                      loaded after setting the option. (Values: 0, 1; Default: 0)
 		SRGBLinearization   - Eanbles or disables gamma-to-linear-space conversion of input textures that are tagged as sRGB (Values: 0, 1; Default: 0)
@@ -122,7 +137,8 @@ struct H3DStats
 		ShadowsGPUTime    - GPU time in ms spent for generating shadow maps
 		ParticleGPUTime   - GPU time in ms spent for drawing particles
 		TextureVMem       - Estimated amount of video memory used by textures (in Mb)
-		GeometryVMem      - Estimated amount of video memory used by geometry (in Mb)
+		GeometryVMem      - Estimated amount of video memory used by geometry (in Mb),
+		ComputeGPUTime	  - GPU time in ms spent for processing compute shaders
 	*/
 	enum List
 	{
@@ -138,7 +154,25 @@ struct H3DStats
 		ShadowsGPUTime,
 		ParticleGPUTime,
 		TextureVMem,
-		GeometryVMem
+		GeometryVMem,
+		ComputeGPUTime
+	};
+};
+
+struct H3DDeviceCapabilities
+{
+	/* Enum: H3DDeviceCapabilities
+	The available GPU capabilities.
+
+	GeometryShaders			- GPU supports runtime geometry generation via geometry shaders
+	TessellationShaders     - GPU supports tessellation
+	ComputeShaders		    - GPU supports general-purpose computing via compute shaders
+	*/
+	enum List
+	{
+		GeometryShaders = 200,
+		TessellationShaders,
+		ComputeShaders
 	};
 };
 
@@ -157,6 +191,7 @@ struct H3DResTypes
 		Texture         - Texture map
 		ParticleEffect  - Particle configuration
 		Pipeline        - Rendering pipeline
+		ComputeBuffer   - Buffer with arbitrary data that can be accessed and modified by compute shaders
 	*/
 	enum List
 	{
@@ -169,7 +204,8 @@ struct H3DResTypes
 		Shader,
 		Texture,
 		ParticleEffect,
-		Pipeline
+		Pipeline,
+		ComputeBuffer
 	};
 };
 
@@ -356,8 +392,7 @@ struct H3DTexRes
 		TexSliceCountI,
 		ImgWidthI,
 		ImgHeightI,
-		ImgPixelStream,
-		TexNativeRefI
+		ImgPixelStream
 	};
 };
 
@@ -416,6 +451,34 @@ struct H3DPipeRes
 	};
 };
 
+struct H3DComputeBufRes
+{
+	/* Enum: H3DComputeBufRes
+	The available ComputeBuffer resource accessors.
+
+	ComputeBufElem				- General compute buffer configuration
+	DrawParamsElem				- Specifies parameters for shader bindings
+	CompBufDataSizeI			- Size of the buffer
+	CompBufDrawableI			- Use this compute buffer as a source of vertices for drawing [0, 1]. Default - 0
+	DrawParamsNameStr			- Specifies the name of the parameter in the buffer (used for binding of shader variable to buffer data)
+	DrawParamsSizeI				- Specifies the size of one parameter in the buffer. Example: for vertex position (3 floats) size should be 3
+	DrawParamsOffsetI			- Specifies the offset of parameter in the buffer (in bytes)
+	                              Example: for first parameter offset is 0. For second (if 1st parameter uses 3 floats) it is 12
+	DrawParamsCountI			- Total number of specified vertex binding parameters [read-only]
+
+	*/
+	enum List
+	{
+		ComputeBufElem = 1000,
+		DrawParamsElem,
+		CompBufDataSizeI,
+		CompBufDrawableI,
+		DrawParamsNameStr,
+		DrawParamsSizeI,
+		DrawParamsOffsetI,
+		DrawParamsCountI
+	};
+};
 
 struct H3DNodeTypes
 {
@@ -430,6 +493,7 @@ struct H3DNodeTypes
 		Light      - Light source
 		Camera     - Camera giving view on scene
 		Emitter    - Particle system emitter
+		Compute	   - Compute node, used for drawing compute results
 	*/
 	enum List
 	{
@@ -440,7 +504,8 @@ struct H3DNodeTypes
 		Joint,
 		Light,
 		Camera,
-		Emitter
+		Emitter,
+		Compute
 	};
 };
 
@@ -522,6 +587,7 @@ struct H3DMesh
 		VertREndI    - Last vertex in Geometry resource of parent Model node [read-only]
 		LodLevelI    - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
 		               the model's current LOD level which is calculated based on the LOD distances (default: 0)
+		TessellatableI - specify if mesh can be tessellated (default: 0)
 	*/
 	enum List
 	{
@@ -530,7 +596,8 @@ struct H3DMesh
 		BatchCountI,
 		VertRStartI,
 		VertREndI,
-		LodLevelI
+		LodLevelI,
+		TessellatableI
 	};
 };
 
@@ -646,6 +713,29 @@ struct H3DEmitter
 	};
 };
 
+struct H3DComputeNode
+{
+	/*	Enum: H3DComputeNode
+	The available compute node parameters.
+
+	MatResI        - Material resource used for rendering
+	CompBufResI    - Compute buffer resource that is used as data storage
+	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
+	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+	DrawTypeI	   - Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
+	ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
+
+	*/
+	enum List
+	{
+		MatResI = 800,
+		CompBufResI,
+		AABBMinF,
+		AABBMaxF,
+		DrawTypeI,
+		ElementsCountI
+	};
+};
 
 struct H3DModelUpdateFlags
 {
@@ -723,12 +813,12 @@ DLL bool h3dGetError();
 		called several times on different rendering contexts in order to initialize them.
 	
 	Parameters:
-		none
+		deviceType - type of the render device
 		
 	Returns:
 		true in case of success, otherwise false
 */
-DLL bool h3dInit();
+DLL bool h3dInit( H3DRenderDevice::List deviceType );
 
 /* Function: h3dRelease
 		Releases the engine.
@@ -745,6 +835,26 @@ DLL bool h3dInit();
 */
 DLL void h3dRelease();
 
+/* Function: h3dCompute
+		Asynchronous processing of arbitrary data on GPU.
+
+	Details:
+		This function is used for processing data on GPU via compute shaders. Compute shaders are commonly used in 
+		tiled rendering, particles generation, image compression/decompression, some even use them for AI calculation. 
+		Calculation results can be stored in a texture or a buffer. 
+		Data in buffers can also be used for rendering via Compute Buffer Resource.
+
+	Parameters:
+		materialRes  - material that specifies the shader used and various input parameters for compute shader
+		context		 - specifies the shader program that will be executed (one shader file may contain a large number of compute shader programs)
+		groupX		 - number of work groups in X dimension [1,65535]
+		groupY		 - number of work groups in Y dimension [1,65535]
+		groupZ		 - number of work groups in Z dimension [1,65535]
+
+	Returns:
+		nothing
+*/
+DLL void h3dCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
 
 /* Function: h3dRender
 		Main rendering function.
@@ -855,6 +965,20 @@ DLL bool h3dSetOption( H3DOptions::List param, float value );
 		current value of the specified statistic parameter
 */
 DLL float h3dGetStat( H3DStats::List param, bool reset );
+
+/* Function: h3dGetDeviceCapabilities
+		Checks whether GPU supports a certain feature.
+
+	Details:
+		This function returns a value, indicating the support of a certain GPU capability.
+
+	Parameters:
+		param  - requested GPU feature
+
+	Returns:
+		1, if feature is supported, 0 otherwise
+*/
+DLL float h3dGetDeviceCapabilities( H3DDeviceCapabilities::List param );
 
 /* Function: h3dShowOverlays
 		Displays overlays on the screen.
@@ -1328,15 +1452,22 @@ DLL H3DRes h3dCreateTexture( const char *name, int width, int height, int fmt, i
 		is used when a shader is compiled, so changing it will not affect any shaders that are already
 		compiled. The preamble is useful for setting platform-specific defines that can be employed for
 		creating several shader code paths, e.g. for supporting different hardware capabilities.
+		Based on render device requirements, engine may internally set shader preambles. OpenGL 4 render device
+		sets shader preambles to specify minimum version, required to compile a shader program of required type.
 	
 	Parameters:
 		vertPreamble  - preamble text of vertex shaders (default: empty string)
 		fragPreamble  - preamble text of fragment shaders (default: empty string)
-		
+		geomPreamble  - preamble text of geometry shaders (default: empty string)
+		tessControlPreamble - preamble text of tessellation control shaders (default: empty string)
+		tessEvalPreamble - preamble text of tessellation evaluation shaders (default: empty string)
+		computePreamble - preamble text of compute shaders (default: empty string)
+
 	Returns:
 		nothing
 */
-DLL void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble );
+DLL void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble,
+								const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble );
 
 /* Function: h3dSetMaterialUniform
 		Sets a shader uniform of a Material resource.
@@ -2140,18 +2271,19 @@ DLL void h3dGetCameraProjMat( H3DNode cameraNode, float *projMat );
 
 /* Function: h3dSetCameraProjMat
 		Sets the camera projection matrix.
-	
-	Details:
+
+	Details :
 		This function sets the camera projection matrix used for bringing the geometry to
 		screen space.
-	
-	Parameters:
-		cameraNode  - handle to Camera node
-		projMat     - pointer to float array with 16 elements
-		
-	Returns:
+
+	Parameters :
+		cameraNode - handle to Camera node
+		projMat - pointer to float array with 16 elements
+
+	Returns :
 		nothing
 */
+
 DLL void h3dSetCameraProjMat( H3DNode cameraNode, float *projMat );
 
 /* Group: Emitter-specific scene graph functions */
@@ -2209,3 +2341,25 @@ DLL void h3dUpdateEmitter( H3DNode emitterNode, float timeDelta );
 		true if Emitter will no more emit any particles, otherwise or in case of failure false
 */
 DLL bool h3dHasEmitterFinished( H3DNode emitterNode );
+
+
+/* Group: Compute-specific scene graph functions */
+/* Function: h3dAddComputeNode
+		Adds a Compute node to the scene.
+
+	Details:
+		This function creates a new Compute node and attaches it to the specified parent node.
+		Compute node is used for drawing results of compute shader work. 
+
+	Parameters:
+		parent             - handle to parent node to which the new node will be attached
+		name               - name of the node
+		materialRes        - handle to Material resource used for rendering
+		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
+		drawType		   - specifies how to treat data in the compute buffer. 0 - Triangles, 1 - Lines, 2 - Points
+		elementsCount	   - number of elements that need to be drawn
+		
+	Returns:
+		handle to the created node or 0 in case of failure
+*/
+DLL H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int drawType, int elementsCount );

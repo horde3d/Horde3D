@@ -1,0 +1,179 @@
+<ui version="4.0" >
+ <class>CameraToolBar</class>
+ <widget class="QWidget" name="CameraToolBar" >
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>358</width>
+    <height>24</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Form</string>
+  </property>
+  <layout class="QHBoxLayout" >
+   <property name="leftMargin" >
+    <number>0</number>
+   </property>
+   <property name="topMargin" >
+    <number>0</number>
+   </property>
+   <property name="rightMargin" >
+    <number>0</number>
+   </property>
+   <property name="bottomMargin" >
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="label_3" >
+     <property name="text" >
+      <string>Active Camera:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="m_activeCam" />
+   </item>
+   <item>
+    <widget class="QToolButton" name="m_sceneToolButton" >
+     <property name="toolTip" >
+      <string>Activate Scene Camera</string>
+     </property>
+     <property name="statusTip" >
+      <string>Toggles the view to show scene using the currently active scene camera</string>
+     </property>
+     <property name="text" >
+      <string>Scene</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="resources.qrc" >:/Icons/Resources/Icon.png</iconset>
+     </property>
+     <property name="iconSize" >
+      <size>
+       <width>18</width>
+       <height>18</height>
+      </size>
+     </property>
+     <property name="shortcut" >
+      <string>0</string>
+     </property>
+     <property name="checkable" >
+      <bool>true</bool>
+     </property>
+     <property name="checked" >
+      <bool>true</bool>
+     </property>
+     <property name="autoExclusive" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="m_topToolButton" >
+     <property name="toolTip" >
+      <string>Top View</string>
+     </property>
+     <property name="statusTip" >
+      <string>Toggles the view to show the scene from top view (X-Z-Plane)</string>
+     </property>
+     <property name="text" >
+      <string>Top</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="resources.qrc" >:/Icons/Resources/Top.png</iconset>
+     </property>
+     <property name="iconSize" >
+      <size>
+       <width>18</width>
+       <height>18</height>
+      </size>
+     </property>
+     <property name="shortcut" >
+      <string>7</string>
+     </property>
+     <property name="checkable" >
+      <bool>true</bool>
+     </property>
+     <property name="autoExclusive" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="m_frontToolButton" >
+     <property name="toolTip" >
+      <string>Front View</string>
+     </property>
+     <property name="statusTip" >
+      <string>Toggles the view to show the scene from front view(X-Y-Plane)</string>
+     </property>
+     <property name="text" >
+      <string>Front</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="resources.qrc" >:/Icons/Resources/Front.png</iconset>
+     </property>
+     <property name="iconSize" >
+      <size>
+       <width>18</width>
+       <height>18</height>
+      </size>
+     </property>
+     <property name="shortcut" >
+      <string>3</string>
+     </property>
+     <property name="checkable" >
+      <bool>true</bool>
+     </property>
+     <property name="autoExclusive" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QToolButton" name="m_rightToolButton" >
+     <property name="toolTip" >
+      <string>Right view</string>
+     </property>
+     <property name="statusTip" >
+      <string>Toggles the view to show the scene from right view (Y-Z-Plane)</string>
+     </property>
+     <property name="text" >
+      <string>Right</string>
+     </property>
+     <property name="icon" >
+      <iconset resource="resources.qrc" >:/Icons/Resources/Right.png</iconset>
+     </property>
+     <property name="iconSize" >
+      <size>
+       <width>18</width>
+       <height>18</height>
+      </size>
+     </property>
+     <property name="shortcut" >
+      <string>1</string>
+     </property>
+     <property name="checkable" >
+      <bool>true</bool>
+     </property>
+     <property name="autoExclusive" >
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+  <action name="m_actionToggleOrtho" >
+   <property name="text" >
+    <string>Toggle Ortho</string>
+   </property>
+   <property name="shortcut" >
+    <string>5</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="resources.qrc" />
+ </resources>
+ <connections/>
+</ui>

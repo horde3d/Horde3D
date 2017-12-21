@@ -13,6 +13,39 @@
 <br />
 <p>You can find out here what has changed in the Horde3D SDK releases.</p>
 
+<h2>Version [1.0.0]</h2>
+
+<h4>Core Engine</h4>
+<ul>
+	<li>Added support for OpenGL 4.</li>
+	<li>Added support for new types of shaders - geometry, tessellation, compute.</li>
+	<li>Added ability to set camera projection matrix.</li>
+	<li>Added more fine-grained control over blend modes in shader contexts.</li>
+	<li>Removed global render device pointer. Render device is now instantiated by the renderer.</li>
+	<li>Added compute shaders GPU timing state.</li>
+	<li>Horde3D now works on big-endian systems.</li>
+	<li>Added support for Shader storage buffer object (SSBO).</li>
+	<li>Debug view now can be renderered to textures as well.</li>
+	<li>Implemented H3D_DEBUGGER_OUTPUT on non-windows platforms.</li>
+	<li>Added h3dGetModelAnimParams API function, removed "AnimTimeF" and "AnimWeightF" parameters.</li>
+	<li>Fixed 16 bit indices decision.</li>
+	<li>Added "h3dutShowInfoBox" helper function to display benchmark result in a nicer way.</li>
+	<li>Added ability to take screenshots in-memory.</li>
+	<li>Added ability to query render device capabilities, like compute shaders support.</li>
+	<li>Bugs fixed.</li>
+</ul>
+<h4>ColladaConv</h4>
+<ul>
+	<li>Changed modelName to parameter instead of a global variable.</li>
+	<li>Endianness-aware generation of resource.</li>
+</ul>
+<h4>Samples</h4>
+<ul>
+	<li>New sample framework, based on GLFW version 3.2.1</li>
+	<li>New samples - Particle vortex and Tessellator that demonstrate the use of compute and tessellation shaders.</li>
+	<li>Default resolution for samples is HD (1280*720) now.</li>
+</ul>
+
 <h2>Version [1.0.0] Beta5</h2>
 
 <h4>Core Engine</h4>

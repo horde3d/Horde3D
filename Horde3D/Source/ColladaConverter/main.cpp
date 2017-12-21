@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -134,7 +134,7 @@ void printHelp()
 
 int main( int argc, char **argv )
 {
-	log( "Horde3D ColladaConv - 1.0.0 Beta5" );
+	log( "Horde3D ColladaConv - 1.0.0" );
 	log( "" );
 	
 	if( argc < 2 )
@@ -258,8 +258,10 @@ int main( int argc, char **argv )
 		{
 			string sourcePath = basePath + assetList[i];
 			string assetName = extractFileName( assetList[i], false );
+
 			if( addModelName )	
 				modelName = assetName + "_";
+
 			string assetPath = cleanPath( extractFilePath( assetList[i] ) );
 			if( !assetPath.empty() ) assetPath += "/";
 			

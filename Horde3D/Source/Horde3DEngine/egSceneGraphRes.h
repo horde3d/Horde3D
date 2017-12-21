@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -41,7 +41,7 @@ public:
 	void release();
 	bool load( const char *data, int size );
 
-	SceneNodeTpl *getRootNode() { return _rootNode; }
+	SceneNodeTpl *getRootNode() const { return _rootNode; }
 
 private:
 	void parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &nodeTpl );

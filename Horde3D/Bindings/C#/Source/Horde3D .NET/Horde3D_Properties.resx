@@ -112,16 +112,16 @@
     <value>2.0</value>
   </resheader>
   <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="UIntOutOfRangeExceptionString" xml:space="preserve">
     <value>The parameter value is lesser than zero. Internally this value is represented by an unsigned integer.</value>
   </data>
   <data name="VersionString" xml:space="preserve">
-    <value>Horde3D 1.0.0 Beta5</value>
+    <value>Horde3D 1.0.0</value>
   </data>
   <data name="MatrixOutOfRangeExceptionString" xml:space="preserve">
     <value>The parameter is not a 4x4 float matrix.</value>

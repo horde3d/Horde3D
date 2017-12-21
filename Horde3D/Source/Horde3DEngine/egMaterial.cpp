@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -23,7 +23,6 @@
 namespace Horde3D {
 
 using namespace std;
-
 
 MaterialResource::MaterialResource( const string &name, int flags ) :
 	Resource( ResourceTypes::Material, name, flags )
@@ -62,7 +61,9 @@ void MaterialResource::release()
 	_shaderRes = 0x0;
 	_matLink = 0x0;
 	for( uint32 i = 0; i < _samplers.size(); ++i ) _samplers[i].texRes = 0x0;
+// 	for ( uint32 i = 0; i < _buffers.size(); ++i ) _buffers[ i ].compBufRes = 0;
 
+	_buffers.clear();
 	_samplers.clear();
 	_uniforms.clear();
 	_shaderFlags.clear();
@@ -190,6 +191,25 @@ bool MaterialResource::load( const char *data, int size )
 		node1 = node1.getNextSibling( "Uniform" );
 	}
 	
+	// Data (compute/texture) buffers
+	node1 = rootNode.getFirstChild( "DataBuffer" );
+	while ( !node1.isEmpty() )
+	{
+		if ( node1.getAttribute( "name" ) == 0x0 ) return raiseError( "Missing DataBuffer attribute 'name'" );
+		if ( node1.getAttribute( "source" ) == 0x0 ) return raiseError( "Missing DataBuffer attribute 'source'" );
+
+		MatBuffer buf;
+		buf.name = node1.getAttribute( "name" );
+
+		uint32 compBuffer = Modules::resMan().addResource(
+			ResourceTypes::ComputeBuffer, node1.getAttribute( "source" ), 0, false );
+		buf.compBufRes = ( ComputeBufferResource * ) Modules::resMan().resolveResHandle( compBuffer );
+
+		_buffers.push_back( buf );
+
+		node1 = node1.getNextSibling( "DataBuffer" );
+	}
+
 	return true;
 }
 
@@ -212,7 +232,7 @@ bool MaterialResource::setUniform( const string &name, float a, float b, float c
 }
 
 
-bool MaterialResource::isOfClass( const string &theClass )
+bool MaterialResource::isOfClass( const string &theClass ) const
 {
 	static string theClass2;
 	
@@ -250,7 +270,7 @@ bool MaterialResource::isOfClass( const string &theClass )
 }
 
 
-int MaterialResource::getElemCount( int elem )
+int MaterialResource::getElemCount( int elem ) const
 {
 	switch( elem )
 	{
@@ -266,7 +286,7 @@ int MaterialResource::getElemCount( int elem )
 }
 
 
-int MaterialResource::getElemParamI( int elem, int elemIdx, int param )
+int MaterialResource::getElemParamI( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{
@@ -285,7 +305,7 @@ int MaterialResource::getElemParamI( int elem, int elemIdx, int param )
 			switch( param )
 			{
 			case MaterialResData::SampTexResI:
-				return _samplers[elemIdx].texRes->getHandle();
+				return _samplers[elemIdx].texRes ? _samplers[elemIdx].texRes->getHandle() : 0;
 			}
 		}
 		break;
@@ -343,7 +363,7 @@ void MaterialResource::setElemParamI( int elem, int elemIdx, int param, int valu
 			{
 			case MaterialResData::SampTexResI:
 				Resource *res = Modules::resMan().resolveResHandle( value );
-				if( res != 0x0 && res->getType() == ResourceTypes::Texture )
+				if( res == 0 || (res != 0x0 && res->getType() == ResourceTypes::Texture) )
 					_samplers[elemIdx].texRes = (TextureResource *)res;
 				else
 					Modules::setError( "Invalid handle in h3dSetResParamI for H3DMatRes::SampTexResI" );
@@ -357,7 +377,7 @@ void MaterialResource::setElemParamI( int elem, int elemIdx, int param, int valu
 }
 
 
-float MaterialResource::getElemParamF( int elem, int elemIdx, int param, int compIdx )
+float MaterialResource::getElemParamF( int elem, int elemIdx, int param, int compIdx ) const
 {
 	switch( elem )
 	{
@@ -403,7 +423,7 @@ void MaterialResource::setElemParamF( int elem, int elemIdx, int param, int comp
 }
 
 
-const char *MaterialResource::getElemParamStr( int elem, int elemIdx, int param )
+const char *MaterialResource::getElemParamStr( int elem, int elemIdx, int param ) const
 {
 	switch( elem )
 	{

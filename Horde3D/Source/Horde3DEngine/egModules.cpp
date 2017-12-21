@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -23,6 +23,9 @@
 #include "egRenderer.h"
 #include "egPipeline.h"
 #include "egExtensions.h"
+#include "egComputeBuffer.h"
+#include "egComputeNode.h"
+
 
 // Extensions
 #ifdef CMAKE
@@ -39,7 +42,7 @@
 
 namespace Horde3D {
 
-const char *Modules::versionString = "Horde3D 1.0.0 Beta5";
+const char *Modules::versionString = "Horde3D 1.0.0";
 
 bool                   Modules::_errorFlag = false;
 EngineConfig           *Modules::_engineConfig = 0x0;
@@ -47,11 +50,8 @@ EngineLog              *Modules::_engineLog = 0x0;
 StatManager            *Modules::_statManager = 0x0;
 SceneManager           *Modules::_sceneManager = 0x0;
 ResourceManager        *Modules::_resourceManager = 0x0;
-RenderDevice           *Modules::_renderDevice = 0x0;
 Renderer               *Modules::_renderer = 0x0;
 ExtensionManager       *Modules::_extensionManager = 0x0;
-
-RenderDevice *gRDI = 0x0;
 
 void Modules::installExtensions()
 {
@@ -65,7 +65,7 @@ void Modules::installExtensions()
 }
 
 
-bool Modules::init()
+bool Modules::init( int backendType )
 {
 	// Create modules (order is important because of dependencies)
 	if( _extensionManager == 0x0 ) _extensionManager = new ExtensionManager();
@@ -73,13 +73,12 @@ bool Modules::init()
 	if( _engineConfig == 0x0 ) _engineConfig = new EngineConfig();
 	if( _sceneManager == 0x0 ) _sceneManager = new SceneManager();
 	if( _resourceManager == 0x0 ) _resourceManager = new ResourceManager();
-	if( _renderDevice == 0x0 ) _renderDevice = new RenderDevice();
-	gRDI = _renderDevice;
 	if( _renderer == 0x0 ) _renderer = new Renderer();
 	if( _statManager == 0x0 ) _statManager = new StatManager();
 
 	// Init modules
-	if( !renderer().init() ) return false;
+	if ( !renderer().init( ( RenderBackendType::List ) backendType ) ) return false;
+	if ( !stats().init() ) return false;
 
 	// Register resource types
 	resMan().registerResType( ResourceTypes::SceneGraph, "SceneGraph", 0x0, 0x0,
@@ -92,7 +91,7 @@ bool Modules::init()
 		MaterialResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Code, "Code", 0x0, 0x0,
 		CodeResource::factoryFunc );
-	resMan().registerResType( ResourceTypes::Shader, "Shader", 0x0, 0x0,
+	resMan().registerResType( ResourceTypes::Shader, "Shader", ShaderResource::initializationFunc, 0x0,
 		ShaderResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Texture, "Texture", TextureResource::initializationFunc,
 		TextureResource::releaseFunc, TextureResource::factoryFunc );
@@ -100,6 +99,9 @@ bool Modules::init()
 		ParticleEffectResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Pipeline, "Pipeline", 0x0, 0x0,
 		PipelineResource::factoryFunc );
+	resMan().registerResType( ResourceTypes::ComputeBuffer, "ComputeBuffer", 0x0, 0x0,
+		ComputeBufferResource::factoryFunc );
+
 
 	// Register node types
 	sceneMan().registerNodeType( SceneNodeTypes::Group, "Group",
@@ -116,11 +118,14 @@ bool Modules::init()
 		CameraNode::parsingFunc, CameraNode::factoryFunc );
 	sceneMan().registerNodeType( SceneNodeTypes::Emitter, "Emitter",
 		EmitterNode::parsingFunc, EmitterNode::factoryFunc );
+	sceneMan().registerNodeType( SceneNodeTypes::Compute, "Compute",
+		ComputeNode::parsingFunc, ComputeNode::factoryFunc );
 
 	// Register render functions
 	renderer().registerRenderFunc( SceneNodeTypes::Mesh, Renderer::drawMeshes );
 	renderer().registerRenderFunc( SceneNodeTypes::Emitter, Renderer::drawParticles );
-	
+	renderer().registerRenderFunc( SceneNodeTypes::Compute, Renderer::drawComputeResults );
+
 	// Install extensions
 	installExtensions();
 
@@ -169,8 +174,6 @@ void Modules::release()
 	delete _sceneManager; _sceneManager = 0x0;
 	delete _resourceManager; _resourceManager = 0x0;
 	delete _renderer; _renderer = 0x0;
-	delete _renderDevice; _renderDevice = 0x0;
-	gRDI = 0x0;
 	delete _statManager; _statManager = 0x0;
 	delete _engineLog; _engineLog = 0x0;
 	delete _engineConfig; _engineConfig = 0x0;

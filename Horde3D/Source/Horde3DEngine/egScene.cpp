@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -33,7 +33,7 @@ using namespace std;
 SceneNode::SceneNode( const SceneNodeTpl &tpl ) :
 	_parent( 0x0 ), _type( tpl.type ), _handle( 0 ), _sgHandle( 0 ), _flags( 0 ), _sortKey( 0 ),
 	_dirty( true ), _transformed( true ), _renderable( false ),
-	_name( tpl.name ), _attachment( tpl.attachmentString )
+	_name( tpl.name ), _attachment( tpl.attachmentString ), _lodSupported( false )
 {
 	_relTrans = Matrix4f::ScaleMat( tpl.scale.x, tpl.scale.y, tpl.scale.z );
 	_relTrans.rotate( degToRad( tpl.rot.x ), degToRad( tpl.rot.y ), degToRad( tpl.rot.z ) );
@@ -46,7 +46,7 @@ SceneNode::~SceneNode()
 }
 
 
-void SceneNode::getTransform( Vec3f &trans, Vec3f &rot, Vec3f &scale )
+void SceneNode::getTransform( Vec3f &trans, Vec3f &rot, Vec3f &scale ) const
 {
 	if( _dirty ) Modules::sceneMan().updateNodes();
 	
@@ -117,7 +117,7 @@ void SceneNode::setFlags( int flags, bool recursive )
 }
 
 
-int SceneNode::getParamI( int param )
+int SceneNode::getParamI( int param ) const
 {
 	Modules::setError( "Invalid param in h3dGetNodeParamI" );
 	return Math::MinInt32;
@@ -128,7 +128,7 @@ void SceneNode::setParamI( int param, int value )
 	Modules::setError( "Invalid param in h3dSetNodeParamI" );
 }
 
-float SceneNode::getParamF( int param, int compIdx )
+float SceneNode::getParamF( int param, int compIdx ) const
 {
 	Modules::setError( "Invalid param in h3dGetNodeParamF" );
 	return Math::NaN;
@@ -139,7 +139,7 @@ void SceneNode::setParamF( int param, int compIdx, float value )
 	Modules::setError( "Invalid param in h3dSetNodeParamF" );
 }
 
-const char *SceneNode::getParamStr( int param )
+const char *SceneNode::getParamStr( int param ) const
 {
 	switch( param )
 	{
@@ -169,13 +169,19 @@ void SceneNode::setParamStr( int param, const char *value )
 }
 
 
-uint32 SceneNode::calcLodLevel( const Vec3f &viewPoint )
+uint32 SceneNode::calcLodLevel( const Vec3f &viewPoint ) const
 {
 	return 0;
 }
 
 
-bool SceneNode::canAttach( SceneNode &/*parent*/ )
+bool SceneNode::checkLodCorrectness( uint32 lodLevel ) const
+{
+	return true;
+}
+
+
+bool SceneNode::canAttach( SceneNode &/*parent*/ ) const
 {
 	return true;
 }
@@ -355,10 +361,10 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 			if( !frustum1.cullBox( node->_bBox ) &&
 				(frustum2 == 0x0 || !frustum2->cullBox( node->_bBox )) )
 			{
-				if( node->_type == SceneNodeTypes::Mesh )  // TODO: Generalize and optimize this
+				if( node->_lodSupported )
 				{
-					uint32 curLod = ((MeshNode *)node)->getParentModel()->calcLodLevel( camPos );
-					if( ((MeshNode *)node)->getLodLevel() != curLod ) continue;
+					uint32 curLod = node->calcLodLevel( camPos );
+					if ( !node->checkLodCorrectness( curLod ) ) continue;
 				}
 				
 				float sortKey = 0;
@@ -395,7 +401,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 // Class SceneManager
 // *************************************************************************************************
 
-SceneManager::SceneManager()
+SceneManager::SceneManager() : _rayNum( 0 )
 {
 	SceneNode *rootNode = GroupNode::factoryFunc( GroupNodeTpl( "RootNode" ) );
 	rootNode->_handle = RootNode;
@@ -737,25 +743,27 @@ bool SceneManager::getCastRayResult( int index, CastRayResult &crr )
 int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool checkOcclusion, bool calcLod )
 {
 	// Note: This function is a bit hacky with all the hard-coded node types
-	
+	// TODO: Generalize function
 	if( node._dirty ) updateNodes();
+
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Check occlusion
 	if( checkOcclusion && cam._occSet >= 0 )
 	{
 		if( node.getType() == SceneNodeTypes::Mesh && cam._occSet < (int)((MeshNode *)&node)->_occQueries.size() )
 		{
-			if( gRDI->getQueryResult( ((MeshNode *)&node)->_occQueries[cam._occSet] ) < 1 )
+			if( rdi->getQueryResult( ((MeshNode *)&node)->_occQueries[cam._occSet] ) < 1 )
 				return -1;
 		}
 		else if( node.getType() == SceneNodeTypes::Emitter && cam._occSet < (int)((EmitterNode *)&node)->_occQueries.size() )
 		{
-			if( gRDI->getQueryResult( ((EmitterNode *)&node)->_occQueries[cam._occSet] ) < 1 )
+			if( rdi->getQueryResult( ((EmitterNode *)&node)->_occQueries[cam._occSet] ) < 1 )
 				return -1;
 		}
 		else if( node.getType() == SceneNodeTypes::Light && cam._occSet < (int)((LightNode *)&node)->_occQueries.size() )
 		{
-			if( gRDI->getQueryResult( ((LightNode *)&node)->_occQueries[cam._occSet] ) < 1 )
+			if( rdi->getQueryResult( ((LightNode *)&node)->_occQueries[cam._occSet] ) < 1 )
 				return -1;
 		}
 	}
