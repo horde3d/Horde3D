@@ -34,7 +34,7 @@ void TextureResourceEx::release()
     TextureResource::release();
 }
 
-bool TextureResourceEx::importTexGL(uint32 texGL, int width, int height )
+void TextureResourceEx::importTexGL(uint32 texGL, int width, int height )
 {
     _loaded = true;
     _width = width;
