@@ -210,5 +210,9 @@ if(UNIX AND NOT APPLE)
 		    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
             RENAME  horde3deditor.svg)
 
-#    install(TARGETS Horde3DEditor DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    # Install the editor
+    install(TARGETS Horde3DEditor DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    install(DIRECTORY Styles DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+    
 endif()
