@@ -26,7 +26,7 @@ public:
 
     void release();
 
-    bool importTexGL(uint32 texGL , int width, int height);
+    void importTexGL(uint32 texGL , int width, int height);
 
     uint32 getGLTexID();
 

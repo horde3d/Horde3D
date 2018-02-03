@@ -561,6 +561,11 @@ bool isExtensionSupported( const char *extName )
 	if( glExt::majorVersion < 3 )
 	{
 		const char *extensions = (char *)glGetString( GL_EXTENSIONS );
+                if( extensions == 0x0 )
+                {
+                    return false;
+                }
+
 		size_t nameLen = strlen( extName );
 		const char *pos;
 		while( ( pos = strstr( extensions, extName ) ) != 0x0 )
@@ -690,6 +695,8 @@ void initLegacyExtensions( bool &r )
 	{
 		r &= ( glTexBufferARB = ( PFNGLTEXBUFFERPROC ) platGetProcAddress( "glTexBuffer" ) ) != 0x0;
 	}
+
+	glExt::EXT_texture_sRGB = isExtensionSupported( "GL_EXT_texture_sRGB" );
 }
 
 void initModernExtensions( bool &r )
@@ -1236,8 +1243,6 @@ bool initOpenGLExtensions( bool forceLegacyFuncs )
 	glExt::EXT_texture_filter_anisotropic = isExtensionSupported( "GL_EXT_texture_filter_anisotropic" );
 
 	glExt::EXT_texture_compression_s3tc = isExtensionSupported( "GL_EXT_texture_compression_s3tc" ) || isExtensionSupported( "GL_S3_s3tc" );
-
-	glExt::EXT_texture_sRGB = isExtensionSupported( "GL_EXT_texture_sRGB" );
 
 	return r;
 }

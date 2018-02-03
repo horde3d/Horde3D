@@ -25,8 +25,6 @@ namespace Horde3D {
 
 using namespace std;
 
-std::vector< PipelineCommandRegEntry > ExternalPipelineCommandsManager::_registeredCommands = {};
-
 // *************************************************************************************************
 // Class PipelineResource
 // *************************************************************************************************
@@ -268,12 +266,12 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 		else
 		{
 			// check commands in extensions
-			if ( ExternalPipelineCommandsManager::registeredCommandsCount() > 0 )
+			if ( Modules::pipeMan().registeredCommandsCount() > 0 )
 			{
 				bool result = true;
 			 	PipelineCommand cmd( DefaultPipelineCommands::ExternalCommand );
 				
-				const char *msg = ExternalPipelineCommandsManager::parseCommand( node1.getName(), &node1, cmd, result );
+				const char *msg = Modules::pipeMan().parseCommand( node1.getName(), &node1, cmd, result );
 				if ( result )
 				{
 					stage.commands.push_back( cmd );
@@ -540,6 +538,57 @@ bool PipelineResource::getRenderTargetData( const string &target, int bufIndex, 
 	
 	return Modules::renderer().getRenderDevice()->getRenderBufferData( rbObj, bufIndex, width, height, 
 																	   compCount, dataBuffer, bufferSize );
+}
+
+// *************************************************************************************************
+// Class ExternalPipelineCommandsManager
+// *************************************************************************************************
+
+
+void ExternalPipelineCommandsManager::registerPipelineCommand( const std::string &commandName, parsePipelineCommandFunc pf, 
+															   executePipelineCommandFunc ef )
+{
+	ASSERT( !commandName.empty() )
+	ASSERT( pf != 0x0 )
+	ASSERT( ef != 0x0 )
+
+	PipelineCommandRegEntry entry;
+	entry.comNameString = commandName;
+	entry.parseFunc = pf;
+	entry.executeFunc = ef;
+	_registeredCommands.emplace_back( entry );
+}
+
+const char * ExternalPipelineCommandsManager::parseCommand( const char *commandName, void *xmlData, PipelineCommand &cmd, bool &success )
+{
+	for ( size_t i = 0; i < _registeredCommands.size(); ++i )
+	{
+		PipelineCommandRegEntry &entry = _registeredCommands[ i ];
+		if ( entry.comNameString.compare( commandName ) == 0 && entry.parseFunc != 0x0 )
+		{
+			const char *msg = entry.parseFunc( commandName, xmlData, cmd );
+			if ( strlen( msg ) == 0 )
+			{
+				cmd.externalCommandID = ( int ) i;
+			}
+			else
+			{
+				success = false;
+			}
+
+			return msg;
+		}
+	}
+
+	return ""; // pipeline command skipped
+}
+
+void ExternalPipelineCommandsManager::executeCommand( const PipelineCommand &command )
+{
+	if ( command.externalCommandID != -1 )
+	{
+		_registeredCommands[ command.externalCommandID ].executeFunc( &command );
+	}
 }
 
 }  // namespace

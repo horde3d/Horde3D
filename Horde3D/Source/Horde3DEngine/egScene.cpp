@@ -31,9 +31,9 @@ using namespace std;
 // *************************************************************************************************
 
 SceneNode::SceneNode( const SceneNodeTpl &tpl ) :
-	_parent( 0x0 ), _type( tpl.type ), _handle( 0 ), _sgHandle( 0 ), _flags( 0 ), _sortKey( 0 ),
-	_dirty( true ), _transformed( true ), _renderable( false ),
-	_name( tpl.name ), _attachment( tpl.attachmentString ), _lodSupported( false )
+	_name( tpl.name ), _attachment( tpl.attachmentString ), _parent( 0x0 ), _type( tpl.type ),
+	_handle( 0 ), _sgHandle( 0 ), _flags( 0 ), _sortKey( 0 ), _dirty( true ), _transformed( true ),
+	_renderable( false ), _lodSupported( false )
 {
 	_relTrans = Matrix4f::ScaleMat( tpl.scale.x, tpl.scale.y, tpl.scale.z );
 	_relTrans.rotate( degToRad( tpl.rot.x ), degToRad( tpl.rot.y ), degToRad( tpl.rot.z ) );

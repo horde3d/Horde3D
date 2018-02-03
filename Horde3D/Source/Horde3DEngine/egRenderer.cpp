@@ -2188,9 +2188,9 @@ void Renderer::render( CameraNode *camNode )
 						pc.params[4].getFloat(), pc.params[5].getFloat() );
 				}
 				break;
-				
+
 			case DefaultPipelineCommands::ExternalCommand:
-				ExternalPipelineCommandsManager::executeCommand( pc );
+				Modules::pipeMan().executeCommand( pc );
 				break;
 			}
 		}
@@ -2239,7 +2239,8 @@ void Renderer::renderDebugView()
 	setMaterial( 0x0, "" );
 	setShaderComb( &_defColorShader );
 	commitGeneralUniforms();
-	_renderDevice->setShaderConst( _defColorShader.uniLocs[ _uni.worldMat ], CONST_FLOAT44, &Matrix4f().x[0] );
+    Matrix4f identity;
+	_renderDevice->setShaderConst( _defColorShader.uniLocs[ _uni.worldMat ], CONST_FLOAT44, &identity.x[0] );
 	color[0] = 0.4f; color[1] = 0.4f; color[2] = 0.4f; color[3] = 1;
 	_renderDevice->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
 	for( uint32 i = 0, s = (uint32)Modules::sceneMan().getRenderQueue().size(); i < s; ++i )

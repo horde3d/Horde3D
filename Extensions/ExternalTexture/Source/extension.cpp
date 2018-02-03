@@ -45,11 +45,12 @@ DLLEXP bool h3dextImportTexture( Horde3D::ResHandle texRes, int texID )
     if( res == 0x0 || res->getType() != ResourceTypes::Texture )
     {
         Modules::log().writeError("Error adding texture resource");
-        return 0;
+        return false;
     }
 
     TextureResourceEx* texEx = static_cast<TextureResourceEx*>(res);
-    return texEx->importTexGL( texID, 0, 0 );
+    texEx->importTexGL( texID, 0, 0 );
+    return true;
 }
 
 // Public C API

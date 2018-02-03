@@ -27,14 +27,7 @@
 
 
 // Extensions
-#ifdef CMAKE
-	#include "egExtensions_auto_include.h"
-#else
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	#include "Terrain/Source/extension.h"
-	#pragma comment( lib, "Extension_Terrain.lib" )
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#endif
+#include "egExtensions_auto_include.h"
 
 #include "utDebug.h"
 
@@ -43,24 +36,19 @@ namespace Horde3D {
 
 const char *Modules::versionString = "Horde3D 1.0.0";
 
-bool                   Modules::_errorFlag = false;
-EngineConfig           *Modules::_engineConfig = 0x0;
-EngineLog              *Modules::_engineLog = 0x0;
-StatManager            *Modules::_statManager = 0x0;
-SceneManager           *Modules::_sceneManager = 0x0;
-ResourceManager        *Modules::_resourceManager = 0x0;
-Renderer               *Modules::_renderer = 0x0;
-ExtensionManager       *Modules::_extensionManager = 0x0;
+bool								Modules::_errorFlag = false;
+EngineConfig						*Modules::_engineConfig = 0x0;
+EngineLog							*Modules::_engineLog = 0x0;
+StatManager							*Modules::_statManager = 0x0;
+SceneManager						*Modules::_sceneManager = 0x0;
+ResourceManager						*Modules::_resourceManager = 0x0;
+Renderer							*Modules::_renderer = 0x0;
+ExtensionManager					*Modules::_extensionManager = 0x0;
+ExternalPipelineCommandsManager		*Modules::_extCmdPipeMan = 0x0;
 
 void Modules::installExtensions()
 {
-#ifdef CMAKE
 	#include "egExtensions_auto_install.h"
-#else
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-	extMan().installExtension( new Horde3DTerrain::ExtTerrain() );
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#endif
 }
 
 
@@ -74,6 +62,7 @@ bool Modules::init( int backendType )
 	if( _resourceManager == 0x0 ) _resourceManager = new ResourceManager();
 	if( _renderer == 0x0 ) _renderer = new Renderer();
 	if( _statManager == 0x0 ) _statManager = new StatManager();
+	if ( _extCmdPipeMan == 0x0 ) _extCmdPipeMan = new ExternalPipelineCommandsManager();
 
 	// Init modules
 	if ( !renderer().init( ( RenderBackendType::List ) backendType ) ) return false;
@@ -170,6 +159,7 @@ void Modules::release()
 	
 	// Order of destruction is important
 	delete _extensionManager; _extensionManager = 0x0;
+	delete _extCmdPipeMan; _extCmdPipeMan = 0x0;
 	delete _sceneManager; _sceneManager = 0x0;
 	delete _resourceManager; _resourceManager = 0x0;
 	delete _renderer; _renderer = 0x0;

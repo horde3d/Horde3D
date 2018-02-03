@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2018 Volker Vogelhuber and Horde3D team -->
+<component type="desktop">
+  <id>Horde3DEditor.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <name>Horde3D Editor</name>
+  <summary>Create 3D scenes compatible with Horde3D graphics engine</summary>
+  <description>
+    <p>
+      Create 3D scenes compatible with Horde3D graphics engine, edit game-engine specific parameters.
+    </p>
+  </description>
+  <screenshots>
+    <!-- TODO: Add screenshots -->
+  </screenshots>
+  <!--
+   Validate with `appstream-util validate *.appdata.xml`
+  -->
+  <releases>
+    <!-- TODO: Add a release here -->
+  </releases>
+  <kudos>
+  </kudos>
+  <url type="homepage">http://horde3d.org</url>
+  <update_contact>http://horde3d.org/contact.html</update_contact>
+</component>

@@ -45,7 +45,7 @@ struct ComputeNodeTpl : public SceneNodeTpl
 
 	ComputeNodeTpl( const std::string &name, ComputeBufferResource *computeBufferRes, MaterialResource *materialRes,
 					int vertDrawType, int elemDrawCount ) :
-						SceneNodeTpl( SceneNodeTypes::Compute, name ), compBufRes( computeBufferRes ), matRes( materialRes ),
+						SceneNodeTpl( SceneNodeTypes::Compute, name ), matRes( materialRes ), compBufRes( computeBufferRes ),
 						drawType( vertDrawType ), elementsCount( elemDrawCount ), aabbMin( Vec3f( 0, 0, 0 ) ), aabbMax( Vec3f( 1, 1, 1 ) )
 	{
 	}

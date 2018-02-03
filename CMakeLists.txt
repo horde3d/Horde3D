@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.1)
 # Project details.
 project(Horde3D)
 
+set(CMAKE_CXX_STANDARD 11)
+
 SET(${PROJECT_NAME}_MAJOR_VERSION 1)
 SET(${PROJECT_NAME}_MINOR_VERSION 0)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
