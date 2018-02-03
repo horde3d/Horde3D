@@ -561,6 +561,11 @@ bool isExtensionSupported( const char *extName )
 	if( glExt::majorVersion < 3 )
 	{
 		const char *extensions = (char *)glGetString( GL_EXTENSIONS );
+                if( extensions == 0x0 )
+                {
+                    return false;
+                }
+
 		size_t nameLen = strlen( extName );
 		const char *pos;
 		while( ( pos = strstr( extensions, extName ) ) != 0x0 )
