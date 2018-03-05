@@ -174,13 +174,13 @@ void Converter::checkNodeName( SceneNode *node )
 		// If necessary, cut name to make room for the postfix
 		if( strlen( node->name ) > 240 ) node->name[240] = '\0';
 
-		char newName[256];
+        char newName[512];
 		unsigned int index = 2;
 
 		// Find a free name
 		while( true )
 		{
-			sprintf( newName, "%s_%i", node->name, index++ );
+            snprintf( newName, sizeof(newName), "%s_%i", node->name, index++ );
 
 			if( !findNode( newName, node ) )
 			{
