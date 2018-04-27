@@ -1214,6 +1214,23 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 		rdi->destroyShader( sc.shaderObj );
 		sc.shaderObj = 0;
 	}
+
+	// dump all shader file
+	if(Modules::config().dumpShaderFile)
+	{
+		static int iShaderNum = 0;
+		{
+			iShaderNum ++;
+			char buff[2][100];
+			sprintf(buff[0],"shader_%d_0.txt",iShaderNum);
+			sprintf(buff[1],"shader_%d_1.txt",iShaderNum);
+			std::ofstream out0( buff[0], ios::binary ), out1( buff[1], ios::binary );
+			if( out0.good() ) out0 << _tmpCode0;
+			if( out1.good() ) out1 << _tmpCode1;
+			out0.close();
+			out1.close();
+		}
+	}
 	
 	// Compile shader
 	bool compiled = Modules::renderer().createShaderComb( sc, 
