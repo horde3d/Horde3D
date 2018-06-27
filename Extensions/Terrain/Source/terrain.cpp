@@ -263,7 +263,7 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 }
 
 
-void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
+void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &shaderContext, int theClass,
                               bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
                               int occSet )
 {

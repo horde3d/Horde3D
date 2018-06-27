@@ -76,7 +76,7 @@ public:
 
 	static SceneNodeTpl *parsingFunc( std::map< std::string, std::string > &attribs );
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
-	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 	virtual bool canAttach( SceneNode &parent ) const;

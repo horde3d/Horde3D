@@ -332,6 +332,8 @@ uint32 RenderDeviceGL4::beginCreatingGeometry( uint32 vlObj )
 	glGenVertexArrays( 1, &vaoID );
 	vao.vao = vaoID;
 
+//	glBindVertexArray( vaoID );
+
 	return _vaos.add( vao );
 }
 
@@ -376,7 +378,6 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 			newVertexAttribMask |= 1 << i;
 		}
 	}
-
 
 	for ( uint32 i = 0; i < 16; ++i )
 	{

@@ -96,25 +96,25 @@ private:
 
 	// Invoker functions
 	template<typename T>
-	static void              beginQuery_Invoker( void* const pObj, uint32 frameID )
+	inline static void              beginQuery_Invoker( void* const pObj, uint32 frameID )
 	{
 		static_cast< T* >( pObj )->beginQuery( frameID );
 	}
 
 	template<typename T>
-	static void              endQuery_Invoker( void* const pObj )
+	inline static void              endQuery_Invoker( void* const pObj )
 	{
 		static_cast< T* >( pObj )->endQuery();
 	}
 
 	template<typename T>
-	static bool              updateResults_Invoker( void* const pObj )
+	inline static bool              updateResults_Invoker( void* const pObj )
 	{
 		return static_cast< T* >( pObj )->updateResults();
 	}
 
 	template<typename T>
-	static void              reset_Invoker( void* const pObj )
+	inline static void              reset_Invoker( void* const pObj )
 	{
 		static_cast< T* >( pObj )->reset();
 	}
@@ -728,25 +728,25 @@ private:
 	// invoker functions
 	// main funcs
 	template<typename T>
-	static bool              init_Invoker( void* const pObj ) 
+	inline static bool              init_Invoker( void* const pObj )
 	{ 
 		return static_cast< T* >( pObj )->init();
 	}
 
 	template<typename T>
-	static void              initStates_Invoker( void* const pObj ) 
+	inline static void              initStates_Invoker( void* const pObj )
 	{
 		static_cast< T* >( pObj )->initStates();
 	}
 
 	template<typename T>
-	static uint32            registerVertexLayout_Invoker( void* const pObj, uint32 numAttribs, VertexLayoutAttrib *attribs )
+	inline static uint32            registerVertexLayout_Invoker( void* const pObj, uint32 numAttribs, VertexLayoutAttrib *attribs )
 	{ 
 		return static_cast< T* >( pObj )->registerVertexLayout( numAttribs, attribs );
 	}
 	
 	template<typename T>
-	static void              beginRendering_Invoker( void* const pObj ) 
+	inline static void              beginRendering_Invoker( void* const pObj )
 	{ 
 		static_cast< T* >( pObj )->beginRendering();
 	}
@@ -754,49 +754,49 @@ private:
 
 	// buffers
 	template<typename T>
-	static uint32            createVertexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	inline static uint32            createVertexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
 	{ 
 		return static_cast< T* >( pObj )->createVertexBuffer( size, data ); 
 	}
 
 	template<typename T>
-	static uint32            createIndexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	inline static uint32            createIndexBuffer_Invoker( void* const pObj, uint32 size, const void *data )
 	{ 
 		return static_cast< T* >( pObj )->createIndexBuffer( size, data ); 
 	}
 
 	template<typename T>
-	static uint32            createTextureBuffer_Invoker( void* const pObj, TextureFormats::List format, uint32 bufSize, const void *data )
+	inline static uint32            createTextureBuffer_Invoker( void* const pObj, TextureFormats::List format, uint32 bufSize, const void *data )
 	{
 		return static_cast< T* >( pObj )->createTextureBuffer( format, bufSize, data );
 	}
 
 	template<typename T>
-	static uint32            createShaderStorageBuffer_Invoker( void* const pObj, uint32 size, const void *data )
+	inline static uint32            createShaderStorageBuffer_Invoker( void* const pObj, uint32 size, const void *data )
 	{
 		return static_cast< T* >( pObj )->createShaderStorageBuffer( size, data );
 	}
 
 	template<typename T>
-	static void				 setGeomVertexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
+	inline static void				 setGeomVertexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
 	{
 		static_cast< T* >( pObj )->setGeomVertexParams( geoIndex, vbo, vbSlot, offset, stride );
 	}
 
 	template<typename T>
-	static void				 setGeomIndexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format )
+	inline static void				 setGeomIndexParams_Invoker( void* const pObj, uint32 geoIndex, uint32 idxBuf, RDIIndexFormat format )
 	{
 		static_cast< T* >( pObj )->setGeomIndexParams( geoIndex, idxBuf, format );
 	}
 
 	template<typename T>
-	static uint32            beginCreatingGeometry_Invoker( void* const pObj, uint32 vlObj )
+	inline static uint32            beginCreatingGeometry_Invoker( void* const pObj, uint32 vlObj )
 	{
 		return static_cast< T* >( pObj )->beginCreatingGeometry( vlObj );
 	}
 
 	template<typename T>
-	static void		         finishCreatingGeometry_Invoker( void* const pObj, uint32 geoIndex )
+	inline static void		         finishCreatingGeometry_Invoker( void* const pObj, uint32 geoIndex )
 	{
 		static_cast< T* >( pObj )->finishCreatingGeometry( geoIndex );
 	}
@@ -820,7 +820,7 @@ private:
 	}
 
 	template<typename T>
-	static void              updateBufferData_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
+	inline static void              updateBufferData_Invoker( void* const pObj, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 	{
 		static_cast< T* >( pObj )->updateBufferData( geoObj, bufObj, offset, size, data );
 	}
@@ -841,20 +841,20 @@ private:
 
 	// textures
 	template<typename T>
-	static uint32            calcTextureSize_Invoker( void* const pObj, TextureFormats::List format, int width, int height, int depth )
+	inline static uint32            calcTextureSize_Invoker( void* const pObj, TextureFormats::List format, int width, int height, int depth )
 	{
 		return static_cast< T* >( pObj )->calcTextureSize( format, width, height, depth );
 	}
 
 	template<typename T>
-	static uint32            createTexture_Invoker( void* const pObj, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
+	inline static uint32            createTexture_Invoker( void* const pObj, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 													bool hasMips, bool genMips, bool compress, bool sRGB )
 	{
 		return static_cast< T* >( pObj )->createTexture( type, width, height, depth, format, hasMips, genMips, compress, sRGB );
 	}
 
 	template<typename T>
-	static void              uploadTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, const void *pixels )
+	inline static void              uploadTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, const void *pixels )
 	{
 		static_cast< T* >( pObj )->uploadTextureData( texObj, slice, mipLevel, pixels );
 	}
@@ -866,13 +866,13 @@ private:
 	}
 
 	template<typename T>
-	static void              updateTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, const void *pixels )
+	inline static void              updateTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, const void *pixels )
 	{
 		static_cast< T* >( pObj )->updateTextureData( texObj, slice, mipLevel, pixels );
 	}
 
 	template<typename T>
-	static bool              getTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, void *buffer )
+	inline static bool              getTextureData_Invoker( void* const pObj, uint32 texObj, int slice, int mipLevel, void *buffer )
 	{
 		return static_cast< T* >( pObj )->getTextureData( texObj, slice, mipLevel, buffer );
 	}
@@ -885,7 +885,7 @@ private:
 
 	// shaders
 	template<typename T>
-	static uint32            createShader_Invoker( void* const pObj, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+	inline static uint32            createShader_Invoker( void* const pObj, const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
 												   const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
 	{
 		return static_cast< T* >( pObj )->createShader( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
@@ -898,55 +898,55 @@ private:
 	}
 
 	template<typename T>
-	static void				 bindShader_Invoker( void* const pObj, uint32 shaderId )
+	inline static void				bindShader_Invoker( void* const pObj, uint32 shaderId )
 	{
 		static_cast< T* >( pObj )->bindShader( shaderId );
 	}
 
 	template<typename T>
-	static int				 getShaderConstLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
+	inline static int				getShaderConstLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
 	{
 		return static_cast< T* >( pObj )->getShaderConstLoc( shaderId, name );
 	}
 
 	template<typename T>
-	static int				 getShaderSamplerLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
+	inline static int				getShaderSamplerLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
 	{
 		return static_cast< T* >( pObj )->getShaderSamplerLoc( shaderId, name );
 	}
 
 	template<typename T>
-	static int				 getShaderBufferLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
+	inline static int				getShaderBufferLoc_Invoker( void* const pObj, uint32 shaderId, const char *name )
 	{
 		return static_cast< T* >( pObj )->getShaderBufferLoc( shaderId, name );
 	}
 
 	template<typename T>
-	static void				 runComputeShader_Invoker( void* const pObj, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+	inline static void				runComputeShader_Invoker( void* const pObj, uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
 	{
 		static_cast< T* >( pObj )->runComputeShader( shaderId, xDim, yDim, zDim );
 	}
 
 	template<typename T>
-	static void				 setShaderConst_Invoker( void* const pObj, int loc, RDIShaderConstType type, void *values, uint32 count )
+	inline static void				setShaderConst_Invoker( void* const pObj, int loc, RDIShaderConstType type, void *values, uint32 count )
 	{
 		static_cast< T* >( pObj )->setShaderConst( loc, type, values, count );
 	}
 
 	template<typename T>
-	static void				 setShaderSampler_Invoker( void* const pObj, int loc, uint32 texUnit )
+	inline static void				setShaderSampler_Invoker( void* const pObj, int loc, uint32 texUnit )
 	{
 		static_cast< T* >( pObj )->setShaderSampler( loc, texUnit );
 	}
 
 	template<typename T>
-	static const char *		 getDefaultVSCode_Invoker( void* const pObj )
+	inline static const char *		getDefaultVSCode_Invoker( void* const pObj )
 	{
 		return static_cast< T* >( pObj )->getDefaultVSCode();
 	}
 
 	template<typename T>
-	static const char *		 getDefaultFSCode_Invoker( void* const pObj )
+	inline static const char *		getDefaultFSCode_Invoker( void* const pObj )
 	{
 		return static_cast< T* >( pObj )->getDefaultFSCode();
 	}
@@ -954,7 +954,7 @@ private:
 
 	// Render bufs
 	template<typename T>
-	static uint32            createRenderBuffer_Invoker( void* const pObj, uint32 width, uint32 height, TextureFormats::List format,
+	inline static uint32            createRenderBuffer_Invoker( void* const pObj, uint32 width, uint32 height, TextureFormats::List format,
 														 bool depth, uint32 numColBufs, uint32 samples )
 	{
 		return static_cast< T* >( pObj )->createRenderBuffer( width, height, format, depth, numColBufs, samples );
@@ -967,26 +967,26 @@ private:
 	}
 
 	template<typename T>
-	static uint32            getRenderBufferTex_Invoker( void* const pObj, uint32 rbObj, uint32 bufIndex )
+	inline static uint32            getRenderBufferTex_Invoker( void* const pObj, uint32 rbObj, uint32 bufIndex )
 	{
 		return static_cast< T* >( pObj )->getRenderBufferTex( rbObj, bufIndex );
 	}
 
 	template<typename T>
-	static void				 setRenderBuffer_Invoker( void* const pObj, uint32 rbObj )
+	inline static void				 setRenderBuffer_Invoker( void* const pObj, uint32 rbObj )
 	{
 		static_cast< T* >( pObj )->setRenderBuffer( rbObj );
 	}
 	
 	template<typename T>
-	static bool	             getRenderBufferData_Invoker( void* const pObj, uint32 rbObj, int bufIndex, int *width, int *height,
+	inline static bool	             getRenderBufferData_Invoker( void* const pObj, uint32 rbObj, int bufIndex, int *width, int *height,
 														  int *compCount, void *dataBuffer, int bufferSize )
 	{
 		return static_cast< T* >( pObj )->getRenderBufferData( rbObj, bufIndex, width, height, compCount, dataBuffer, bufferSize );
 	}
 	
 	template<typename T>
-	static void	             getRenderBufferDimensions_Invoker( void* const pObj, uint32 rbObj, int *width, int *height )
+	inline static void	             getRenderBufferDimensions_Invoker( void* const pObj, uint32 rbObj, int *width, int *height )
 	{
 		static_cast< T* >( pObj )->getRenderBufferDimensions( rbObj, width, height );
 	}
@@ -994,37 +994,37 @@ private:
 
 	// Queries
 	template<typename T>
-	static uint32            createOcclusionQuery_Invoker( void* const pObj )
+	inline static uint32            createOcclusionQuery_Invoker( void* const pObj )
 	{
 		return static_cast< T* >( pObj )->createOcclusionQuery();
 	}
 
 	template<typename T>
-	static void				 destroyQuery_Invoker( void* const pObj, uint32 queryObj )
+	inline static void				 destroyQuery_Invoker( void* const pObj, uint32 queryObj )
 	{
 		static_cast< T* >( pObj )->destroyQuery( queryObj );
 	}
 
 	template<typename T>
-	static void				 beginQuery_Invoker( void* const pObj, uint32 queryObj )
+	inline static void				 beginQuery_Invoker( void* const pObj, uint32 queryObj )
 	{
 		static_cast< T* >( pObj )->beginQuery( queryObj );
 	}
 
 	template<typename T>
-	static void				 endQuery_Invoker( void* const pObj, uint32 queryObj )
+	inline static void				 endQuery_Invoker( void* const pObj, uint32 queryObj )
 	{
 		static_cast< T* >( pObj )->endQuery( queryObj );
 	}
 
 	template<typename T>
-	static uint32			 getQueryResult_Invoker( void* const pObj, uint32 queryObj )
+	inline static uint32			 getQueryResult_Invoker( void* const pObj, uint32 queryObj )
 	{
 		return static_cast< T* >( pObj )->getQueryResult( queryObj );
 	}
 
 	template<typename T>
-	static GPUTimer *		 createGPUTimer_Invoker( void* const pObj )
+	inline static GPUTimer *		 createGPUTimer_Invoker( void* const pObj )
 	{
 		return static_cast< T* >( pObj )->createGPUTimer();
 	}
@@ -1032,38 +1032,38 @@ private:
 
 	// drawing
 	template<typename T>
-	static bool	             commitStates_Invoker( void* const pObj, uint32 filter )
+	inline static bool	             commitStates_Invoker( void* const pObj, uint32 filter )
 	{
 		return static_cast< T* >( pObj )->commitStates( filter );
 	}
 
 	template<typename T>
-	static void				 resetStates_Invoker( void* const pObj )
+	inline static void				 resetStates_Invoker( void* const pObj )
 	{
 		static_cast< T* >( pObj )->resetStates();
 	}
 
 	template<typename T>
-	static void				 clear_Invoker( void* const pObj, uint32 flags, float *colorRGBA, float depth )
+	inline static void				 clear_Invoker( void* const pObj, uint32 flags, float *colorRGBA, float depth )
 	{
 		static_cast< T* >( pObj )->clear( flags, colorRGBA, depth );
 	}
 
 	template<typename T>
-	static void				 draw_Invoker( void* const pObj, RDIPrimType primType, uint32 firstVert, uint32 numVerts )
+	inline static void				 draw_Invoker( void* const pObj, RDIPrimType primType, uint32 firstVert, uint32 numVerts )
 	{
 		static_cast< T* >( pObj )->draw( primType, firstVert, numVerts );
 	}
 
 	template<typename T>
-	static void				 drawIndexed_Invoker( void* const pObj, RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
+	inline static void				 drawIndexed_Invoker( void* const pObj, RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
 												  uint32 firstVert, uint32 numVerts )
 	{
 		static_cast< T* >( pObj )->drawIndexed( primType, firstIndex, numIndices, firstVert, numVerts );
 	}
 
 	template<typename T>
-	static void				 setStorageBuffer_Invoker( void* const pObj, uint8 slot, uint32 bufObj )
+	inline static void				 setStorageBuffer_Invoker( void* const pObj, uint8 slot, uint32 bufObj )
 	{
 		static_cast< T* >( pObj )->setStorageBuffer( slot, bufObj );
 	}
