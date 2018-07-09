@@ -13,6 +13,8 @@
 #ifndef _egMaterial_H_
 #define _egMaterial_H_
 
+#include <cstring>
+
 #include "egPrerequisites.h"
 #include "egResource.h"
 #include "egShader.h"

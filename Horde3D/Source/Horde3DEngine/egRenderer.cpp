@@ -2158,7 +2158,7 @@ void Renderer::render( CameraNode *camNode )
 				break;
 
 			case DefaultPipelineCommands::DrawGeometry:
-				drawGeometry( pc.params[0].getString(), pc.params[1].getString(),
+				drawGeometry( pc.params[0].getString(), pc.params[1].getInt(),
 				              (RenderingOrder::List)pc.params[2].getInt(), _curCamera->_occSet );
 				break;
 
@@ -2171,7 +2171,7 @@ void Renderer::render( CameraNode *camNode )
 			break;
 
 			case DefaultPipelineCommands::DoForwardLightLoop:
-				drawLightGeometry( pc.params[0].getString(), pc.params[1].getString(),
+				drawLightGeometry( pc.params[0].getString(), pc.params[1].getInt(),
 				                   pc.params[2].getBool(), (RenderingOrder::List)pc.params[3].getInt(),
 								   _curCamera->_occSet );
 				break;
