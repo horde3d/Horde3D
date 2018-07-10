@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -88,11 +88,17 @@ public:
 	void setParamF( int param, int compIdx, float value );
 
 	void setupViewParams( float fov, float aspect, float nearPlane, float farPlane );
+	void setProjectionMatrix( float* projMat );
 
 	const Frustum &getFrustum() const { return _frustum; }
 	const Matrix4f &getViewMat() const { return _viewMat; }
 	const Matrix4f &getProjMat() const { return _projMat; }
 	const Vec3f &getAbsPos() const { return _absPos; }
+	
+	const int getViewportX() const { return _vpX; }
+	const int getViewportY() const { return _vpY; }
+	const int getViewportWidth() const { return _vpWidth; }
+	const int getViewportHeight() const { return _vpHeight; }
 
 private:
 	CameraNode( const CameraNodeTpl &cameraTpl );
@@ -110,6 +116,7 @@ private:
 	int                 _outputBufferIndex;
 	int                 _occSet;
 	bool                _orthographic;  // Perspective or orthographic frustum?
+	bool                _manualProjMat; // Projection matrix manually set?
 
 	friend class SceneManager;
 	friend class Renderer;

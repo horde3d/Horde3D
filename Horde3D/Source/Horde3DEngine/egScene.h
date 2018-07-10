@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -45,7 +45,8 @@ struct SceneNodeTypes
 		Joint,
 		Light,
 		Camera,
-		Emitter
+		Emitter,
+		Compute
 	};
 };
 
@@ -114,6 +115,9 @@ public:
 	virtual void setParamStr( int param, const char* value );
 
 	virtual uint32 calcLodLevel( const Vec3f &viewPoint ) const;
+	virtual bool checkLodCorrectness( uint32 lodLevel ) const;
+
+	bool checkLodSupport() { return _lodSupported; }
 
 	virtual bool canAttach( SceneNode &parent ) const;
 	void markDirty();
@@ -145,7 +149,12 @@ protected:
 
 protected:
 	Matrix4f                    _relTrans, _absTrans;  // Transformation matrices
+	std::vector< SceneNode * >  _children;  // Child nodes
+	std::string                 _name;
+	std::string                 _attachment;  // User defined data
+	BoundingBox                 _bBox;  // AABB in world space
 	SceneNode                   *_parent;  // Parent node
+
 	int                         _type;
 	NodeHandle                  _handle;
 	uint32                      _sgHandle;  // Spatial graph handle
@@ -154,12 +163,8 @@ protected:
 	bool                        _dirty;  // Does the node need to be updated?
 	bool                        _transformed;
 	bool                        _renderable;
+	bool						_lodSupported;
 
-	BoundingBox                 _bBox;  // AABB in world space
-
-	std::vector< SceneNode * >  _children;  // Child nodes
-	std::string                 _name;
-	std::string                 _attachment;  // User defined data
 
 	friend class SceneManager;
 	friend class SpatialGraph;

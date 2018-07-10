@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -19,6 +19,8 @@
 #include "egCamera.h"
 #include "egParticle.h"
 #include "egTexture.h"
+#include "egComputeBuffer.h"
+#include "egComputeNode.h"
 #include <cstdlib>
 #include <cstring>
 #include <string>
@@ -35,13 +37,26 @@
 
 
 // Check some platform-dependent assumptions
-// Note: this function is never called but just wraps the compile time asserts
 static void __ValidatePlatform__()
 {
 	ASSERT_STATIC( sizeof( int64 ) == 8 );
 	ASSERT_STATIC( sizeof( int ) == 4 );
 	ASSERT_STATIC( sizeof( short ) == 2 );
 	ASSERT_STATIC( sizeof( char ) == 1 );
+    
+    // Check if platform endianess detection is correct.
+    union {
+        uint32         u32;
+        unsigned char  bytes[4];
+    } e;
+    e.u32 = 0xAABBCCDD;
+#if defined( PLATFORM_LITTLE_ENDIAN )
+    ASSERT(e.bytes[0] == 0xDD && e.bytes[1] == 0xCC && e.bytes[2] == 0xBB && e.bytes[3] == 0xAA);
+#elif defined( PLATFORM_BIG_ENDIAN )
+    ASSERT(e.bytes[3] == 0xDD && e.bytes[2] == 0xCC && e.bytes[1] == 0xBB && e.bytes[0] == 0xAA);
+#else
+#   error Unknown endianess
+#endif
 }
 
 
@@ -52,7 +67,7 @@ using namespace std;
 bool initialized;
 const char *emptyCString = "";
 std::string emptyString = emptyCString;
-std::string strPool[4];  // String pool for avoiding memory allocations of temporary string objects
+std::string strPool[ 8 ];  // String pool for avoiding memory allocations of temporary string objects
 
 
 inline const string &safeStr( const char *str, int index )
@@ -84,7 +99,7 @@ DLLEXP bool h3dGetError()
 }
 
 
-DLLEXP bool h3dInit()
+DLLEXP bool h3dInit( RenderBackendType::List backendType )
 {
 	if( initialized )
 	{	
@@ -94,7 +109,8 @@ DLLEXP bool h3dInit()
 	}
 	initialized = true;
 
-	return Modules::init();
+    __ValidatePlatform__();
+	return Modules::init( backendType );
 }
 
 
@@ -102,6 +118,21 @@ DLLEXP void h3dRelease()
 {
 	Modules::release();
 	initialized = false;
+}
+
+
+DLLEXP void h3dCompute( int materialRes, const char *context, int groupX, int groupY, int groupZ )
+{
+	Resource *res = Modules::resMan().resolveResHandle( materialRes );
+	APIFUNC_VALIDATE_RES_TYPE( res, ResourceTypes::Material, "h3dDispatchCompute", APIFUNC_RET_VOID );
+
+	if ( groupX <= 0 || groupY <= 0 || groupZ <= 0 )
+	{
+		Modules::log().writeError( "Invalid group values in h3dDispatchCompute" );
+		return;
+	}
+
+	Modules::renderer().dispatchCompute( ( MaterialResource * ) res, safeStr( context, 0 ), groupX, groupY, groupZ );
 }
 
 
@@ -124,6 +155,7 @@ DLLEXP void h3dClear()
 {
 	Modules::sceneMan().removeNode( Modules::sceneMan().getRootNode() );
 	Modules::resMan().clear();
+	MaterialClassCollection::clear();
 }
 
 
@@ -133,7 +165,7 @@ DLLEXP void h3dClear()
 
 DLLEXP const char *h3dGetMessage( int *level, float *time )
 {
-	static string msgText;
+//	static string msgText;
 	static LogMessage msg;
 	
 	if( Modules::log().getMessage( msg ) )
@@ -165,20 +197,9 @@ DLLEXP float h3dGetStat( EngineStats::List param, bool reset )
 }
 
 
-DLLEXP void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG,
-                             float colB, float colA, uint32 materialRes, int flags )
+DLLEXP float h3dGetDeviceCapabilities( RenderDeviceCapabilities::List param )
 {
-	Resource *resObj = Modules::resMan().resolveResHandle( materialRes ); 
-	APIFUNC_VALIDATE_RES_TYPE( resObj, ResourceTypes::Material, "h3dShowOverlays", APIFUNC_RET_VOID );
-
-	float rgba[4] = { colR, colG, colB, colA };
-	Modules::renderer().showOverlays( verts, (uint32)vertCount, rgba, (MaterialResource *)resObj, flags );
-}
-
-
-DLLEXP void h3dClearOverlays()
-{
-	Modules::renderer().clearOverlays();
+	return getRenderDeviceCapabilities( param );
 }
 
 
@@ -257,8 +278,14 @@ DLLEXP bool h3dLoadResource( ResHandle res, const char *data, int size )
 {
 	Resource *resObj = Modules::resMan().resolveResHandle( res );
 	APIFUNC_VALIDATE_RES( resObj, "h3dLoadResource", false );
-	
-	Modules::log().writeInfo( "Loading resource '%s'", resObj->getName().c_str() );
+    if( resObj->isLoaded() )
+    {
+        Modules::log().writeWarning( "Resource '%s' already loaded", resObj->getName().c_str() );
+        // True or false?
+        return false;
+    }
+    else
+        Modules::log().writeInfo( "Loading resource '%s'", resObj->getName().c_str() );
 	return resObj->load( data, size );
 }
 
@@ -390,9 +417,11 @@ DLLEXP ResHandle h3dCreateTexture( const char *name, int width, int height, int 
 }
 
 
-DLLEXP void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble )
+DLLEXP void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble, 
+								   const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble )
 {
-	ShaderResource::setPreambles( safeStr( vertPreamble, 0 ), safeStr( fragPreamble, 1 ) );
+	ShaderResource::setPreambles( safeStr( vertPreamble, 0 ), safeStr( fragPreamble, 1 ), safeStr( geomPreamble, 2 ), 
+								  safeStr( tessControlPreamble, 3 ), safeStr( tessEvalPreamble, 4 ), safeStr( computePreamble, 5 ) );
 }
 
 
@@ -428,7 +457,7 @@ DLLEXP bool h3dGetRenderTargetData( ResHandle pipelineRes, const char *targetNam
 	}
 	else
 	{
-		return gRDI->getRenderBufferData( 0, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+		return Modules::renderer().getRenderDevice()->getRenderBufferData( 0, bufIndex, width, height, compCount, dataBuffer, bufferSize );
 	}
 }
 
@@ -885,6 +914,22 @@ DLLEXP void h3dGetCameraProjMat( NodeHandle cameraNode, float *projMat )
 }
 
 
+DLLEXP void h3dSetCameraProjMat( NodeHandle cameraNode, float *projMat )
+{
+	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( cameraNode );
+	APIFUNC_VALIDATE_NODE_TYPE( sn, SceneNodeTypes::Camera, "h3dSetCameraProjMat", APIFUNC_RET_VOID );
+	if ( projMat == 0x0 )
+	{
+		Modules::setError( "Invalid pointer in h3dSetCameraProjMat" );
+		return;
+	}
+	
+	Modules::sceneMan().updateNodes();
+
+	( ( CameraNode * ) sn )->setProjectionMatrix( projMat );
+}
+
+
 DLLEXP NodeHandle h3dAddEmitterNode( NodeHandle parent, const char *name, ResHandle materialRes,
                                      ResHandle particleEffectRes, int maxParticleCount, int respawnCount )
 {
@@ -920,6 +965,23 @@ DLLEXP bool h3dHasEmitterFinished( NodeHandle emitterNode )
 	return ((EmitterNode *)sn)->hasFinished();
 }
 
+
+DLLEXP NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResHandle materialRes, ResHandle compBufferRes,
+									 int drawType, int elementsCount )
+{
+	SceneNode *parentNode = Modules::sceneMan().resolveNodeHandle( parent );
+	APIFUNC_VALIDATE_NODE( parentNode, "h3dAddComputeNode", 0 );
+	Resource *matRes = Modules::resMan().resolveResHandle( materialRes );
+	APIFUNC_VALIDATE_RES_TYPE( matRes, ResourceTypes::Material, "h3dAddComputeNode", 0 );
+	Resource *cbRes = Modules::resMan().resolveResHandle( compBufferRes );
+	APIFUNC_VALIDATE_RES_TYPE( cbRes, ResourceTypes::ComputeBuffer, "h3dAddComputeNode", 0 );
+
+	ComputeNodeTpl tpl( safeStr( name, 0 ), ( ComputeBufferResource * ) cbRes, ( MaterialResource * ) matRes, 
+						drawType, elementsCount );
+
+	SceneNode *sn = Modules::sceneMan().findType( SceneNodeTypes::Compute )->factoryFunc( tpl );
+	return Modules::sceneMan().addNode( sn, *parentNode );
+}
 
 // =================================================================================================
 // DLL entry point

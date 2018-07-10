@@ -2,7 +2,7 @@
 //
 // Horde3D Terrain Extension
 // --------------------------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz and Volker Wiendl
+// Copyright (C) 2006-2016 Nicolas Schulz, Volker Wiendl and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -30,16 +30,26 @@ bool ExtTerrain::init()
 		TerrainNode::parsingFunc, TerrainNode::factoryFunc );
 	Modules::renderer().registerRenderFunc( SNT_TerrainNode, TerrainNode::renderFunc );
 
+	TerrainNode::uni_terBlockParams = Modules::renderer().registerEngineUniform( "terBlockParams" );
+
 	// Create vertex layout
 	VertexLayoutAttrib attribs[2] = {
 		{"vertPos", 0, 3, 0},
 		{"terHeight", 1, 1, 0}
 	};
-	TerrainNode::vlTerrain = gRDI->registerVertexLayout( 2, attribs );
+	TerrainNode::vlTerrain = Modules::renderer().getRenderDevice()->registerVertexLayout( 2, attribs );
 
 	// Upload default shader used for debug view
-	Modules::renderer().createShaderComb(
-		vsTerrainDebugView, fsTerrainDebugView, TerrainNode::debugViewShader );
+	if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGL2 )
+	{
+		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+                                              vsTerrainDebugView, fsTerrainDebugView, 0, 0, 0, 0 );
+	} 
+	else
+	{
+		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+                                              vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, 0, 0, 0, 0 );
+	}
 	
 	return true;
 }

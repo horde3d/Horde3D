@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -25,6 +25,9 @@ namespace Horde3D {
 
 using namespace std;
 
+// *************************************************************************************************
+// Class PipelineResource
+// *************************************************************************************************
 
 PipelineResource::PipelineResource( const string &name, int flags ) :
 	Resource( ResourceTypes::Pipeline, name, flags )
@@ -103,7 +106,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 				if( !renderTarget ) return "Reference to undefined render target in SwitchTarget";
 			}
 
-			stage.commands.push_back( PipelineCommand( PipelineCommands::SwitchTarget ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::SwitchTarget ) );
 			stage.commands.back().params.resize( 1 );
 			stage.commands.back().params[0].setPtr( renderTarget );
 		}
@@ -115,7 +118,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			void *renderTarget = findRenderTarget( node1.getAttribute( "sourceRT" ) );
 			if( !renderTarget ) return "Reference to undefined render target in BindBuffer";
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::BindBuffer ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::BindBuffer ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 3 );
 			params[0].setPtr( renderTarget );
@@ -124,11 +127,11 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 		}
 		else if( strcmp( node1.getName(), "UnbindBuffers" ) == 0 )
 		{
-			stage.commands.push_back( PipelineCommand( PipelineCommands::UnbindBuffers ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::UnbindBuffers ) );
 		}
 		else if( strcmp( node1.getName(), "ClearTarget" ) == 0 )
 		{
-			stage.commands.push_back( PipelineCommand( PipelineCommands::ClearTarget ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::ClearTarget ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 9 );
 			params[0].setBool( false );
@@ -177,21 +180,12 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			else if( _stricmp( orderStr, "BACK_TO_FRONT" ) == 0 ) order = RenderingOrder::BackToFront;
 			else if( _stricmp( orderStr, "NONE" ) == 0 ) order = RenderingOrder::None;
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DrawGeometry ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DrawGeometry ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 3 );			
 			params[0].setString( node1.getAttribute( "context" ) );
-			params[1].setString( node1.getAttribute( "class", "" ) );
+			params[1].setInt( MaterialClassCollection::addClass( node1.getAttribute( "class", "" ) ) );
 			params[2].setInt( order );
-		}
-		else if( strcmp( node1.getName(), "DrawOverlays" ) == 0 )
-		{
-			if( !node1.getAttribute( "context" ) ) return "Missing DrawOverlays attribute 'context'";
-			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DrawOverlays ) );
-			vector< PipeCmdParam > &params = stage.commands.back().params;
-			params.resize( 1 );
-			params[0].setString( node1.getAttribute( "context" ) );
 		}
 		else if( strcmp( node1.getName(), "DrawQuad" ) == 0 )
 		{
@@ -201,7 +195,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			uint32 matRes = Modules::resMan().addResource(
 				ResourceTypes::Material, node1.getAttribute( "material" ), 0, false );
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DrawQuad ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DrawQuad ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 2 );
 			params[0].setResource( Modules::resMan().resolveResHandle( matRes ) );
@@ -215,22 +209,42 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			else if( _stricmp( orderStr, "BACK_TO_FRONT" ) == 0 ) order = RenderingOrder::BackToFront;
 			else if( _stricmp( orderStr, "NONE" ) == 0 ) order = RenderingOrder::None;
 
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DoForwardLightLoop ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DoForwardLightLoop ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 4 );
 			params[0].setString( node1.getAttribute( "context", "" ) );
-			params[1].setString( node1.getAttribute( "class", "" ) );
+			params[1].setInt( MaterialClassCollection::addClass( node1.getAttribute( "class", "" ) ) );
 			params[2].setBool( _stricmp( node1.getAttribute( "noShadows", "false" ), "true" ) == 0 );
 			params[3].setInt( order );
 		}
 		else if( strcmp( node1.getName(), "DoDeferredLightLoop" ) == 0 )
 		{
-			stage.commands.push_back( PipelineCommand( PipelineCommands::DoDeferredLightLoop ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::DoDeferredLightLoop ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 2 );
 			params[0].setString( node1.getAttribute( "context", "" ) );
 			params[1].setBool( _stricmp( node1.getAttribute( "noShadows", "false" ), "true" ) == 0 );
 		}
+// 		else if ( strcmp( node1.getName(), "DispatchComputeShader" ) == 0 )
+// 		{
+// 			if ( !node1.getAttribute( "material" ) ) return "Missing DispatchComputeShader attribute 'material'";
+// 			if ( !node1.getAttribute( "context" ) ) return "Missing DispatchComputeShader attribute 'context'";
+// 			if ( !node1.getAttribute( "x" ) ) return "Missing DispatchComputeShader attribute 'x'";
+// 			if ( !node1.getAttribute( "y" ) ) return "Missing DispatchComputeShader attribute 'y'";
+// 			if ( !node1.getAttribute( "z" ) ) return "Missing DispatchComputeShader attribute 'z'";
+// 
+// 			uint32 matRes = Modules::resMan().addResource(
+// 				ResourceTypes::Material, node1.getAttribute( "material" ), 0, false );
+// 
+// 			stage.commands.push_back( PipelineCommand( PipelineCommands::DispatchComputeShader ) );
+// 			vector< PipeCmdParam > &params = stage.commands.back().params;
+// 			params.resize( 5 );
+// 			params[ 0 ].setResource( Modules::resMan().resolveResHandle( matRes ) );
+// 			params[ 1 ].setString( node1.getAttribute( "context", "" ) );
+// 			params[ 2 ].setInt( atoi( node1.getAttribute( "x", "0" ) ) );
+// 			params[ 3 ].setInt( atoi( node1.getAttribute( "y", "0" ) ) );
+// 			params[ 4 ].setInt( atoi( node1.getAttribute( "z", "0" ) ) );
+// 		}
 		else if( strcmp( node1.getName(), "SetUniform" ) == 0 )
 		{
 			if( !node1.getAttribute( "material" ) ) return "Missing SetUniform attribute 'material'";
@@ -239,7 +253,7 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			uint32 matRes = Modules::resMan().addResource(
 				ResourceTypes::Material, node1.getAttribute( "material" ), 0, false );
 			
-			stage.commands.push_back( PipelineCommand( PipelineCommands::SetUniform ) );
+			stage.commands.push_back( PipelineCommand( DefaultPipelineCommands::SetUniform ) );
 			vector< PipeCmdParam > &params = stage.commands.back().params;
 			params.resize( 6 );
 			params[0].setResource( Modules::resMan().resolveResHandle( matRes ) );
@@ -248,6 +262,25 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			params[3].setFloat( (float)atof( node1.getAttribute( "b", "0" ) ) );
 			params[4].setFloat( (float)atof( node1.getAttribute( "c", "0" ) ) );
 			params[5].setFloat( (float)atof( node1.getAttribute( "d", "0" ) ) );
+		}
+		else
+		{
+			// check commands in extensions
+			if ( Modules::pipeMan().registeredCommandsCount() > 0 )
+			{
+				bool result = true;
+			 	PipelineCommand cmd( DefaultPipelineCommands::ExternalCommand );
+				
+				const char *msg = Modules::pipeMan().parseCommand( node1.getName(), &node1, cmd, result );
+				if ( result )
+				{
+					stage.commands.push_back( cmd );
+				}
+				else
+				{
+					return msg;
+				}
+			}
 		}
 
 		node1 = node1.getNextSibling();
@@ -294,6 +327,8 @@ RenderTarget *PipelineResource::findRenderTarget( const string &id ) const
 
 bool PipelineResource::createRenderTargets()
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{
 		RenderTarget &rt = _renderTargets[i];
@@ -302,7 +337,7 @@ bool PipelineResource::createRenderTargets()
 		if( width == 0 ) width = ftoi_r( _baseWidth * rt.scale );
 		if( height == 0 ) height = ftoi_r( _baseHeight * rt.scale );
 		
-		rt.rendBuf = gRDI->createRenderBuffer(
+		rt.rendBuf = rdi->createRenderBuffer(
 			width, height, rt.format, rt.hasDepthBuf, rt.numColBufs, rt.samples );
 		if( rt.rendBuf == 0 ) return false;
 	}
@@ -313,11 +348,13 @@ bool PipelineResource::createRenderTargets()
 
 void PipelineResource::releaseRenderTargets()
 {
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
 	for( uint32 i = 0; i < _renderTargets.size(); ++i )
 	{
 		RenderTarget &rt = _renderTargets[i];
 		if( rt.rendBuf )
-			gRDI->destroyRenderBuffer( rt.rendBuf );
+			rdi->destroyRenderBuffer( rt.rendBuf );
 	}
 }
 
@@ -388,7 +425,7 @@ bool PipelineResource::load( const char *data, int size )
 		{
 			_stages.push_back( PipelineStage() );
 			string errorMsg = parseStage( node2, _stages.back() );
-			if( errorMsg != "" ) 
+			if( !errorMsg.empty() ) 
 				return raiseError( "Error in stage '" + _stages.back().id + "': " + errorMsg );
 			
 			node2 = node2.getNextSibling( "Stage" );
@@ -499,8 +536,59 @@ bool PipelineResource::getRenderTargetData( const string &target, int bufIndex, 
 		else rbObj = rt->rendBuf;
 	}
 	
-	return gRDI->getRenderBufferData(
-		rbObj, bufIndex, width, height, compCount, dataBuffer, bufferSize );
+	return Modules::renderer().getRenderDevice()->getRenderBufferData( rbObj, bufIndex, width, height, 
+																	   compCount, dataBuffer, bufferSize );
+}
+
+// *************************************************************************************************
+// Class ExternalPipelineCommandsManager
+// *************************************************************************************************
+
+
+void ExternalPipelineCommandsManager::registerPipelineCommand( const std::string &commandName, parsePipelineCommandFunc pf, 
+															   executePipelineCommandFunc ef )
+{
+	ASSERT( !commandName.empty() )
+	ASSERT( pf != 0x0 )
+	ASSERT( ef != 0x0 )
+
+	PipelineCommandRegEntry entry;
+	entry.comNameString = commandName;
+	entry.parseFunc = pf;
+	entry.executeFunc = ef;
+	_registeredCommands.emplace_back( entry );
+}
+
+const char * ExternalPipelineCommandsManager::parseCommand( const char *commandName, void *xmlData, PipelineCommand &cmd, bool &success )
+{
+	for ( size_t i = 0; i < _registeredCommands.size(); ++i )
+	{
+		PipelineCommandRegEntry &entry = _registeredCommands[ i ];
+		if ( entry.comNameString.compare( commandName ) == 0 && entry.parseFunc != 0x0 )
+		{
+			const char *msg = entry.parseFunc( commandName, xmlData, cmd );
+			if ( strlen( msg ) == 0 )
+			{
+				cmd.externalCommandID = ( int ) i;
+			}
+			else
+			{
+				success = false;
+			}
+
+			return msg;
+		}
+	}
+
+	return ""; // pipeline command skipped
+}
+
+void ExternalPipelineCommandsManager::executeCommand( const PipelineCommand &command )
+{
+	if ( command.externalCommandID != -1 )
+	{
+		_registeredCommands[ command.externalCommandID ].executeFunc( &command );
+	}
 }
 
 }  // namespace

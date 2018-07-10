@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -145,7 +145,8 @@ struct EngineStats
 		ShadowsGPUTime,
 		ParticleGPUTime,
 		TextureVMem,
-		GeometryVMem
+		GeometryVMem,
+		ComputeGPUTime
 	};
 };
 
@@ -157,6 +158,8 @@ public:
 	StatManager();
 	~StatManager();
 	
+	bool init();	// Should be called after Renderer initialization
+
 	float getStat( int param, bool reset );
 	void incStat( int param, float value );
 	Timer *getTimer( int param );
@@ -177,9 +180,28 @@ protected:
 	GPUTimer  *_defLightsGPUTimer;
 	GPUTimer  *_shadowsGPUTimer;
 	GPUTimer  *_particleGPUTimer;
+	GPUTimer  *_computeGPUTimer;
 
 	friend class ProfSample;
 };
+
+// =================================================================================================
+// Render Device Capabilities
+// =================================================================================================
+
+struct RenderDeviceCapabilities
+{
+	enum List
+	{
+		GeometryShaders = 200,
+		Tessellation,
+		Compute
+	};
+};
+
+// =================================================================================================
+
+float getRenderDeviceCapabilities( int param );
 
 }
 #endif // _egCom_H_

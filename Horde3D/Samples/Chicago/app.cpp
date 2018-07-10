@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -25,7 +25,7 @@ using namespace std;
 
 
 ChicagoSample::ChicagoSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Chicago - Horde3D Sample" ),
+    SampleApplication( argc, argv, "Chicago - Horde3D Sample", H3DRenderDevice::OpenGL2 ),
     _crowdSim(0)
 {
     _x = 15; _y = 3; _z = 20;

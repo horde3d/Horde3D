@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Horde3D Editor
+Comment=Create 3D scenes compatible with Horde3D graphics engine
+Keywords=3D;editor;programming;scene;
+GenericName=Editor
+Exec="${CMAKE_INSTALL_PREFIX}/bin/Horde3DEditor" %u
+Icon=horde3deditor
+Terminal=false
+StartupNotify=true
+Type=Application
+Categories=Graphics;Development;
+MimeType=application/x-executable;

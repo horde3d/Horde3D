@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -26,5 +26,7 @@
 // Check for errors and invalid data during each drawcall (requires DEBUG config)
 //#define H3D_VALIDATE_DRAWCALLS
 
+// Specifies the number of material subclass levels (eg. Level1.Level2.Level3.Level4.Level5)
+#define H3D_MATERIAL_HIERARCHY_LEVELS 5
 
 #endif // _h3d_config_H_

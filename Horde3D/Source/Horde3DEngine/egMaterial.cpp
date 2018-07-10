@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -16,6 +16,7 @@
 #include "egCom.h"
 #include "utXML.h"
 #include <cstring>
+#include <algorithm>
 
 #include "utDebug.h"
 
@@ -23,6 +24,17 @@
 namespace Horde3D {
 
 using namespace std;
+
+void MaterialResource::initializationFunc()
+{
+	MaterialClassCollection::init();
+}
+
+
+void MaterialResource::releaseFunc()
+{
+	MaterialClassCollection::release();
+}
 
 
 MaterialResource::MaterialResource( const string &name, int flags ) :
@@ -53,7 +65,7 @@ void MaterialResource::initDefault()
 	_shaderRes = 0x0;
 	_combMask = 0;
 	_matLink = 0x0;
-	_class = "";
+	_classID = 0;
 }
 
 
@@ -63,6 +75,7 @@ void MaterialResource::release()
 	_matLink = 0x0;
 	for( uint32 i = 0; i < _samplers.size(); ++i ) _samplers[i].texRes = 0x0;
 
+	_buffers.clear();
 	_samplers.clear();
 	_uniforms.clear();
 	_shaderFlags.clear();
@@ -98,7 +111,7 @@ bool MaterialResource::load( const char *data, int size )
 		return raiseError( "Not a material resource file" );
 
 	// Class
-    _class = rootNode.getAttribute( "class", "" );
+    _classID = MaterialClassCollection::addClass( rootNode.getAttribute( "class", "" ) );
 
 	// Link
 	if( strcmp( rootNode.getAttribute( "link", "" ), "" ) != 0 )
@@ -190,6 +203,25 @@ bool MaterialResource::load( const char *data, int size )
 		node1 = node1.getNextSibling( "Uniform" );
 	}
 	
+	// Data (compute/texture) buffers
+	node1 = rootNode.getFirstChild( "DataBuffer" );
+	while ( !node1.isEmpty() )
+	{
+		if ( node1.getAttribute( "name" ) == 0x0 ) return raiseError( "Missing DataBuffer attribute 'name'" );
+		if ( node1.getAttribute( "source" ) == 0x0 ) return raiseError( "Missing DataBuffer attribute 'source'" );
+
+		MatBuffer buf;
+		buf.name = node1.getAttribute( "name" );
+
+		uint32 compBuffer = Modules::resMan().addResource(
+			ResourceTypes::ComputeBuffer, node1.getAttribute( "source" ), 0, false );
+		buf.compBufRes = ( ComputeBufferResource * ) Modules::resMan().resolveResHandle( compBuffer );
+
+		_buffers.push_back( buf );
+
+		node1 = node1.getNextSibling( "DataBuffer" );
+	}
+
 	return true;
 }
 
@@ -212,41 +244,9 @@ bool MaterialResource::setUniform( const string &name, float a, float b, float c
 }
 
 
-bool MaterialResource::isOfClass( const string &theClass ) const
+bool MaterialResource::isOfClass( int theClassID ) const
 {
-	static string theClass2;
-	
-	if( theClass != "" )
-	{
-		if( theClass[0]	!= '~' )
-		{
-			if( _class.find( theClass, 0 ) != 0 ) return false;
-			if( _class.length() > theClass.length() && _class[theClass.length()] != '.' ) return false;
-		}
-		else	// Not operator
-		{
-			theClass2 = theClass.substr( 1, theClass.length() - 1);
-			
-			if( _class.find( theClass2, 0 ) == 0 )
-			{
-				if( _class.length() == theClass2.length() )
-				{
-					return false;
-				}
-				else
-				{
-					if( _class[theClass2.length()] == '.' ) return false;
-				}
-			}
-		}
-	}
-	else
-	{
-		// Special name which is hidden when drawing objects of "all classes"
-		if( _class == "_DEBUG_" ) return false;
-	}
-
-	return true;
+	return MaterialClassCollection::isOfClass( theClassID, _classID );
 }
 
 
@@ -285,7 +285,7 @@ int MaterialResource::getElemParamI( int elem, int elemIdx, int param ) const
 			switch( param )
 			{
 			case MaterialResData::SampTexResI:
-				return _samplers[elemIdx].texRes->getHandle();
+				return _samplers[elemIdx].texRes ? _samplers[elemIdx].texRes->getHandle() : 0;
 			}
 		}
 		break;
@@ -343,7 +343,7 @@ void MaterialResource::setElemParamI( int elem, int elemIdx, int param, int valu
 			{
 			case MaterialResData::SampTexResI:
 				Resource *res = Modules::resMan().resolveResHandle( value );
-				if( res != 0x0 && res->getType() == ResourceTypes::Texture )
+				if( res == 0 || (res != 0x0 && res->getType() == ResourceTypes::Texture) )
 					_samplers[elemIdx].texRes = (TextureResource *)res;
 				else
 					Modules::setError( "Invalid handle in h3dSetResParamI for H3DMatRes::SampTexResI" );
@@ -411,7 +411,7 @@ const char *MaterialResource::getElemParamStr( int elem, int elemIdx, int param 
 		switch( param )
 		{
 		case MaterialResData::MatClassStr:
-			return _class.c_str();
+			return MaterialClassCollection::getClassString( _classID );
 		}
 		break;
 	case MaterialResData::SamplerElem:
@@ -448,7 +448,7 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 		switch( param )
 		{
 		case MaterialResData::MatClassStr:
-			_class = value;
+			_classID = MaterialClassCollection::addClass( std::string( value ) );
 			return;
 		}
 		break;
@@ -456,5 +456,232 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 	
 	Resource::setElemParamStr( elem, elemIdx, param, value );
 }
+
+// =================================================================================================
+// MaterialClassCollection
+// =================================================================================================
+std::vector< MaterialHierarchy > MaterialClassCollection::_matHierarchy;
+
+std::string MaterialClassCollection::_returnedClassString;
+
+const int numberOfCharactersInClass = 64;
+//std::vector< std::string > MaterialClassCollection::_classes;
+
+void MaterialClassCollection::init()
+{
+	_matHierarchy.reserve( 50 );
+	_returnedClassString.reserve( 512 );
+
+	// add default class
+	MaterialHierarchy hierarchy;
+	_matHierarchy.push_back( std::move( hierarchy ) );
+}
+
+
+void MaterialClassCollection::release()
+{
+	_matHierarchy.clear();
+}
+
+
+void MaterialClassCollection::clear()
+{
+	_matHierarchy.clear();
+	
+	// add default class
+	MaterialHierarchy hierarchy;
+	_matHierarchy.push_back( std::move( hierarchy ) );
+}
+
+
+int MaterialClassCollection::addClass( const std::string &matClass )
+{
+	if ( matClass.empty() ) return 0; // Most common case - return default class
+
+	// Check level count (number of dots + 1) in a class
+	size_t numberOfLevels = ( size_t ) std::count( matClass.begin(), matClass.end(), '.' ) + 1;
+	if ( numberOfLevels > H3D_MATERIAL_HIERARCHY_LEVELS )
+	{
+		Modules::setError( "Number of hierarchy levels in material class exceeds the maximum value. Material class cannot be registered." );
+		return 0;
+	}
+
+	bool inversed = false;
+	if ( !matClass.empty() && matClass[ 0 ] == '~' ) inversed = true; 
+
+	// TODO: implement hashing
+
+	// Split material class levels to separate strings
+	char tmpStrings[ H3D_MATERIAL_HIERARCHY_LEVELS ][ numberOfCharactersInClass ] = { '\0' };
+	std::string subString; subString.reserve( 256 );
+	int lastDotPosition = 0;
+
+	for ( size_t i = 0; i < numberOfLevels; ++i )
+	{
+		int dotPos = matClass.find( '.', lastDotPosition );
+		if ( i == 0 && inversed ) lastDotPosition = 1; // handle case with ~ character present. It should be removed from the final string
+		
+		subString = matClass.substr( lastDotPosition, dotPos );
+		if ( subString.length() > numberOfCharactersInClass - 1 )
+		{
+			// Truncate string
+			subString.erase( numberOfCharactersInClass - 1, subString.length() - numberOfCharactersInClass - 1 );
+		}
+		
+		strcpy( tmpStrings[ i ], subString.c_str() );
+
+		lastDotPosition = dotPos + 1;
+	}
+
+	// Try to find class in the collection
+	bool exactMatch = true;
+	int partialMatchIds[ H3D_MATERIAL_HIERARCHY_LEVELS ] = {};
+	for ( size_t i = 0; i < _matHierarchy.size(); i++ )
+	{
+		MaterialHierarchy &hierarchy = _matHierarchy[ i ];
+
+		for ( size_t j = 0; j < H3D_MATERIAL_HIERARCHY_LEVELS; j++ )
+		{
+			if ( strcmp( hierarchy.value[ j ].name, tmpStrings[ j ] ) != 0 )
+			{
+				exactMatch = false;
+				break;
+			}
+			else
+			{
+				// save partial matches in order to save time if new class record would be created
+				partialMatchIds[ j ] = hierarchy.value[ j ].index;
+			}
+		}
+
+		if ( exactMatch )
+		{
+			return inversed ? i * -1 : i; // minus in index indicates that class should be excluded from processing
+		}
+		else exactMatch = true; // reset flag for next iteration
+	}
+
+	// Class is not found - create new record
+	// Hierarchy is created for each level
+	for ( size_t levels = 0; levels < numberOfLevels; ++levels )
+	{
+		if ( partialMatchIds[ levels ] != 0 ) 
+		{
+			continue;
+		}
+
+		MaterialHierarchy hierarchy;
+
+		for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
+		{
+			strcpy( hierarchy.value[ i ].name, tmpStrings[ i ] );
+
+			if ( partialMatchIds[ i ] != 0 ) hierarchy.value[ i ].index = partialMatchIds[ i ];
+			else
+			{
+				if ( i < numberOfLevels ) hierarchy.value[ i ].index = _matHierarchy.size();
+				else hierarchy.value[ i ].index = 0; // iterator is greater than the number of levels in the class, so use default class for later hierarchy levels
+			}
+		}
+
+		_matHierarchy.push_back( std::move( hierarchy ) );
+	}
+
+	int result = inversed ? ( _matHierarchy.size() - 1 ) * -1 : _matHierarchy.size() - 1;
+	return result;
+}
+
+
+const char * MaterialClassCollection::getClassString( int currentMaterialClass )
+{
+	if ( currentMaterialClass < 0 ) currentMaterialClass *= -1;
+
+	ASSERT( ( size_t ) currentMaterialClass < _matHierarchy.size() )
+
+	_returnedClassString.clear();
+
+	// Combine different hierarchy levels to one string
+	MaterialHierarchy &hierarchy = _matHierarchy[ currentMaterialClass ];
+	bool previousStepSuccessful = false;
+
+	for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
+	{
+		if ( !strcmp( hierarchy.value[ i ].name, "" ) == 0 )
+		{
+			if ( previousStepSuccessful ) _returnedClassString.append( "." );
+
+			_returnedClassString.append( hierarchy.value[ i ].name );
+			previousStepSuccessful = true;
+		}
+		else previousStepSuccessful = false;
+	}
+
+	return _returnedClassString.c_str();
+}
+
+bool MaterialClassCollection::isOfClass( int requestedMaterialClass, int currentMaterialClass )
+{
+	if ( requestedMaterialClass == 0 || ( requestedMaterialClass == currentMaterialClass ) )
+		return true;
+
+	// Check if index is negative - class exclusion is required
+	bool exclusion = false;
+	if ( requestedMaterialClass < 0 ) 
+	{
+		exclusion = true;
+		requestedMaterialClass *= -1; // make variable positive as it is used later for array index comparison
+	}
+
+	ASSERT( ( size_t ) requestedMaterialClass < _matHierarchy.size() );
+
+	MaterialHierarchy &hierarchy = _matHierarchy[ ( size_t ) currentMaterialClass ];
+
+	// Check if requested class is part of the hierarchy of the current class
+	for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
+	{
+		if ( hierarchy.value[ i ].index == requestedMaterialClass )
+		{
+			if ( exclusion ) return false;
+			else return true;
+		}
+	}
+
+	return exclusion ? true : false;
+}
+
+
+// 	static string theClass2;
+// 	
+// 	if( theClass != "" )
+// 	{
+// 		if( theClass[0]	!= '~' )
+// 		{
+// 			if( _class.find( theClass, 0 ) != 0 ) return false;
+// 			if( _class.length() > theClass.length() && _class[theClass.length()] != '.' ) return false;
+// 		}
+// 		else	// Not operator
+// 		{
+// 			theClass2 = theClass.substr( 1, theClass.length() - 1);
+// 			
+// 			if( _class.find( theClass2, 0 ) == 0 )
+// 			{
+// 				if( _class.length() == theClass2.length() )
+// 				{
+// 					return false;
+// 				}
+// 				else
+// 				{
+// 					if( _class[theClass2.length()] == '.' ) return false;
+// 				}
+// 			}
+// 		}
+// 	}
+// 	else
+// 	{
+// 		// Special name which is hidden when drawing objects of "all classes"
+// 		if( _class == "_DEBUG_" ) return false;
+// 	}
+// 
+// 	return true;
 
 }  // namespace

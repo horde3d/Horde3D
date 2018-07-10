@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -107,45 +107,74 @@ int Resource::findElem( int elem, int param, const char *value ) const
 
 int Resource::getElemCount( int elem ) const
 {
+	H3D_UNUSED_VAR(elem);
 	Modules::setError( "Invalid elem in h3dGetResElemCount" );
 	return 0;
 }
 
 int Resource::getElemParamI( int elem, int elemIdx, int param ) const
 {
+	H3D_UNUSED_VAR(elem);
+	H3D_UNUSED_VAR(elemIdx);
+	H3D_UNUSED_VAR(param);
 	Modules::setError( "Invalid elem or param in h3dGetResParamI" );
 	return Math::MinInt32;
 }
 
 void Resource::setElemParamI( int elem, int elemIdx, int param, int value )
 {
+	H3D_UNUSED_VAR(elem);
+	H3D_UNUSED_VAR(elemIdx);
+	H3D_UNUSED_VAR(param);
+	H3D_UNUSED_VAR(value);
 	Modules::setError( "Invalid elem or param in h3dSetResParamI" );
 }
 
 float Resource::getElemParamF( int elem, int elemIdx, int param, int compIdx ) const
 {
+	H3D_UNUSED_VAR(elem);
+	H3D_UNUSED_VAR(elemIdx);
+	H3D_UNUSED_VAR(param);
+	H3D_UNUSED_VAR(compIdx);
 	Modules::setError( "Invalid elem, param or component in h3dGetResParamF" );
 	return Math::NaN;
 }
 
 void Resource::setElemParamF( int elem, int elemIdx, int param, int compIdx, float value )
 {
+	H3D_UNUSED_VAR(elem);
+	H3D_UNUSED_VAR(elemIdx);
+	H3D_UNUSED_VAR(param);
+	H3D_UNUSED_VAR(compIdx);
+	H3D_UNUSED_VAR(value);
 	Modules::setError( "Invalid elem, param or component in h3dSetResParamF" );
 }
 
 const char *Resource::getElemParamStr( int elem, int elemIdx, int param ) const
 {
+	H3D_UNUSED_VAR(elem);
+	H3D_UNUSED_VAR(elemIdx);
+	H3D_UNUSED_VAR(param);
 	Modules::setError( "Invalid elem or param in h3dGetResParamStr" );
 	return "";
 }
 
 void Resource::setElemParamStr( int elem, int elemIdx, int param, const char *value )
 {
+	H3D_UNUSED_VAR(elem);
+	H3D_UNUSED_VAR(elemIdx);
+	H3D_UNUSED_VAR(param);
+	H3D_UNUSED_VAR(value);
 	Modules::setError( "Invalid elem or param in h3dSetResParamStr" );
 }
 
 void *Resource::mapStream( int elem, int elemIdx, int stream, bool read, bool write )
 {
+	H3D_UNUSED_VAR(elem);
+	H3D_UNUSED_VAR(elemIdx);
+	H3D_UNUSED_VAR(stream);
+	H3D_UNUSED_VAR(read);
+	H3D_UNUSED_VAR(write);
 	Modules::setError( "Invalid operation in h3dMapResStream" );
 	return 0x0;
 }
@@ -382,10 +411,12 @@ void ResourceManager::releaseUnusedResources()
 	// Find unused resources and release dependencies
 	for( uint32 i = 0; i < _resources.size(); ++i )
 	{
-		if( _resources[i] != 0x0 && _resources[i]->_userRefCount == 0 && _resources[i]->_refCount == 0 )
+
+        Resource* res = _resources[i];
+        if( res != 0x0 && res->_userRefCount == 0 && res->_refCount == 0 )
 		{
 			killList.push_back( i );
-			_resources[i]->release();
+            res->release();
 		}
 	}
 	

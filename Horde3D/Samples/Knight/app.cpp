@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -21,11 +21,13 @@
 #include <math.h>
 #include <iomanip>
 
+#include "Horde3DOverlays.h"
+
 using namespace std;
 
 
 KnightSample::KnightSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Knight - Horde3D Sample" ),
+    SampleApplication( argc, argv, "Knight - Horde3D Sample", H3DRenderDevice::OpenGL2 ),
     _animTime(0),
     _weight(1.0f)
 {
@@ -44,7 +46,8 @@ bool KnightSample::initResources()
         return false;
 
 	// 1. Add resources
-	
+	h3dSetOption( H3DOptions::FastAnimation, 0 );
+
 	// Environment
     H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/sphere/sphere.scene.xml", 0 );
 
@@ -162,6 +165,6 @@ void KnightSample::update()
 		// Display weight
 		_text.str( "" );
 		_text << fixed << setprecision( 2 ) << "Weight: " << _weight;
-        h3dutShowText( _text.str().c_str(), 0.175f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( _text.str().c_str(), 0.175f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 }

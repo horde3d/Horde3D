@@ -8,6 +8,8 @@ set(HORDE3D_SOURCES
 	egAnimation.cpp
 	egCamera.cpp
 	egCom.cpp
+	egComputeNode.cpp
+	egComputeBuffer.cpp
 	egExtensions.cpp
 	egGeometry.cpp
 	egLight.cpp
@@ -18,7 +20,8 @@ set(HORDE3D_SOURCES
 	egParticle.cpp
 	egPipeline.cpp
 	egPrimitives.cpp
-	egRendererBase.cpp
+	egRendererBaseGL2.cpp
+	egRendererBaseGL4.cpp
 	egRenderer.cpp
 	egResource.cpp
 	egScene.cpp
@@ -32,6 +35,8 @@ set(HORDE3D_SOURCES
 	egAnimation.h
 	egCamera.h
 	egCom.h
+	egComputeNode.h
+	egComputeBuffer.h
 	egExtensions.h
 	egGeometry.h
 	egLight.h
@@ -44,6 +49,8 @@ set(HORDE3D_SOURCES
 	egPrimitives.h
 	egRenderer.h
 	egRendererBase.h
+	egRendererBaseGL2.h
+	egRendererBaseGL4.h
 	egResource.h
 	egScene.h
 	egSceneGraphRes.h
@@ -52,6 +59,7 @@ set(HORDE3D_SOURCES
 	utImage.h
 	utTimer.h
 	utOpenGL.h
+        ../Shared/utPlatform.h
 	../../Bindings/C++/Horde3D.h
 
 	${HORDE3D_EXTENSION_SOURCES}
@@ -73,7 +81,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	target_link_libraries(Horde3D GL ${HORDE3D_EXTENSION_LIBS})
+	FIND_PACKAGE(OpenGL REQUIRED)
+        FIND_PACKAGE(EGL )
+        if( EGL_FOUND )
+            add_definitions( -DHAVE_EGL ${EGL_DEFINITIONS} )
+        endif( EGL_FOUND )
+        target_link_libraries(Horde3D ${OPENGL_gl_LIBRARY} ${EGL_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
 	install(TARGETS Horde3D
 		RUNTIME DESTINATION bin
 		LIBRARY DESTINATION lib
@@ -84,7 +97,7 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	set_target_properties(Horde3D PROPERTIES
 		FRAMEWORK TRUE
-		PRIVATE_HEADER "egAnimatables.h;egAnimation.h;egCamera.h;egCom.h;egExtensions.h;egGeometry.h;egLight.h;egMaterial.h;egModel.h;egModules.h;egParticle.h;egPipeline.h;egPrerequisites.h;egPrimitives.h;egRenderer.h;egRendererBase.h;egResource.h;egScene.h;egSceneGraphRes.h;egShader.h;egTexture.h;utImage.h;utTimer.h;utOpenGL.h;"
+		PRIVATE_HEADER "egAnimatables.h;egAnimation.h;egCamera.h;egCom.h;egExtensions.h;egGeometry.h;egLight.h;egMaterial.h;egModel.h;egModules.h;egParticle.h;egPipeline.h;egPrerequisites.h;egPrimitives.h;egRenderer.h;egRendererBase.h;egRendererBaseGL2.h;egRendererBaseGL4.h;egResource.h;egScene.h;egSceneGraphRes.h;egShader.h;egTexture.h;utImage.h;utTimer.h;utOpenGL.h;"
 		PUBLIC_HEADER "../../Bindings/C++/Horde3D.h")
 	
 	FIND_LIBRARY(OPENGL_LIBRARY OpenGL)

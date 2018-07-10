@@ -2,7 +2,7 @@
 //
 // Horde3D Terrain Extension
 // --------------------------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz and Volker Wiendl
+// Copyright (C) 2006-2016 Nicolas Schulz, Volker Wiendl and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -28,6 +28,9 @@ const int SNT_TerrainNode = 100;
 
 extern const char *vsTerrainDebugView;
 extern const char *fsTerrainDebugView;	
+
+extern const char *vsTerrainDebugViewGL4;
+extern const char *fsTerrainDebugViewGL4;
 
 struct TerrainNodeTpl : public SceneNodeTpl
 {
@@ -73,16 +76,16 @@ public:
 
 	static SceneNodeTpl *parsingFunc( std::map< std::string, std::string > &attribs );
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
-	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
-	bool canAttach( SceneNode &parent );
-	int getParamI( int param );
-	void setParamI( int param, int value );
-	float getParamF( int param, int compIdx );
-	void setParamF( int param, int compIdx, float value );
+	virtual bool canAttach( SceneNode &parent ) const;
+	virtual int getParamI( int param ) const;
+	virtual void setParamI( int param, int value );
+	virtual float getParamF( int param, int compIdx ) const;
+	virtual void setParamF( int param, int compIdx, float value );
 
-	bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
+	virtual bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
 
 	ResHandle createGeometryResource( const std::string &name, float lodThreshold );
 	
@@ -92,11 +95,12 @@ public:
 public:
 	static uint32 vlTerrain;
 	static ShaderCombination debugViewShader;
+	static int uni_terBlockParams;
 
 protected:
 	TerrainNode( const TerrainNodeTpl &terrainTpl );
 	
-	void onPostUpdate();
+	virtual void onPostUpdate();
 	
 	bool updateHeightData( TextureResource &hmap );
 	void calcMaxLevel();
@@ -134,6 +138,7 @@ protected:
 	BoundingBox        _localBBox;
 
 	std::vector< BlockInfo >  _blockTree;
+	uint32 _geometry;
 };
 
 }  // namespace

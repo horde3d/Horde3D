@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -19,7 +19,8 @@
 #include "egModel.h"
 #include <vector>
 #include <algorithm>
-
+#include <string>
+#include <functional>
 
 namespace Horde3D {
 
@@ -44,7 +45,7 @@ extern const char *fsOccBox;
 // =================================================================================================
 
 typedef void (*RenderFunc)( uint32 firstItem, uint32 lastItem, const std::string &shaderContext,
-                            const std::string &theClass, bool debugView, const Frustum *frust1,
+                            int theClass, bool debugView, const Frustum *frust1,
                             const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 struct RenderFuncListItem
@@ -53,30 +54,17 @@ struct RenderFuncListItem
 	RenderFunc  renderFunc;
 };
 
-// =================================================================================================
-
-struct OverlayBatch
+struct RenderBackendType
 {
-	PMaterialResource  materialRes;
-	uint32             firstVert, vertCount;
-	float              colRGBA[4];
-	int                flags;
-	
-	OverlayBatch() {}
-
-	OverlayBatch( uint32 firstVert, uint32 vertCount, float *col, MaterialResource *materialRes, int flags ) :
-		materialRes( materialRes ), firstVert( firstVert ), vertCount( vertCount ), flags( flags )
+	enum List
 	{
-		colRGBA[0] = col[0]; colRGBA[1] = col[1]; colRGBA[2] = col[2]; colRGBA[3] = col[3];
-	}
- };
-
-struct OverlayVert
-{
-	float  x, y;  // Position
-	float  u, v;  // Texture coordinates
+		OpenGL2 = 2,
+		OpenGL4 = 4,
+		OpenGLES = 8
+	};
 };
 
+// =================================================================================================
 
 struct ParticleVert
 {
@@ -112,6 +100,45 @@ struct PipeSamplerBinding
 	uint32  bufIndex;
 };
 
+struct EngineUniform
+{
+	std::string uniformName;
+	size_t	hash;
+
+	EngineUniform( const char *uniName ) 
+	{
+		uniformName.assign( uniName );
+		hash = std::hash< std::string >{}( uniformName );
+	}
+
+	bool operator==( const EngineUniform &uni ) const
+	{
+		return hash == uni.hash;
+	}
+};
+
+struct DefaultShaderUniforms
+{
+	int                 frameBufSize = -1;
+	int                 viewMat = -1, viewMatInv = -1, projMat = -1, viewProjMat = -1, 
+						viewProjMatInv = -1, viewerPos = -1;
+
+	int                 worldMat = -1, worldNormalMat = -1, nodeId = -1, customInstData = -1;
+	int                 skinMatRows = -1;
+	int                 lightPos = -1, lightDir = -1, lightColor = -1;
+	int                 shadowSplitDists = -1, shadowMats = -1, shadowMapSize = -1, shadowBias = -1;
+	int                 parPosArray = -1, parSizeAndRotArray = -1, parColorArray = -1;
+};
+
+struct DefaultVertexLayouts
+{
+	enum List
+	{
+		Position = 0,
+		Particle,
+		Model
+	};
+};
 
 class Renderer
 {
@@ -120,17 +147,26 @@ public:
 	~Renderer();
 
 	void registerRenderFunc( int nodeType, RenderFunc rf );
-	
-	unsigned char *useScratchBuf( uint32 minSize );
-	
-	bool init();
+
+	int registerEngineUniform( const char *uniName );
+	int getEngineUniform( const char *uniName );
+	uint32 totalEngineUniforms() { return ( uint32 )_engineUniforms.size(); }
+	DefaultShaderUniforms &getDefShaderUniIndices() { return _uni; }
+
+	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
+
+	unsigned char *useScratchBuf( uint32 minSize, uint32 alignment );
+	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
+
+	bool init( RenderBackendType::List type );
 	void initStates();
 
 	void drawAABB( const Vec3f &bbMin, const Vec3f &bbMax );
 	void drawSphere( const Vec3f &pos, float radius );
 	void drawCone( float height, float fov, const Matrix4f &transMat );
 	
-	bool createShaderComb( const char *vertexShader, const char *fragmentShader, ShaderCombination &sc );
+	bool createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
+						   const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader );
 	void releaseShaderComb( ShaderCombination &sc );
 	void setShaderComb( ShaderCombination *sc );
 	void commitGeneralUniforms();
@@ -145,26 +181,29 @@ public:
 	void pushOccProxy( uint32 list, const Vec3f &bbMin, const Vec3f &bbMax, uint32 queryObj )
 		{ _occProxies[list].push_back( OccProxy( bbMin, bbMax, queryObj ) ); }
 	
-	void showOverlays( const float *verts, uint32 vertCount, float *colRGBA,
-	                   MaterialResource *matRes, int flags );
-	void clearOverlays();
-	
-	static void drawMeshes( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+	static void drawMeshes( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
-	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
+	static void drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass, 
+									bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
 	void render( CameraNode *camNode );
 	void finalizeFrame();
+
+	void dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z );
 
 	uint32 getFrameID() const { return _frameID; }
 	ShaderCombination *getCurShader() const { return _curShader; }
 	CameraNode *getCurCamera() const { return _curCamera; }
 	uint32 getQuadIdxBuf() const { return _quadIdxBuf; }
 	uint32 getParticleVBO() const { return _particleVBO; }
+	uint32 getParticleGeometry() const { return _particleGeo; }
+	uint32 getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const;
+
+	int getRenderDeviceType() { return _renderDeviceType; }
 
 protected:
-	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
 	
 	void createPrimitives();
 	
@@ -174,44 +213,56 @@ protected:
 	Matrix4f calcCropMatrix( const Frustum &frustSlice, const Vec3f lightPos, const Matrix4f &lightViewProjMat );
 	void updateShadowMap();
 
-	void drawOverlays( const std::string &shaderContext );
-
 	void bindPipeBuffer( uint32 rbObj, const std::string &sampler, uint32 bufIndex );
 	void clear( bool depth, bool buf0, bool buf1, bool buf2, bool buf3, float r, float g, float b, float a );
 	void drawFSQuad( Resource *matRes, const std::string &shaderContext );
-	void drawGeometry( const std::string &shaderContext, const std::string &theClass,
+	void drawGeometry( const std::string &shaderContext, int theClass,
 	                   RenderingOrder::List order, int occSet );
-	void drawLightGeometry( const std::string &shaderContext, const std::string &theClass,
+	void drawLightGeometry( const std::string &shaderContext, int theClass,
 	                        bool noShadows, RenderingOrder::List order, int occSet );
 	void drawLightShapes( const std::string &shaderContext, bool noShadows, int occSet );
 	
-	void drawRenderables( const std::string &shaderContext, const std::string &theClass, bool debugView,
+	void drawRenderables( const std::string &shaderContext, int theClass, bool debugView,
 		const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 	
 	void renderDebugView();
 	void finishRendering();
 
-protected:
-	std::vector< RenderFuncListItem >  _renderFuncRegistry;
-	
-	unsigned char                      *_scratchBuf;
-	uint32                             _scratchBufSize;
+	RenderDeviceInterface	*createRenderDevice( int type );
+	void					releaseRenderDevice();
 
-	Matrix4f                           _viewMat, _viewMatInv, _projMat, _viewProjMat, _viewProjMatInv;
+protected:
+	
+	RenderDeviceInterface		       *_renderDevice;
+
+	DefaultShaderUniforms			   _uni; // indices of engine uniforms in ShaderCombination uniLoc array
+
+	std::vector< RenderFuncListItem >  _renderFuncRegistry;
 	
 	std::vector< PipeSamplerBinding >  _pipeSamplerBindings;
 	std::vector< char >                _occSets;  // Actually bool
 	std::vector< OccProxy >            _occProxies[2];  // 0: renderables, 1: lights
-	
-	std::vector< OverlayBatch >        _overlayBatches;
-	OverlayVert                        *_overlayVerts;
-	uint32                             _overlayVB;
-	
+
+	std::vector< EngineUniform >	   _engineUniforms; // uniforms, that are used internally by the engine and extensions
+
+	Matrix4f                           _viewMat, _viewMatInv, _projMat, _viewProjMat, _viewProjMatInv;
+
+	unsigned char                      *_scratchBuf;
+	uint32                             _scratchBufSize;
+
+	// standard geometry
+	uint32								_particleGeo;
+	uint32								_cubeGeo;
+	uint32								_sphereGeo;
+	uint32								_coneGeo;
+	uint32								_FSPolyGeo;
+
 	uint32                             _shadowRB;
 	uint32                             _frameID;
 	uint32                             _defShadowMap;
 	uint32                             _quadIdxBuf;
 	uint32                             _particleVBO;
+
 	MaterialResource                   *_curStageMatLink;
 	CameraNode                         *_curCamera;
 	LightNode                          *_curLight;
@@ -224,12 +275,15 @@ protected:
 	float                              _splitPlanes[5];
 	Matrix4f                           _lightMats[4];
 
-	uint32                             _vlPosOnly, _vlOverlay, _vlModel, _vlParticle;
+	uint32                             _vlPosOnly, _vlModel, _vlParticle;
 	ShaderCombination                  _defColorShader;
 	int                                _defColShader_color;  // Uniform location
 	
 	uint32                             _vbCube, _ibCube, _vbSphere, _ibSphere;
 	uint32                             _vbCone, _ibCone, _vbFSPoly;
+	
+	int									_renderDeviceType;
+	
 };
 
 }

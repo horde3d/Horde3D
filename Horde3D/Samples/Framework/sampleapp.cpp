@@ -5,7 +5,7 @@
 //
 // Sample Framework
 // --------------------------------------
-// Copyright (C) 2006-2011 Nicolas Schulz
+// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -24,6 +24,8 @@
 #include <cstdio>
 #include <math.h>
 #include <iomanip>
+
+#include "Horde3DOverlays.h"
 
 using namespace std;
 
@@ -71,6 +73,7 @@ bool checkForBenchmarkOption( int argc, char** argv )
 
 SampleApplication::SampleApplication(int argc, char** argv,
         const char* title,
+        int renderer,
         float fov, float near_plane, float far_plane,
         int width, int height,
         bool fullscreen, bool show_cursor,
@@ -78,9 +81,10 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
     _velocity(0.1f),
-	_helpRows(10), _helpLabels(0), _helpValues(0),
+	_helpRows(12), _helpLabels(0), _helpValues(0),
     _curPipeline(0),
     _cam(0),
+    _renderInterface( renderer ),
     _initialized(false),
     _running(false),
     _resourcePath( extractResourcePath( argv[0] ) ),
@@ -226,7 +230,7 @@ int SampleApplication::run()
 {
 	
 	int frames = 0;
-    float fps = H3D_FPS_REFERENCE;
+	float fps = H3D_FPS_REFERENCE;
 	
 	_running = true;
 
@@ -275,8 +279,8 @@ int SampleApplication::run()
     {
         double avgFPS = _benchmarkLength / (glfwGetTime() - _t0);
         const char* fpsLabel = "Average FPS:";
-        char* fpsValue = new char[10];
-        sprintf( fpsValue, "%.2f", avgFPS );
+		const char* fpsValue = new char[ 16 ];
+        sprintf( (char*)fpsValue, "%.2f", avgFPS );
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
 
@@ -285,11 +289,13 @@ int SampleApplication::run()
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
-            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, (const char**)&fpsValue, _fontMatRes, _panelMatRes );
+            h3dShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, &fpsValue, _fontMatRes, _panelMatRes );
 
             render();
             finalize();
         }
+
+		delete[] fpsValue;
 	}
 	
     release();
@@ -319,8 +325,8 @@ bool SampleApplication::initResources()
 	_logoMatRes = h3dAddResource( H3DResTypes::Material, "overlays/logo.material.xml", 0 );
 
     // Help info
-    _helpLabels = (const char**)malloc(_helpRows * sizeof(char*));
-    _helpValues = (const char**)malloc(_helpRows * sizeof(char*));
+    _helpLabels = new const char*[_helpRows];
+    _helpValues = new const char*[_helpRows];
 
     if ( _helpRows > 0 ) { _helpLabels[0] = "F1:"; _helpValues[0] = "Help (ON/OFF)"; }
     if ( _helpRows > 1 ) { _helpLabels[1] = "F2:"; _helpValues[1] = "Stats (...)"; }
@@ -409,7 +415,7 @@ void SampleApplication::render()
 	h3dSetNodeTransform( _cam, _x, _y, _z, _rx ,_ry, 0, 1, 1, 1 );
 	
 	// Show stats
-	h3dutShowFrameStats( _fontMatRes, _panelMatRes, _statMode );
+	h3dShowFrameStats( _fontMatRes, _panelMatRes, _statMode );
 	if( _statMode > 0 )
     {
         std::string piperes_name = "Pipeline: forward";
@@ -420,15 +426,15 @@ void SampleApplication::render()
         else if( _curPipeline == 2 )
             piperes_name = "Pipeline: HDR";
 
-        h3dutShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
         
-        char* buf = new char[64];
+        char buf[64];
         if ( _sampleCount == 0 ) {
             strcpy(buf, "MSAA: off");
         } else {
             sprintf( buf, "MSAA: %d", _sampleCount );
         }
-        h3dutShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 
     const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
@@ -437,7 +443,7 @@ void SampleApplication::render()
     // Show help
     if( _showHelpPanel )
     {
-        h3dutShowInfoBox( ww-0.48f, 0.03f, 0.45f, "Help", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
+        h3dShowInfoBox( ww-0.48f, 0.03f, 0.45f, "Help", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
     }
 
     // Show logo
@@ -588,6 +594,13 @@ bool SampleApplication::init()
     glfwWindowHint( GLFW_DEPTH_BITS, 24 );
     glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
 
+	if ( _renderInterface == H3DRenderDevice::OpenGL4 )
+	{
+		glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
+		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
+		glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+	}
+
     if ( _winFullScreen ) {
         const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
         _winHandle = glfwCreateWindow( mode->width, mode->height, _winTitle.c_str(), glfwGetPrimaryMonitor(), NULL );
@@ -600,12 +613,12 @@ bool SampleApplication::init()
 		// Fake message box
         glfwDestroyWindow(_winHandle);
 		
-        _winHandle = glfwCreateWindow( 800, 50, "Unable to initalize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
+        _winHandle = glfwCreateWindow( 800, 50, "Unable to initialize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
 		double startTime = glfwGetTime();
         while( glfwGetTime() - startTime < 5.0 ) { /* Sleep */ }
 		
-		std::cout << "Unable to initalize window" << std::endl;
-        std::cout << "Make sure you have an OpenGL 2.0 compatible graphics card" << std::endl;
+		std::cout << "Unable to initialize window" << std::endl;
+		std::cout << "Make sure you have an OpenGL " << ((_renderInterface == H3DRenderDevice::OpenGL2) ? "2.0" : "4.3") << " compatible graphics card" << std::endl;
 		
 		return false;
 	}
@@ -615,7 +628,7 @@ bool SampleApplication::init()
     glfwSetInputMode( _winHandle, GLFW_STICKY_KEYS, GL_TRUE );
 	
 	// Disable vertical synchronization
-    glfwSwapInterval(0);
+    glfwSwapInterval( 0 );
 
 	// Set listeners
     glfwSetWindowCloseCallback( _winHandle, windowCloseListener );
@@ -628,11 +641,18 @@ bool SampleApplication::init()
     showCursor( _winShowCursor );
     
 	// Initialize engine
-	if( !h3dInit() )
+	if( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
-		std::cout << "Unable to initalize engine" << std::endl;
+		std::cout << "Unable to initialize engine" << std::endl;
 		
 		h3dutDumpMessages();
+		return false;
+	}
+
+	// Samples require overlays extension in order to display information
+	if ( !h3dCheckExtension( "Overlays" ) )
+	{
+		std::cout << "Unable to find overlays extension" << std::endl;
 		return false;
 	}
 
@@ -643,11 +663,12 @@ bool SampleApplication::init()
 	h3dSetOption( H3DOptions::ShadowMapSize, 2048 );
     h3dSetOption( H3DOptions::FastAnimation, 1 );
     h3dSetOption( H3DOptions::SampleCount, (float) _sampleCount );
+	h3dSetOption( H3DOptions::DumpFailedShaders, 1 );
 
 	// Init resources
     if( !initResources() )
 	{
-		std::cout << "Unable to initalize resources" << std::endl;
+		std::cout << "Unable to initialize resources" << std::endl;
 		
 		h3dutDumpMessages();
 	    return false;
