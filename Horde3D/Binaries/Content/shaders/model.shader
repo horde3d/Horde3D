@@ -289,6 +289,10 @@ uniform sampler2D albedoMap;
 	uniform sampler2D normalMap;
 #endif
 
+#ifdef _F04_EnvMapping
+	uniform samplerCube envMap;
+#endif
+
 varying vec4 pos;
 varying vec2 texCoords;
 
@@ -341,10 +345,22 @@ void main( void )
 	newPos += vec3( 0.0, newCoords.p, 0.0 );
 #endif
 	
+#ifdef _F04_EnvMapping
+	setMatID( 4.0 );
+#else
 	setMatID( 1.0 );
+#endif
+	
 	setPos( newPos - viewerPos );
 	setNormal( normalize( normal ) );
+
+#ifdef _F04_EnvMapping
+	vec3 refl = textureCube( envMap, reflect( pos.xyz - viewerPos, normalize( normal ) ) ).rgb;
+	setAlbedo( refl * 1.5 );
+#else
 	setAlbedo( albedo.rgb );
+#endif
+
 	setSpecParams( matSpecParams.rgb, matSpecParams.a );
 }
 
@@ -364,6 +380,10 @@ uniform sampler2D albedoMap;
 
 #ifdef _F02_NormalMapping
 	uniform sampler2D normalMap;
+#endif
+
+#ifdef _F04_EnvMapping
+	uniform samplerCube envMap;
 #endif
 
 in vec4 pos;
@@ -418,10 +438,22 @@ void main( void )
 	newPos += vec3( 0.0, newCoords.p, 0.0 );
 #endif
 	
+#ifdef _F04_EnvMapping
+	setMatID( 4.0 );
+#else
 	setMatID( 1.0 );
+#endif
+	
 	setPos( newPos - viewerPos );
 	setNormal( normalize( normal ) );
+
+#ifdef _F04_EnvMapping
+	vec3 refl = textureCube( envMap, reflect( pos.xyz - viewerPos, normalize( normal ) ) ).rgb;
+	setAlbedo( refl * 1.5 );
+#else
 	setAlbedo( albedo.rgb );
+#endif
+
 	setSpecParams( matSpecParams.rgb, matSpecParams.a );
 }
 	
