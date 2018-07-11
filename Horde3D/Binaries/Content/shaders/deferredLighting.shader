@@ -157,6 +157,10 @@ void main( void )
 	{
 		gl_FragColor.rgb = getAlbedo( texCoords );
 	}
+	else if( getMatID( texCoords ) == 4.0 )	// Envmapped
+	{
+		gl_FragColor.rgb = getAlbedo( texCoords ).rgb;
+	}
 	else
 	{
 		gl_FragColor.rgb = getAlbedo( texCoords ) * textureCube( ambientMap, getNormal( texCoords ) ).rgb;
@@ -182,9 +186,13 @@ void main( void )
 	{
 		fragColor.rgb = getAlbedo( texCoords );
 	}
+	else if( getMatID( texCoords ) == 4.0 )	// Envmapped
+	{
+		fragColor.rgb = getAlbedo( texCoords ).rgb;
+	}
 	else
 	{
-		fragColor.rgb = getAlbedo( texCoords ) * texture( ambientMap, getNormal( texCoords ) ).rgb;
+		fragColor.rgb = getAlbedo( texCoords ) * textureCube( ambientMap, getNormal( texCoords ) ).rgb;
 	}
 }
 
