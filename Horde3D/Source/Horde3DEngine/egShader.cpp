@@ -1241,7 +1241,7 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 				{
 					switch ( i )
 					{
-						case 0: // vertex shader
+						case 0 : // vertex shader
 							dumpFileName = "shdDumpVS.txt"; output = &_tmpCodeVS; break;
 						case 1:  // fragment shader
 							dumpFileName = "shdDumpFS.txt"; output = &_tmpCodeFS; break;
@@ -1269,11 +1269,11 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 		rdi->bindShader( sc.shaderObj );
 
 		// Find samplers in compiled shader
-		sc.customSamplers.reserve( _samplers.size() );
+		sc.samplersLocs.reserve( _samplers.size() );
 		for( uint32 i = 0; i < _samplers.size(); ++i )
 		{
 			int samplerLoc = rdi->getShaderSamplerLoc( sc.shaderObj, _samplers[i].id.c_str() );
-			sc.customSamplers.push_back( samplerLoc );
+			sc.samplersLocs.push_back( samplerLoc );
 			
 			// Set texture unit
 			if( samplerLoc >= 0 )
@@ -1281,18 +1281,18 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 		}
 		
 		// Find buffers in compiled shader
-		sc.customBuffers.reserve( _buffers.size() );
+		sc.bufferLocs.reserve( _buffers.size() );
 		for ( uint32 i = 0; i < _buffers.size(); ++i )
 		{
 			int bufferLoc = rdi->getShaderBufferLoc( sc.shaderObj, _buffers[ i ].id.c_str() );
-			sc.customBuffers.push_back( bufferLoc );
+			sc.bufferLocs.push_back( bufferLoc );
 		}
 
 		// Find uniforms in compiled shader
-		sc.customUniforms.reserve( _uniforms.size() );
+		sc.uniLocs.reserve( Modules::renderer().totalEngineUniforms() + _uniforms.size() );
 		for( uint32 i = 0; i < _uniforms.size(); ++i )
 		{
-			sc.customUniforms.push_back(
+			sc.uniLocs.push_back(
 				rdi->getShaderConstLoc( sc.shaderObj, _uniforms[i].id.c_str() ) );
 		}
 	}

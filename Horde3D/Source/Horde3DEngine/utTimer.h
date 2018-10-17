@@ -32,7 +32,7 @@ class Timer
 {
 public:
 
-	Timer() : _elapsedTime( 0 ), _startTime( 0 ), _enabled( false )
+	Timer() : _startTime( 0 ), _elapsedTime( 0 ), _enabled( false )
 	{
 	#if defined( PLATFORM_WIN ) 
 		// Find first available CPU

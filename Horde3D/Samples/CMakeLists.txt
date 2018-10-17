@@ -1,4 +1,5 @@
 include_directories(../Bindings/C++)
+include_directories(../../Extensions/Overlays/Bindings/C++)
 
 IF(GLFW_FOUND)
     include_directories(${GLFW_INCLUDE_DIR})

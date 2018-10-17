@@ -174,13 +174,13 @@ void Converter::checkNodeName( SceneNode *node )
 		// If necessary, cut name to make room for the postfix
 		if( strlen( node->name ) > 240 ) node->name[240] = '\0';
 
-		char newName[256];
+        char newName[512];
 		unsigned int index = 2;
 
 		// Find a free name
 		while( true )
 		{
-			sprintf( newName, "%s_%i", node->name, index++ );
+            snprintf( newName, sizeof(newName), "%s_%i", node->name, index++ );
 
 			if( !findNode( newName, node ) )
 			{
@@ -464,7 +464,9 @@ void Converter::processJoints()
 		_joints[i]->invBindMat = _joints[i]->matAbs.inverted();
 	}
 
-	if( _joints.size() + 1 > 75 ) log( "Warning: Model has more than 75 joints" );
+	if( _joints.size() + 1 > 75 ) log( "Warning: Model has more than 75 joints. It may render incorrectly if used with OpenGL 2 render backend." );
+	if ( _joints.size() + 1 > 330 ) log( "Warning: Model has more than 330 joints. Currently it is not supported." );
+
 }
 
 
@@ -909,8 +911,9 @@ bool Converter::writeGeometry( const string &assetPath, const string &assetName 
 	fwrite_le(&count, 1, f);
 
 	// Write default identity matrix
+    Matrix4f identity;
 	for( unsigned int j = 0; j < 16; ++j )
-		fwrite_le<float>(&Matrix4f().x[j], 1, f);
+		fwrite_le<float>(&identity.x[j], 1, f);
 
 	for( unsigned int i = 0; i < _joints.size(); ++i )
 	{

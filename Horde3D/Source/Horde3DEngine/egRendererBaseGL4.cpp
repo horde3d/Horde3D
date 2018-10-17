@@ -250,12 +250,7 @@ bool RenderDeviceGL4::init()
 		Modules::log().writeError( "Extension EXT_texture_compression_s3tc not supported" );
 		failed = true;
 	}
-	if( !glExt::EXT_texture_sRGB )
-	{
-		Modules::log().writeError( "Extension EXT_texture_sRGB not supported" );
-		failed = true;
-	}
-	
+		
 	if( failed )
 	{
 		Modules::log().writeError( "Failed to init renderer backend (OpenGL %d.%d), retrying with legacy OpenGL 2.1 backend", 
@@ -274,7 +269,7 @@ bool RenderDeviceGL4::init()
 	_caps.tesselation = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
 	_caps.computeShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 3;
 	_caps.instancing = true;
-	_caps.maxJointCount = 75; // currently, will be changed soon
+	_caps.maxJointCount = 330;
 	_caps.maxTexUnitCount = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 
 	// Find maximum number of storage buffers in compute shader
@@ -337,6 +332,8 @@ uint32 RenderDeviceGL4::beginCreatingGeometry( uint32 vlObj )
 	glGenVertexArrays( 1, &vaoID );
 	vao.vao = vaoID;
 
+//	glBindVertexArray( vaoID );
+
 	return _vaos.add( vao );
 }
 
@@ -381,7 +378,6 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 			newVertexAttribMask |= 1 << i;
 		}
 	}
-
 
 	for ( uint32 i = 0; i < 16; ++i )
 	{

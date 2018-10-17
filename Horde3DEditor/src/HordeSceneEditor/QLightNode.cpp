@@ -287,7 +287,7 @@ void QLightNode::setRadius(float value)
 
 float QLightNode::intensity() const
 {
-	return m_xmlNode.attribute( "colMult" ).toFloat();
+	return m_xmlNode.attribute( "colMult", "1.0" ).toFloat();
 }
 
 void QLightNode::setIntensity( float value )

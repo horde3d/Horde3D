@@ -13,6 +13,8 @@
 #ifndef _egMaterial_H_
 #define _egMaterial_H_
 
+#include <cstring>
+
 #include "egPrerequisites.h"
 #include "egResource.h"
 #include "egShader.h"
@@ -70,6 +72,38 @@ struct MatUniform
 	}
 };
 
+struct MaterialClass
+{
+	char		name[ 64 ];
+	uint32		index = 0;
+
+	MaterialClass()
+	{
+		memset( name, 0, 64 );
+	}
+};
+
+typedef struct MaterialHierarchy { MaterialClass value[ H3D_MATERIAL_HIERARCHY_LEVELS ]; } MaterialHierarchy;
+
+class MaterialClassCollection
+{
+public:
+	static void init();
+	static void release();
+
+	static int addClass( const std::string &matClass );
+	static const char *getClassString( int currentMaterialClass );
+	static void clear();
+
+	inline static bool isOfClass( int requestedMaterialClass, int currentMaterialClass );
+
+private:
+	static std::vector< MaterialHierarchy > _matHierarchy;
+
+	static std::string _returnedClassString;
+// 	static std::vector< std::string > _classes;
+};
+
 // =================================================================================================
 
 class MaterialResource;
@@ -81,6 +115,9 @@ public:
 	static Resource *factoryFunc( const std::string &name, int flags )
 		{ return new MaterialResource( name, flags ); }
 	
+	static void initializationFunc();
+	static void releaseFunc();
+
 	MaterialResource( const std::string &name, int flags );
 	~MaterialResource();
 	Resource *clone();
@@ -89,7 +126,7 @@ public:
 	void release();
 	bool load( const char *data, int size );
 	bool setUniform( const std::string &name, float a, float b, float c, float d );
-	bool isOfClass( const std::string &theClass ) const;
+	bool isOfClass( int theClassID ) const;
 
 	int getElemCount( int elem ) const;
 	int getElemParamI( int elem, int elemIdx, int param ) const;
@@ -105,7 +142,8 @@ private:
 private:
 	PShaderResource             _shaderRes;
 	uint32                      _combMask;
-	std::string                 _class;
+	int							_classID;
+	//	std::string                 _class;
 	std::vector< MatBuffer >	_buffers;
 	std::vector< MatSampler >   _samplers;
 	std::vector< MatUniform >   _uniforms;
