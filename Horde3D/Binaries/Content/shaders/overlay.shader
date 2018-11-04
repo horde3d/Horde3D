@@ -25,6 +25,18 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context OVERLAY
+	{
+		VertexShader = compile GLSL VS_OVERLAY_GL4;
+		PixelShader = compile GLSL FS_OVERLAY_GL4;
+		
+		ZWriteEnable = false;
+		BlendMode = Blend;
+	}
+}
+
 [[VS_OVERLAY]]
 
 uniform mat4 projMat;
@@ -75,7 +87,7 @@ out vec4 fragColor;
 
 void main( void )
 {
-	vec4 albedo = texture2D( albedoMap, texCoords );
+	vec4 albedo = texture( albedoMap, texCoords );
 	
 	fragColor = albedo * olayColor;
 }

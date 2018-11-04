@@ -70,6 +70,33 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context BRIGHTPASS
+	{
+		VertexShader = compile GLSL VS_FSQUAD_GL4;
+		PixelShader = compile GLSL FS_BRIGHTPASS_GL4;
+		
+		ZWriteEnable = false;
+	}
+
+	context BLUR
+	{
+		VertexShader = compile GLSL VS_FSQUAD_GL4;
+		PixelShader = compile GLSL FS_BLUR_GL4;
+		
+		ZWriteEnable = false;
+	}
+
+	context FINALPASS
+	{
+		VertexShader = compile GLSL VS_FSQUAD_GL4;
+		PixelShader = compile GLSL FS_FINALPASS_GL4;
+		
+		ZWriteEnable = false;
+	}
+}
+
 [[VS_FSQUAD]]
 // =================================================================================================
 

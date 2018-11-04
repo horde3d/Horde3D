@@ -51,6 +51,19 @@ const char *vsTerrainDebugViewGL4 =
 	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
 	"}";
 
+const char *vsTerrainDebugViewGLES3 =
+	"#version 310 es\n"
+	"uniform mat4 viewProjMat;\n"
+	"uniform mat4 worldMat;\n"
+	"uniform vec4 terBlockParams;\n"
+	"layout(location = 0) in vec3 vertPos;\n"
+	"layout(location = 1) in float terHeight;\n"
+	"void main() {\n"
+	"	gl_Position = viewProjMat * worldMat *"
+	"		vec4( vertPos.x * terBlockParams.z + terBlockParams.x, terHeight, "
+	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
+	"}";
+
 const char *fsTerrainDebugView =
 	"uniform vec4 color;\n"
 	"void main() {\n"
@@ -59,6 +72,15 @@ const char *fsTerrainDebugView =
 
 const char *fsTerrainDebugViewGL4 =
 	"#version 330\n"
+	"uniform vec4 color;\n"
+	"out vec4 fragColor;\n"
+	"void main() {\n"
+	"	fragColor = color;\n"
+	"}\n";
+
+const char *fsTerrainDebugViewGLES3 =
+	"#version 310 es\n"
+	"precision highp float;\n"
 	"uniform vec4 color;\n"
 	"out vec4 fragColor;\n"
 	"void main() {\n"

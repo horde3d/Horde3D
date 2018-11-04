@@ -28,7 +28,7 @@
 #	endif
 #elif defined( __APPLE__ ) || defined( __APPLE_CC__ )
 #   if !defined( PLATFORM_MAC )
-#      define PLATFORM_MAC
+#		define PLATFORM_MAC
 #   endif
 #else
 #	if !defined( PLATFORM_LINUX )
@@ -66,7 +66,9 @@
    || defined(_M_ALPHA) || defined(__amd64) \
    || defined(__amd64__) || defined(_M_AMD64) \
    || defined(__x86_64) || defined(__x86_64__) \
-   || defined(_M_X64) || defined(__bfin__)
+   || defined(_M_X64) || defined(__bfin__) \
+   || defined(__arm__) || defined(__ARM_ARCH_7__) \
+   || defined(__aarch64__)
 #       define PLATFORM_LITTLE_ENDIAN
 #else
 #   error Unknown endianess.
@@ -85,6 +87,9 @@
 #	endif
 #endif
 
+#if defined( PLATFORM_WIN ) || defined( PLATFORM_MAC ) || defined ( PLATFORM_LINUX )
+#	define DESKTOP_OPENGL_AVAILABLE
+#endif
 
 // Shortcuts for common types
 typedef signed char int8;

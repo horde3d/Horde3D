@@ -610,20 +610,31 @@ DLLEXP bool h3dutScreenshot( const char *filename )
 	int width, height;
 	h3dGetRenderTargetData( 0, "", 0, &width, &height, 0x0, 0x0, 0 );
 
-	float *pixelsF = new float[width * height * 4];
+	uint8 *pixelsF = new uint8[width * height * 4];
+	memset( pixelsF, 0, width * height * 4 );
 	h3dGetRenderTargetData( 0, "", 0, 0x0, 0x0, 0x0, pixelsF, width * height * 16 );
 	
 	// Convert to BGR8
 	unsigned char *pixels = new unsigned char[width * height * 3];
+// 	for( int y = 0; y < height; ++y )
+// 	{
+// 		for( int x = 0; x < width; ++x )
+// 		{
+// 			pixels[(y * width + x) * 3 + 0] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 2], 0.f, 1.f ) * 255.f );
+// 			pixels[(y * width + x) * 3 + 1] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 1], 0.f, 1.f ) * 255.f );
+// 			pixels[(y * width + x) * 3 + 2] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 0], 0.f, 1.f ) * 255.f );
+// 		}
+// 	}
 	for( int y = 0; y < height; ++y )
 	{
 		for( int x = 0; x < width; ++x )
 		{
-			pixels[(y * width + x) * 3 + 0] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 2], 0.f, 1.f ) * 255.f );
-			pixels[(y * width + x) * 3 + 1] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 1], 0.f, 1.f ) * 255.f );
-			pixels[(y * width + x) * 3 + 2] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 0], 0.f, 1.f ) * 255.f );
+			pixels[(y * width + x) * 3 + 0] = pixelsF[(y * width + x) * 4 + 2];
+			pixels[(y * width + x) * 3 + 1] = pixelsF[(y * width + x) * 4 + 1];
+			pixels[(y * width + x) * 3 + 2] = pixelsF[(y * width + x) * 4 + 0];
 		}
 	}
+//	memcpy( pixels, pixelsF, width * height * 3 );
 	delete[] pixelsF;
 	
 	char *image;

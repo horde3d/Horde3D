@@ -238,6 +238,10 @@ struct DeviceCaps
 	bool	tesselation;
 	bool	computeShaders;
 	bool	instancing;
+	bool	texDXT;
+	bool	texETC2;
+	bool	texASTC;
+	bool	texBPTC;
 };
 
 
@@ -299,15 +303,40 @@ struct TextureFormats
 	enum List
 	{
 		Unknown,
+		R8,
+		R16F,
+		R32F,
+		RG8,
+		RG16F,
+		RG32F,
 		BGRA8,
+		RGBA16F,
+		RGBA32F,
+		RGBA32UI,
 		DXT1,
 		DXT3,
 		DXT5,
-		RGBA16F,
-		RGBA32F,
-		DEPTH,
-		R32,
-		RG32
+		ETC1,
+		RGB8_ETC2,
+		RGBA8_ETC2,
+		BC6_UF16,
+		BC6_SF16,
+		BC7,
+		ASTC_4x4,
+		ASTC_5x4,
+		ASTC_5x5,
+		ASTC_6x5,
+		ASTC_6x6,
+		ASTC_8x5,
+		ASTC_8x6,
+		ASTC_8x8,
+		ASTC_10x5,
+		ASTC_10x6,
+		ASTC_10x8,
+		ASTC_10x10,
+		ASTC_12x10,
+		ASTC_12x12,
+		DEPTH
 	};
 };
 
@@ -539,13 +568,13 @@ private:
 	CreateMemberFunctionChecker( mapBuffer );
 	CreateMemberFunctionChecker( unmapBuffer );
 
-	CreateMemberFunctionChecker( calcTextureSize );
 	CreateMemberFunctionChecker( createTexture );
 	CreateMemberFunctionChecker( uploadTextureData );
 	CreateMemberFunctionChecker( destroyTexture );
 	CreateMemberFunctionChecker( updateTextureData );
 	CreateMemberFunctionChecker( getTextureData );
-
+	CreateMemberFunctionChecker( bindImageToTexture );
+	
 	CreateMemberFunctionChecker( createShader );
 	CreateMemberFunctionChecker( destroyShader );
 	CreateMemberFunctionChecker( bindShader );
@@ -603,7 +632,6 @@ private:
 	typedef void*( *PFN_MAPBUFFER )( void* const, uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
 	typedef void( *PFN_UNMAPBUFFER )( void* const, uint32 geoObj, uint32 bufObj );
 
-	typedef uint32( *PFN_CALCTEXTURESIZE )( void* const, TextureFormats::List format, int width, int height, int depth );
 	typedef uint32( *PFN_CREATETEXTURE )( void* const, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 										  bool hasMips, bool genMips, bool compress, bool sRGB );
 	typedef void( *PFN_UPLOADTEXTUREDATA )( void* const, uint32 texObj, int slice, int mipLevel, const void *pixels );
@@ -675,7 +703,6 @@ private:
 	PFN_UNMAPBUFFER				_pfnUnmapBuffer;
 
 	// textures
-	PFN_CALCTEXTURESIZE			_pfnCalcTextureSize;
 	PFN_CREATETEXTURE			_pfnCreateTexture;
 	PFN_UPLOADTEXTUREDATA		_pfnUploadTextureData;
 	PFN_DESTROYTEXTURE			_pfnDestroyTexture;
@@ -841,13 +868,7 @@ private:
 
 	// textures
 	template<typename T>
-	inline static uint32            calcTextureSize_Invoker( void* const pObj, TextureFormats::List format, int width, int height, int depth )
-	{
-		return static_cast< T* >( pObj )->calcTextureSize( format, width, height, depth );
-	}
-
-	template<typename T>
-	inline static uint32            createTexture_Invoker( void* const pObj, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
+	static uint32            createTexture_Invoker( void* const pObj, TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 													bool hasMips, bool genMips, bool compress, bool sRGB )
 	{
 		return static_cast< T* >( pObj )->createTexture( type, width, height, depth, format, hasMips, genMips, compress, sRGB );
@@ -1093,13 +1114,13 @@ protected:
 		CheckMemberFunction( mapBuffer, void*( T::* )( uint32, uint32, uint32, uint32, RDIBufferMappingTypes ) );
 		CheckMemberFunction( unmapBuffer, void( T::* )( uint32, uint32 ) );
 
-		CheckMemberFunction( calcTextureSize, uint32( T::* )( TextureFormats::List, int, int, int ) );
 		CheckMemberFunction( createTexture, uint32( T::* )( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) );
 		CheckMemberFunction( uploadTextureData, void( T::* )( uint32, int, int, const void * ) );
         CheckMemberFunction( destroyTexture, void( T::* )( uint32& ) );
 		CheckMemberFunction( updateTextureData, void( T::* )( uint32, int, int, const void * ) );
 		CheckMemberFunction( getTextureData, bool( T::* )( uint32, int, int, void * ) );
-	
+		CheckMemberFunction( bindImageToTexture, void( T::* )( uint32, void * ) );
+		
 		CheckMemberFunction( createShader, uint32( T::* )( const char *, const char *, const char *, const char *, const char *, const char * ) );
         CheckMemberFunction( destroyShader, void( T::* )( uint32& ) );
 		CheckMemberFunction( bindShader, void( T::* )( uint32 ) );
@@ -1151,12 +1172,12 @@ protected:
 		_pfnFinishCreatingGeometry = ( PFN_FINISHCREATINGGEOMETRY ) &finishCreatingGeometry_Invoker < T > ;
 		_pfnDestroyGeometry = ( PFN_DESTROYGEOMETRY ) &destroyGeometry_Invoker < T > ;
 		_pfnDestroyBuffer = ( PFN_DESTROYBUFFER ) &destroyBuffer_Invoker < T >;
+
 		_pfnDestroyTextureBuffer = ( PFN_DESTROYTEXTUREBUFFER ) &destroyTextureBuffer_Invoker < T > ;
 		_pfnUpdateBufferData = ( PFN_UPDATEBUFFERDATA ) &updateBufferData_Invoker < T >;
 		_pfnMapBuffer = ( PFN_MAPBUFFER ) &mapBuffer_Invoker < T >;
 		_pfnUnmapBuffer = ( PFN_UNMAPBUFFER ) &unmapBuffer_Invoker < T >;
 
-		_pfnCalcTextureSize = ( PFN_CALCTEXTURESIZE ) &calcTextureSize_Invoker < T >;
 		_pfnCreateTexture = ( PFN_CREATETEXTURE ) &createTexture_Invoker < T >;
 		_pfnUploadTextureData = ( PFN_UPLOADTEXTUREDATA ) &uploadTextureData_Invoker < T >;
 		_pfnDestroyTexture = ( PFN_DESTROYTEXTURE ) &destroyTexture_Invoker < T >;
@@ -1194,6 +1215,7 @@ protected:
 		_pfnCommitStates = ( PFN_COMMITSTATES ) &commitStates_Invoker < T > ;
 		_pfnResetStates = ( PFN_RESETSTATES ) &resetStates_Invoker < T > ;
 		_pfnClear = ( PFN_CLEAR ) &clear_Invoker < T > ;
+
 		_pfnDraw = ( PFN_DRAW ) &draw_Invoker < T > ;
 		_pfnDrawIndexed = ( PFN_DRAWINDEXED ) &drawIndexed_Invoker < T > ;
 
@@ -1305,7 +1327,52 @@ public:
 	// Textures
 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth ) 
 	{ 
-		return ( *_pfnCalcTextureSize )( this, format, width, height, depth );
+		switch ( format )
+		{
+			case TextureFormats::R8:
+				return width * height * depth * 1;
+			case TextureFormats::RG8:
+				return width * height * depth * 2;
+			case TextureFormats::R16F:
+			case TextureFormats::RG16F:
+			case TextureFormats::R32F:
+			case TextureFormats::RG32F:
+			case TextureFormats::BGRA8:
+				return width * height * depth * 4;
+			case TextureFormats::DXT1:
+			case TextureFormats::ETC1:
+			case TextureFormats::RGB8_ETC2:
+				return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 8;
+			case TextureFormats::DXT3:
+			case TextureFormats::DXT5:
+			case TextureFormats::RGBA8_ETC2:
+			case TextureFormats::BC6_SF16:
+			case TextureFormats::BC6_UF16:
+			case TextureFormats::BC7:
+			case TextureFormats::ASTC_4x4:
+			case TextureFormats::ASTC_5x4:
+			case TextureFormats::ASTC_5x5:
+			case TextureFormats::ASTC_6x5:
+			case TextureFormats::ASTC_6x6:
+			case TextureFormats::ASTC_8x5:
+			case TextureFormats::ASTC_8x6:
+			case TextureFormats::ASTC_8x8:
+			case TextureFormats::ASTC_10x5:
+			case TextureFormats::ASTC_10x6:
+			case TextureFormats::ASTC_10x8:
+			case TextureFormats::ASTC_10x10:
+			case TextureFormats::ASTC_12x10:
+			case TextureFormats::ASTC_12x12:
+				return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 16;
+			case TextureFormats::RGBA16F:
+				return width * height * depth * 8;
+			case TextureFormats::RGBA32F:
+				return width * height * depth * 16;
+			case TextureFormats::RGBA32UI:
+				return width * height * depth * 16;
+			default:
+				return 0;
+		}
 	}
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 	                      bool hasMips, bool genMips, bool compress, bool sRGB )

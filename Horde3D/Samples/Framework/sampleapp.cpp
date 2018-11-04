@@ -317,7 +317,7 @@ bool SampleApplication::initResources()
 	// Pipelines
 	_pipelineRes[0] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/forward.pipeline.xml", 0 );
 	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.xml", 0 );
-    _pipelineRes[2] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
+	_pipelineRes[2] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
 	
 	// Overlays
 	_fontMatRes = h3dAddResource( H3DResTypes::Material, "overlays/font.material.xml", 0 );
@@ -599,6 +599,13 @@ bool SampleApplication::init()
 		glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
 		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
 		glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
+	}
+	else if ( _renderInterface == H3DRenderDevice::OpenGLES3 )
+	{
+		glfwWindowHint( GLFW_CLIENT_API, GLFW_OPENGL_ES_API );
+		glfwWindowHint( GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API );
+ 		glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
+ 		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1 );
 	}
 
     if ( _winFullScreen ) {

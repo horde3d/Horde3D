@@ -27,6 +27,9 @@ namespace glExt
 	bool ARB_timer_query = false;
 	bool ARB_texture_buffer_object = false;
 	bool OES_EGL_image = false;
+	bool ARB_ES3_compatibility = false;
+	bool ARB_texture_compression_bptc = false;
+	bool ARB_texture_rg = false;
 
 	int	majorVersion = 1, minorVersion = 0;
 }
@@ -561,10 +564,10 @@ bool isExtensionSupported( const char *extName )
 	if( glExt::majorVersion < 3 )
 	{
 		const char *extensions = (char *)glGetString( GL_EXTENSIONS );
-                if( extensions == 0x0 )
-                {
-                    return false;
-                }
+        if( extensions == 0x0 )
+        {
+			return false;
+		}
 
 		size_t nameLen = strlen( extName );
 		const char *pos;
@@ -697,11 +700,15 @@ void initLegacyExtensions( bool &r )
 	}
 
 	glExt::EXT_texture_sRGB = isExtensionSupported( "GL_EXT_texture_sRGB" );
+
+	glExt::ARB_texture_rg = isExtensionSupported( "GL_ARB_texture_rg" );
 }
 
 void initModernExtensions( bool &r )
 {
-//	throw std::exception( "The method or operation is not implemented." );
+	glExt::ARB_ES3_compatibility = isExtensionSupported( "GL_ARB_ES3_compatibility" );
+	glExt::ARB_texture_compression_bptc = isExtensionSupported( "GL_ARB_texture_compression_bptc" );
+	glExt::KHR_texture_compression_astc = isExtensionSupported( "GL_KHR_texture_compression_astc_ldr" );
 }
 
 bool initOpenGLExtensions( bool forceLegacyFuncs )

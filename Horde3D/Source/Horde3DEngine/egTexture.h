@@ -75,13 +75,16 @@ public:
 	bool hasMipMaps() const { return _hasMipMaps; }
 
 public:
-	static uint32 defTex2DObject;
-	static uint32 defTex3DObject;
-	static uint32 defTexCubeObject;
+	static uint32	defTex2DObject;
+	static uint32	defTex3DObject;
+	static uint32	defTexCubeObject;
+	static bool		bgraSwizzleRequired;
 
 protected:
 	bool raiseError( const std::string &msg );
 	bool checkDDS( const char *data, int size ) const;
+	bool checkKTX( const char *data, int size ) const;
+	bool loadKTX( const char *data, int size );
 	bool loadDDS( const char *data, int size );
 	bool loadSTBI( const char *data, int size );
 	int getMipCount() const;

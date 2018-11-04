@@ -15,14 +15,18 @@
 #include "egLight.h"
 #include "egCamera.h"
 #include "egModules.h"
-#include "egRendererBaseGL2.h"
-#include "egRendererBaseGL4.h"
 #include "egCom.h"
 #include "egComputeNode.h"
 #include <cstring>
 
 #include "utDebug.h"
 
+#if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined( H3D_FORCE_GLES )
+#	include "egRendererBaseGL2.h"
+#	include "egRendererBaseGL4.h"
+#else
+#	include "egRendererBaseGLES3.h"
+#endif
 
 namespace Horde3D {
 
@@ -117,7 +121,7 @@ Renderer::~Renderer()
 
 		releaseRenderDevice();
 	}
-
+	
 	delete[] _scratchBuf;
 }
 
@@ -328,6 +332,7 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 {
 	switch ( type )
 	{
+#if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined ( H3D_FORCE_GLES )
 		case RenderBackendType::OpenGL4 :
 		{
 			return new RDI_GL4::RenderDeviceGL4();
@@ -336,6 +341,12 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 		{
 			return new RDI_GL2::RenderDeviceGL2();
 		}
+#else	
+		case RenderBackendType::OpenGLES3 :
+		{
+			return new RDI_GLES3::RenderDeviceGLES3();
+		}
+#endif
 		default:
 			Modules::log().writeError( "Incorrect render interface type or type not specified. Renderer cannot be initialized." );
 			break;
@@ -2239,6 +2250,7 @@ void Renderer::renderDebugView()
 	setMaterial( 0x0, "" );
 	setShaderComb( &_defColorShader );
 	commitGeneralUniforms();
+	
     Matrix4f identity;
 	_renderDevice->setShaderConst( _defColorShader.uniLocs[ _uni.worldMat ], CONST_FLOAT44, &identity.x[0] );
 	color[0] = 0.4f; color[1] = 0.4f; color[2] = 0.4f; color[3] = 1;

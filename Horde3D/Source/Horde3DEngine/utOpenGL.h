@@ -62,6 +62,10 @@ namespace glExt
 	extern bool ARB_timer_query;
 	extern bool ARB_texture_buffer_object;
     extern bool OES_EGL_image;
+	extern bool ARB_ES3_compatibility;
+	extern bool ARB_texture_compression_bptc;
+	extern bool ARB_texture_rg;
+	extern bool KHR_texture_compression_astc;
 
 	extern int  majorVersion, minorVersion;
 }
@@ -2849,8 +2853,67 @@ extern PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES;
 
 #endif
 
+#ifndef GL_ARB_ES3_compatibility
+#define GL_ARB_ES3_compatibility 1
+
+#define GL_COMPRESSED_RGB8_ETC2                             0x9274
+#define GL_COMPRESSED_SRGB8_ETC2                            0x9275
+#define GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2         0x9276
+#define GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2        0x9277
+#define GL_COMPRESSED_RGBA8_ETC2_EAC                        0x9278
+#define GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC                 0x9279
+#define GL_COMPRESSED_R11_EAC                               0x9270
+#define GL_COMPRESSED_SIGNED_R11_EAC                        0x9271
+#define GL_COMPRESSED_RG11_EAC                              0x9272
+#define GL_COMPRESSED_SIGNED_RG11_EAC                       0x9273
+#endif
+
+#ifndef GL_ARB_texture_compression_bptc
+#define GL_ARB_texture_compression_bptc 1
+
+#define GL_COMPRESSED_RGBA_BPTC_UNORM_ARB					0x8E8C
+#define GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB				0x8E8D
+#define GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB				0x8E8E
+#define GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB			0x8E8F
+#endif
+
+#ifndef GL_KHR_texture_compression_astc_ldr
+#define GL_KHR_texture_compression_astc_ldr 1
+
+#define GL_COMPRESSED_RGBA_ASTC_4x4_KHR            0x93B0
+#define GL_COMPRESSED_RGBA_ASTC_5x4_KHR            0x93B1
+#define GL_COMPRESSED_RGBA_ASTC_5x5_KHR            0x93B2
+#define GL_COMPRESSED_RGBA_ASTC_6x5_KHR            0x93B3
+#define GL_COMPRESSED_RGBA_ASTC_6x6_KHR            0x93B4
+#define GL_COMPRESSED_RGBA_ASTC_8x5_KHR            0x93B5
+#define GL_COMPRESSED_RGBA_ASTC_8x6_KHR            0x93B6
+#define GL_COMPRESSED_RGBA_ASTC_8x8_KHR            0x93B7
+#define GL_COMPRESSED_RGBA_ASTC_10x5_KHR           0x93B8
+#define GL_COMPRESSED_RGBA_ASTC_10x6_KHR           0x93B9
+#define GL_COMPRESSED_RGBA_ASTC_10x8_KHR           0x93BA
+#define GL_COMPRESSED_RGBA_ASTC_10x10_KHR          0x93BB
+#define GL_COMPRESSED_RGBA_ASTC_12x10_KHR          0x93BC
+#define GL_COMPRESSED_RGBA_ASTC_12x12_KHR          0x93BD
+
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR    0x93D0
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR    0x93D1
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR    0x93D2
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR    0x93D3
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR    0x93D4
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR    0x93D5
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR    0x93D6
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR    0x93D7
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR   0x93D8
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR   0x93D9
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR   0x93DA
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR  0x93DB
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR  0x93DC
+#define GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR  0x93DD
+
+#endif
 }  // namespace h3dGL
 
 using namespace h3dGL;
+
 
 #endif // _utOpenGL_H_

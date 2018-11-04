@@ -230,7 +230,7 @@ std::string CodeResource::assembleCode() const
 
 void CodeResource::updateShaders()
 {
-    std::vector< Resource * >& resources = Modules::resMan().getResources();
+	auto resources = Modules::resMan().getResources();
 	for( uint32 i = 0; i < resources.size(); ++i )
 	{
 		Resource *res = resources[ i ];
@@ -417,13 +417,28 @@ void ShaderResource::initializationFunc()
 	switch ( Modules::renderer().getRenderDeviceType() )
 	{
 		case RenderBackendType::OpenGL4:
-			_vertPreamble = "#version 330\r\n";
-			_fragPreamble = "#version 330\r\n";
-			_geomPreamble = "#version 330\r\n";
+		{
+			_vertPreamble = "#version 330\n";
+			_fragPreamble = "#version 330\n";
+			_geomPreamble = "#version 330\n";
 			_tessCtlPreamble = "#version 410\r\n";
 			_tessEvalPreamble = "#version 410\r\n";
-			_computePreamble = "#version 430\r\n";
+			_computePreamble = "#version 430\n";
+			
 			break;
+		}
+		case RenderBackendType::OpenGLES3:
+		{
+			_vertPreamble = "#version 300 es\n precision highp float;\n";
+			_fragPreamble = "#version 300 es\n precision highp float;\n precision highp sampler2D;\n precision highp sampler2DShadow;\n";
+			
+			if ( Modules::renderer().getRenderDevice()->getCaps().geometryShaders ) 
+				_geomPreamble = "#version 300 es\n#extension GL_EXT_geometry_shader : enable\n";
+			
+			_computePreamble = "#version 310 es\n";
+
+			break;
+		}
 		default:
 			break;
 	}
@@ -704,6 +719,28 @@ bool ShaderResource::parseFXSection( char *data )
 				else
 					return raiseError( "FX: unexpected token", tok.getLine() );
 // 				if ( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
+			}
+		}
+		else if ( tok.checkToken( "OpenGLES3" ) )
+		{
+			if ( !tok.checkToken( "{" ) ) return raiseError( "FX: expected '{'", tok.getLine() );
+			while ( true )
+			{
+				if ( !tok.hasToken() )
+					return raiseError( "FX: expected '}'", tok.getLine() );
+				else if ( tok.checkToken( "}" ) )
+					break;
+				else if ( tok.checkToken( "context" ) )
+				{
+					bool success = parseFXSectionContext( tok, identifier, RenderBackendType::OpenGLES3 );
+					if ( !success )
+					{
+						return false;
+					}
+				}
+				else
+					return raiseError( "FX: unexpected token", tok.getLine() );
+				// 				if ( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
 			}
 		}
 		else

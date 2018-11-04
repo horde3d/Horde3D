@@ -14,14 +14,12 @@
 #define _egRendererBaseGL2_H_
 
 #include "egRendererBase.h"
-#include "utOpenGL.h"
 #include <string.h>
 
 
 namespace Horde3D {
 
 namespace RDI_GL2 {
-
 
 const uint32 MaxNumVertexLayouts = 16;
 
@@ -238,7 +236,7 @@ public:
 	// 	uint32 getBufferMem() const { return _bufferMem; }
 
 	// Textures
-	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
+// 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
 	                      bool hasMips, bool genMips, bool compress, bool sRGB );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
@@ -332,6 +330,8 @@ protected:
 	void applyRenderStates();
 
 	inline void	  decreaseBufferRefCount( uint32 bufObj );
+
+	bool isCompressedTextureFormat( TextureFormats::List fmt );
 
 protected:
 

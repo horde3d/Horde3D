@@ -19,6 +19,8 @@
 #include <cstring>
 
 #include "utDebug.h"
+#include <array>
+#include <tuple>
 
 
 namespace Horde3D {
@@ -29,6 +31,9 @@ using namespace std;
 // Class TextureResource
 // *************************************************************************************************
 
+//
+// DDS
+//
 #define FOURCC( c0, c1, c2, c3 ) ((c0) | (c1<<8) | (c2<<16) | (c3<<24))
 
 #define DDSD_MIPMAPCOUNT      0x00020000
@@ -44,6 +49,11 @@ using namespace std;
 #define D3DFMT_A16B16G16R16F  113
 #define D3DFMT_A32B32G32R32F  116
 
+#define D3DFMT_DXGI_BC6H_UF16 96
+#define D3DFMT_DXGI_BC6H_SF16 97
+
+#define D3DFMT_DXGI_BC7		  98
+#define D3DFMT_DXGI_BC7U	  99
 
 struct DDSHeader
 {
@@ -71,13 +81,72 @@ struct DDSHeader
 	uint32  dwReserved2;
 } ddsHeader;
 
+//
+// KTX
+//
+const unsigned char ktxIdentifier[ 12 ] = { 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A };
+
+struct KTXHeader
+{
+	unsigned char identifier[ 12 ];
+	uint32 endianness;
+	uint32 glType;
+	uint32 glTypeSize;
+	uint32 glFormat;
+	uint32 glInternalFormat;
+	uint32 glBaseInternalFormat;
+	uint32 pixelWidth;
+	uint32 pixelHeight;
+	uint32 pixelDepth;
+	uint32 numberOfArrayElements;
+	uint32 numberOfFaces;
+	uint32 numberOfMipmapLevels;
+	uint32 bytesOfKeyValueData;
+} ktxHeader;
+
+struct ktxTexFormat
+{
+	uint32 h3dTexFormat;
+	uint32 glFormat;
+	uint32 glSRGBFormat;
+};
+
+const std::array< ktxTexFormat, 25 > ktxSupportedFormats = { {
+//			 h3dTexFormat, glFormat, glSRGBFormat
+	{ TextureFormats::BGRA8, 0x8051, 0x8051 }, // GL_RGB8
+	{ TextureFormats::BGRA8, 0x8058, 0x8058 }, // GL_RGBA8
+	{ TextureFormats::BGRA8, 0x80E1, 0x80E1 }, // GL_BGRA
+	{ TextureFormats::RGBA16F, 0x881A, 0x881A }, // GL_RGBA16F
+	{ TextureFormats::RGBA32F, 0x8814, 0x8814 }, // GL_RGBA32F
+	{ TextureFormats::DXT1, 0x83F1, 0x83F1 }, // GL_COMPRESSED_RGBA_S3TC_DXT1
+	{ TextureFormats::DXT3, 0x83F2, 0x83F2 }, // GL_COMPRESSED_RGBA_S3TC_DXT3
+	{ TextureFormats::DXT5, 0x83F3, 0x83F3 }, // GL_COMPRESSED_RGBA_S3TC_DXT5
+	{ TextureFormats::ETC1, 0x8D64, 0x8D64 }, // GL_ETC1_RGB8_OES
+	{ TextureFormats::RGB8_ETC2, 0x9274, 0x9275 }, // GL_COMPRESSED_RGB8_ETC2, GL_COMPRESSED_SRGB8_ETC2
+	{ TextureFormats::RGBA8_ETC2, 0x9278, 0x9279 }, // GL_COMPRESSED_RGBA8_ETC2_EAC, GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC
+	{ TextureFormats::ASTC_4x4, 0x93B0, 0x93D0 }, // GL_COMPRESSED_RGBA_ASTC_4x4_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR
+	{ TextureFormats::ASTC_5x4, 0x93B1, 0x93D1 }, // GL_COMPRESSED_RGBA_ASTC_5x4_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR
+	{ TextureFormats::ASTC_5x5, 0x93B2, 0x93D2 }, // GL_COMPRESSED_RGBA_ASTC_5x5_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR
+	{ TextureFormats::ASTC_6x5, 0x93B3, 0x93D3 }, // GL_COMPRESSED_RGBA_ASTC_6x5_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x5_KHR
+	{ TextureFormats::ASTC_6x6, 0x93B4, 0x93D4 }, // GL_COMPRESSED_RGBA_ASTC_6x6_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_6x6_KHR
+	{ TextureFormats::ASTC_8x5, 0x93B5, 0x93D5 }, // GL_COMPRESSED_RGBA_ASTC_8x5_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x5_KHR
+	{ TextureFormats::ASTC_8x6, 0x93B6, 0x93D6 }, // GL_COMPRESSED_RGBA_ASTC_8x6_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x6_KHR
+	{ TextureFormats::ASTC_8x8, 0x93B7, 0x93D7 }, // GL_COMPRESSED_RGBA_ASTC_8x8_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_8x8_KHR
+	{ TextureFormats::ASTC_10x5, 0x93B8, 0x93D8 }, // GL_COMPRESSED_RGBA_ASTC_10x5_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x5_KHR
+	{ TextureFormats::ASTC_10x6, 0x93B9, 0x93D9 }, // GL_COMPRESSED_RGBA_ASTC_10x6_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x6_KHR
+	{ TextureFormats::ASTC_10x8, 0x93BA, 0x93DA }, // GL_COMPRESSED_RGBA_ASTC_10x8_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x8_KHR
+	{ TextureFormats::ASTC_10x10, 0x93BB, 0x93DB }, // GL_COMPRESSED_RGBA_ASTC_10x10_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_10x10_KHR
+	{ TextureFormats::ASTC_12x10, 0x93BC, 0x93DC }, // GL_COMPRESSED_RGBA_ASTC_12x10_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR
+	{ TextureFormats::ASTC_12x12, 0x93BD, 0x93DD }, // GL_COMPRESSED_RGBA_ASTC_12x12_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR
+} };
+ 		                                 
 
 unsigned char *TextureResource::mappedData = 0x0;
 int TextureResource::mappedWriteImage = -1;
 uint32 TextureResource::defTex2DObject = 0;
 uint32 TextureResource::defTex3DObject = 0;
 uint32 TextureResource::defTexCubeObject = 0;
-
+bool TextureResource::bgraSwizzleRequired = true;
 
 void TextureResource::initializationFunc()
 {
@@ -88,6 +157,12 @@ void TextureResource::initializationFunc()
 		  128,192,255,255, 128,192,255,255, 128,192,255,255, 128,192,255,255 };
 
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+	// Check if RGBA->BGRA swizzle required by render device
+	if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGLES3 )
+	{
+		bgraSwizzleRequired = false;
+	}
 
 	// Upload default textures
 	defTex2DObject = rdi->createTexture( TextureTypes::Tex2D, 4, 4, 1,
@@ -255,6 +330,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 	_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
 	int mipCount = ddsHeader.dwFlags & DDSD_MIPMAPCOUNT ? ddsHeader.dwMipMapCount : 1;
 	_hasMipMaps = mipCount > 1 ? true : false;
+	bool dx10HeaderAvailable = false;
 
 	// Get texture type
 	if( ddsHeader.caps.dwCaps2 == 0 )
@@ -305,6 +381,33 @@ bool TextureResource::loadDDS( const char *data, int size )
 			_texFormat = TextureFormats::RGBA32F;
 			bytesPerBlock = 16;
 			break;
+		case FOURCC( 'D', 'X', '1', '0' ):
+			{
+				// DX10 header contains another 20 bytes
+				uint32 dx10Header[ 5 ];
+				elemcpy_le( ( uint32* ) ( &dx10Header ), ( uint32* ) ( data + 128 ), 20 / sizeof( uint32 ) );
+
+				uint32 dx10Format = dx10Header[ 0 ];
+				switch ( dx10Format )
+				{
+					case D3DFMT_DXGI_BC7:
+					case D3DFMT_DXGI_BC7U:
+						_texFormat = TextureFormats::BC7;
+						blockSize = 4; bytesPerBlock = 16;
+						break;
+					case D3DFMT_DXGI_BC6H_UF16:
+						_texFormat = TextureFormats::BC6_UF16;
+						blockSize = 4; bytesPerBlock = 16;
+						break;
+					case D3DFMT_DXGI_BC6H_SF16:
+						_texFormat = TextureFormats::BC6_SF16;
+						blockSize = 4; bytesPerBlock = 16;
+						break;
+				}
+
+				dx10HeaderAvailable = true;
+				break;
+			}
 		}
 	}
 	else if( ddsHeader.pixFormat.dwFlags & DDPF_RGB )
@@ -351,9 +454,11 @@ bool TextureResource::loadDDS( const char *data, int size )
 	_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
 	                                  mipCount > 1, false, false, _sRGB );
 	
+	if ( _texObject == 0 ) return raiseError( "Failed to create DDS texture" );
+
 	// Upload texture subresources
 	int numSlices = _texType == TextureTypes::TexCube ? 6 : 1;
-	unsigned char *pixels = (unsigned char *)(data + 128);
+	unsigned char *pixels =  dx10HeaderAvailable ? ( unsigned char * ) ( data + 128 + 20 ) : ( unsigned char * )( data + 128 );
 
 	for( int i = 0; i < numSlices; ++i )
 	{
@@ -414,6 +519,142 @@ bool TextureResource::loadDDS( const char *data, int size )
 }
 
 
+bool TextureResource::checkKTX( const char *data, int size ) const
+{
+	return size > 64 && memcmp( data, ktxIdentifier, 12 ) == 0;
+}
+
+
+bool TextureResource::loadKTX( const char *data, int size )
+{
+	ASSERT_STATIC( sizeof( KTXHeader ) == 64 );
+
+	// all of the ktx header is uint32 data, so we consider it a array of uint32s.
+	elemcpy_le( ( uint32* ) ( &ktxHeader ), ( uint32* ) ( data ), 64 / sizeof( uint32 ) );
+
+	// Check header
+	if ( memcmp( ktxHeader.identifier, ktxIdentifier, 12 ) != 0 )
+	{
+		Modules::log().writeError( "Invalid KTX header" );
+		return false;
+	}
+
+	// Store properties
+	_width = ktxHeader.pixelWidth;
+	_height = ktxHeader.pixelHeight;
+	_depth = 1;
+	_texFormat = TextureFormats::Unknown;
+	_texObject = 0;
+	_sRGB = ( _flags & ResourceFlags::TexSRGB ) != 0;
+	uint32 mipCount = ktxHeader.numberOfMipmapLevels;
+	_hasMipMaps = mipCount > 1 ? true : false;
+
+	// Get texture type
+	if ( ktxHeader.numberOfFaces > 1 )
+	{
+		if ( ktxHeader.numberOfFaces != 6 )
+		{
+			Modules::log().writeError( "Wrong number of cube texture faces (should be 6)" );
+			return false;
+		}
+		else
+		{
+			_texType = TextureTypes::TexCube;
+		}
+	}
+	else if ( ktxHeader.pixelDepth > 1 )
+	{
+		_depth = ktxHeader.pixelDepth;
+		_texType = TextureTypes::Tex3D;
+	}
+	else
+		_texType = TextureTypes::Tex2D;
+
+	// Texture arrays are not supported yet
+	if ( ktxHeader.numberOfArrayElements > 1 )
+		Modules::log().writeWarning( "Texture Arrays not supported. using first array element only" );
+	else ktxHeader.numberOfArrayElements = 1; // ktx spec note 2 - Replace with 1 if this field is 0.
+
+	// Get pixel format
+	for ( const ktxTexFormat &tex : ktxSupportedFormats )
+	{
+		if ( ktxHeader.glInternalFormat == tex.glFormat || ktxHeader.glInternalFormat == tex.glSRGBFormat )
+		{
+			_texFormat = (TextureFormats::List) tex.h3dTexFormat;
+			break;
+		}
+	}
+
+	if ( _texFormat == TextureFormats::Unknown )
+		return raiseError( "Unsupported KTX pixel format" );
+	
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+	// Create texture
+	_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
+		mipCount > 1, false, false, _sRGB );
+
+	if ( _texObject == 0 ) return raiseError( "Failed to create KTX texture" );
+
+	uint32 sliceCount = _texType == TextureTypes::TexCube ? 6 : 1;
+	unsigned char *pixels = ( unsigned char * ) ( data + sizeof( KTXHeader ) + ktxHeader.bytesOfKeyValueData );
+
+	int width = _width, height = _height, depth = _depth;
+	uint32 *dstBuf = 0x0;
+
+	for ( uint32 mip = 0; mip < mipCount; ++mip )
+	{
+		uint32 mipSize;
+		pixels = (unsigned char *) elemcpy_le( &mipSize, ( uint32* ) ( pixels ), 1 );
+
+		if ( pixels + mipSize > ( unsigned char * )data + size )
+			return raiseError( "Corrupt KTX" );
+
+		for ( uint32 element = 0; element < ktxHeader.numberOfArrayElements; ++element ) 
+		{
+			for ( uint32 slice = 0; slice < ktxHeader.numberOfFaces; ++slice )
+			{
+				if ( element == 0 )
+				{	// using only first element of array now
+					if ( _texFormat == TextureFormats::BGRA8 && ktxHeader.glInternalFormat != 0x80E1 ) // GL_BGRA
+					{
+						// Convert 8 bit KTX formats to BGRA
+						uint32 pixCount = width * height * depth;
+						if ( dstBuf == 0x0 ) dstBuf = new uint32[ pixCount * 4 ];
+						uint32 *p = dstBuf;
+
+						if ( ktxHeader.glInternalFormat == 0x8051 ) // GL_RGB8
+							for ( uint32 k = 0; k < pixCount * 3; k += 3 )
+								*p++ = pixels[ k + 2 ] | pixels[ k + 1 ] << 8 | pixels[ k + 0 ] << 16 | 0xFF000000;
+						else if ( ktxHeader.glInternalFormat == 0x8058 && bgraSwizzleRequired ) // GL_RGBA8
+							for ( uint32 k = 0; k < pixCount * 4; k += 4 )
+								*p++ = pixels[ k + 2 ] | pixels[ k + 1 ] << 8 | pixels[ k + 0 ] << 16 | pixels[ k + 3 ] << 24;
+
+						rdi->uploadTextureData( _texObject, slice, mip, dstBuf );
+					}
+					else
+					{
+						// Upload KTX data directly
+						rdi->uploadTextureData( _texObject, slice, mip, pixels );
+					}
+				}
+
+				pixels += mipSize;	
+			}
+		}
+
+		if ( width > 1 ) width >>= 1;
+		if ( height > 1 ) height >>= 1;
+		if ( depth > 1 ) depth >>= 1;
+	}
+
+	if ( dstBuf != 0x0 ) delete[] dstBuf;
+
+	ASSERT( pixels == ( unsigned char * ) data + size );
+	return true;
+}
+
+
 bool TextureResource::loadSTBI( const char *data, int size )
 {
 	bool hdr = false;
@@ -429,12 +670,15 @@ bool TextureResource::loadSTBI( const char *data, int size )
 	if( pixels == 0x0 )
 		return raiseError( "Invalid image format (" + string( stbi_failure_reason() ) + ")" );
 
-	// Swizzle RGBA -> BGRA
-	uint32 *ptr = (uint32 *)pixels;
-	for( uint32 i = 0, si = _width * _height; i < si; ++i )
+	// Swizzle RGBA -> BGRA if required
+	if ( bgraSwizzleRequired )
 	{
-		uint32 col = *ptr;
-		*ptr++ = (col & 0xFF00FF00) | ((col & 0x000000FF) << 16) | ((col & 0x00FF0000) >> 16);
+		uint32 *ptr = ( uint32 * ) pixels;
+		for ( uint32 i = 0, si = _width * _height; i < si; ++i )
+		{
+			uint32 col = *ptr;
+			*ptr++ = ( col & 0xFF00FF00 ) | ( ( col & 0x000000FF ) << 16 ) | ( ( col & 0x00FF0000 ) >> 16 );
+		}
 	}
 	
 	_depth = 1;
@@ -460,8 +704,10 @@ bool TextureResource::load( const char *data, int size )
 {
 	if( !Resource::load( data, size ) ) return false;
 
-	if( checkDDS( data, size ) )
+	if ( checkDDS( data, size ) )
 		return loadDDS( data, size );
+	else if ( checkKTX( data, size ) )
+		return loadKTX( data, size );
 	else
 		return loadSTBI( data, size );
 }

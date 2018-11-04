@@ -30,6 +30,13 @@ else()
     message("Not building examples.")
 endif(HORDE3D_BUILD_EXAMPLES)
 
+# Use OpenGL ES 3 backend (turns off other backends)
+option(HORDE3D_FORCE_GLES "Forces Horde3D to use OpenGL ES 3 render backend" OFF)
+
+if(HORDE3D_FORCE_GLES)
+	set(FORCE_GLES TRUE)
+endif(HORDE3D_FORCE_GLES)
+
 # Set binaries output folder.
 SET(HORDE3D_OUTPUT_PATH_PREFIX "${PROJECT_BINARY_DIR}/Binaries")
 SET(HORDE3D_OUTPUT_PATH_SUFFIX "")

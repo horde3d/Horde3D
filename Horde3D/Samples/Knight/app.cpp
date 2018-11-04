@@ -27,7 +27,7 @@ using namespace std;
 
 
 KnightSample::KnightSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Knight - Horde3D Sample", H3DRenderDevice::OpenGL2 ),
+    SampleApplication( argc, argv, "Knight - Horde3D Sample", H3DRenderDevice::OpenGLES3 ),
     _animTime(0),
     _weight(1.0f)
 {
@@ -36,7 +36,7 @@ KnightSample::KnightSample( int argc, char** argv ) :
     _helpRows += 1;
     
     // Default to HDR pipeline
-    _curPipeline = 2;
+	_curPipeline = 0;//2;
 }
 
 

@@ -104,6 +104,36 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context ATTRIBPASS
+	{
+		VertexShader = compile GLSL VS_GENERAL_GLES3;
+		PixelShader = compile GLSL FS_ATTRIBPASS_GLES3;
+	}
+
+	context SHADOWMAP
+	{
+		VertexShader = compile GLSL VS_SHADOWMAP_GLES3;
+		PixelShader = compile GLSL FS_SHADOWMAP_GLES3;
+	}
+
+	context LIGHTING
+	{
+		VertexShader = compile GLSL VS_GENERAL_GLES3;
+		PixelShader = compile GLSL FS_LIGHTING_GLES3;
+		
+		ZWriteEnable = false;
+		BlendMode = Add;
+	}
+	
+	context AMBIENT
+	{
+		VertexShader = compile GLSL VS_GENERAL_GLES3;
+		PixelShader = compile GLSL FS_AMBIENT_GLES3;
+	}
+}
+
 [[VS_GENERAL]]
 // =================================================================================================
 
@@ -448,7 +478,7 @@ void main( void )
 	setNormal( normalize( normal ) );
 
 #ifdef _F04_EnvMapping
-	vec3 refl = textureCube( envMap, reflect( pos.xyz - viewerPos, normalize( normal ) ) ).rgb;
+	vec3 refl = texture( envMap, reflect( pos.xyz - viewerPos, normalize( normal ) ) ).rgb;
 	setAlbedo( refl * 1.5 );
 #else
 	setAlbedo( albedo.rgb );
@@ -877,3 +907,386 @@ void main( void )
 	fragColor.rgb = refl * 1.5;
 #endif
 }
+
+// =================================================================================================
+// =======================================GLES3=====================================================
+// =================================================================================================
+
+[[VS_GENERAL_GLES3]]
+// =================================================================================================
+
+#ifdef _F03_ParallaxMapping
+	#define _F02_NormalMapping
+#endif
+
+#include "shaders/utilityLib/vertCommon.glsl"
+
+#ifdef _F01_Skinning
+	#include "shaders/utilityLib/vertSkinningGLES3.glsl"
+#endif
+
+uniform mat4 viewProjMat;
+uniform vec3 viewerPos;
+
+layout( location = 0 ) in vec3 vertPos;
+layout( location = 1 ) in vec3 normal;
+layout( location = 5 ) in vec2 texCoords0;
+
+#ifdef _F02_NormalMapping
+	layout ( location = 2 ) in vec4 tangent;
+#endif
+
+out vec4 pos;
+out vec4 vsPos;
+out vec2 texCoords;
+
+#ifdef _F02_NormalMapping
+	out mat3 tsbMat;
+#else
+	out vec3 tsbNormal;
+#endif
+#ifdef _F03_ParallaxMapping
+	out vec3 eyeTS;
+#endif
+
+
+void main( void )
+{
+#ifdef _F01_Skinning
+	mat4 skinningMat = calcSkinningMat();
+	mat3 skinningMatVec = getSkinningMatVec( skinningMat );
+#endif
+	
+	// Calculate normal
+#ifdef _F01_Skinning
+	vec3 _normal = normalize( calcWorldVec( skinVec( normal, skinningMatVec ) ) );
+#else
+	vec3 _normal = normalize( calcWorldVec( normal ) );
+#endif
+
+	// Calculate tangent and bitangent
+#ifdef _F02_NormalMapping
+	#ifdef _F01_Skinning
+		vec3 _tangent = normalize( calcWorldVec( skinVec( tangent.xyz, skinningMatVec ) ) );
+	#else
+		vec3 _tangent = normalize( calcWorldVec( tangent.xyz ) );
+	#endif
+	
+	vec3 _bitangent = cross( _normal, _tangent ) * tangent.w;
+	tsbMat = calcTanToWorldMat( _tangent, _bitangent, _normal );
+#else
+	tsbNormal = _normal;
+#endif
+
+	// Calculate world space position
+#ifdef _F01_Skinning	
+	pos = calcWorldPos( skinPos( vec4( vertPos, 1.0 ), skinningMat ) );
+#else
+	pos = calcWorldPos( vec4( vertPos, 1.0 ) );
+#endif
+
+	vsPos = calcViewPos( pos );
+
+	// Calculate tangent space eye vector
+#ifdef _F03_ParallaxMapping
+	eyeTS = calcTanVec( viewerPos - pos.xyz, _tangent, _bitangent, _normal );
+#endif
+	
+	// Calculate texture coordinates and clip space position
+	texCoords = texCoords0;
+	gl_Position = viewProjMat * pos;
+}
+
+
+[[FS_ATTRIBPASS_GLES3]]
+// =================================================================================================
+
+#ifdef _F03_ParallaxMapping
+	#define _F02_NormalMapping
+#endif
+
+#include "shaders/utilityLib/fragDeferredWriteGLES3.glsl" 
+
+uniform vec3 viewerPos;
+uniform vec4 matDiffuseCol;
+uniform vec4 matSpecParams;
+uniform sampler2D albedoMap;
+
+#ifdef _F02_NormalMapping
+	uniform sampler2D normalMap;
+#endif
+
+in vec4 pos;
+in vec4 vsPos;
+in vec2 texCoords;
+
+#ifdef _F02_NormalMapping
+	in mat3 tsbMat;
+#else
+	in vec3 tsbNormal;
+#endif
+#ifdef _F03_ParallaxMapping
+	in vec3 eyeTS;
+#endif
+
+void main( void )
+{
+	vec3 newCoords = vec3( texCoords, 0 );
+	
+#ifdef _F03_ParallaxMapping	
+	const float plxScale = 0.03;
+	const float plxBias = -0.015;
+	
+	// Iterative parallax mapping
+	vec3 eye = normalize( eyeTS );
+	for( int i = 0; i < 4; ++i )
+	{
+		vec4 nmap = texture( normalMap, newCoords.st * vec2( 1, -1 ) );
+		float height = nmap.a * plxScale + plxBias;
+		newCoords += (height - newCoords.p) * nmap.z * eye;
+	}
+#endif
+
+	// Flip texture vertically to match the GL coordinate system
+	newCoords.t *= -1.0;
+
+	vec4 albedo = texture( albedoMap, newCoords.st ) * matDiffuseCol;
+	
+#ifdef _F05_AlphaTest
+	if( albedo.a < 0.01 ) discard;
+#endif
+	
+#ifdef _F02_NormalMapping
+	vec3 normalMap = texture( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
+	vec3 normal = tsbMat * normalMap;
+#else
+	vec3 normal = tsbNormal;
+#endif
+
+	vec3 newPos = pos.xyz;
+	vec3 newVSPos = vsPos.xyz;
+	
+#ifdef _F03_ParallaxMapping
+	newPos += vec3( 0.0, newCoords.p, 0.0 );
+#endif
+	
+	setMatID( 1.0 );
+	setPos( newPos - viewerPos );
+	setNormal( normalize( normal ) );
+	setAlbedo( albedo.rgb );
+	setSpecParams( matSpecParams.rgb, matSpecParams.a );
+}
+
+
+[[VS_SHADOWMAP_GLES3]]
+// =================================================================================================
+	
+#include "shaders/utilityLib/vertCommon.glsl"
+#include "shaders/utilityLib/vertSkinningGLES3.glsl"
+
+uniform mat4 viewProjMat;
+uniform vec4 lightPos;
+
+layout( location = 0 ) in vec3 vertPos;
+out vec3 lightVec;
+
+#ifdef _F05_AlphaTest
+	layout( location = 5 ) in vec2 texCoords0;
+	out vec2 texCoords;
+#endif
+
+void main( void )
+{
+#ifdef _F01_Skinning	
+	vec4 pos = calcWorldPos( skinPos( vec4( vertPos, 1.0 ) ) );
+#else
+	vec4 pos = calcWorldPos( vec4( vertPos, 1.0 ) );
+#endif
+
+#ifdef _F05_AlphaTest
+	texCoords = texCoords0;
+#endif
+
+	lightVec = lightPos.xyz - pos.xyz;
+	gl_Position = viewProjMat * pos;
+}
+
+
+[[FS_SHADOWMAP_GLES3]]
+// =================================================================================================
+
+uniform vec4 lightPos;
+uniform float shadowBias;
+in vec3 lightVec;
+
+#ifdef _F05_AlphaTest
+	uniform vec4 matDiffuseCol;
+	uniform sampler2D albedoMap;
+	in vec2 texCoords;
+#endif
+
+void main( void )
+{
+#ifdef _F05_AlphaTest
+	vec4 albedo = texture( albedoMap, texCoords * vec2( 1, -1 ) ) * matDiffuseCol;
+	if( albedo.a < 0.01 ) discard;
+#endif
+	
+	float dist = length( lightVec ) / lightPos.w;
+//	gl_FragDepth = dist + shadowBias;
+	
+	// Clearly better bias but requires SM 3.0
+	gl_FragDepth = dist + abs( dFdx( dist ) ) + abs( dFdy( dist ) ) + shadowBias;
+}
+
+
+[[FS_LIGHTING_GLES3]]
+// =================================================================================================
+
+#ifdef _F03_ParallaxMapping
+	#define _F02_NormalMapping
+#endif
+
+#include "shaders/utilityLib/fragLightingGLES3.glsl" 
+
+uniform vec4 matDiffuseCol;
+uniform vec4 matSpecParams;
+uniform sampler2D albedoMap;
+
+#ifdef _F02_NormalMapping
+	uniform sampler2D normalMap;
+#endif
+
+in vec4 pos, vsPos;
+in vec2 texCoords;
+
+#ifdef _F02_NormalMapping
+	in mat3 tsbMat;
+#else
+	in vec3 tsbNormal;
+#endif
+#ifdef _F03_ParallaxMapping
+	in vec3 eyeTS;
+#endif
+
+out vec4 fragColor;
+
+void main( void )
+{
+	vec3 newCoords = vec3( texCoords, 0 );
+	
+#ifdef _F03_ParallaxMapping	
+	const float plxScale = 0.03;
+	const float plxBias = -0.015;
+	
+	// Iterative parallax mapping
+	vec3 eye = normalize( eyeTS );
+	for( int i = 0; i < 4; ++i )
+	{
+		vec4 nmap = texture( normalMap, newCoords.st * vec2( 1, -1 ) );
+		float height = nmap.a * plxScale + plxBias;
+		newCoords += (height - newCoords.p) * nmap.z * eye;
+	}
+#endif
+
+	// Flip texture vertically to match the GL coordinate system
+	newCoords.t *= -1.0;
+
+	vec4 albedo = texture( albedoMap, newCoords.st ) * matDiffuseCol;
+	
+#ifdef _F05_AlphaTest
+	if( albedo.a < 0.01 ) discard;
+#endif
+	
+#ifdef _F02_NormalMapping
+	vec3 normalMap = texture( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
+	vec3 normal = tsbMat * normalMap;
+#else
+	vec3 normal = tsbNormal;
+#endif
+
+	vec3 newPos = pos.xyz;
+
+#ifdef _F03_ParallaxMapping
+	newPos += vec3( 0.0, newCoords.p, 0.0 );
+#endif
+	
+	fragColor.rgb = calcPhongSpotLight( newPos, normalize( normal ), albedo.rgb, matSpecParams.rgb,
+										matSpecParams.a, -vsPos.z, 0.3 );
+}
+
+[[FS_AMBIENT_GLES3]]	
+// =================================================================================================
+
+#ifdef _F03_ParallaxMapping
+	#define _F02_NormalMapping
+#endif
+
+#include "shaders/utilityLib/fragLightingGLES3.glsl" 
+
+uniform sampler2D albedoMap;
+uniform samplerCube ambientMap;
+
+#ifdef _F02_NormalMapping
+	uniform sampler2D normalMap;
+#endif
+
+#ifdef _F04_EnvMapping
+	uniform samplerCube envMap;
+#endif
+
+in vec4 pos;
+in vec4 vsPos;
+in vec2 texCoords;
+
+#ifdef _F02_NormalMapping
+	in mat3 tsbMat;
+#else
+	in vec3 tsbNormal;
+#endif
+#ifdef _F03_ParallaxMapping
+	in vec3 eyeTS;
+#endif
+
+out vec4 fragColor;
+
+void main( void )
+{
+	vec3 newCoords = vec3( texCoords, 0 );
+	
+#ifdef _F03_ParallaxMapping	
+	const float plxScale = 0.03;
+	const float plxBias = -0.015;
+	
+	// Iterative parallax mapping
+	vec3 eye = normalize( eyeTS );
+	for( int i = 0; i < 4; ++i )
+	{
+		vec4 nmap = texture( normalMap, newCoords.st * vec2( 1, -1 ) );
+		float height = nmap.a * plxScale + plxBias;
+		newCoords += (height - newCoords.p) * nmap.z * eye;
+	}
+#endif
+
+	// Flip texture vertically to match the GL coordinate system
+	newCoords.t *= -1.0;
+
+	vec4 albedo = texture( albedoMap, newCoords.st );
+	
+#ifdef _F05_AlphaTest
+	if( albedo.a < 0.01 ) discard;
+#endif
+	
+#ifdef _F02_NormalMapping
+	vec3 normalMap = texture( normalMap, newCoords.st ).rgb * 2.0 - 1.0;
+	vec3 normal = tsbMat * normalMap;
+#else
+	vec3 normal = tsbNormal;
+#endif
+	
+	fragColor.rgb = albedo.rgb * texture( ambientMap, normal ).rgb;
+	
+#ifdef _F04_EnvMapping
+	vec3 refl = texture( envMap, reflect( pos.xyz - viewerPos, normalize( normal ) ) ).rgb;
+	fragColor.rgb = refl * 1.5;
+#endif
