@@ -104,7 +104,7 @@ public:
 	void update( int flags );
 	uint32 calcLodLevel( const Vec3f &viewPoint ) const;
 
-	void setCustomInstData( float *data, uint32 count );
+	void setCustomInstData( const float *data, uint32 count );
 
 	GeometryResource *getGeometryResource() const { return _geometryRes; }
 	bool jointExists( uint32 jointIndex ) const { return jointIndex < _skinMatRows.size() / 3; }

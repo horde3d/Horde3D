@@ -700,7 +700,7 @@ DLLEXP NodeHandle h3dGetNodeFindResult( int index )
 }
 
 
-DLLEXP void h3dSetNodeUniforms( NodeHandle node, float *uniformData, int count )
+DLLEXP void h3dSetNodeUniforms( NodeHandle node, const float *uniformData, int count )
 {
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
 	APIFUNC_VALIDATE_NODE( sn, "h3dSetNodeUniforms", APIFUNC_RET_VOID );
