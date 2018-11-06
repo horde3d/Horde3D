@@ -10,7 +10,6 @@
 //
 // *************************************************************************************************
 
-#define _CRT_SECURE_NO_WARNINGS
 #include "utOpenGL.h"
 #include <cstdlib>
 #include <cstring>

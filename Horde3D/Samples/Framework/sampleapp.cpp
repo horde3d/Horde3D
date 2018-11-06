@@ -14,8 +14,6 @@
 //
 // *************************************************************************************************
 
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "sampleapp.h"
 #include "Horde3DUtils.h"
 #include <iostream>
