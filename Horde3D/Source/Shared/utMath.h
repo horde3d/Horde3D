@@ -451,6 +451,22 @@ public:
 	{
 	}
 
+	// ------
+	// Access
+	// ------
+	float operator[]( unsigned int index ) const
+	{
+		return *(&x + index);
+	}
+
+	float &operator[]( unsigned int index )
+	{
+		return *(&x + index);
+	}
+
+	// ---------------------
+	// Arithmetic operations
+	// ---------------------
 	Vec4f operator+( const Vec4f &v ) const
 	{
 		return Vec4f( x + v.x, y + v.y, z + v.z, w + v.w );
