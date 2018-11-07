@@ -512,6 +512,7 @@ protected:
 	RDIDelegate< void ( uint32, uint32 ) >								_delegate_unmapBuffer;
 
 	RDIDelegate< uint32 ( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) > _delegate_createTexture;
+	RDIDelegate< void ( uint32 ) >										_delegate_generateTextureMipmap;
 	RDIDelegate< void ( uint32, int, int, const void * ) >				_delegate_uploadTextureData;
 	RDIDelegate< void ( uint32 & ) >									_delegate_destroyTexture;
 	RDIDelegate< void ( uint32, int, int, const void * ) >				_delegate_updateTextureData;
@@ -530,7 +531,7 @@ protected:
 	RDIDelegate< const char *() >										_delegate_getDefaultVSCode;
 	RDIDelegate< const char *() >										_delegate_getDefaultFSCode;
 
-	RDIDelegate< uint32 ( uint32, uint32, TextureFormats::List, bool, uint32, uint32 ) > _delegate_createRenderBuffer;
+	RDIDelegate< uint32 ( uint32, uint32, TextureFormats::List, bool, uint32, uint32, bool ) > _delegate_createRenderBuffer;
 	RDIDelegate< void ( uint32 & ) >									_delegate_destroyRenderBuffer;
 	RDIDelegate< uint32( uint32, uint32 ) >								_delegate_getRenderBufferTex;
 	RDIDelegate< void ( uint32 ) >										_delegate_setRenderBuffer;
@@ -710,6 +711,10 @@ public:
 	{ 
 		return _delegate_createTexture.invoke( type, width, height, depth, format, hasMips, genMips, compress, sRGB );
 	}
+	void generateTextureMipmap( uint32 texObj )
+	{
+		_delegate_generateTextureMipmap.invoke( texObj );
+	}
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 	{ 
 		_delegate_uploadTextureData.invoke( texObj, slice, mipLevel, pixels );
@@ -730,10 +735,10 @@ public:
 	{
 		return _textureMem; 
 	}
-    void bindImageToTexture( uint32 texObj, void* eglImage )
-    {
+	void bindImageToTexture( uint32 texObj, void* eglImage )
+	{
 		return _delegate_bindImageToTexture.invoke( texObj, eglImage );
-    }
+	}
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
@@ -742,7 +747,7 @@ public:
 		return _delegate_createShader.invoke( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
 											  tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
 	}
-    void destroyShader( uint32& shaderId )
+	void destroyShader( uint32& shaderId )
 	{
 		_delegate_destroyShader.invoke( shaderId );
 	}
@@ -789,9 +794,9 @@ public:
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples )
+	                           bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
 	{
-		return _delegate_createRenderBuffer.invoke( width, height, format, depth, numColBufs, samples );
+		return _delegate_createRenderBuffer.invoke( width, height, format, depth, numColBufs, samples, hasMipmaps);
 	}
     void destroyRenderBuffer( uint32& rbObj )
 	{ 

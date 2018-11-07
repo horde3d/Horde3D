@@ -276,6 +276,7 @@ void RenderDeviceGL4::initRDIFuncs()
 	_delegate_unmapBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::unmapBuffer >( this );
 
 	_delegate_createTexture.bind< RenderDeviceGL4, &RenderDeviceGL4::createTexture >( this );
+	_delegate_generateTextureMipmap.bind< RenderDeviceGL4, &RenderDeviceGL4::generateTextureMipmap >( this );
 	_delegate_uploadTextureData.bind< RenderDeviceGL4, &RenderDeviceGL4::uploadTextureData >( this );
 	_delegate_destroyTexture.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyTexture >( this );
 	_delegate_updateTextureData.bind< RenderDeviceGL4, &RenderDeviceGL4::updateTextureData >( this );
@@ -413,7 +414,7 @@ bool RenderDeviceGL4::init()
 
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
-	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
+	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0, false ); 
 	if( testBuf == 0 )
 	{	
 		_depthFormat = GL_DEPTH_COMPONENT16;
@@ -836,6 +837,19 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	_textureMem += tex.memSize;
 	
 	return _textures.add( tex );
+}
+
+
+void RenderDeviceGL4::generateTextureMipmap( uint32 texObj )
+{
+	const RDITextureGL4 &tex = _textures.getRef( texObj );
+
+	glActiveTexture( GL_TEXTURE15 );
+	glBindTexture( tex.type, tex.glObj );
+	glGenerateMipmap( tex.type );
+	glBindTexture( tex.type, 0 );
+	if( _texSlots[15].texObj )
+		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
 }
 
 
@@ -1386,7 +1400,7 @@ void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 // =================================================================================================
 
 uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-										 bool depth, uint32 numColBufs, uint32 samples )
+                                            bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
 	{
@@ -1423,7 +1437,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
 			// Create a color texture
-			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, hasMipmaps, hasMipmaps, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;

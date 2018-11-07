@@ -338,7 +338,7 @@ bool PipelineResource::createRenderTargets()
 		if( height == 0 ) height = ftoi_r( _baseHeight * rt.scale );
 		
 		rt.rendBuf = rdi->createRenderBuffer(
-			width, height, rt.format, rt.hasDepthBuf, rt.numColBufs, rt.samples );
+			width, height, rt.format, rt.hasDepthBuf, rt.numColBufs, rt.samples, false );
 		if( rt.rendBuf == 0 ) return false;
 	}
 	
