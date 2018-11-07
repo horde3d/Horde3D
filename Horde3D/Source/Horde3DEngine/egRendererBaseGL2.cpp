@@ -1137,6 +1137,18 @@ void RenderDeviceGL2::setShaderConst( int loc, RDIShaderConstType type, void *va
 	case CONST_FLOAT33:
 		glUniformMatrix3fv( loc, count, false, (float *)values );
 		break;
+	case CONST_INT:
+		glUniform1iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT2:
+		glUniform2iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT3:
+		glUniform3iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT4:
+		glUniform4iv( loc, count, (GLint *)values );
+		break;
 	}
 }
 

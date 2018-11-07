@@ -316,7 +316,11 @@ enum RDIShaderConstType
 	CONST_FLOAT3,
 	CONST_FLOAT4,
 	CONST_FLOAT44,
-	CONST_FLOAT33
+	CONST_FLOAT33,
+	CONST_INT,
+	CONST_INT2,
+	CONST_INT3,
+	CONST_INT4
 };
 
 // ---------------------------------------------------------
