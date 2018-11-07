@@ -1730,8 +1730,6 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 		}
 
 		ShaderCombination *prevShader = Modules::renderer().getCurShader();
-		
-		RDIPrimType drawType = PRIM_TRILIST;
 
 		if( !debugView )
 		{
@@ -1747,9 +1745,6 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 				}
 				curMatRes = meshNode->getMaterialRes();
 			}
-
-			// Change draw type for tessellatable models
-			if ( meshNode->getTessellationStatus() == 1 && tessellationSupported ) drawType = PRIM_PATCHES;
 		}
 		else
 		{
@@ -1816,8 +1811,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 			rdi->beginQuery( queryObj );
 		
 		// Render
-		rdi->drawIndexed( drawType, meshNode->getBatchStart(), meshNode->getBatchCount(),
-		                   meshNode->getVertRStart(), meshNode->getVertREnd() - meshNode->getVertRStart() + 1 );
+		rdi->drawIndexed( meshNode->getPrimType(), meshNode->getBatchStart(), meshNode->getBatchCount(),
+		                  meshNode->getVertRStart(), meshNode->getVertREnd() - meshNode->getVertRStart() + 1 );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
 		Modules::stats().incStat( EngineStats::TriCount, meshNode->getBatchCount() / 3.0f );
 
@@ -2046,7 +2041,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 				drawType = PRIM_TRILIST;
 				break;
 			case 1: // Lines
-				drawType = PRIM_LINES;
+				drawType = PRIM_LINELIST;
 				break;
 			case 2: // Points
 				drawType = PRIM_POINTS;

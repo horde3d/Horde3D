@@ -830,7 +830,7 @@ DLLEXP void h3dUpdateModel( NodeHandle modelNode, int flags )
 
 
 DLLEXP NodeHandle h3dAddMeshNode( NodeHandle parent, const char *name, ResHandle materialRes,
-                                  int batchStart, int batchCount, int vertRStart, int vertREnd )
+                                  int primType, int batchStart, int batchCount, int vertRStart, int vertREnd )
 {
 	SceneNode *parentNode = Modules::sceneMan().resolveNodeHandle( parent );
 	APIFUNC_VALIDATE_NODE( parentNode, "h3dAddMeshNode", 0 );
@@ -838,8 +838,8 @@ DLLEXP NodeHandle h3dAddMeshNode( NodeHandle parent, const char *name, ResHandle
 	APIFUNC_VALIDATE_RES_TYPE( matRes, ResourceTypes::Material, "h3dAddMeshNode", 0 );
 
 	//Modules::log().writeInfo( "Adding Mesh node '%s'", safeStr( name ).c_str() );
-	MeshNodeTpl tpl( safeStr( name, 0 ), (MaterialResource *)matRes, (unsigned)batchStart,
-	                 (unsigned)batchCount, (unsigned)vertRStart, (unsigned)vertREnd );
+	MeshNodeTpl tpl( safeStr( name, 0 ), (MaterialResource *)matRes, (MeshPrimType::List)primType,
+	                 (unsigned)batchStart, (unsigned)batchCount, (unsigned)vertRStart, (unsigned)vertREnd );
 	SceneNode *sn = Modules::sceneMan().findType( SceneNodeTypes::Mesh )->factoryFunc( tpl );
 	return Modules::sceneMan().addNode( sn, *parentNode );
 }
