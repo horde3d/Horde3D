@@ -77,7 +77,7 @@ bool initOpenGLExtensions();
 #if defined( PLATFORM_WIN ) || defined( PLATFORM_WIN_CE )
 #include <GLES3/gl3platform.h>
 #define GL_PROTOTYPES
-#define GL_GLEXT_PROTOTYPES
+//#define GL_GLEXT_PROTOTYPES
 #include <GLES3/gl31.h>
 //#include <GLES2/gl2ext.h>
 #elif defined(PLATFORM_LINUX)

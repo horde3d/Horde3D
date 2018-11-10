@@ -153,17 +153,17 @@ bool initOpenGLExtensions()
 	}
 
 	glESExt::EXT_texture_border_clamp = checkExtensionSupported( "GL_EXT_texture_border_clamp" ) || checkExtensionSupported( "GL_OES_texture_border_clamp" );
-	if ( glESExt::EXT_texture_border_clamp )
-	{
-		r &= ( glTexParameterIivEXT = ( PFNGLTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glTexParameterIivEXT" ) ) != 0x0;
-		r &= ( glTexParameterIuivEXT = ( PFNGLTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glTexParameterIuivEXT" ) ) != 0x0;
-		r &= ( glGetTexParameterIivEXT = ( PFNGLGETTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIivEXT" ) ) != 0x0;
-		r &= ( glGetTexParameterIuivEXT = ( PFNGLGETTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIuivEXT" ) ) != 0x0;
-		r &= ( glSamplerParameterIivEXT = ( PFNGLSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIivEXT" ) ) != 0x0;
-		r &= ( glSamplerParameterIuivEXT = ( PFNGLSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIuivEXT" ) ) != 0x0;
-		r &= ( glGetSamplerParameterIivEXT = ( PFNGLGETSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIivEXT" ) ) != 0x0;
-		r &= ( glGetSamplerParameterIuivEXT = ( PFNGLGETSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIuivEXT" ) ) != 0x0;
-	}
+// 	if ( glESExt::EXT_texture_border_clamp )
+// 	{
+// 		r &= ( glTexParameterIivEXT = ( PFNGLTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glTexParameterIivEXT" ) ) != 0x0;
+// 		r &= ( glTexParameterIuivEXT = ( PFNGLTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glTexParameterIuivEXT" ) ) != 0x0;
+// 		r &= ( glGetTexParameterIivEXT = ( PFNGLGETTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIivEXT" ) ) != 0x0;
+// 		r &= ( glGetTexParameterIuivEXT = ( PFNGLGETTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIuivEXT" ) ) != 0x0;
+// 		r &= ( glSamplerParameterIivEXT = ( PFNGLSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIivEXT" ) ) != 0x0;
+// 		r &= ( glSamplerParameterIuivEXT = ( PFNGLSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIuivEXT" ) ) != 0x0;
+// 		r &= ( glGetSamplerParameterIivEXT = ( PFNGLGETSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIivEXT" ) ) != 0x0;
+// 		r &= ( glGetSamplerParameterIuivEXT = ( PFNGLGETSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIuivEXT" ) ) != 0x0;
+// 	}
 
 	glESExt::EXT_geometry_shader = checkExtensionSupported( "GL_EXT_geometry_shader" ) || checkExtensionSupported( "GL_OES_geometry_shader" );
 
