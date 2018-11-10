@@ -30,6 +30,7 @@ namespace glExt
 	bool ARB_ES3_compatibility = false;
 	bool ARB_texture_compression_bptc = false;
 	bool ARB_texture_rg = false;
+	bool KHR_texture_compression_astc = false;
 
 	int	majorVersion = 1, minorVersion = 0;
 }
