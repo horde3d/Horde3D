@@ -620,7 +620,7 @@ bool SampleApplication::init()
 		// Fake message box
         glfwDestroyWindow(_winHandle);
 		
-        _winHandle = glfwCreateWindow( 800, 50, "Unable to initialize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
+        _winHandle = glfwCreateWindow( 800, 50, "Unable to initialize engine!", NULL, NULL );
 		double startTime = glfwGetTime();
         while( glfwGetTime() - startTime < 5.0 ) { /* Sleep */ }
 		
