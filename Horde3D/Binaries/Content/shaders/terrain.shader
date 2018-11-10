@@ -65,6 +65,36 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context ATTRIBPASS
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		PixelShader = compile GLSL FS_ATTRIBPASS_GL4;
+	}
+
+	context SHADOWMAP
+	{
+		VertexShader = compile GLSL VS_SHADOWMAP_GL4;
+		PixelShader = compile GLSL FS_SHADOWMAP_GL4;
+	}
+
+	context LIGHTING
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		PixelShader = compile GLSL FS_LIGHTING_GL4;
+		
+		ZWriteEnable = false;
+		BlendMode = Add;
+	}
+
+	context AMBIENT
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		PixelShader = compile GLSL FS_AMBIENT_GL4;
+	}
+}
+
 [[VS_GENERAL]]
 // =================================================================================================
 

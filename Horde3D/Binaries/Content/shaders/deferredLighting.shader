@@ -219,7 +219,7 @@ void main( void )
 	}
 	else
 	{
-		fragColor.rgb = getAlbedo( texCoords ) * textureCube( ambientMap, getNormal( texCoords ) ).rgb;
+		fragColor.rgb = getAlbedo( texCoords ) * texture( ambientMap, getNormal( texCoords ) ).rgb;
 	}
 }
 

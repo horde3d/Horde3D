@@ -1016,6 +1016,10 @@ uniform sampler2D albedoMap;
 	uniform sampler2D normalMap;
 #endif
 
+#ifdef _F04_EnvMapping
+	uniform samplerCube envMap;
+#endif
+
 in vec4 pos;
 in vec4 vsPos;
 in vec2 texCoords;
@@ -1070,10 +1074,21 @@ void main( void )
 	newPos += vec3( 0.0, newCoords.p, 0.0 );
 #endif
 	
+#ifdef _F04_EnvMapping
+	setMatID( 4.0 );
+#else
 	setMatID( 1.0 );
+#endif
 	setPos( newPos - viewerPos );
 	setNormal( normalize( normal ) );
+
+#ifdef _F04_EnvMapping
+	vec3 refl = texture( envMap, reflect( pos.xyz - viewerPos, normalize( normal ) ) ).rgb;
+	setAlbedo( refl * 1.5 );
+#else
 	setAlbedo( albedo.rgb );
+#endif
+
 	setSpecParams( matSpecParams.rgb, matSpecParams.a );
 }
 
@@ -1290,3 +1305,4 @@ void main( void )
 	vec3 refl = texture( envMap, reflect( pos.xyz - viewerPos, normalize( normal ) ) ).rgb;
 	fragColor.rgb = refl * 1.5;
 #endif
+}
