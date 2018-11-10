@@ -52,7 +52,16 @@ bool KnightSample::initResources()
     H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/sphere/sphere.scene.xml", 0 );
 
     // Knight
-	H3DRes knightRes = h3dAddResource( H3DResTypes::SceneGraph, "models/knight/knight.scene.xml", 0 );
+	H3DRes knightRes = 0;
+	if ( _renderInterface != H3DRenderDevice::OpenGLES3 )
+	{
+		knightRes = h3dAddResource( H3DResTypes::SceneGraph, "models/knight/knight.scene.xml", 0 );
+	}
+	else
+	{
+		knightRes = h3dAddResource( H3DResTypes::SceneGraph, "models/knight/knightES.scene.xml", 0 );
+	}
+
 	H3DRes knightAnim1Res = h3dAddResource( H3DResTypes::Animation, "animations/knight_order.anim", 0 );
 	H3DRes knightAnim2Res = h3dAddResource( H3DResTypes::Animation, "animations/knight_attack.anim", 0 );
 

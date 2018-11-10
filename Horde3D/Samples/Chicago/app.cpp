@@ -47,7 +47,15 @@ bool ChicagoSample::initResources()
 	H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/platform/platform.scene.xml", 0 );
 
     // Skybox
-	H3DRes skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skybox.scene.xml", 0 );
+	H3DRes skyBoxRes = 0;
+	if ( _renderInterface != H3DRenderDevice::OpenGLES3 )
+	{
+		skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skybox.scene.xml", 0 );
+	}
+	else
+	{
+		skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skyboxES.scene.xml", 0 );
+	}
 
     // 2. Load resources
 
