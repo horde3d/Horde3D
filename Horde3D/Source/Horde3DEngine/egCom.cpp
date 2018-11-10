@@ -445,6 +445,16 @@ float getRenderDeviceCapabilities( int param )
 			return rdi->getCaps().computeShaders ? 1.0f : 0.0f;
 		case RenderDeviceCapabilities::Tessellation:
 			return rdi->getCaps().tesselation ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureFloatRenderable:
+			return rdi->getCaps().texFloat ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionASTC:
+			return rdi->getCaps().texASTC ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionBPTC:
+			return rdi->getCaps().texBPTC ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionDXT:
+			return rdi->getCaps().texDXT ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionETC2:
+			return rdi->getCaps().texETC2 ? 1.0f : 0.0f;
 		default:
 			Modules::setError( "Invalid param for h3dGetDeviceCapabilities" );
 			return Math::NaN;

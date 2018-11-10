@@ -17,9 +17,13 @@
 
 #include "utDebug.h"
 
+#include <array>
+
 
 namespace Horde3D {
 namespace RDI_GL2 {
+
+	using namespace h3dGL;
 
 #ifdef H3D_VALIDATE_DRAWCALLS
 #	define CHECK_GL_ERROR checkError();
@@ -48,6 +52,55 @@ static const uint32 primitiveTypes[ 5 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 
 static const uint32 bufferMappingTypes[ 3 ] = { GL_READ_ONLY, GL_WRITE_ONLY, GL_READ_WRITE };
+
+// Texture formats mapping to supported non compressed GL texture formats
+struct GLTextureFormatAndType
+{
+	uint32 glCreateFormat;
+	uint32 glInputFormat;
+	uint32 glSRGBFormat;
+	uint32 glInputType;
+};
+
+// DEPTH is used as array count as it is always last in the list
+// if no srgb format is available the same format is used
+static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > textureGLFormats = { {
+	{ 0, 0, 0, 0 },																							// TextureFormats::Unknown
+	{ GL_R8, GL_RED, GL_R8, GL_UNSIGNED_BYTE },																// TextureFormats::R8
+	{ GL_R16, GL_RED, GL_R16, GL_HALF_FLOAT },																// TextureFormats::R16F
+	{ GL_R32F, GL_RED, GL_R32F, GL_FLOAT },																	// TextureFormats::R32F
+	{ GL_RG8, GL_RG, GL_RG8, GL_UNSIGNED_BYTE },															// TextureFormats::RG8
+	{ GL_RG16F, GL_RG, GL_RG16F, GL_HALF_FLOAT },															// TextureFormats::RG16F
+	{ GL_RG32F, GL_RG, GL_RG32F, GL_FLOAT },																// TextureFormats::RG32F
+	{ GL_RGBA8, GL_BGRA, GL_SRGB8_ALPHA8, GL_UNSIGNED_BYTE },												// TextureFormats::BGRA8
+	{ GL_RGBA16F, GL_RGBA, GL_RGBA16F, GL_HALF_FLOAT },														// TextureFormats::RGBA16F
+	{ GL_RGBA32F, GL_RGBA, GL_RGBA32F, GL_FLOAT },															// TextureFormats::RGBA32F
+	{ GL_RGBA32UI, GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },											// TextureFormats::RGBA32UI
+	{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, 0 },						// TextureFormats::DXT1
+	{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, 0 },						// TextureFormats::DXT3
+	{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, 0 },						// TextureFormats::DXT5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ETC1
+	{ 0, 0, 0, 0 },																							// TextureFormats::RGB8_ETC2
+	{ 0, 0, 0, 0 },																							// TextureFormats::RGBA8_ETC2
+	{ GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB, 0, GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB, GL_FLOAT },	// TextureFormats::BC6_UF16
+	{ GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB, 0, GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB, GL_FLOAT },		// TextureFormats::BC6_SF16
+	{ GL_COMPRESSED_RGBA_BPTC_UNORM_ARB, 0, GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB, GL_UNSIGNED_BYTE },	// TextureFormats::BC7
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_4x4
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_5x4
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_5x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_6x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_6x6
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_8x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_8x6
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_8x8
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x6
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x8
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x10
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_12x10
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_12x12
+	{ GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT }								// TextureFormats::DEPTH
+} };
 
 // =================================================================================================
 // GPUTimer
@@ -253,6 +306,11 @@ bool RenderDeviceGL2::init()
 		Modules::log().writeError( "Extension EXT_texture_sRGB not supported" );
 		failed = true;
 	}
+	if ( !glExt::ARB_texture_rg )
+	{
+		Modules::log().writeError( "Extension ARB_texture_rg not supported" );
+		failed = true;
+	}
 	
 	if( failed )
 	{
@@ -273,6 +331,10 @@ bool RenderDeviceGL2::init()
 	_caps.instancing = false;
 	_caps.maxJointCount = 75;
 	_caps.maxTexUnitCount = 16;
+	_caps.texDXT = true;
+	_caps.texETC2 = false;
+	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
+	_caps.texASTC = false;
 
 	// Init states before creating test render buffer, to
 	// ensure binding the current FBO again
@@ -448,10 +510,10 @@ uint32 RenderDeviceGL2::createTextureBuffer( TextureFormats::List format, uint32
 		case TextureFormats::RGBA32F:
 			buf.glFmt = GL_RGBA32F_ARB;
 			break;
-		case TextureFormats::R32:
+		case TextureFormats::R32F:
 			buf.glFmt = GL_R32F_ARB;
 			break;
-		case TextureFormats::RG32:
+		case TextureFormats::RG32F:
 			buf.glFmt = GL_RG32F_ARB;
 			break;
 		default:
@@ -565,34 +627,27 @@ void RenderDeviceGL2::unmapBuffer( uint32 geoObj, uint32 bufObj )
 // Textures
 // =================================================================================================
 
-uint32 RenderDeviceGL2::calcTextureSize( TextureFormats::List format, int width, int height, int depth )
-{
-	switch( format )
-	{
-	case TextureFormats::BGRA8:
-		return width * height * depth * 4;
-	case TextureFormats::DXT1:
-		return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 8;
-	case TextureFormats::DXT3:
-		return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 16;
-	case TextureFormats::DXT5:
-		return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 16;
-	case TextureFormats::RGBA16F:
-		return width * height * depth * 8;
-	case TextureFormats::RGBA32F:
-		return width * height * depth * 16;
-	default:
-		return 0;
-	}
-}
-
-
 uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int height, int depth,
                                     TextureFormats::List format,
                                     bool hasMips, bool genMips, bool compress, bool sRGB )
 {
 	ASSERT( depth > 0 );
 
+	if ( !_caps.texETC2 && ( format == TextureFormats::ETC1 || format == TextureFormats::RGB8_ETC2 || format == TextureFormats::RGBA8_ETC2 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: ETC1, ETC2" );
+		return 0;
+	}
+	if ( !_caps.texBPTC && ( format == TextureFormats::BC6_SF16 || format == TextureFormats::BC6_UF16 || format == TextureFormats::BC7 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: BC6, BC7" );
+		return 0;
+	}
+	if ( !_caps.texASTC && ( format >= TextureFormats::ASTC_4x4 && format <= TextureFormats::ASTC_12x12 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: ASTC" );
+		return 0;
+	}
 	if( !_caps.texNPOT )
 	{
 		// Check if texture is NPOT
@@ -609,35 +664,13 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 	tex.sRGB = sRGB && Modules::config().sRGBLinearization;
 	tex.genMips = genMips;
 	tex.hasMips = hasMips;
-	
-	switch( format )
-	{
-	case TextureFormats::BGRA8:
-		tex.glFmt = tex.sRGB ? GL_SRGB8_ALPHA8_EXT : GL_RGBA8;
-		break;
-	case TextureFormats::DXT1:
-		tex.glFmt = tex.sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-		break;
-	case TextureFormats::DXT3:
-		tex.glFmt = tex.sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-		break;
-	case TextureFormats::DXT5:
-		tex.glFmt = tex.sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		break;
-	case TextureFormats::RGBA16F:
-		tex.glFmt = GL_RGBA16F_ARB;
-		break;
-	case TextureFormats::RGBA32F:
-		tex.glFmt = GL_RGBA32F_ARB;
-		break;
-	case TextureFormats::DEPTH:
-		tex.glFmt = _depthFormat;
-		break;
-	default:
-		ASSERT( 0 );
-		break;
-	};
-	
+
+	if ( format > ( int ) textureGLFormats.size() ) ASSERT( 0 );
+
+	tex.glFmt = format != TextureFormats::DEPTH
+				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
+				: _depthFormat;
+
 	glGenTextures( 1, &tex.glObj );
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
@@ -670,24 +703,10 @@ void RenderDeviceGL2::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
 	
-	int inputFormat = GL_BGRA, inputType = GL_UNSIGNED_BYTE;
-	bool compressed = (format == TextureFormats::DXT1) || (format == TextureFormats::DXT3) ||
-	                  (format == TextureFormats::DXT5);
-	
-	switch( format )
-	{
-	case TextureFormats::RGBA16F:
-		inputFormat = GL_RGBA;
-		inputType = GL_FLOAT;
-		break;
-	case TextureFormats::RGBA32F:
-		inputFormat = GL_RGBA;
-		inputType = GL_FLOAT;
-		break;
-	case TextureFormats::DEPTH:
-		inputFormat = GL_DEPTH_COMPONENT;
-		inputType = GL_FLOAT;
-	};
+	bool compressed = isCompressedTextureFormat( format );
+
+	int inputType = textureGLFormats[ format ].glInputType;
+	int inputFormat = textureGLFormats[ format ].glInputFormat;
 	
 	// Calculate size of next mipmap using "floor" convention
 	int width = std::max( tex.width >> mipLevel, 1 ), height = std::max( tex.height >> mipLevel, 1 );
@@ -743,6 +762,23 @@ void RenderDeviceGL2::destroyTexture( uint32& texObj )
 }
 
 
+bool RenderDeviceGL2::isCompressedTextureFormat( TextureFormats::List fmt )
+{
+	return	( fmt == TextureFormats::DXT1 ) || ( fmt == TextureFormats::DXT3 ) ||
+			( fmt == TextureFormats::DXT5 ) || ( fmt == TextureFormats::ETC1 ) ||
+			( fmt == TextureFormats::RGB8_ETC2 ) || ( fmt == TextureFormats::RGBA8_ETC2 ) ||
+			( fmt == TextureFormats::BC6_SF16 ) || ( fmt == TextureFormats::BC6_UF16 ) ||
+			( fmt == TextureFormats::BC7 ) || ( fmt == TextureFormats::ASTC_4x4 ) ||
+			( fmt == TextureFormats::ASTC_5x4 ) || ( fmt == TextureFormats::ASTC_5x5 ) ||
+			( fmt == TextureFormats::ASTC_6x5 ) || ( fmt == TextureFormats::ASTC_6x6 ) ||
+			( fmt == TextureFormats::ASTC_8x5 ) || ( fmt == TextureFormats::ASTC_8x6 ) ||
+			( fmt == TextureFormats::ASTC_8x8 ) || ( fmt == TextureFormats::ASTC_10x5 ) ||
+			( fmt == TextureFormats::ASTC_10x6 ) || ( fmt == TextureFormats::ASTC_10x8 ) ||
+			( fmt == TextureFormats::ASTC_10x10 ) || ( fmt == TextureFormats::ASTC_12x10 ) ||
+			( fmt == TextureFormats::ASTC_12x12 ) ;
+}
+
+
 void RenderDeviceGL2::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	uploadTextureData( texObj, slice, mipLevel, pixels );
@@ -756,29 +792,16 @@ bool RenderDeviceGL2::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 	int target = tex.type == textureTypes[ TextureTypes::TexCube ] ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
 	if( target == GL_TEXTURE_CUBE_MAP ) target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice;
 	
-	int fmt, type, compressed = 0;
+	int fmt, type = 0;
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
+	
+	bool compressed = isCompressedTextureFormat( tex.format );
 
-	switch( tex.format )
-	{
-	case TextureFormats::BGRA8:
-		fmt = GL_BGRA;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	case TextureFormats::DXT1:
-	case TextureFormats::DXT3:
-	case TextureFormats::DXT5:
-		compressed = 1;
-		break;
-	case TextureFormats::RGBA16F:
-	case TextureFormats::RGBA32F:
-		fmt = GL_RGBA;
-		type = GL_FLOAT;
-		break;
-	default:
-		return false;
-	};
+	if ( tex.format > ( int ) textureGLFormats.size() ) return false;
+
+	fmt = textureGLFormats[ tex.format ].glInputFormat;
+	type = textureGLFormats[ tex.format ].glInputType;
 
 	if( compressed )
 		glGetCompressedTexImage( target, mipLevel, buffer );

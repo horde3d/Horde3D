@@ -10,19 +10,19 @@
 //
 // *************************************************************************************************
 
-#include "egRendererBaseGL4.h"
+#include "egRendererBaseGLES3.h"
 #include "egModules.h"
 #include "egCom.h"
-#include "utOpenGL.h"
+#include "utOpenGLES3.h"
 
 #include "utDebug.h"
-
 #include <array>
 
-namespace Horde3D {
-namespace RDI_GL4 {
 
-	using namespace h3dGL;
+namespace Horde3D {
+namespace RDI_GLES3 {
+
+	using namespace h3dGLES;
 
 #ifdef H3D_VALIDATE_DRAWCALLS
 #	define CHECK_GL_ERROR checkError();
@@ -30,9 +30,8 @@ namespace RDI_GL4 {
 #	define CHECK_GL_ERROR
 #endif
 
-// Debug shaders
 static const char *defaultShaderVS =
-	"#version 330\n"
+	"#version 300 es\n"
 	"uniform mat4 viewProjMat;\n"
 	"uniform mat4 worldMat;\n"
 	"layout ( location = 0 ) in vec3 vertPos;\n"
@@ -41,17 +40,17 @@ static const char *defaultShaderVS =
 	"}\n";
 
 static const char *defaultShaderFS =
-	"#version 330\n"
+	"#version 300 es\n"
+	"precision highp float;\n"
 	"out vec4 fragColor;\n"
 	"uniform vec4 color;\n"
 	"void main() {\n"
 	"	fragColor = color;\n"
 	"}\n";
 
-// Bindings for RDI types to GL
 static const uint32 indexFormats[ 2 ] = { GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
 
-static const uint32 primitiveTypes[ 5 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_LINES, GL_POINTS, GL_PATCHES };
+static const uint32 primitiveTypes[ 5 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_LINES, GL_POINTS, 0 };
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 
@@ -73,24 +72,24 @@ struct GLTextureFormatAndType
 static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > textureGLFormats = { {
 	{ 0, 0, 0, 0 },																							// TextureFormats::Unknown
 	{ GL_R8, GL_RED, GL_R8, GL_UNSIGNED_BYTE },																// TextureFormats::R8
-	{ GL_R16, GL_RED, GL_R16, GL_HALF_FLOAT },																// TextureFormats::R16F
+	{ GL_R16F, GL_RED, GL_R16F, GL_HALF_FLOAT },																// TextureFormats::R16F
 	{ GL_R32F, GL_RED, GL_R32F, GL_FLOAT },																	// TextureFormats::R32F
 	{ GL_RG8, GL_RG, GL_RG8, GL_UNSIGNED_BYTE },															// TextureFormats::RG8
 	{ GL_RG16F, GL_RG, GL_RG16F, GL_HALF_FLOAT },															// TextureFormats::RG16F
 	{ GL_RG32F, GL_RG, GL_RG32F, GL_FLOAT },																// TextureFormats::RG32F
-	{ GL_RGBA8, GL_BGRA, GL_SRGB8_ALPHA8, GL_UNSIGNED_BYTE },												// TextureFormats::BGRA8
+	{ GL_RGBA8, GL_RGBA, GL_SRGB8_ALPHA8, GL_UNSIGNED_BYTE },												// TextureFormats::BGRA8
 	{ GL_RGBA16F, GL_RGBA, GL_RGBA16F, GL_HALF_FLOAT },														// TextureFormats::RGBA16F
 	{ GL_RGBA32F, GL_RGBA, GL_RGBA32F, GL_FLOAT },															// TextureFormats::RGBA32F
 	{ GL_RGBA32UI, GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },											// TextureFormats::RGBA32UI
 	{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, 0 },						// TextureFormats::DXT1
 	{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, 0 },						// TextureFormats::DXT3
 	{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, 0 },						// TextureFormats::DXT5
-	{ 0, 0, 0, 0 },																							// TextureFormats::ETC1
+	{ GL_ETC1_RGB8_OES, 0, GL_ETC1_RGB8_OES, 0 },															// TextureFormats::ETC1
 	{ GL_COMPRESSED_RGB8_ETC2, 0, GL_COMPRESSED_SRGB8_ETC2, 0 },											// TextureFormats::RGB8_ETC2
 	{ GL_COMPRESSED_RGBA8_ETC2_EAC, 0, GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC, 0 },							// TextureFormats::RGBA8_ETC2
-	{ GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB, 0, GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB, GL_FLOAT },	// TextureFormats::BC6_UF16
-	{ GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB, 0, GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB, GL_FLOAT },		// TextureFormats::BC6_SF16
-	{ GL_COMPRESSED_RGBA_BPTC_UNORM_ARB, 0, GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB, GL_UNSIGNED_BYTE },	// TextureFormats::BC7
+	{ GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT, 0, GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_EXT, 0 },			// TextureFormats::BC6_UF16
+	{ GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT, 0, GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_EXT, 0 },				// TextureFormats::BC6_SF16
+	{ GL_COMPRESSED_RGBA_BPTC_UNORM_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT, GL_UNSIGNED_BYTE },	// TextureFormats::BC7
 	{ GL_COMPRESSED_RGBA_ASTC_4x4_KHR, 0, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_4x4_KHR, 0 },						// TextureFormats::ASTC_4x4
 	{ GL_COMPRESSED_RGBA_ASTC_5x4_KHR, 0, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x4_KHR, 0 },						// TextureFormats::ASTC_5x4
 	{ GL_COMPRESSED_RGBA_ASTC_5x5_KHR, 0, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_5x5_KHR, 0 },						// TextureFormats::ASTC_5x5
@@ -112,22 +111,24 @@ static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > tex
 // GPUTimer
 // =================================================================================================
 
-GPUTimerGL4::GPUTimerGL4() : _numQueries( 0 ), _queryFrame( 0 ), _activeQuery( false )
+GPUTimerGLES3::GPUTimerGLES3() : _numQueries( 0 ), _queryFrame( 0 ), _activeQuery( false )
 {
-	GPUTimer::initFunctions< GPUTimerGL4 >();
+	GPUTimer::initFunctions< GPUTimerGLES3 >();
 	reset();
 }
 
 
-GPUTimerGL4::~GPUTimerGL4()
+GPUTimerGLES3::~GPUTimerGLES3()
 {
 	if( !_queryPool.empty() )
 		glDeleteQueries( (uint32)_queryPool.size(), &_queryPool[0] );
 }
 
 
-void GPUTimerGL4::beginQuery( uint32 frameID )
+void GPUTimerGLES3::beginQuery( uint32 frameID )
 {
+	if ( !glESExt::EXT_disjoint_timer_query ) return;
+	
 	ASSERT( !_activeQuery );
 	
 	if( _queryFrame != frameID )
@@ -152,21 +153,21 @@ void GPUTimerGL4::beginQuery( uint32 frameID )
 	}
 	
 	_activeQuery = true;
-	 glQueryCounter( queryObjs[0], GL_TIMESTAMP );
+	glQueryCounterEXT( queryObjs[ 0 ], GL_TIMESTAMP_EXT );
 }
 
 
-void GPUTimerGL4::endQuery()
+void GPUTimerGLES3::endQuery()
 {
 	if( _activeQuery )
 	{	
-		glQueryCounter( _queryPool[_numQueries * 2 - 1], GL_TIMESTAMP );
+		glQueryCounterEXT( _queryPool[ _numQueries * 2 - 1 ], GL_TIMESTAMP_EXT );
 		_activeQuery = false;
 	}
 }
 
 
-bool GPUTimerGL4::updateResults()
+bool GPUTimerGLES3::updateResults()
 {
 	if( _numQueries == 0 )
 	{
@@ -176,15 +177,15 @@ bool GPUTimerGL4::updateResults()
 	
 	// Make sure that last query is available
 	GLint available;
-	glGetQueryObjectiv( _queryPool[_numQueries * 2 - 1], GL_QUERY_RESULT_AVAILABLE, &available );
+	glGetQueryObjectivEXT( _queryPool[ _numQueries * 2 - 1 ], GL_QUERY_RESULT_AVAILABLE_EXT, &available );
 	if( !available ) return false;
 	
 	//  Accumulate time
 	GLuint64 timeStart = 0, timeEnd = 0, timeAccum = 0;
 	for( uint32 i = 0; i < _numQueries; ++i )
 	{
-		glGetQueryObjectui64v( _queryPool[i * 2], GL_QUERY_RESULT, &timeStart );
-		glGetQueryObjectui64v( _queryPool[i * 2 + 1], GL_QUERY_RESULT, &timeEnd );
+		glGetQueryObjectui64vEXT( _queryPool[ i * 2 ], GL_QUERY_RESULT_EXT, &timeStart );
+		glGetQueryObjectui64vEXT( _queryPool[ i * 2 + 1 ], GL_QUERY_RESULT_EXT, &timeEnd );
 		timeAccum += timeEnd - timeStart;
 	}
 	
@@ -193,7 +194,7 @@ bool GPUTimerGL4::updateResults()
 }
 
 
-void GPUTimerGL4::reset()
+void GPUTimerGLES3::reset()
 {
 	_time = 0.f;
 }
@@ -203,9 +204,9 @@ void GPUTimerGL4::reset()
 // RenderDevice
 // =================================================================================================
 
-RenderDeviceGL4::RenderDeviceGL4()
+RenderDeviceGLES3::RenderDeviceGLES3()
 {
-	RenderDeviceInterface::initRDIFunctions< RenderDeviceGL4 >();
+	RenderDeviceInterface::initRDIFunctions< RenderDeviceGLES3 >();
 
 	_numVertexLayouts = 0;
 	
@@ -227,92 +228,93 @@ RenderDeviceGL4::RenderDeviceGL4()
 	_pendingMask = 0;
 	_tessPatchVerts = _lastTessPatchVertsValue = 0;
 	_memBarriers = NotSet;
-	
-	_maxComputeBufferAttachments = 8;
-	_storageBufs.reserve( _maxComputeBufferAttachments );
 
-	_maxTexSlots = 32; // texture units per stage
+	_maxTexSlots = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
 // 	_texSlots.reserve( _maxTexSlots ); // reserve memory
 
-	_doubleBuffered = false;
 	// add default geometry for resetting
-	RDIGeometryInfoGL4 defGeom;
+	RDIGeometryInfoGLES3 defGeom;
 	defGeom.atrribsBinded = true;
 	_vaos.add( defGeom );
 }
 
 
-RenderDeviceGL4::~RenderDeviceGL4()
+RenderDeviceGLES3::~RenderDeviceGLES3()
 {
 }
 
 
-void RenderDeviceGL4::initStates()
+void RenderDeviceGLES3::initStates()
 {
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
 	GLint value;
 	glGetIntegerv( GL_SAMPLE_BUFFERS, &value );
 	_defaultFBOMultisampled = value > 0;
-	GLboolean doubleBuffered;
-	glGetBooleanv( GL_DOUBLEBUFFER, &doubleBuffered );
-	_doubleBuffered = doubleBuffered != 0;
-	// Get the currently bound frame buffer object to avoid reset to invalid FBO
-	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
 }
 
 
-bool RenderDeviceGL4::init()
+bool RenderDeviceGLES3::init()
 {
 	bool failed = false;
 
 	char *vendor = (char *)glGetString( GL_VENDOR );
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
-
-	if( !version || !renderer || !vendor )
-	{
-		Modules::log().writeError("OpenGL not initialized. Make sure you have a valid OpenGL context");
-		return false;
-	}
 	
-	Modules::log().writeInfo( "Initializing GL4 backend using OpenGL driver '%s' by '%s' on '%s'",
-							  version, vendor, renderer );
+ 	if( !version || !renderer || !vendor )
+    	{
+        	Modules::log().writeError("OpenGL ES not initialized. Make sure you have a valid OpenGL ES context");
+        	return false;
+    	}
+
+	Modules::log().writeInfo( "Initializing GLES3 backend using OpenGL driver '%s' by '%s' on '%s'",
+	                          version, vendor, renderer );
 	
 	// Init extensions
-	if( !initOpenGLExtensions( false ) )
+	if( !initOpenGLExtensions() )
 	{	
 		Modules::log().writeError( "Could not find all required OpenGL function entry points" );
-		failed = true;
 	}
 
-	// Check that OpenGL 3.3 is available
-	if( glExt::majorVersion * 10 + glExt::minorVersion < 33 )
+	// Check that OpenGL ES 3.0 is available
+	if( glESExt::majorVersion * 10 + glESExt::minorVersion < 30 )
 	{
-		Modules::log().writeError( "OpenGL 3.3 not available" );
+		Modules::log().writeError( "OpenGL ES 3.0 not available" );
 		failed = true;
 	}
 	
 	// Check that required extensions are supported
-	if( !glExt::EXT_texture_filter_anisotropic )
+	if( !glESExt::EXT_texture_filter_anisotropic )
 	{
-		Modules::log().writeError( "Extension EXT_texture_filter_anisotropic not supported" );
-		failed = true;
+		Modules::log().writeWarning( "Extension EXT_texture_filter_anisotropic not supported" );
+	//	failed = true;
 	}
-	if( !glExt::EXT_texture_compression_s3tc )
+	if( !glESExt::EXT_color_buffer_float )
 	{
-		Modules::log().writeError( "Extension EXT_texture_compression_s3tc not supported" );
-		failed = true;
+		Modules::log().writeWarning( "Extension EXT_color_buffer_float not supported" );
+		//failed = true;
 	}
-	if ( !glExt::ARB_texture_compression_bptc )
+	if( !glESExt::EXT_texture_compression_s3tc )
 	{
-		Modules::log().writeError( "Extension ARB_texture_compression_bptc not supported" );
-		failed = true;
+		Modules::log().writeWarning( "Extension EXT_texture_compression_s3tc not supported" );
 	}
-
+	if ( !glESExt::EXT_disjoint_timer_query )
+	{
+		Modules::log().writeWarning( "Extension EXT_disjoint_timer_query not supported" );
+	}
+	if ( !glESExt::EXT_texture_border_clamp )
+	{
+		Modules::log().writeWarning( "Extension EXT_texture_border_clamp not supported" );
+	}
+	if ( !glESExt::EXT_geometry_shader )
+	{
+		Modules::log().writeWarning( "Extension EXT_geometry_shader not supported" );
+	}
+	
 	if( failed )
 	{
-		Modules::log().writeError( "Failed to init renderer backend (OpenGL %d.%d), retrying with legacy OpenGL 2.1 backend", 
-									glExt::majorVersion, glExt::minorVersion );
+		Modules::log().writeError( "Failed to init renderer backend (OpenGL ES %d.%d)", 
+									glESExt::majorVersion, glESExt::minorVersion );
 // 		char *exts = (char *)glGetString( GL_EXTENSIONS );
 // 		Modules::log().writeInfo( "Supported extensions: '%s'", exts );
 
@@ -320,28 +322,22 @@ bool RenderDeviceGL4::init()
 	}
 	
 	// Set capabilities
-	_caps.texFloat = true;
+	_caps.texFloat = glESExt::EXT_color_buffer_float;
 	_caps.texNPOT = true;
 	_caps.rtMultisampling = true;
-	_caps.geometryShaders = true;
-	_caps.tesselation = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
-	_caps.computeShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 3;
+	_caps.geometryShaders = glESExt::EXT_geometry_shader;
+	_caps.tesselation = false;
+	_caps.computeShaders = true;
 	_caps.instancing = true;
-	_caps.maxJointCount = 330;
-	_caps.maxTexUnitCount = 96; // for most modern hardware it is 192 (GeForce 400+, Radeon 7000+, Intel 4000+). Although 96 should probably be enough.
-	_caps.texDXT = glExt::EXT_texture_compression_s3tc;
-	_caps.texETC2 = glExt::ARB_ES3_compatibility;
-	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
-	_caps.texASTC = glExt::KHR_texture_compression_astc;
+	_caps.maxJointCount = 75; // currently, will be changed soon
+	_caps.maxTexUnitCount = 16; // 
+	_caps.texDXT = glESExt::EXT_texture_compression_dxt1 && glESExt::EXT_texture_compression_s3tc;
+	_caps.texETC2 = true;
+	_caps.texBPTC = glESExt::EXT_texture_compression_bptc;
+	_caps.texASTC = glESExt::KHR_texture_compression_astc;
 
-	// Find maximum number of storage buffers in compute shader
-	glGetIntegerv( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, (GLint *) &_maxComputeBufferAttachments );
-	// Init states before creating test render buffer, to
-	// ensure binding the current FBO again
-	initStates();
-
-	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
-	_depthFormat = GL_DEPTH_COMPONENT24;
+	// Find supported depth format
+	_depthFormat = GL_DEPTH_COMPONENT32F;
 	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
 	if( testBuf == 0 )
 	{	
@@ -350,7 +346,8 @@ bool RenderDeviceGL4::init()
 	}
 	else
 		destroyRenderBuffer( testBuf );
-		
+	
+	initStates();
 	resetStates();
 
 	return true;
@@ -361,7 +358,7 @@ bool RenderDeviceGL4::init()
 // Vertex layouts
 // =================================================================================================
 
-uint32 RenderDeviceGL4::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs )
+uint32 RenderDeviceGLES3::registerVertexLayout( uint32 numAttribs, VertexLayoutAttrib *attribs )
 {
 	if( _numVertexLayouts == MaxNumVertexLayouts )
 		return 0;
@@ -379,38 +376,36 @@ uint32 RenderDeviceGL4::registerVertexLayout( uint32 numAttribs, VertexLayoutAtt
 // Buffers
 // =================================================================================================
 
-void RenderDeviceGL4::beginRendering()
+void RenderDeviceGLES3::beginRendering()
 {	
 	//	Get the currently bound frame buffer object. 
 	glGetIntegerv( GL_FRAMEBUFFER_BINDING, &_defaultFBO );
 	resetStates();
 }
 
-uint32 RenderDeviceGL4::beginCreatingGeometry( uint32 vlObj )
+uint32 RenderDeviceGLES3::beginCreatingGeometry( uint32 vlObj )
 {
-	RDIGeometryInfoGL4 vao;
+	RDIGeometryInfoGLES3 vao;
 	vao.layout = vlObj;
 
 	uint32 vaoID;
 	glGenVertexArrays( 1, &vaoID );
 	vao.vao = vaoID;
 
-//	glBindVertexArray( vaoID );
-
 	return _vaos.add( vao );
 }
 
-void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
+void RenderDeviceGLES3::finishCreatingGeometry( uint32 geoObj )
 {
 	ASSERT( geoObj > 0 )
 	
-	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+	RDIGeometryInfoGLES3 &curVao = _vaos.getRef( geoObj );
 	glBindVertexArray( curVao.vao );
 
 	// bind index buffer, if present
 	if ( curVao.indexBuf )
 	{
-		RDIBufferGL4 &buf = _buffers.getRef( curVao.indexBuf );
+		RDIBufferGLES3 &buf = _buffers.getRef( curVao.indexBuf );
 		ASSERT( buf.glObj > 0 )
 
 		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, buf.glObj );
@@ -427,9 +422,9 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 // 		if ( attribIndex >= 0 )
 		{
 			VertexLayoutAttrib &attrib = vl.attribs[ i ];
-			const RDIVertBufSlotGL4 &vbSlot = curVao.vertexBufInfo[ attrib.vbSlot ];
+			const RDIVertBufSlotGLES3 &vbSlot = curVao.vertexBufInfo[ attrib.vbSlot ];
 
-			RDIBufferGL4 &buf = _buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj );
+			RDIBufferGLES3 &buf = _buffers.getRef( curVao.vertexBufInfo[ attrib.vbSlot ].vbObj );
 			ASSERT( buf.glObj != 0 &&
 					buf.type == GL_ARRAY_BUFFER ||
 					buf.type == GL_SHADER_STORAGE_BUFFER ); // special case for compute buffer
@@ -441,6 +436,7 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 			newVertexAttribMask |= 1 << i;
 		}
 	}
+
 
 	for ( uint32 i = 0; i < 16; ++i )
 	{
@@ -457,16 +453,14 @@ void RenderDeviceGL4::finishCreatingGeometry( uint32 geoObj )
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 }
 
-void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
+void RenderDeviceGLES3::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride )
 {
-	H3D_UNUSED_VAR( vbSlot );
-
-	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
-	RDIBufferGL4 &buf = _buffers.getRef( vbo );
+	RDIGeometryInfoGLES3 &curVao = _vaos.getRef( geoObj );
+	RDIBufferGLES3 &buf = _buffers.getRef( vbo );
 
 	buf.geometryRefCount++;
 
-	RDIVertBufSlotGL4 attribInfo;
+	RDIVertBufSlotGLES3 attribInfo;
 	attribInfo.vbObj = vbo;
 	attribInfo.offset = offset;
 	attribInfo.stride = stride;
@@ -474,22 +468,23 @@ void RenderDeviceGL4::setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbS
 	curVao.vertexBufInfo.push_back( attribInfo );
 }
 
-void RenderDeviceGL4::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
+void RenderDeviceGLES3::setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format )
 {
-	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
-	RDIBufferGL4 &buf = _buffers.getRef( indBuf );
+	RDIGeometryInfoGLES3 &curVao = _vaos.getRef( geoObj );
+	RDIBufferGLES3 &buf = _buffers.getRef( indBuf );
 
 	buf.geometryRefCount++;
+
 	curVao.indexBuf = indBuf;
 	curVao.indexBuf32Bit = ( format == IDXFMT_32 ? true : false );
 }
 
-void RenderDeviceGL4::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers )
+void RenderDeviceGLES3::destroyGeometry( uint32 &geoObj, bool destroyBindedBuffers )
 {
 	if ( geoObj == 0 )
 		return;
-	
-	RDIGeometryInfoGL4 &curVao = _vaos.getRef( geoObj );
+
+	RDIGeometryInfoGLES3 &curVao = _vaos.getRef( geoObj );
 
 	glDeleteVertexArrays( 1, &curVao.vao );
 	glBindVertexArray( 0 );
@@ -518,88 +513,88 @@ void RenderDeviceGL4::destroyGeometry( uint32& geoObj, bool destroyBindedBuffers
 	geoObj = 0;
 }
 
-
-void RenderDeviceGL4::decreaseBufferRefCount( uint32 bufObj )
+void RenderDeviceGLES3::decreaseBufferRefCount( uint32 bufObj )
 {
 	if ( bufObj == 0 ) return;
 	
-	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+	RDIBufferGLES3 &buf = _buffers.getRef( bufObj );
 
 	buf.geometryRefCount--;
 }
 
-
-uint32 RenderDeviceGL4::createVertexBuffer( uint32 size, const void *data )
+uint32 RenderDeviceGLES3::createVertexBuffer( uint32 size, const void *data )
 {
 	return createBuffer( GL_ARRAY_BUFFER, size, data );
 }
 
 
-uint32 RenderDeviceGL4::createIndexBuffer( uint32 size, const void *data )
+uint32 RenderDeviceGLES3::createIndexBuffer( uint32 size, const void *data )
 {
 	return createBuffer( GL_ELEMENT_ARRAY_BUFFER, size, data );
 }
 
 
-uint32 RenderDeviceGL4::createShaderStorageBuffer( uint32 size, const void *data )
+uint32 RenderDeviceGLES3::createShaderStorageBuffer( uint32 size, const void *data )
 {
 	if ( _caps.computeShaders )
 		return createBuffer( GL_SHADER_STORAGE_BUFFER, size, data );
 	else
 	{
-		Modules::log().writeError( "Shader storage buffers are not supported on this OpenGL 4 device." );
+		Modules::log().writeError( "Shader storage buffers are not supported on this OpenGL ES device." );
 		
 		return 0;
 	}
 }
 
 
-uint32 RenderDeviceGL4::createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
+uint32 RenderDeviceGLES3::createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
 {
-	RDITextureBufferGL4 buf;
+// 	RDITextureBufferGLES3 buf;
+// 
+// 	buf.bufObj = createBuffer( GL_TEXTURE_BUFFER, bufSize, data );
+// 
+// 	glGenTextures( 1, &buf.glTexID );
+// 	glActiveTexture( GL_TEXTURE15 );
+// 	glBindTexture( GL_TEXTURE_BUFFER, buf.glTexID );
+// 
+// 	switch ( format )
+// 	{
+// 		case TextureFormats::BGRA8:
+// 			buf.glFmt = GL_RGBA8;
+// 			break;
+// 		case TextureFormats::RGBA16F:
+// 			buf.glFmt = GL_RGBA16F;
+// 			break;
+// 		case TextureFormats::RGBA32F:
+// 			buf.glFmt = GL_RGBA32F;
+// 			break;
+// 		case TextureFormats::R32:
+// 			buf.glFmt = GL_R32F;
+// 			break;
+// 		case TextureFormats::RG32:
+// 			buf.glFmt = GL_RG32F;
+// 			break;
+// 		default:
+// 			ASSERT( 0 );
+// 			break;
+// 	};
+// 
+// 	// bind texture to buffer
+// 	glTexBuffer( GL_TEXTURE_BUFFER, buf.glFmt, _buffers.getRef( buf.bufObj ).glObj );
+// 
+// 	glBindTexture( GL_TEXTURE_BUFFER, 0 );
+// 	if ( _texSlots[ 15 ].texObj )
+// 		glBindTexture( _textures.getRef( _texSlots[ 15 ].texObj ).type, _textures.getRef( _texSlots[ 15 ].texObj ).glObj );
+// 
+// 	return _textureBuffs.add( buf );
 
-	buf.bufObj = createBuffer( GL_TEXTURE_BUFFER, bufSize, data );
-
-	glGenTextures( 1, &buf.glTexID );
-	glActiveTexture( GL_TEXTURE15 );
-	glBindTexture( GL_TEXTURE_BUFFER, buf.glTexID );
-
-	switch ( format )
-	{
-		case TextureFormats::BGRA8:
-			buf.glFmt = GL_RGBA8;
-			break;
-		case TextureFormats::RGBA16F:
-			buf.glFmt = GL_RGBA16F;
-			break;
-		case TextureFormats::RGBA32F:
-			buf.glFmt = GL_RGBA32F;
-			break;
-		case TextureFormats::R32F:
-			buf.glFmt = GL_R32F;
-			break;
-		case TextureFormats::RG32F:
-			buf.glFmt = GL_RG32F;
-			break;
-		default:
-			ASSERT( 0 );
-			break;
-	};
-
-	// bind texture to buffer
-	glTexBuffer( GL_TEXTURE_BUFFER, buf.glFmt, _buffers.getRef( buf.bufObj ).glObj );
-
-	glBindTexture( GL_TEXTURE_BUFFER, 0 );
-	if ( _texSlots[ 15 ].texObj )
-		glBindTexture( _textures.getRef( _texSlots[ 15 ].texObj ).type, _textures.getRef( _texSlots[ 15 ].texObj ).glObj );
-
-	return _textureBuffs.add( buf );
+	return 0;
 }
 
 
-uint32 RenderDeviceGL4::createBuffer( uint32 bufType, uint32 size, const void *data )
+uint32 RenderDeviceGLES3::createBuffer( uint32 bufType, uint32 size, const void *data )
 {
-	RDIBufferGL4 buf;
+	RDIBufferGLES3 buf;
 
 	buf.type = bufType;
 	buf.size = size;
@@ -613,13 +608,11 @@ uint32 RenderDeviceGL4::createBuffer( uint32 bufType, uint32 size, const void *d
 }
 
 
-void RenderDeviceGL4::destroyBuffer( uint32& bufObj )
+void RenderDeviceGLES3::destroyBuffer( uint32 &bufObj )
 {
-	if( bufObj == 0 )
-		return;
+	if( bufObj == 0 ) return;
 	
-	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
-
+	RDIBufferGLES3 &buf = _buffers.getRef( bufObj );
 	if ( buf.geometryRefCount < 1 )
 	{
 		glDeleteBuffers( 1, &buf.glObj );
@@ -631,12 +624,11 @@ void RenderDeviceGL4::destroyBuffer( uint32& bufObj )
 }
 
 
-void RenderDeviceGL4::destroyTextureBuffer( uint32& bufObj )
+void RenderDeviceGLES3::destroyTextureBuffer( uint32 &bufObj )
 {
-	if ( bufObj == 0 )
-		return;
+	if ( bufObj == 0 ) return;
 
-	RDITextureBufferGL4 &buf = _textureBuffs.getRef( bufObj );
+	RDITextureBufferGLES3 &buf = _textureBuffs.getRef( bufObj );
 	destroyBuffer( buf.bufObj );
 
 	glDeleteTextures( 1, &buf.glTexID );
@@ -645,11 +637,10 @@ void RenderDeviceGL4::destroyTextureBuffer( uint32& bufObj )
 	bufObj = 0;
 }
 
-void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
+void RenderDeviceGLES3::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
-	H3D_UNUSED_VAR( geoObj );
-
-	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+//	const RDIGeometryInfoGLES3 &geo = _vaos.getRef( geoObj );
+	const RDIBufferGLES3 &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
 	
 	glBindBuffer( buf.type, buf.glObj );
@@ -665,11 +656,10 @@ void RenderDeviceGL4::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 off
 	glBufferSubData( buf.type, offset, size, data );
 }
 
-void * RenderDeviceGL4::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
-{
-	H3D_UNUSED_VAR( geoObj );
 
-	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+void * RenderDeviceGLES3::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
+{
+	const RDIBufferGLES3 &buf = _buffers.getRef( bufObj );
 	ASSERT( offset + size <= buf.size );
 
 	glBindBuffer( buf.type, buf.glObj );
@@ -682,11 +672,9 @@ void * RenderDeviceGL4::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, 
 	return glMapBufferRange( buf.type, offset, size, bufferMappingTypes[ mapType ] );
 }
 
-void RenderDeviceGL4::unmapBuffer( uint32 geoObj, uint32 bufObj )
+void RenderDeviceGLES3::unmapBuffer( uint32 geoObj, uint32 bufObj )
 {
-	H3D_UNUSED_VAR( geoObj );
-
-	const RDIBufferGL4 &buf = _buffers.getRef( bufObj );
+	const RDIBufferGLES3 &buf = _buffers.getRef( bufObj );
 
 	// multiple buffers can be mapped at the same time, so bind the one that needs to be unmapped
 	glBindBuffer( buf.type, buf.glObj );
@@ -699,16 +687,25 @@ void RenderDeviceGL4::unmapBuffer( uint32 geoObj, uint32 bufObj )
 // Textures
 // =================================================================================================
 
-uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int height, int depth,
-									TextureFormats::List format,
-									bool hasMips, bool genMips, bool compress, bool sRGB )
+uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int height, int depth,
+										 TextureFormats::List format,
+										 bool hasMips, bool genMips, bool compress, bool sRGB )
 {
-	H3D_UNUSED_VAR( compress );
 	ASSERT( depth > 0 );
 
-	if ( format == TextureFormats::ETC1 || !_caps.texETC2 && ( format == TextureFormats::RGB8_ETC2 || format == TextureFormats::RGBA8_ETC2 ) )
+	if ( !_caps.texFloat && ( format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F ) )
 	{
-		Modules::log().writeWarning( "Unsupported texture formats: ETC1, ETC2" );
+		Modules::log().writeWarning( "Unsupported texture formats: RGBA16F, RGBA32F" );
+		return 0;
+	}
+	if ( !_caps.texDXT && ( format == TextureFormats::DXT1 || format == TextureFormats::DXT3 || format == TextureFormats::DXT5 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: DXT1, DXT3, DXT5" );
+		return 0;
+	}
+	if ( !_caps.texBPTC && ( format == TextureFormats::BC6_SF16 || format == TextureFormats::BC6_UF16 || format == TextureFormats::BC7 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: BC6, BC7" );
 		return 0;
 	}
 	if ( !_caps.texASTC && ( format >= TextureFormats::ASTC_4x4 && format <= TextureFormats::ASTC_12x12 ) )
@@ -719,11 +716,11 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	if( !_caps.texNPOT )
 	{
 		// Check if texture is NPOT
-		if ( ( width & ( width - 1 ) ) != 0 || ( height & ( height - 1 ) ) != 0 )
+		if( (width & (width-1)) != 0 || (height & (height-1)) != 0 )
 			Modules::log().writeWarning( "Texture has non-power-of-two dimensions although NPOT is not supported by GPU" );
 	}
 	
-	RDITextureGL4 tex;
+	RDITextureGLES3 tex;
 	tex.type = textureTypes[ type ];
 	tex.format = format;
 	tex.width = width;
@@ -732,19 +729,16 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	tex.sRGB = sRGB && Modules::config().sRGBLinearization;
 	tex.genMips = genMips;
 	tex.hasMips = hasMips;
-	
-	if ( format > (int) textureGLFormats.size() ) ASSERT( 0 );
 
-	tex.glFmt = format != TextureFormats::DEPTH
+	if ( format > ( int ) textureGLFormats.size() ) ASSERT( 0 );
+
+	tex.glFmt = format != TextureFormats::DEPTH 
 				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
 				: _depthFormat;
-	
+ 	
 	glGenTextures( 1, &tex.glObj );
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
-	
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
 	
 	tex.samplerState = 0;
 	applySamplerState( tex );
@@ -763,9 +757,9 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 }
 
 
-void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
+void RenderDeviceGLES3::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
-	const RDITextureGL4 &tex = _textures.getRef( texObj );
+	const RDITextureGLES3 &tex = _textures.getRef( texObj );
 	TextureFormats::List format = tex.format;
 
 	glActiveTexture( GL_TEXTURE15 );
@@ -775,7 +769,7 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 
 	int inputType = textureGLFormats[ format ].glInputType;
 	int inputFormat = textureGLFormats[ format ].glInputFormat;
-	
+
 	// Calculate size of next mipmap using "floor" convention
 	int width = std::max( tex.width >> mipLevel, 1 ), height = std::max( tex.height >> mipLevel, 1 );
 	
@@ -786,7 +780,7 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 		
 		if( compressed )
 			glCompressedTexImage2D( target, mipLevel, tex.glFmt, width, height, 0,
-									calcTextureSize( format, width, height, 1 ), pixels );
+			                        calcTextureSize( format, width, height, 1 ), pixels );
 		else
 			glTexImage2D( target, mipLevel, tex.glFmt, width, height, 0, inputFormat, inputType, pixels );
 	}
@@ -796,10 +790,10 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 		
 		if( compressed )
 			glCompressedTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-									calcTextureSize( format, width, height, depth ), pixels );	
+			                        calcTextureSize( format, width, height, depth ), pixels );	
 		else
 			glTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-						  inputFormat, inputType, pixels );
+			              inputFormat, inputType, pixels );
 	}
 
 	if( tex.genMips && (tex.type != GL_TEXTURE_CUBE_MAP || slice == 5) )
@@ -814,12 +808,11 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 }
 
 
-void RenderDeviceGL4::destroyTexture( uint32& texObj )
+void RenderDeviceGLES3::destroyTexture( uint32 &texObj )
 {
-	if( texObj == 0 )
-		return;
+	if( texObj == 0 ) return;
 	
-	const RDITextureGL4 &tex = _textures.getRef( texObj );
+	const RDITextureGLES3 &tex = _textures.getRef( texObj );
 	if( tex.glObj ) glDeleteTextures( 1, &tex.glObj );
 
 	_textureMem -= tex.memSize;
@@ -828,35 +821,59 @@ void RenderDeviceGL4::destroyTexture( uint32& texObj )
 }
 
 
-void RenderDeviceGL4::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
+void RenderDeviceGLES3::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	uploadTextureData( texObj, slice, mipLevel, pixels );
 }
 
 
-bool RenderDeviceGL4::getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
+bool RenderDeviceGLES3::getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
 {
-	const RDITextureGL4 &tex = _textures.getRef( texObj );
+ 	const RDITextureGLES3 &tex = _textures.getRef( texObj );
+ 	
+ 	int target = tex.type == textureTypes[ TextureTypes::TexCube ] ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
+ 	if( target == GL_TEXTURE_CUBE_MAP ) target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice;
 	
-	int target = tex.type == textureTypes[ TextureTypes::TexCube ] ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
-	if( target == GL_TEXTURE_CUBE_MAP ) target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice;
-	
-	int fmt, type = 0;
-	bool compressed = isCompressedTextureFormat( tex.format );
-
-	if ( tex.format > ( int ) textureGLFormats.size() ) return false;
-
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
 
-	fmt = textureGLFormats[ tex.format ].glInputFormat;
-	type = textureGLFormats[ tex.format ].glInputType;
+	// create a temporary fbo 
+	GLint currentFBO = 0;
+    GLuint tempFBO = 0;
+    glGetIntegerv( GL_FRAMEBUFFER_BINDING, &currentFBO );
+    glGenFramebuffers( 1, &tempFBO );
+	glBindFramebuffer( GL_FRAMEBUFFER, tempFBO );
 
-	if( compressed )
-		glGetCompressedTexImage( target, mipLevel, buffer );
-	else
-		glGetTexImage( target, mipLevel, fmt, type, buffer );
+    GLenum status;
 
+    switch (target) {
+    case GL_TEXTURE_2D:
+    case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+    case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+    case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+    case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+        glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.glObj, mipLevel );
+		status = glCheckFramebufferStatus( GL_FRAMEBUFFER );
+        if ( status != GL_FRAMEBUFFER_COMPLETE ) 
+		{
+			return false;
+        }
+
+        glReadPixels( 0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+        break;
+    case GL_TEXTURE_3D:
+        for (int i = 0; i < tex.depth; i++) {
+			glFramebufferTexture3DOES( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex.glObj, mipLevel, i );
+            glReadPixels(0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, ( uint8 * ) buffer + 4 * i * tex.width * tex.height );
+        }
+        break;
+    }
+
+	glBindFramebuffer( GL_FRAMEBUFFER, currentFBO );
+	glDeleteFramebuffers( 1, &tempFBO );
+ 
 	glBindTexture( tex.type, 0 );
 	if( _texSlots[15].texObj )
 		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
@@ -865,30 +882,30 @@ bool RenderDeviceGL4::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 }
 
 
-bool RenderDeviceGL4::isCompressedTextureFormat( TextureFormats::List fmt )
+bool RenderDeviceGLES3::isCompressedTextureFormat( TextureFormats::List fmt )
 {
 	return	( fmt == TextureFormats::DXT1 ) || ( fmt == TextureFormats::DXT3 ) ||
-			( fmt == TextureFormats::DXT5 ) || ( fmt == TextureFormats::ETC1 ) ||
-			( fmt == TextureFormats::RGB8_ETC2 ) || ( fmt == TextureFormats::RGBA8_ETC2 ) ||
-			( fmt == TextureFormats::BC6_SF16 ) || ( fmt == TextureFormats::BC6_UF16 ) ||
-			( fmt == TextureFormats::BC7 ) || ( fmt == TextureFormats::ASTC_4x4 ) ||
-			( fmt == TextureFormats::ASTC_5x4 ) || ( fmt == TextureFormats::ASTC_5x5 ) ||
-			( fmt == TextureFormats::ASTC_6x5 ) || ( fmt == TextureFormats::ASTC_6x6 ) ||
-			( fmt == TextureFormats::ASTC_8x5 ) || ( fmt == TextureFormats::ASTC_8x6 ) ||
-			( fmt == TextureFormats::ASTC_8x8 ) || ( fmt == TextureFormats::ASTC_10x5 ) ||
-			( fmt == TextureFormats::ASTC_10x6 ) || ( fmt == TextureFormats::ASTC_10x8 ) ||
-			( fmt == TextureFormats::ASTC_10x10 ) || ( fmt == TextureFormats::ASTC_12x10 ) ||
-			( fmt == TextureFormats::ASTC_12x12 );
+		( fmt == TextureFormats::DXT5 ) || ( fmt == TextureFormats::ETC1 ) ||
+		( fmt == TextureFormats::RGB8_ETC2 ) || ( fmt == TextureFormats::RGBA8_ETC2 ) ||
+		( fmt == TextureFormats::BC6_SF16 ) || ( fmt == TextureFormats::BC6_UF16 ) ||
+		( fmt == TextureFormats::BC7 ) || ( fmt == TextureFormats::ASTC_4x4 ) ||
+		( fmt == TextureFormats::ASTC_5x4 ) || ( fmt == TextureFormats::ASTC_5x5 ) ||
+		( fmt == TextureFormats::ASTC_6x5 ) || ( fmt == TextureFormats::ASTC_6x6 ) ||
+		( fmt == TextureFormats::ASTC_8x5 ) || ( fmt == TextureFormats::ASTC_8x6 ) ||
+		( fmt == TextureFormats::ASTC_8x8 ) || ( fmt == TextureFormats::ASTC_10x5 ) ||
+		( fmt == TextureFormats::ASTC_10x6 ) || ( fmt == TextureFormats::ASTC_10x8 ) ||
+		( fmt == TextureFormats::ASTC_10x10 ) || ( fmt == TextureFormats::ASTC_12x10 ) ||
+		( fmt == TextureFormats::ASTC_12x12 );
 }
 
 
-void RenderDeviceGL4::bindImageToTexture(uint32 texObj, void *eglImage)
+void RenderDeviceGLES3::bindImageToTexture(uint32 texObj, void *eglImage)
 {
-	if( !glExt::OES_EGL_image )
+	if( !glESExt::OES_EGL_image_external )
 		Modules::log().writeError("OES_egl_image not supported");
 	else
 	{
-		const RDITextureGL4 &tex = _textures.getRef( texObj );
+		const RDITextureGLES3 &tex = _textures.getRef( texObj );
 		glActiveTexture( GL_TEXTURE15 );
 		glBindTexture( tex.type, tex.glObj );
 		glEGLImageTargetTexture2DOES( tex.type, eglImage );
@@ -899,11 +916,12 @@ void RenderDeviceGL4::bindImageToTexture(uint32 texObj, void *eglImage)
 	}
 }
 
+
 // =================================================================================================
 // Shaders
 // =================================================================================================
 
-uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
+uint32 RenderDeviceGLES3::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
 											 const char *tessControlShaderSrc, const char *tessEvalShaderSrc, const char *computeShaderSrc )
 {
 	int infologLength = 0;
@@ -967,7 +985,7 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 	// Geometry shader
 	if ( geometryShaderSrc )
 	{
-		gs = glCreateShader( GL_GEOMETRY_SHADER );
+		gs = glCreateShader( GL_GEOMETRY_SHADER_EXT );
 		glShaderSource( gs, 1, &geometryShaderSrc, 0x0 );
 		glCompileShader( gs );
 		glGetShaderiv( gs, GL_COMPILE_STATUS, &status );
@@ -990,57 +1008,57 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 	}
 	
 	// Tesselation control shader
-	if ( tessControlShaderSrc )
-	{
-		tsC = glCreateShader( GL_TESS_CONTROL_SHADER );
-		glShaderSource( tsC, 1, &tessControlShaderSrc, 0x0 );
-		glCompileShader( tsC );
-		glGetShaderiv( tsC, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			glGetShaderiv( tsC, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( tsC, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Tesselation Control Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			glDeleteShader( vs );
-			glDeleteShader( fs );
-			if ( gs ) glDeleteShader( gs );
-			glDeleteShader( tsC );
-			return 0;
-		}
-	}
-
-	// Tesselation evaluation shader
-	if ( tessEvalShaderSrc )
-	{
-		tsE = glCreateShader( GL_TESS_EVALUATION_SHADER );
-		glShaderSource( tsE, 1, &tessEvalShaderSrc, 0x0 );
-		glCompileShader( tsE );
-		glGetShaderiv( tsE, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			glGetShaderiv( tsE, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( tsE, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Tesselation Evaluation Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			glDeleteShader( vs );
-			glDeleteShader( fs );
-			if ( gs ) glDeleteShader( gs );
-			glDeleteShader( tsC );
-			glDeleteShader( tsE );
-			return 0;
-		}
-	}
+// 	if ( tessControlShaderSrc )
+// 	{
+// 		tsC = glCreateShader( GL_TESS_CONTROL_SHADER );
+// 		glShaderSource( tsC, 1, &tessControlShaderSrc, 0x0 );
+// 		glCompileShader( tsC );
+// 		glGetShaderiv( tsC, GL_COMPILE_STATUS, &status );
+// 		if ( !status )
+// 		{
+// 			glGetShaderiv( tsC, GL_INFO_LOG_LENGTH, &infologLength );
+// 			if ( infologLength > 1 )
+// 			{
+// 				infoLog = new char[ infologLength ];
+// 				glGetShaderInfoLog( tsC, infologLength, &charsWritten, infoLog );
+// 				_shaderLog = _shaderLog + "[Tesselation Control Shader]\n" + infoLog;
+// 				delete[] infoLog; infoLog = 0x0;
+// 			}
+// 
+// 			glDeleteShader( vs );
+// 			glDeleteShader( fs );
+// 			if ( gs ) glDeleteShader( gs );
+// 			glDeleteShader( tsC );
+// 			return 0;
+// 		}
+// 	}
+// 
+// 	// Tesselation evaluation shader
+// 	if ( tessEvalShaderSrc )
+// 	{
+// 		tsE = glCreateShader( GL_TESS_EVALUATION_SHADER );
+// 		glShaderSource( tsE, 1, &tessEvalShaderSrc, 0x0 );
+// 		glCompileShader( tsE );
+// 		glGetShaderiv( tsE, GL_COMPILE_STATUS, &status );
+// 		if ( !status )
+// 		{
+// 			glGetShaderiv( tsE, GL_INFO_LOG_LENGTH, &infologLength );
+// 			if ( infologLength > 1 )
+// 			{
+// 				infoLog = new char[ infologLength ];
+// 				glGetShaderInfoLog( tsE, infologLength, &charsWritten, infoLog );
+// 				_shaderLog = _shaderLog + "[Tesselation Evaluation Shader]\n" + infoLog;
+// 				delete[] infoLog; infoLog = 0x0;
+// 			}
+// 
+// 			glDeleteShader( vs );
+// 			glDeleteShader( fs );
+// 			if ( gs ) glDeleteShader( gs );
+// 			glDeleteShader( tsC );
+// 			glDeleteShader( tsE );
+// 			return 0;
+// 		}
+// 	}
 
 	// Compute shader
 	if ( computeShaderSrc )
@@ -1107,7 +1125,7 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 }
 
 
-bool RenderDeviceGL4::linkShaderProgram( uint32 programObj )
+bool RenderDeviceGLES3::linkShaderProgram( uint32 programObj )
 {
 	int infologLength = 0;
 	int charsWritten = 0;
@@ -1133,7 +1151,7 @@ bool RenderDeviceGL4::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
+uint32 RenderDeviceGLES3::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
 									  const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
 {
 	// Compile and link shader
@@ -1143,8 +1161,8 @@ uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *f
 
 //	int loc = glGetFragDataLocation( programObj, "fragColor" );
 
-	uint32 shaderId = _shaders.add( RDIShaderGL4() );
-	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+	uint32 shaderId = _shaders.add( RDIShaderGLES3() );
+	RDIShaderGLES3 &shader = _shaders.getRef( shaderId );
 	shader.oglProgramObj = programObj;
 	
 	int attribCount;
@@ -1169,7 +1187,7 @@ uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *f
 			{
 				if( vl.attribs[k].semanticName.compare(name) == 0 )
 				{
-					shader.inputLayouts[i].attribIndices[k] = (int8) glGetAttribLocation( programObj, name );
+					shader.inputLayouts[i].attribIndices[k] = glGetAttribLocation( programObj, name );
 					attribFound = true;
 				}
 			}
@@ -1188,23 +1206,22 @@ uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *f
 }
 
 
-void RenderDeviceGL4::destroyShader( uint32& shaderId )
+void RenderDeviceGLES3::destroyShader( uint32 &shaderId )
 {
-	if( shaderId == 0 )
-		return;
+	if( shaderId == 0 ) return;
 
-	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+	RDIShaderGLES3 &shader = _shaders.getRef( shaderId );
 	glDeleteProgram( shader.oglProgramObj );
 	_shaders.remove( shaderId );
 	shaderId = 0;
 }
 
 
-void RenderDeviceGL4::bindShader( uint32 shaderId )
+void RenderDeviceGLES3::bindShader( uint32 shaderId )
 {
 	if( shaderId != 0 )
 	{
-		RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+		RDIShaderGLES3 &shader = _shaders.getRef( shaderId );
 		glUseProgram( shader.oglProgramObj );
 	}
 	else
@@ -1217,25 +1234,24 @@ void RenderDeviceGL4::bindShader( uint32 shaderId )
 } 
 
 
-int RenderDeviceGL4::getShaderConstLoc( uint32 shaderId, const char *name )
+int RenderDeviceGLES3::getShaderConstLoc( uint32 shaderId, const char *name )
 {
-	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+	RDIShaderGLES3 &shader = _shaders.getRef( shaderId );
 	return glGetUniformLocation( shader.oglProgramObj, name );
 }
 
 
-int RenderDeviceGL4::getShaderSamplerLoc( uint32 shaderId, const char *name )
+int RenderDeviceGLES3::getShaderSamplerLoc( uint32 shaderId, const char *name )
 {
-	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+	RDIShaderGLES3 &shader = _shaders.getRef( shaderId );
 	return glGetUniformLocation( shader.oglProgramObj, name );
 }
 
-
-int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
+int RenderDeviceGLES3::getShaderBufferLoc( uint32 shaderId, const char *name )
 {
 	if ( _caps.computeShaders )
 	{
-		RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+		RDIShaderGLES3 &shader = _shaders.getRef( shaderId );
 		int idx = glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
 		if( idx != -1 )
 		{
@@ -1253,7 +1269,7 @@ int RenderDeviceGL4::getShaderBufferLoc( uint32 shaderId, const char *name )
 }
 
 
-void RenderDeviceGL4::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
+void RenderDeviceGLES3::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
 {
 	switch( type )
 	{
@@ -1279,25 +1295,25 @@ void RenderDeviceGL4::setShaderConst( int loc, RDIShaderConstType type, void *va
 }
 
 
-void RenderDeviceGL4::setShaderSampler( int loc, uint32 texUnit )
+void RenderDeviceGLES3::setShaderSampler( int loc, uint32 texUnit )
 {
 	glUniform1i( loc, (int)texUnit );
 }
 
 
-const char *RenderDeviceGL4::getDefaultVSCode()
+const char *RenderDeviceGLES3::getDefaultVSCode()
 {
 	return defaultShaderVS;
 }
 
 
-const char *RenderDeviceGL4::getDefaultFSCode()
+const char *RenderDeviceGLES3::getDefaultFSCode()
 {
 	return defaultShaderFS;
 }
 
 
-void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
+void RenderDeviceGLES3::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
 {
 	bindShader( shaderId );
 
@@ -1309,15 +1325,16 @@ void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 // Renderbuffers
 // =================================================================================================
 
-uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-										 bool depth, uint32 numColBufs, uint32 samples )
+/*
+uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
+                                         bool depth, uint32 numColBufs, uint32 samples )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
 	{
 		return 0;
 	}
 
-	if( numColBufs > RDIRenderBufferGL4::MaxColorAttachmentCount ) return 0;
+	if( numColBufs > RDIRenderBufferGLES3::MaxColorAttachmentCount ) return 0;
 
 	uint32 maxSamples = 0;
 	if( _caps.rtMultisampling )
@@ -1332,7 +1349,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 		Modules::log().writeWarning( "GPU does not support desired multisampling quality for render target" );
 	}
 
-	RDIRenderBufferGL4 rb;
+	RDIRenderBufferGLES3 rb;
 	rb.width = width;
 	rb.height = height;
 	rb.samples = samples;
@@ -1346,13 +1363,13 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 		// Attach color buffers
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
+			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 			// Create a color texture
 			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
-			RDITextureGL4 &tex = _textures.getRef( texObj );
-			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
+			RDITextureGLES3 &tex = _textures.getRef( texObj );
 			// Attach the texture
 			glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + j, GL_TEXTURE_2D, tex.glObj, 0 );
 
@@ -1365,12 +1382,12 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 				glRenderbufferStorageMultisample( GL_RENDERBUFFER, rb.samples, tex.glFmt, rb.width, rb.height );
 				// Attach the renderbuffer
 				glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + j,
-											  GL_RENDERBUFFER, rb.colBufs[j] );
+				                              GL_RENDERBUFFER, rb.colBufs[j] );
 			}
 		}
 
 		uint32 buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
-							 GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+		                     GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 		glDrawBuffers( numColBufs, buffers );
 		
@@ -1380,19 +1397,19 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 			glDrawBuffers( numColBufs, buffers );
 		}
 	}
-	else
-	{	
-		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
-		glDrawBuffer( GL_NONE );
-		glReadBuffer( GL_NONE );
-		
-		if( samples > 0 )
-		{
-			glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS );
-			glDrawBuffer( GL_NONE );
-			glReadBuffer( GL_NONE );
-		}
-	}
+// 	else
+// 	{	
+// 		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
+// 		glDrawBuffer( GL_NONE );
+// 		glReadBuffer( GL_NONE );
+// 		
+// 		if( samples > 0 )
+// 		{
+// 			glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS );
+// 			glDrawBuffer( GL_NONE );
+// 			glReadBuffer( GL_NONE );
+// 		}
+// 	}
 
 	// Attach depth buffer
 	if( depth )
@@ -1404,7 +1421,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
 		uploadTextureData( texObj, 0, 0, 0x0 );
 		rb.depthTex = texObj;
-		RDITextureGL4 &tex = _textures.getRef( texObj );
+		RDITextureGLES3 &tex = _textures.getRef( texObj );
 		// Attach the texture
 		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex.glObj, 0 );
 
@@ -1417,7 +1434,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 			glRenderbufferStorageMultisample( GL_RENDERBUFFER, rb.samples, _depthFormat, rb.width, rb.height );
 			// Attach the renderbuffer
 			glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-										  GL_RENDERBUFFER, rb.depthBuf );
+			                              GL_RENDERBUFFER, rb.depthBuf );
 		}
 	}
 
@@ -1445,12 +1462,166 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 	}
 	
 	return rbObj;
+}*/
+
+uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
+	bool depth, uint32 numColBufs, uint32 samples )
+{
+	if ( ( format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F ) && !_caps.texFloat )
+	{
+		return 0;
+	}
+
+	if ( numColBufs > RDIRenderBufferGLES3::MaxColorAttachmentCount ) return 0;
+
+	uint32 maxSamples = 0;
+	GLint value;
+	glGetIntegerv( GL_MAX_SAMPLES, &value );
+	maxSamples = ( uint32 ) value;
+
+	if ( samples > maxSamples )
+	{
+		samples = maxSamples;
+		Modules::log().writeWarning( "GPU does not support desired multisampling quality for render target" );
+	}
+
+	RDIRenderBufferGLES3 rb;
+	rb.width = width;
+	rb.height = height;
+	rb.samples = samples;
+
+	// Create framebuffers
+	glGenFramebuffers( 1, &rb.fbo );
+	if ( samples > 0 ) glGenFramebuffers( 1, &rb.fboMS );
+
+	if ( numColBufs > 0 )
+	{
+		// Attach color buffers
+		for ( uint32 j = 0; j < numColBufs; ++j )
+		{
+			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
+			// Create a color texture
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
+			ASSERT( texObj != 0 );
+			uploadTextureData( texObj, 0, 0, 0x0 );
+			rb.colTexs[ j ] = texObj;
+			RDITextureGLES3 &tex = _textures.getRef( texObj );
+			// Attach the texture
+			glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + j, GL_TEXTURE_2D, tex.glObj, 0 );
+
+			if ( samples > 0 )
+			{
+				glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS );
+				// Create a multisampled renderbuffer
+				glGenRenderbuffers( 1, &rb.colBufs[ j ] );
+				glBindRenderbuffer( GL_RENDERBUFFER, rb.colBufs[ j ] );
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, rb.samples, tex.glFmt, rb.width, rb.height );
+				// Attach the renderbuffer
+				glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + j, GL_RENDERBUFFER, rb.colBufs[ j ] );
+			}
+		}
+
+		uint32 buffers[] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1,
+			GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
+		glDrawBuffers( numColBufs, buffers );
+
+		if ( samples > 0 )
+		{
+			glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS );
+			glDrawBuffers( numColBufs, buffers );
+		}
+	}
+	else
+	{
+		uint32 buffers[] = { GL_NONE };
+
+		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
+		glDrawBuffers( 0, buffers );
+		glReadBuffer( GL_NONE );
+
+		if ( samples > 0 )
+		{
+			glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS );
+			glDrawBuffers( 0, buffers );
+			glReadBuffer( GL_NONE );
+		}
+	}
+
+	// Attach depth buffer
+	if ( depth )
+	{
+		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
+
+		// Create a depth texture
+		if ( samples > 0 )
+		{
+			glGenRenderbuffers( 1, &rb.depthBuf );
+			glBindRenderbuffer( GL_RENDERBUFFER, rb.depthBuf );
+			if ( samples > 0 )
+				glRenderbufferStorageMultisample( GL_RENDERBUFFER, samples, _depthFormat, rb.width, rb.height );
+			else
+				glRenderbufferStorage( GL_RENDERBUFFER, _depthFormat, rb.width, rb.height );
+
+			glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb.depthBuf );
+		}
+		else
+		{
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, false, false, false, false );
+			ASSERT( texObj != 0 );
+			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
+			uploadTextureData( texObj, 0, 0, 0x0 );
+			rb.depthTex = texObj;
+			RDITextureGLES3 &tex = _textures.getRef( texObj );
+			// Attach the texture
+			glFramebufferTexture2D( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex.glObj, 0 );
+		}
+
+		// Create a multisampled renderbuffer
+		if ( samples > 0 )
+		{
+			glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS );
+			glGenRenderbuffers( 1, &rb.depthBuf );
+			glBindRenderbuffer( GL_RENDERBUFFER, rb.depthBuf );
+			glRenderbufferStorageMultisample( GL_RENDERBUFFER, rb.samples, _depthFormat, rb.width, rb.height );
+			// Attach the renderbuffer
+			glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+				GL_RENDERBUFFER, rb.depthBuf );
+		}
+	}
+
+	uint32 rbObj = _rendBufs.add( rb );
+
+	// Check if FBO is complete
+	bool valid = true;
+	glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
+	uint32 status = glCheckFramebufferStatus( GL_FRAMEBUFFER );
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+	if ( status != GL_FRAMEBUFFER_COMPLETE ) valid = false;
+
+	if ( samples > 0 )
+	{
+		glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS );
+		status = glCheckFramebufferStatus( GL_FRAMEBUFFER );
+		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+		if ( status != GL_FRAMEBUFFER_COMPLETE ) valid = false;
+	}
+
+	if ( !valid )
+	{
+		destroyRenderBuffer( rbObj );
+		return 0;
+	}
+
+	glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
+
+	return rbObj;
 }
 
 
-void RenderDeviceGL4::destroyRenderBuffer( uint32& rbObj )
+void RenderDeviceGLES3::destroyRenderBuffer( uint32 &rbObj )
 {
-	RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
+	RDIRenderBufferGLES3 &rb = _rendBufs.getRef( rbObj );
 	
 	glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
 	
@@ -1458,7 +1629,7 @@ void RenderDeviceGL4::destroyRenderBuffer( uint32& rbObj )
 	if( rb.depthBuf != 0 ) glDeleteRenderbuffers( 1, &rb.depthBuf );
 	rb.depthTex = rb.depthBuf = 0;
 		
-	for( uint32 i = 0; i < RDIRenderBufferGL4::MaxColorAttachmentCount; ++i )
+	for( uint32 i = 0; i < RDIRenderBufferGLES3::MaxColorAttachmentCount; ++i )
 	{
 		if( rb.colTexs[i] != 0 ) destroyTexture( rb.colTexs[i] );
 		if( rb.colBufs[i] != 0 ) glDeleteRenderbuffers( 1, &rb.colBufs[i] );
@@ -1474,28 +1645,28 @@ void RenderDeviceGL4::destroyRenderBuffer( uint32& rbObj )
 }
 
 
-void RenderDeviceGL4::getRenderBufferDimensions( uint32 rbObj, int *width, int *height )
+void RenderDeviceGLES3::getRenderBufferDimensions( uint32 rbObj, int *width, int *height )
 {
-	RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
+	RDIRenderBufferGLES3 &rb = _rendBufs.getRef( rbObj );
 
 	*width = rb.width;
 	*height = rb.height;
 }
 
 
-uint32 RenderDeviceGL4::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
+uint32 RenderDeviceGLES3::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
 {
-	RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
+	RDIRenderBufferGLES3 &rb = _rendBufs.getRef( rbObj );
 	
-	if( bufIndex < RDIRenderBufferGL4::MaxColorAttachmentCount ) return rb.colTexs[bufIndex];
+	if( bufIndex < RDIRenderBufferGLES3::MaxColorAttachmentCount ) return rb.colTexs[bufIndex];
 	else if( bufIndex == 32 ) return rb.depthTex;
 	else return 0;
 }
 
 
-void RenderDeviceGL4::resolveRenderBuffer( uint32 rbObj )
+void RenderDeviceGLES3::resolveRenderBuffer( uint32 rbObj )
 {
-	RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
+	RDIRenderBufferGLES3 &rb = _rendBufs.getRef( rbObj );
 	
 	if( rb.fboMS == 0 ) return;
 	
@@ -1503,12 +1674,16 @@ void RenderDeviceGL4::resolveRenderBuffer( uint32 rbObj )
 	glBindFramebuffer( GL_DRAW_FRAMEBUFFER, rb.fbo );
 
 	bool depthResolved = false;
-	for( uint32 i = 0; i < RDIRenderBufferGL4::MaxColorAttachmentCount; ++i )
+	for( uint32 i = 0; i < RDIRenderBufferGLES3::MaxColorAttachmentCount; ++i )
 	{
 		if( rb.colBufs[i] != 0 )
 		{
+			uint32 buffers[] = { GL_COLOR_ATTACHMENT0 + i };
+
 			glReadBuffer( GL_COLOR_ATTACHMENT0 + i );
-			glDrawBuffer( GL_COLOR_ATTACHMENT0 + i );
+			glDrawBuffers( 1, buffers );
+			//glReadBuffer( GL_COLOR_ATTACHMENT0 + i );
+			//glDrawBuffer( GL_COLOR_ATTACHMENT0 + i );
 			
 			int mask = GL_COLOR_BUFFER_BIT;
 			if( !depthResolved && rb.depthBuf != 0 )
@@ -1522,8 +1697,13 @@ void RenderDeviceGL4::resolveRenderBuffer( uint32 rbObj )
 
 	if( !depthResolved && rb.depthBuf != 0 )
 	{
+		uint32 buffers[] = { GL_NONE };
+
 		glReadBuffer( GL_NONE );
-		glDrawBuffer( GL_NONE );
+		glDrawBuffers( 0, buffers );
+
+		//glReadBuffer( GL_NONE );
+		//glDrawBuffer( GL_NONE );
 		glBlitFramebuffer( 0, 0, rb.width, rb.height, 0, 0, rb.width, rb.height,
 							  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST );
 	}
@@ -1533,7 +1713,7 @@ void RenderDeviceGL4::resolveRenderBuffer( uint32 rbObj )
 }
 
 
-void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
+void RenderDeviceGLES3::setRenderBuffer( uint32 rbObj )
 {
 	// Resolve render buffer if necessary
 	if( _curRendBuf != 0 ) resolveRenderBuffer( _curRendBuf );
@@ -1543,18 +1723,20 @@ void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
 	
 	if( rbObj == 0 )
 	{
-		glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
-		if( _defaultFBO == 0 )
-		{
-			if( _doubleBuffered )
-				glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
-			else
-				glDrawBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
-		}
+// 		glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
+// 		if( _defaultFBO == 0 ) glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
+
+		int currentFrameBuffer;
+		glGetIntegerv( GL_FRAMEBUFFER_BINDING, &currentFrameBuffer );
+
+		//check if it is already, because this call can be extremely expensive on some platforms
+		if ( currentFrameBuffer != _defaultFBO )
+			glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
+
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
-		if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
-		else glDisable( GL_MULTISAMPLE );
+//         if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
+// 		else glDisable( GL_MULTISAMPLE );
 	}
 	else
 	{
@@ -1562,21 +1744,21 @@ void RenderDeviceGL4::setRenderBuffer( uint32 rbObj )
 		for( uint32 i = 0; i < 16; ++i ) setTexture( i, 0, 0, 0 );
 		commitStates( PM_TEXTURES );
 		
-		RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
+		RDIRenderBufferGLES3 &rb = _rendBufs.getRef( rbObj );
 
 		glBindFramebuffer( GL_FRAMEBUFFER, rb.fboMS != 0 ? rb.fboMS : rb.fbo );
 		ASSERT( glCheckFramebufferStatus( GL_FRAMEBUFFER ) == GL_FRAMEBUFFER_COMPLETE );
 		_fbWidth = rb.width;
 		_fbHeight = rb.height;
 
-		if( rb.fboMS != 0 ) glEnable( GL_MULTISAMPLE );
-		else glDisable( GL_MULTISAMPLE );
+// 		if( rb.fboMS != 0 ) glEnable( GL_MULTISAMPLE );
+// 		else glDisable( GL_MULTISAMPLE );
 	}
 }
 
 
-bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
-										int *compCount, void *dataBuffer, int bufferSize )
+bool RenderDeviceGLES3::getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
+                                        int *compCount, void *dataBuffer, int bufferSize )
 {
 	int x, y, w, h;
 	int format = GL_RGBA;
@@ -1593,25 +1775,19 @@ bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *widt
 		x = _vpX; y = _vpY; w = _vpWidth; h = _vpHeight;
 
 		glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
-		if( bufIndex != 32 )
-		{
-			if( _doubleBuffered )
-				glReadBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
-			else
-				glReadBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
-		}
-		//format = GL_BGRA;
-		//type = GL_UNSIGNED_BYTE;
+		if( bufIndex != 32 ) glReadBuffer( GL_BACK );
+		format = GL_RGBA;
+		type = GL_UNSIGNED_BYTE;
 	}
 	else
 	{
 		resolveRenderBuffer( rbObj );
-		RDIRenderBufferGL4 &rb = _rendBufs.getRef( rbObj );
+		RDIRenderBufferGLES3 &rb = _rendBufs.getRef( rbObj );
 		
 		if( bufIndex == 32 && rb.depthTex == 0 ) return false;
 		if( bufIndex != 32 )
 		{
-			if( (unsigned)bufIndex >= RDIRenderBufferGL4::MaxColorAttachmentCount || rb.colTexs[bufIndex] == 0 )
+			if( (unsigned)bufIndex >= RDIRenderBufferGLES3::MaxColorAttachmentCount || rb.colTexs[bufIndex] == 0 )
 				return false;
 		}
 		if( width != 0x0 ) *width = rb.width;
@@ -1634,7 +1810,7 @@ bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *widt
 	
 	bool retVal = false;
 	if( dataBuffer != 0x0 &&
-		bufferSize >= w * h * comps * (type == GL_FLOAT ? 4 : 1) ) 
+	    bufferSize >= w * h * comps * (type == GL_FLOAT ? 4 : 1) ) 
 	{
 		glFinish();
 		glReadPixels( x, y, w, h, format, type, dataBuffer );
@@ -1650,7 +1826,7 @@ bool RenderDeviceGL4::getRenderBufferData( uint32 rbObj, int bufIndex, int *widt
 // Queries
 // =================================================================================================
 
-uint32 RenderDeviceGL4::createOcclusionQuery()
+uint32 RenderDeviceGLES3::createOcclusionQuery()
 {
 	uint32 queryObj;
 	glGenQueries( 1, &queryObj );
@@ -1658,7 +1834,7 @@ uint32 RenderDeviceGL4::createOcclusionQuery()
 }
 
 
-void RenderDeviceGL4::destroyQuery( uint32 queryObj )
+void RenderDeviceGLES3::destroyQuery( uint32 queryObj )
 {
 	if( queryObj == 0 ) return;
 	
@@ -1666,19 +1842,19 @@ void RenderDeviceGL4::destroyQuery( uint32 queryObj )
 }
 
 
-void RenderDeviceGL4::beginQuery( uint32 queryObj )
+void RenderDeviceGLES3::beginQuery( uint32 queryObj )
 {
-	glBeginQuery( GL_SAMPLES_PASSED, queryObj );
+	glBeginQuery( GL_ANY_SAMPLES_PASSED, queryObj );
 }
 
 
-void RenderDeviceGL4::endQuery( uint32 /*queryObj*/ )
+void RenderDeviceGLES3::endQuery( uint32 /*queryObj*/ )
 {
-	glEndQuery( GL_SAMPLES_PASSED );
+	glEndQuery( GL_ANY_SAMPLES_PASSED );
 }
 
 
-uint32 RenderDeviceGL4::getQueryResult( uint32 queryObj )
+uint32 RenderDeviceGLES3::getQueryResult( uint32 queryObj )
 {
 	uint32 samples = 0;
 	glGetQueryObjectuiv( queryObj, GL_QUERY_RESULT, &samples );
@@ -1690,26 +1866,25 @@ uint32 RenderDeviceGL4::getQueryResult( uint32 queryObj )
 // Internal state management
 // =================================================================================================
 
-void RenderDeviceGL4::checkError()
+void RenderDeviceGLES3::checkError()
 {
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
 	ASSERT( error != GL_INVALID_VALUE );
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
-	ASSERT( error != GL_STACK_OVERFLOW && error != GL_STACK_UNDERFLOW );
 }
 
 
-bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
+bool RenderDeviceGLES3::applyVertexLayout( RDIGeometryInfoGLES3 &geo )
 {
 	uint32 newVertexAttribMask = 0;
 	
 	if( _curShaderId == 0 ) return false;
 	
 	RDIVertexLayout &vl = _vertexLayouts[ geo.layout - 1 ];
-	RDIShaderGL4 &shader = _shaders.getRef( _curShaderId );
-	RDIInputLayoutGL4 &inputLayout = shader.inputLayouts[ geo.layout - 1 ];
+	RDIShaderGLES3 &shader = _shaders.getRef( _curShaderId );
+	RDIInputLayoutGLES3 &inputLayout = shader.inputLayouts[ geo.layout - 1 ];
 		
 	if( !inputLayout.valid )
 		return false;
@@ -1721,7 +1896,7 @@ bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
 		if( attribIndex >= 0 )
 		{
 			VertexLayoutAttrib &attrib = vl.attribs[i];
-			const RDIVertBufSlotGL4 &vbSlot = geo.vertexBufInfo[ attrib.vbSlot ];
+			const RDIVertBufSlotGLES3 &vbSlot = geo.vertexBufInfo[ attrib.vbSlot ];
 				
 			ASSERT( _buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj != 0 &&
 					_buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).type == GL_ARRAY_BUFFER );
@@ -1752,7 +1927,7 @@ bool RenderDeviceGL4::applyVertexLayout( RDIGeometryInfoGL4 &geo )
 }
 
 
-void RenderDeviceGL4::applySamplerState( RDITextureGL4 &tex )
+void RenderDeviceGLES3::applySamplerState( RDITextureGLES3 &tex )
 {
 	uint32 state = tex.samplerState;
 	uint32 target = tex.type;
@@ -1760,7 +1935,7 @@ void RenderDeviceGL4::applySamplerState( RDITextureGL4 &tex )
 	const uint32 magFilters[] = { GL_LINEAR, GL_LINEAR, GL_NEAREST };
 	const uint32 minFiltersMips[] = { GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_NEAREST };
 	const uint32 maxAniso[] = { 1, 2, 4, 0, 8, 0, 0, 0, 16 };
-	const uint32 wrapModes[] = { GL_CLAMP_TO_EDGE, GL_REPEAT, GL_CLAMP_TO_BORDER };
+	const uint32 wrapModes[] = { GL_CLAMP_TO_EDGE, GL_REPEAT, GL_CLAMP_TO_BORDER_EXT };
 
 	if( tex.hasMips )
 		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, minFiltersMips[(state & SS_FILTER_MASK) >> SS_FILTER_START] );
@@ -1779,19 +1954,19 @@ void RenderDeviceGL4::applySamplerState( RDITextureGL4 &tex )
 	}
 	else
 	{
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
 	}
 }
 
 
-void RenderDeviceGL4::applyRenderStates()
+void RenderDeviceGLES3::applyRenderStates()
 {
 	// Rasterizer state
 	if( _newRasterState.hash != _curRasterState.hash )
 	{
-		if( _newRasterState.fillMode == RS_FILL_SOLID ) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-		else glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		// Since OpenGL ES does not support glPolygonMode, we can only draw with lines for wireframe
+		if ( _newRasterState.fillMode != RS_FILL_SOLID ) _drawType = PRIM_LINES;
 
 		if( _newRasterState.cullMode == RS_CULL_BACK )
 		{
@@ -1863,25 +2038,25 @@ void RenderDeviceGL4::applyRenderStates()
 	// Number of vertices in patch. Used in tesselation.
 	if ( _tessPatchVerts != _lastTessPatchVertsValue )
 	{
-		glPatchParameteri( GL_PATCH_VERTICES, _tessPatchVerts );
+//		glPatchParameteri( GL_PATCH_VERTICES, _tessPatchVerts );
 
 		_lastTessPatchVertsValue = _tessPatchVerts;
 	}
 }
 
 
-void RenderDeviceGL4::setStorageBuffer( uint8 slot, uint32 bufObj )
+void RenderDeviceGLES3::setStorageBuffer( uint8 slot, uint32 bufObj )
 {
 	ASSERT( slot < _maxComputeBufferAttachments && _storageBufs.size() < _maxComputeBufferAttachments );
 
-	RDIBufferGL4 &buf = _buffers.getRef( bufObj );
-	_storageBufs.push_back( RDIShaderStorageGL4( slot, buf.glObj ) );
+	RDIBufferGLES3 &buf = _buffers.getRef( bufObj );
+	_storageBufs.push_back( RDIShaderStorageGLES3( slot, buf.glObj ) );
 
 	_pendingMask |= PM_COMPUTE;
 }
 
 
-bool RenderDeviceGL4::commitStates( uint32 filter )
+bool RenderDeviceGLES3::commitStates( uint32 filter )
 {
 	if( _pendingMask & filter )
 	{
@@ -1929,21 +2104,10 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 			{
 				glActiveTexture( GL_TEXTURE0 + i );
 
-				if ( _texSlots[ i ].usage != TextureUsage::Texture && _texSlots[ i ].texObj != 0 )
+				// add texture usage from GL4
+				if( _texSlots[i].texObj != 0 )
 				{
-					if ( i >= MaxComputeImages ) continue;
-
-					RDITextureGL4 &tex = _textures.getRef( _texSlots[ i ].texObj );
-					uint32 access[ 3 ] = { GL_READ_ONLY, GL_WRITE_ONLY, GL_READ_WRITE };
-
-					glBindImageTexture( i, tex.glObj, 0, false, 0, access[ _texSlots[ i ].usage - 1 ], tex.glFmt );
-					glBindTexture( GL_TEXTURE_CUBE_MAP, 0 ); // as image units are different from texture units - clear binded texture units
-					glBindTexture( GL_TEXTURE_3D, 0 );
-					glBindTexture( GL_TEXTURE_2D, 0 );
-				}
-				else if( _texSlots[i].texObj != 0 )
-				{
-					RDITextureGL4 &tex = _textures.getRef( _texSlots[i].texObj );
+					RDITextureGLES3 &tex = _textures.getRef( _texSlots[i].texObj );
 					glBindTexture( tex.type, tex.glObj );
 
 					// Apply sampler state
@@ -1969,7 +2133,7 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 		{
 			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
 			{
-				RDIGeometryInfoGL4 &geo = _vaos.getRef( _curGeometryIndex );
+				RDIGeometryInfoGLES3 &geo = _vaos.getRef( _curGeometryIndex );
 
 				glBindVertexArray( geo.vao );
 
@@ -2005,7 +2169,7 @@ bool RenderDeviceGL4::commitStates( uint32 filter )
 }
 
 
-void RenderDeviceGL4::resetStates()
+void RenderDeviceGLES3::resetStates()
 {
 // 	_curIndexBuf = 1; _newIndexBuf = 0;
 // 	_curVertLayout = 1; _newVertLayout = 0;
@@ -2026,10 +2190,10 @@ void RenderDeviceGL4::resetStates()
 	_pendingMask = 0xFFFFFFFF;
 	commitStates();
 
-//	glBindVertexArray( 0 );
+	glBindVertexArray( 0 );
  	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-
+	
 	glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );
 }
 
@@ -2038,13 +2202,13 @@ void RenderDeviceGL4::resetStates()
 // Draw calls and clears
 // =================================================================================================
 
-void RenderDeviceGL4::clear( uint32 flags, float *colorRGBA, float depth )
+void RenderDeviceGLES3::clear( uint32 flags, float *colorRGBA, float depth )
 {
 	uint32 prevBuffers[4] = { 0 };
 
 	if( _curRendBuf != 0x0 )
 	{
-		RDIRenderBufferGL4 &rb = _rendBufs.getRef( _curRendBuf );
+		RDIRenderBufferGLES3 &rb = _rendBufs.getRef( _curRendBuf );
 		
 		if( (flags & CLR_DEPTH) && rb.depthTex == 0 ) flags &= ~CLR_DEPTH;
 		
@@ -2070,7 +2234,7 @@ void RenderDeviceGL4::clear( uint32 flags, float *colorRGBA, float depth )
 	if( flags & CLR_DEPTH )
 	{
 		oglClearMask |= GL_DEPTH_BUFFER_BIT;
-		glClearDepth( depth );
+		glClearDepthf( depth );
 	}
 	if( flags & (CLR_COLOR_RT0 | CLR_COLOR_RT1 | CLR_COLOR_RT2 | CLR_COLOR_RT3) )
 	{
@@ -2093,30 +2257,34 @@ void RenderDeviceGL4::clear( uint32 flags, float *colorRGBA, float depth )
 }
 
 
-void RenderDeviceGL4::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
+void RenderDeviceGLES3::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
 {
+	_drawType = primType;
+
 	if( commitStates() )
 	{
-		glDrawArrays( RDI_GL4::primitiveTypes[ ( uint32 ) primType ], firstVert, numVerts );
+		glDrawArrays( RDI_GLES3::primitiveTypes[ _drawType ], firstVert, numVerts );
 	}
 
 	CHECK_GL_ERROR
 }
 
 
-void RenderDeviceGL4::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
-								uint32 firstVert, uint32 numVerts )
+void RenderDeviceGLES3::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
+                                uint32 firstVert, uint32 numVerts )
 {
+	_drawType = primType;
+
 	if( commitStates() )
 	{
 		firstIndex *= (_indexFormat == IDXFMT_16) ? sizeof( short ) : sizeof( int );
 		
-		glDrawRangeElements( RDI_GL4::primitiveTypes[ ( uint32 ) primType ], firstVert, firstVert + numVerts,
-							 numIndices, RDI_GL4::indexFormats[ _indexFormat ], ( char * ) 0 + firstIndex );
+		glDrawRangeElements( RDI_GLES3::primitiveTypes[ _drawType ], firstVert, firstVert + numVerts,
+							 numIndices, RDI_GLES3::indexFormats[ _indexFormat ], ( char * ) 0 + firstIndex );
 	}
 
 	CHECK_GL_ERROR
 }
 
-} // namespace RDI_GL4
+} // namespace RDI_GLES3
 }  // namespace

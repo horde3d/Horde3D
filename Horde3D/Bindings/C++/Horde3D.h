@@ -66,11 +66,13 @@ struct H3DRenderDevice
 
 	OpenGL2				- use OpenGL 2 as renderer backend (can be used to force OpenGL 2 when higher version is undesirable)
 	OpenGL4				- use OpenGL 4 as renderer backend (falls back to OpenGL 2 in case of error)
+	OpenGLES3			- use OpenGL ES 3 as renderer backend
 	*/
 	enum List
 	{
 		OpenGL2 = 2,
-		OpenGL4 = 4
+		OpenGL4 = 4,
+		OpenGLES3 = 8
 	};
 };
 
@@ -167,12 +169,22 @@ struct H3DDeviceCapabilities
 	GeometryShaders			- GPU supports runtime geometry generation via geometry shaders
 	TessellationShaders     - GPU supports tessellation
 	ComputeShaders		    - GPU supports general-purpose computing via compute shaders
+	TextureFloatRenderable	- GPU supports rendering to floating-point textures (RGBA16F, RGBA32F)
+	TextureCompressionDXT	- GPU supports DXT compressed textures (DXT1, DXT3, DXT5)
+	TextureCompressionETC2	- GPU supports ETC2 compressed textures (RGB, RGBA)
+	TextureCompressionBPTC	- GPU supports BC6 and BC7 compressed textures
+	TextureCompressionASTC	- GPU supports ASTC compressed textures (RGBA)
 	*/
 	enum List
 	{
 		GeometryShaders = 200,
 		TessellationShaders,
-		ComputeShaders
+		ComputeShaders,
+		TextureFloatRenderable,
+		TextureCompressionDXT,
+		TextureCompressionETC2,
+		TextureCompressionBPTC,
+		TextureCompressionASTC
 	};
 };
 
@@ -241,23 +253,64 @@ struct H3DFormats
 	/* Enum: H3DFormats
 			The available resource stream formats.
 			
-		Unknown      - Unknown format
-		TEX_BGRA8    - 8-bit BGRA texture
-		TEX_DXT1     - DXT1 compressed texture
-		TEX_DXT3     - DXT3 compressed texture
-		TEX_DXT5     - DXT5 compressed texture
-		TEX_RGBA16F  - Half float RGBA texture
-		TEX_RGBA32F  - Float RGBA texture
+		Unknown			- Unknown format
+		TEX_R8			- 8-bit texture with one color channel.
+		TEX_R16F		- Half float texture with one color channel.
+		TEX_R32F		- Float texture with one color channel.
+		TEX_RG8			- 8-bit texture with two color channels.
+		TEX_RG16F		- Half float texture with two color channels.
+		TEX_RG32F		- Float texture with two color channels.
+		TEX_BGRA8		- 8-bit BGRA texture. For OpenGL ES it is actually RGBA texture.
+		TEX_RGBA16F		- Half float RGBA texture
+		TEX_RGBA32F		- Float RGBA texture
+		TEX_RGBA32F		- Unsigned integer RGBA texture
+		TEX_DXT1		- DXT1 compressed texture
+		TEX_DXT3		- DXT3 compressed texture
+		TEX_DXT5		- DXT5 compressed texture
+		TEX_ETC1		- ETC1 compressed texture
+		TEX_RGB8_ETC2	- RGB8 texture compressed in ETC2 format
+		TEX_RGBA8_ETC2	- RGBA8 texture compressed in ETC2 format
+		TEX_BC6_UF16	- BC6 compressed unsigned half float texture
+		TEX_BC6_SF16	- BC6 compressed signed half float texture
+		TEX_BC7			- BC7 compressed RGBA texture
+		TEX_ASTC_xxx	- ASTC compressed RGBA texture
 	*/
 	enum List
 	{
 		Unknown = 0,
+		TEX_R8,
+		TEX_R16F,
+		TEX_R32F,
+		TEX_RG8,
+		TEX_RG16F,
+		TEX_RG32F,
 		TEX_BGRA8,
+		TEX_RGBA16F,
+		TEX_RGBA32F,
+		TEX_RGBA32UI,
 		TEX_DXT1,
 		TEX_DXT3,
 		TEX_DXT5,
-		TEX_RGBA16F,
-		TEX_RGBA32F
+		TEX_ETC1,
+		TEX_RGB8_ETC2,
+		TEX_RGBA8_ETC2,
+		TEX_BC6_UF16,
+		TEX_BC6_SF16,
+		TEX_BC7,
+		TEX_ASTC_4x4,
+		TEX_ASTC_5x4,
+		TEX_ASTC_5x5,
+		TEX_ASTC_6x5,
+		TEX_ASTC_6x6,
+		TEX_ASTC_8x5,
+		TEX_ASTC_8x6,
+		TEX_ASTC_8x8,
+		TEX_ASTC_10x5,
+		TEX_ASTC_10x6,
+		TEX_ASTC_10x8,
+		TEX_ASTC_10x10,
+		TEX_ASTC_12x10,
+		TEX_ASTC_12x12
 	};
 };
 

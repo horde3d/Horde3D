@@ -15,4 +15,9 @@ if(HORDE3D_BUILD_TERRAIN)
         add_subdirectory(Sample)
     ENDIF(GLFW_FOUND)
 
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+	    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpic")
+	    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic")
+    endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
 endif(HORDE3D_BUILD_TERRAIN)

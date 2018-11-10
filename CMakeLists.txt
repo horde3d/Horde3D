@@ -5,7 +5,7 @@ project(Horde3D)
 
 set(CMAKE_CXX_STANDARD 11)
 
-SET(${PROJECT_NAME}_MAJOR_VERSION 1)
+SET(${PROJECT_NAME}_MAJOR_VERSION 2)
 SET(${PROJECT_NAME}_MINOR_VERSION 0)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
@@ -29,6 +29,29 @@ if(HORDE3D_BUILD_EXAMPLES)
 else()
     message("Not building examples.")
 endif(HORDE3D_BUILD_EXAMPLES)
+
+# Backend selection
+option(HORDE3D_USE_GL2 "Add OpenGL 2 render backend. Turns off ES3 render backend." ON)
+option(HORDE3D_USE_GL4 "Add OpenGL 4 render backend. Turns off ES3 render backend." ON)
+option(HORDE3D_USE_GLES3 "Add OpenGL ES 3 render backend. Turns off desktop GL backends." OFF)
+
+if(HORDE3D_USE_GLES3)
+	set(USE_GLES3 TRUE)
+	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+	set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+endif(HORDE3D_USE_GLES3)
+
+if(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
+	if(HORDE3D_USE_GL2)
+		set(USE_GL2 TRUE)
+	endif(HORDE3D_USE_GL2)
+	
+	if(HORDE3D_USE_GL4)
+		set(USE_GL4 TRUE)
+	endif(HORDE3D_USE_GL4)
+	
+	set(HORDE3D_USE_GLES3 OFF CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
+endif(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
 
 # Set binaries output folder.
 SET(HORDE3D_OUTPUT_PATH_PREFIX "${PROJECT_BINARY_DIR}/Binaries")

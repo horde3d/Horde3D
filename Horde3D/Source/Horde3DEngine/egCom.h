@@ -195,7 +195,12 @@ struct RenderDeviceCapabilities
 	{
 		GeometryShaders = 200,
 		Tessellation,
-		Compute
+		Compute,
+		TextureFloatRenderable,
+		TextureCompressionDXT,
+		TextureCompressionETC2,
+		TextureCompressionBPTC,
+		TextureCompressionASTC
 	};
 };
 

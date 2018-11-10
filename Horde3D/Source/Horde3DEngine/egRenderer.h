@@ -60,7 +60,7 @@ struct RenderBackendType
 	{
 		OpenGL2 = 2,
 		OpenGL4 = 4,
-		OpenGLES = 8
+		OpenGLES3 = 8
 	};
 };
 
@@ -283,7 +283,7 @@ protected:
 	uint32                             _vbCone, _ibCone, _vbFSPoly;
 	
 	int									_renderDeviceType;
-	
+
 };
 
 }

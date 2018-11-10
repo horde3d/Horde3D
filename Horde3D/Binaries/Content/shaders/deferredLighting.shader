@@ -85,6 +85,33 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context AMBIENT
+	{
+		VertexShader = compile GLSL VS_FSQUAD_GL4;
+		PixelShader = compile GLSL FS_AMBIENT_GL4;
+		
+		ZWriteEnable = false;
+		BlendMode = Replace;
+	}
+
+	context LIGHTING
+	{
+		VertexShader = compile GLSL VS_VOLUME_GL4;
+		PixelShader = compile GLSL FS_LIGHTING_GL4;
+		
+		ZWriteEnable = false;
+		BlendMode = Add;
+	}
+
+	context COPY_DEPTH
+	{
+		VertexShader = compile GLSL VS_FSQUAD_GL4;
+		PixelShader = compile GLSL FS_COPY_DEPTH_GL4;
+	}
+}
+
 
 [[VS_FSQUAD]]
 
@@ -192,7 +219,7 @@ void main( void )
 	}
 	else
 	{
-		fragColor.rgb = getAlbedo( texCoords ) * textureCube( ambientMap, getNormal( texCoords ) ).rgb;
+		fragColor.rgb = getAlbedo( texCoords ) * texture( ambientMap, getNormal( texCoords ) ).rgb;
 	}
 }
 

@@ -40,17 +40,27 @@ bool ExtTerrain::init()
 	TerrainNode::vlTerrain = Modules::renderer().getRenderDevice()->registerVertexLayout( 2, attribs );
 
 	// Upload default shader used for debug view
-	if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGL2 )
+	switch ( Modules::renderer().getRenderDeviceType() )
 	{
-		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-                                              vsTerrainDebugView, fsTerrainDebugView, 0, 0, 0, 0 );
-	} 
-	else
-	{
-		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-                                              vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, 0, 0, 0, 0 );
+		case RenderBackendType::OpenGL2:
+		{
+			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+												  vsTerrainDebugView, fsTerrainDebugView, nullptr, nullptr, nullptr, nullptr );
+		}
+		case RenderBackendType::OpenGL4:
+		{
+			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+												  vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, nullptr, nullptr, nullptr, nullptr );
+		case RenderBackendType::OpenGLES3:
+		{
+			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+												  vsTerrainDebugViewGLES3, fsTerrainDebugViewGLES3, nullptr, nullptr, nullptr, nullptr );
+		}
+		default:
+			return false;
+		}
 	}
-	
+
 	return true;
 }
 

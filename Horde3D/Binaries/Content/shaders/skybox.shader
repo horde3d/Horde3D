@@ -34,6 +34,21 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context ATTRIBPASS
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		PixelShader = compile GLSL FS_ATTRIBPASS_GL4;
+	}
+
+	context AMBIENT
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		PixelShader = compile GLSL FS_AMBIENT_GL4;
+	}
+}
+
 [[VS_GENERAL]]
 // =================================================================================================
 

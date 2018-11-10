@@ -710,19 +710,19 @@ public:
 	// ---------------
 	// Transformations
 	// ---------------
-	void translate( const float x, const float y, const float z )
+	void translate( const float tx, const float ty, const float tz )
 	{
-		*this = TransMat( x, y, z ) * *this;
+		*this = TransMat( tx, ty, tz ) * *this;
 	}
 
-	void scale( const float x, const float y, const float z )
+	void scale( const float sx, const float sy, const float sz )
 	{
-		*this = ScaleMat( x, y, z ) * *this;
+		*this = ScaleMat( sx, sy, sz ) * *this;
 	}
 
-	void rotate( const float x, const float y, const float z )
+	void rotate( const float rx, const float ry, const float rz )
 	{
-		*this = RotMat( x, y, z ) * *this;
+		*this = RotMat( rx, ry, rz ) * *this;
 	}
 
 	// ---------------
@@ -733,13 +733,13 @@ public:
 	{
 		Matrix4f m( *this );
 		
-		for( unsigned int y = 0; y < 4; ++y )
+		for( unsigned int maty = 0; maty < 4; ++maty )
 		{
-			for( unsigned int x = y + 1; x < 4; ++x ) 
+			for( unsigned int matx = maty + 1; matx < 4; ++matx ) 
 			{
-				float tmp = m.c[x][y];
-				m.c[x][y] = m.c[y][x];
-				m.c[y][x] = tmp;
+				float tmp = m.c[matx][maty];
+				m.c[matx][maty] = m.c[maty][matx];
+				m.c[maty][matx] = tmp;
 			}
 		}
 

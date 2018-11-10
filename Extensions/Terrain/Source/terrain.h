@@ -32,6 +32,9 @@ extern const char *fsTerrainDebugView;
 extern const char *vsTerrainDebugViewGL4;
 extern const char *fsTerrainDebugViewGL4;
 
+extern const char *vsTerrainDebugViewGLES3;
+extern const char *fsTerrainDebugViewGLES3;
+
 struct TerrainNodeTpl : public SceneNodeTpl
 {
 	PTextureResource   hmapRes;
