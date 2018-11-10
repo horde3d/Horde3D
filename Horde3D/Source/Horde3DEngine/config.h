@@ -29,7 +29,13 @@
 // Specifies the number of material subclass levels (eg. Level1.Level2.Level3.Level4.Level5)
 #define H3D_MATERIAL_HIERARCHY_LEVELS 5
 
-// Force OpenGL ES Renderer. Other OpenGL renderers will be unavailable.
-//#define H3D_FORCE_GLES
+// Use OpenGL ES Renderer. Other OpenGL renderers will be unavailable.
+//#define H3D_USE_GLES3
+
+// Use OpenGL 2 renderer. Can work with GL4 renderer.
+// #define H3D_USE_GL2
+
+// Use OpenGL 4 renderer. Can work with GL2 renderer.
+// #define H3D_USE_GL4
 
 #endif // _h3d_config_H_

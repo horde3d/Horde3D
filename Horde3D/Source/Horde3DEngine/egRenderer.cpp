@@ -21,9 +21,13 @@
 
 #include "utDebug.h"
 
-#if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined( H3D_FORCE_GLES )
-#	include "egRendererBaseGL2.h"
-#	include "egRendererBaseGL4.h"
+#if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined( H3D_USE_GLES3 )
+#	if defined( H3D_USE_GL2)
+#		include "egRendererBaseGL2.h"
+#	endif
+#	if defined( H3D_USE_GL4 )
+#		include "egRendererBaseGL4.h"
+#	endif
 #else
 #	include "egRendererBaseGLES3.h"
 #endif
@@ -332,17 +336,18 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 {
 	switch ( type )
 	{
-#if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined ( H3D_FORCE_GLES )
-		case RenderBackendType::OpenGL4 :
+#if defined ( H3D_USE_GL4 ) 
+		case RenderBackendType::OpenGL4:
 		{
 			return new RDI_GL4::RenderDeviceGL4();
 		}
-		case RenderBackendType::OpenGL2 :
+#elif defined ( H3D_USE_GL2 )
+		case RenderBackendType::OpenGL2:
 		{
 			return new RDI_GL2::RenderDeviceGL2();
 		}
-#else	
-		case RenderBackendType::OpenGLES3 :
+#elif defined ( H3D_USE_GLES3 )	
+		case RenderBackendType::OpenGLES3:
 		{
 			return new RDI_GLES3::RenderDeviceGLES3();
 		}
