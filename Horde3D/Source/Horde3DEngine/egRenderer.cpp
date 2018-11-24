@@ -209,6 +209,8 @@ bool Renderer::init( RenderBackendType::List type )
 		{
 			// try to use legacy OpenGL renderer backend
 			_renderDevice = createRenderDevice( RenderBackendType::OpenGL2 );
+			if ( !_renderDevice ) return false;
+			
 			if ( !_renderDevice->init() )
 			{
 				releaseRenderDevice();
