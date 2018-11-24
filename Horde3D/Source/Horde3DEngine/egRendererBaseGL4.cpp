@@ -305,8 +305,8 @@ bool RenderDeviceGL4::init()
 	}
 	if ( !glExt::ARB_texture_compression_bptc )
 	{
-		Modules::log().writeError( "Extension ARB_texture_compression_bptc not supported" );
-		failed = true;
+		Modules::log().writeWarning( "Extension ARB_texture_compression_bptc not supported" );
+//		failed = true;
 	}
 
 	if( failed )
@@ -706,7 +706,7 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	H3D_UNUSED_VAR( compress );
 	ASSERT( depth > 0 );
 
-	if ( format == TextureFormats::ETC1 || !_caps.texETC2 && ( format == TextureFormats::RGB8_ETC2 || format == TextureFormats::RGBA8_ETC2 ) )
+	if ( format == TextureFormats::ETC1 || ( !_caps.texETC2 && ( format == TextureFormats::RGB8_ETC2 || format == TextureFormats::RGBA8_ETC2 ) ) )
 	{
 		Modules::log().writeWarning( "Unsupported texture formats: ETC1, ETC2" );
 		return 0;
@@ -714,6 +714,11 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	if ( !_caps.texASTC && ( format >= TextureFormats::ASTC_4x4 && format <= TextureFormats::ASTC_12x12 ) )
 	{
 		Modules::log().writeWarning( "Unsupported texture formats: ASTC" );
+		return 0;
+	}
+	if ( !_caps.texBPTC && ( format == TextureFormats::BC6_SF16 || format == TextureFormats::BC6_UF16 || format == TextureFormats::BC7 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: BC6, BC7" );
 		return 0;
 	}
 	if( !_caps.texNPOT )
