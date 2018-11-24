@@ -209,6 +209,8 @@ bool Renderer::init( RenderBackendType::List type )
 		{
 			// try to use legacy OpenGL renderer backend
 			_renderDevice = createRenderDevice( RenderBackendType::OpenGL2 );
+			if ( !_renderDevice ) return false;
+
 			if ( !_renderDevice->init() )
 			{
 				releaseRenderDevice();
@@ -336,17 +338,19 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 {
 	switch ( type )
 	{
-#if defined ( H3D_USE_GL4 ) 
+#if defined( DESKTOP_OPENGL_AVAILABLE ) && defined ( H3D_USE_GL4 ) 
 		case RenderBackendType::OpenGL4:
 		{
 			return new RDI_GL4::RenderDeviceGL4();
 		}
-#elif defined ( H3D_USE_GL2 )
+#endif
+#if defined( DESKTOP_OPENGL_AVAILABLE ) && defined ( H3D_USE_GL2 )
 		case RenderBackendType::OpenGL2:
 		{
 			return new RDI_GL2::RenderDeviceGL2();
 		}
-#elif defined ( H3D_USE_GLES3 )	
+#endif
+#if defined ( H3D_USE_GLES3 )	
 		case RenderBackendType::OpenGLES3:
 		{
 			return new RDI_GLES3::RenderDeviceGLES3();
