@@ -738,7 +738,7 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	tex.genMips = genMips;
 	tex.hasMips = hasMips;
 	
-	if ( format > (int) textureGLFormats.size() ) ASSERT( 0 );
+	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
 
 	tex.glFmt = format != TextureFormats::DEPTH
 				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
