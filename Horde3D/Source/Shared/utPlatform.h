@@ -152,4 +152,12 @@ namespace StaticAssert
 // Misc functions
 #define H3D_UNUSED_VAR( exp ) ( (void) (exp))
 
+#if defined( _MSC_VER )
+#define H3D_INLINE __forceinline
+#elif defined ( __GNUG__ ) || defined ( __clang__ )
+#define H3D_INLINE __attribute__((always_inline))
+#else 
+#define H3D_INLINE 
+#endif
+
 #endif // _utPlatform_H_
