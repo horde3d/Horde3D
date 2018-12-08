@@ -206,7 +206,7 @@ void GPUTimerGLES3::reset()
 
 RenderDeviceGLES3::RenderDeviceGLES3()
 {
-	RenderDeviceInterface::initRDIFunctions< RenderDeviceGLES3 >();
+	initRDIFuncs(); // bind render device functions
 
 	_numVertexLayouts = 0;
 	
@@ -241,6 +241,71 @@ RenderDeviceGLES3::RenderDeviceGLES3()
 
 RenderDeviceGLES3::~RenderDeviceGLES3()
 {
+}
+
+
+void RenderDeviceGLES3::initRDIFuncs()
+{
+	_delegate_init.bind< RenderDeviceGLES3, &RenderDeviceGLES3::init >( this );
+	_delegate_initStates.bind< RenderDeviceGLES3, &RenderDeviceGLES3::initStates >( this );
+	_delegate_registerVertexLayout.bind< RenderDeviceGLES3, &RenderDeviceGLES3::registerVertexLayout >( this );
+	_delegate_beginRendering.bind< RenderDeviceGLES3, &RenderDeviceGLES3::beginRendering >( this );
+
+	_delegate_beginCreatingGeometry.bind< RenderDeviceGLES3, &RenderDeviceGLES3::beginCreatingGeometry >( this );
+	_delegate_finishCreatingGeometry.bind< RenderDeviceGLES3, &RenderDeviceGLES3::finishCreatingGeometry >( this );
+	_delegate_destroyGeometry.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyGeometry >( this );
+	_delegate_setGeomVertexParams.bind< RenderDeviceGLES3, &RenderDeviceGLES3::setGeomVertexParams >( this );
+	_delegate_setGeomIndexParams.bind< RenderDeviceGLES3, &RenderDeviceGLES3::setGeomIndexParams >( this );
+	_delegate_createVertexBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createVertexBuffer >( this );
+	_delegate_createIndexBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createIndexBuffer >( this );
+	_delegate_createTextureBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createTextureBuffer >( this );
+	_delegate_createShaderStorageBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createShaderStorageBuffer >( this );
+	_delegate_destroyBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyBuffer >( this );
+	_delegate_destroyTextureBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyTextureBuffer >( this );
+	_delegate_updateBufferData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::updateBufferData >( this );
+	_delegate_mapBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::mapBuffer >( this );
+	_delegate_unmapBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::unmapBuffer >( this );
+
+	_delegate_createTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createTexture >( this );
+	_delegate_uploadTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::uploadTextureData >( this );
+	_delegate_destroyTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyTexture >( this );
+	_delegate_updateTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::updateTextureData >( this );
+	_delegate_getTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getTextureData >( this );
+	_delegate_bindImageToTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::bindImageToTexture >( this );
+
+	_delegate_createShader.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createShader >( this );
+	_delegate_destroyShader.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyShader >( this );
+	_delegate_bindShader.bind< RenderDeviceGLES3, &RenderDeviceGLES3::bindShader >( this );
+	_delegate_getShaderConstLoc.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getShaderConstLoc >( this );
+	_delegate_getShaderSamplerLoc.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getShaderSamplerLoc >( this );
+	_delegate_getShaderBufferLoc.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getShaderBufferLoc >( this );
+	_delegate_runComputeShader.bind< RenderDeviceGLES3, &RenderDeviceGLES3::runComputeShader >( this );
+	_delegate_setShaderConst.bind< RenderDeviceGLES3, &RenderDeviceGLES3::setShaderConst >( this );
+	_delegate_setShaderSampler.bind< RenderDeviceGLES3, &RenderDeviceGLES3::setShaderSampler >( this );
+	_delegate_getDefaultVSCode.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getDefaultVSCode >( this );
+	_delegate_getDefaultFSCode.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getDefaultFSCode >( this );
+
+	_delegate_createRenderBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createRenderBuffer >( this );
+	_delegate_destroyRenderBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyRenderBuffer >( this );
+	_delegate_getRenderBufferTex.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getRenderBufferTex >( this );
+	_delegate_setRenderBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::setRenderBuffer >( this );
+	_delegate_getRenderBufferData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getRenderBufferData >( this );
+	_delegate_getRenderBufferDimensions.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getRenderBufferDimensions >( this );
+
+	_delegate_createOcclusionQuery.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createOcclusionQuery >( this );
+	_delegate_destroyQuery.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyQuery >( this );
+	_delegate_beginQuery.bind< RenderDeviceGLES3, &RenderDeviceGLES3::beginQuery >( this );
+	_delegate_endQuery.bind< RenderDeviceGLES3, &RenderDeviceGLES3::endQuery >( this );
+	_delegate_getQueryResult.bind< RenderDeviceGLES3, &RenderDeviceGLES3::getQueryResult >( this );
+
+	_delegate_createGPUTimer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createGPUTimer >( this );
+	_delegate_commitStates.bind< RenderDeviceGLES3, &RenderDeviceGLES3::commitStates >( this );
+	_delegate_resetStates.bind< RenderDeviceGLES3, &RenderDeviceGLES3::resetStates >( this );
+	_delegate_clear.bind< RenderDeviceGLES3, &RenderDeviceGLES3::clear >( this );
+
+	_delegate_draw.bind< RenderDeviceGLES3, &RenderDeviceGLES3::draw >( this );
+	_delegate_drawIndexed.bind< RenderDeviceGLES3, &RenderDeviceGLES3::drawIndexed >( this );
+	_delegate_setStorageBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::setStorageBuffer >( this );
 }
 
 
