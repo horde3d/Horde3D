@@ -206,7 +206,7 @@ void GPUTimerGL2::reset()
 
 RenderDeviceGL2::RenderDeviceGL2()
 {
-	RenderDeviceInterface::initRDIFunctions< RenderDeviceGL2 >();
+	initRDIFuncs(); // bind render device functions
 
 	_numVertexLayouts = 0;
 	
@@ -306,6 +306,7 @@ void RenderDeviceGL2::initRDIFuncs()
 	_delegate_drawIndexed.bind< RenderDeviceGL2, &RenderDeviceGL2::drawIndexed >( this );
 	_delegate_setStorageBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::setStorageBuffer >( this );
 }
+
 
 void RenderDeviceGL2::initStates()
 {

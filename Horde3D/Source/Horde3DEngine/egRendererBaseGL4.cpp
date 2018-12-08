@@ -211,7 +211,6 @@ void GPUTimerGL4::reset()
 
 RenderDeviceGL4::RenderDeviceGL4()
 {
- 	RenderDeviceInterface::initRDIFunctions< RenderDeviceGL4 >();
 	initRDIFuncs(); // bind render device functions
 
 	_numVertexLayouts = 0;
