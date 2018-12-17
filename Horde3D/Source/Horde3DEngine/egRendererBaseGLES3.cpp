@@ -113,7 +113,11 @@ static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > tex
 
 GPUTimerGLES3::GPUTimerGLES3() : _numQueries( 0 ), _queryFrame( 0 ), _activeQuery( false )
 {
-	GPUTimer::initFunctions< GPUTimerGLES3 >();
+	_beginQuery.bind< GPUTimerGLES3, &GPUTimerGLES3::beginQuery >( this );
+	_endQuery.bind< GPUTimerGLES3, &GPUTimerGLES3::endQuery >( this );
+	_updateResults.bind< GPUTimerGLES3, &GPUTimerGLES3::updateResults >( this );
+	_reset.bind< GPUTimerGLES3, &GPUTimerGLES3::reset >( this );
+
 	reset();
 }
 
@@ -795,7 +799,7 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 	tex.genMips = genMips;
 	tex.hasMips = hasMips;
 
-	if ( format > ( int ) textureGLFormats.size() ) ASSERT( 0 );
+	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
 
 	tex.glFmt = format != TextureFormats::DEPTH 
 				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
