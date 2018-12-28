@@ -114,7 +114,13 @@ static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > tex
 
 GPUTimerGL4::GPUTimerGL4() : _numQueries( 0 ), _queryFrame( 0 ), _activeQuery( false )
 {
-	GPUTimer::initFunctions< GPUTimerGL4 >();
+//	GPUTimer::initFunctions< GPUTimerGL4 >();
+
+	_beginQuery.bind< GPUTimerGL4, &GPUTimerGL4::beginQuery >( this );
+	_endQuery.bind< GPUTimerGL4, &GPUTimerGL4::endQuery > ( this );
+	_updateResults.bind< GPUTimerGL4, &GPUTimerGL4::updateResults >( this );
+	_reset.bind< GPUTimerGL4, &GPUTimerGL4::reset >( this );
+
 	reset();
 }
 
@@ -205,7 +211,7 @@ void GPUTimerGL4::reset()
 
 RenderDeviceGL4::RenderDeviceGL4()
 {
-	RenderDeviceInterface::initRDIFunctions< RenderDeviceGL4 >();
+	initRDIFuncs(); // bind render device functions
 
 	_numVertexLayouts = 0;
 	
@@ -247,6 +253,71 @@ RenderDeviceGL4::~RenderDeviceGL4()
 }
 
 
+void RenderDeviceGL4::initRDIFuncs()
+{
+	_delegate_init.bind< RenderDeviceGL4, &RenderDeviceGL4::init >( this );
+	_delegate_initStates.bind< RenderDeviceGL4, &RenderDeviceGL4::initStates >( this );
+	_delegate_registerVertexLayout.bind< RenderDeviceGL4, &RenderDeviceGL4::registerVertexLayout >( this );
+	_delegate_beginRendering.bind< RenderDeviceGL4, &RenderDeviceGL4::beginRendering >( this );
+
+	_delegate_beginCreatingGeometry.bind< RenderDeviceGL4, &RenderDeviceGL4::beginCreatingGeometry >( this );
+	_delegate_finishCreatingGeometry.bind< RenderDeviceGL4, &RenderDeviceGL4::finishCreatingGeometry >( this );
+	_delegate_destroyGeometry.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyGeometry >( this );
+	_delegate_setGeomVertexParams.bind< RenderDeviceGL4, &RenderDeviceGL4::setGeomVertexParams >( this );
+	_delegate_setGeomIndexParams.bind< RenderDeviceGL4, &RenderDeviceGL4::setGeomIndexParams >( this );
+	_delegate_createVertexBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::createVertexBuffer >( this );
+	_delegate_createIndexBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::createIndexBuffer >( this );
+	_delegate_createTextureBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::createTextureBuffer >( this );
+	_delegate_createShaderStorageBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::createShaderStorageBuffer >( this );
+	_delegate_destroyBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyBuffer >( this );
+	_delegate_destroyTextureBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyTextureBuffer >( this );
+	_delegate_updateBufferData.bind< RenderDeviceGL4, &RenderDeviceGL4::updateBufferData >( this );
+	_delegate_mapBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::mapBuffer >( this );
+	_delegate_unmapBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::unmapBuffer >( this );
+
+	_delegate_createTexture.bind< RenderDeviceGL4, &RenderDeviceGL4::createTexture >( this );
+	_delegate_uploadTextureData.bind< RenderDeviceGL4, &RenderDeviceGL4::uploadTextureData >( this );
+	_delegate_destroyTexture.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyTexture >( this );
+	_delegate_updateTextureData.bind< RenderDeviceGL4, &RenderDeviceGL4::updateTextureData >( this );
+	_delegate_getTextureData.bind< RenderDeviceGL4, &RenderDeviceGL4::getTextureData >( this );
+	_delegate_bindImageToTexture.bind< RenderDeviceGL4, &RenderDeviceGL4::bindImageToTexture >( this );
+
+	_delegate_createShader.bind< RenderDeviceGL4, &RenderDeviceGL4::createShader >( this );
+	_delegate_destroyShader.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyShader >( this );
+	_delegate_bindShader.bind< RenderDeviceGL4, &RenderDeviceGL4::bindShader >( this );
+	_delegate_getShaderConstLoc.bind< RenderDeviceGL4, &RenderDeviceGL4::getShaderConstLoc >( this );
+	_delegate_getShaderSamplerLoc.bind< RenderDeviceGL4, &RenderDeviceGL4::getShaderSamplerLoc >( this );
+	_delegate_getShaderBufferLoc.bind< RenderDeviceGL4, &RenderDeviceGL4::getShaderBufferLoc >( this );
+	_delegate_runComputeShader.bind< RenderDeviceGL4, &RenderDeviceGL4::runComputeShader >( this );
+	_delegate_setShaderConst.bind< RenderDeviceGL4, &RenderDeviceGL4::setShaderConst >( this );
+	_delegate_setShaderSampler.bind< RenderDeviceGL4, &RenderDeviceGL4::setShaderSampler >( this );
+	_delegate_getDefaultVSCode.bind< RenderDeviceGL4, &RenderDeviceGL4::getDefaultVSCode >( this );
+	_delegate_getDefaultFSCode.bind< RenderDeviceGL4, &RenderDeviceGL4::getDefaultFSCode >( this );
+
+	_delegate_createRenderBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::createRenderBuffer >( this );
+	_delegate_destroyRenderBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyRenderBuffer >( this );
+	_delegate_getRenderBufferTex.bind< RenderDeviceGL4, &RenderDeviceGL4::getRenderBufferTex >( this );
+	_delegate_setRenderBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::setRenderBuffer >( this );
+	_delegate_getRenderBufferData.bind< RenderDeviceGL4, &RenderDeviceGL4::getRenderBufferData >( this );
+	_delegate_getRenderBufferDimensions.bind< RenderDeviceGL4, &RenderDeviceGL4::getRenderBufferDimensions >( this );
+
+	_delegate_createOcclusionQuery.bind< RenderDeviceGL4, &RenderDeviceGL4::createOcclusionQuery >( this );
+	_delegate_destroyQuery.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyQuery >( this );
+	_delegate_beginQuery.bind< RenderDeviceGL4, &RenderDeviceGL4::beginQuery >( this );
+	_delegate_endQuery.bind< RenderDeviceGL4, &RenderDeviceGL4::endQuery >( this );
+	_delegate_getQueryResult.bind< RenderDeviceGL4, &RenderDeviceGL4::getQueryResult >( this );
+
+	_delegate_createGPUTimer.bind< RenderDeviceGL4, &RenderDeviceGL4::createGPUTimer >( this );
+	_delegate_commitStates.bind< RenderDeviceGL4, &RenderDeviceGL4::commitStates >( this );
+	_delegate_resetStates.bind< RenderDeviceGL4, &RenderDeviceGL4::resetStates >( this );
+	_delegate_clear.bind< RenderDeviceGL4, &RenderDeviceGL4::clear >( this );
+
+	_delegate_draw.bind< RenderDeviceGL4, &RenderDeviceGL4::draw >( this );
+	_delegate_drawIndexed.bind< RenderDeviceGL4, &RenderDeviceGL4::drawIndexed >( this );
+	_delegate_setStorageBuffer.bind< RenderDeviceGL4, &RenderDeviceGL4::setStorageBuffer >( this );
+}
+
+
 void RenderDeviceGL4::initStates()
 {
 	glPixelStorei( GL_UNPACK_ALIGNMENT, 1 );
@@ -257,7 +328,7 @@ void RenderDeviceGL4::initStates()
 	glGetBooleanv( GL_DOUBLEBUFFER, &doubleBuffered );
 	_doubleBuffered = doubleBuffered != 0;
 	// Get the currently bound frame buffer object to avoid reset to invalid FBO
-	glGetIntegerv( GL_FRAMEBUFFER_BINDING_EXT, &_defaultFBO );
+	glGetIntegerv( GL_FRAMEBUFFER_BINDING, &_defaultFBO );
 }
 
 
@@ -738,7 +809,7 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	tex.genMips = genMips;
 	tex.hasMips = hasMips;
 	
-	if ( format > (int) textureGLFormats.size() ) ASSERT( 0 );
+	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
 
 	tex.glFmt = format != TextureFormats::DEPTH
 				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
@@ -887,7 +958,7 @@ bool RenderDeviceGL4::isCompressedTextureFormat( TextureFormats::List fmt )
 }
 
 
-void RenderDeviceGL4::bindImageToTexture(uint32 texObj, void *eglImage)
+void RenderDeviceGL4::bindImageToTexture( uint32 texObj, void *eglImage )
 {
 	if( !glExt::OES_EGL_image )
 		Modules::log().writeError("OES_egl_image not supported");

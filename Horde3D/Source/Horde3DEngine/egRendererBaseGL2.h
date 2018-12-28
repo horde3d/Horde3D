@@ -333,6 +333,7 @@ protected:
 
 	bool isCompressedTextureFormat( TextureFormats::List fmt );
 
+	void initRDIFuncs();
 protected:
 
 // 	DeviceCaps    _caps;

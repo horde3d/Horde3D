@@ -13,13 +13,13 @@
 #ifndef _egMaterial_H_
 #define _egMaterial_H_
 
-#include <cstring>
-
 #include "egPrerequisites.h"
 #include "egResource.h"
 #include "egShader.h"
 #include "egTexture.h"
 #include "egComputeBuffer.h"
+
+#include <cstring>
 
 namespace Horde3D {
 

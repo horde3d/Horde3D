@@ -316,6 +316,8 @@ protected:
 
 	bool isCompressedTextureFormat( TextureFormats::List fmt );
 
+	void initRDIFuncs();
+
 protected:
 
 	RDIVertexLayout		              _vertexLayouts[MaxNumVertexLayouts];

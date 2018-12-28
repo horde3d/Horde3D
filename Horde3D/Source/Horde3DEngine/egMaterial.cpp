@@ -518,7 +518,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 
 	for ( size_t i = 0; i < numberOfLevels; ++i )
 	{
-		int dotPos = matClass.find( '.', lastDotPosition );
+		int dotPos = (int) matClass.find( '.', lastDotPosition );
 		if ( i == 0 && inversed ) lastDotPosition = 1; // handle case with ~ character present. It should be removed from the final string
 		
 		subString = matClass.substr( lastDotPosition, dotPos );
@@ -528,7 +528,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 			subString.erase( numberOfCharactersInClass - 1, subString.length() - numberOfCharactersInClass - 1 );
 		}
 		
-		strcpy( tmpStrings[ i ], subString.c_str() );
+		strncpy_s( tmpStrings[ i ], subString.c_str(), subString.size() );
 
 		lastDotPosition = dotPos + 1;
 	}
@@ -536,11 +536,11 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 	// Try to find class in the collection
 	bool exactMatch = true;
 	int partialMatchIds[ H3D_MATERIAL_HIERARCHY_LEVELS ] = {};
-	for ( size_t i = 0; i < _matHierarchy.size(); i++ )
+	for ( int i = 0; i < (int) _matHierarchy.size(); i++ )
 	{
 		MaterialHierarchy &hierarchy = _matHierarchy[ i ];
 
-		for ( size_t j = 0; j < H3D_MATERIAL_HIERARCHY_LEVELS; j++ )
+		for ( int j = 0; j < H3D_MATERIAL_HIERARCHY_LEVELS; j++ )
 		{
 			if ( strcmp( hierarchy.value[ j ].name, tmpStrings[ j ] ) != 0 )
 			{
@@ -574,12 +574,12 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 
 		for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
 		{
-			strcpy( hierarchy.value[ i ].name, tmpStrings[ i ] );
+			strncpy_s( hierarchy.value[ i ].name, tmpStrings[ i ], numberOfCharactersInClass );
 
 			if ( partialMatchIds[ i ] != 0 ) hierarchy.value[ i ].index = partialMatchIds[ i ];
 			else
 			{
-				if ( i < numberOfLevels ) hierarchy.value[ i ].index = _matHierarchy.size();
+				if ( i < numberOfLevels ) hierarchy.value[ i ].index = (uint32) _matHierarchy.size();
 				else hierarchy.value[ i ].index = 0; // iterator is greater than the number of levels in the class, so use default class for later hierarchy levels
 			}
 		}
@@ -587,7 +587,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 		_matHierarchy.push_back( std::move( hierarchy ) );
 	}
 
-	int result = inversed ? ( _matHierarchy.size() - 1 ) * -1 : _matHierarchy.size() - 1;
+	int result = inversed ? ( (int) _matHierarchy.size() - 1 ) * -1 : (int) _matHierarchy.size() - 1;
 	return result;
 }
 

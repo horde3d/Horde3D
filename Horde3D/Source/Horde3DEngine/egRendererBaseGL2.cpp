@@ -108,7 +108,10 @@ static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > tex
 
 GPUTimerGL2::GPUTimerGL2() : _numQueries( 0 ),  _queryFrame( 0 ), _activeQuery( false )
 {
-	GPUTimer::initFunctions< GPUTimerGL2 >();
+	_beginQuery.bind< GPUTimerGL2, &GPUTimerGL2::beginQuery >( this );
+	_endQuery.bind< GPUTimerGL2, &GPUTimerGL2::endQuery >( this );
+	_updateResults.bind< GPUTimerGL2, &GPUTimerGL2::updateResults >( this );
+	_reset.bind< GPUTimerGL2, &GPUTimerGL2::reset >( this );
 
 	reset();
 }
@@ -203,7 +206,7 @@ void GPUTimerGL2::reset()
 
 RenderDeviceGL2::RenderDeviceGL2()
 {
-	RenderDeviceInterface::initRDIFunctions< RenderDeviceGL2 >();
+	initRDIFuncs(); // bind render device functions
 
 	_numVertexLayouts = 0;
 	
@@ -237,6 +240,71 @@ RenderDeviceGL2::RenderDeviceGL2()
 
 RenderDeviceGL2::~RenderDeviceGL2()
 {
+}
+
+
+void RenderDeviceGL2::initRDIFuncs()
+{
+	_delegate_init.bind< RenderDeviceGL2, &RenderDeviceGL2::init >( this );
+	_delegate_initStates.bind< RenderDeviceGL2, &RenderDeviceGL2::initStates >( this );
+	_delegate_registerVertexLayout.bind< RenderDeviceGL2, &RenderDeviceGL2::registerVertexLayout >( this );
+	_delegate_beginRendering.bind< RenderDeviceGL2, &RenderDeviceGL2::beginRendering >( this );
+
+	_delegate_beginCreatingGeometry.bind< RenderDeviceGL2, &RenderDeviceGL2::beginCreatingGeometry >( this );
+	_delegate_finishCreatingGeometry.bind< RenderDeviceGL2, &RenderDeviceGL2::finishCreatingGeometry >( this );
+	_delegate_destroyGeometry.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyGeometry >( this );
+	_delegate_setGeomVertexParams.bind< RenderDeviceGL2, &RenderDeviceGL2::setGeomVertexParams >( this );
+	_delegate_setGeomIndexParams.bind< RenderDeviceGL2, &RenderDeviceGL2::setGeomIndexParams >( this );
+	_delegate_createVertexBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createVertexBuffer >( this );
+	_delegate_createIndexBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createIndexBuffer >( this );
+	_delegate_createTextureBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createTextureBuffer >( this );
+	_delegate_createShaderStorageBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createShaderStorageBuffer >( this );
+	_delegate_destroyBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyBuffer >( this );
+	_delegate_destroyTextureBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyTextureBuffer >( this );
+	_delegate_updateBufferData.bind< RenderDeviceGL2, &RenderDeviceGL2::updateBufferData >( this );
+	_delegate_mapBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::mapBuffer >( this );
+	_delegate_unmapBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::unmapBuffer >( this );
+
+	_delegate_createTexture.bind< RenderDeviceGL2, &RenderDeviceGL2::createTexture >( this );
+	_delegate_uploadTextureData.bind< RenderDeviceGL2, &RenderDeviceGL2::uploadTextureData >( this );
+	_delegate_destroyTexture.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyTexture >( this );
+	_delegate_updateTextureData.bind< RenderDeviceGL2, &RenderDeviceGL2::updateTextureData >( this );
+	_delegate_getTextureData.bind< RenderDeviceGL2, &RenderDeviceGL2::getTextureData >( this );
+	_delegate_bindImageToTexture.bind< RenderDeviceGL2, &RenderDeviceGL2::bindImageToTexture >( this );
+
+	_delegate_createShader.bind< RenderDeviceGL2, &RenderDeviceGL2::createShader >( this );
+	_delegate_destroyShader.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyShader >( this );
+	_delegate_bindShader.bind< RenderDeviceGL2, &RenderDeviceGL2::bindShader >( this );
+	_delegate_getShaderConstLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderConstLoc >( this );
+	_delegate_getShaderSamplerLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderSamplerLoc >( this );
+	_delegate_getShaderBufferLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderBufferLoc >( this );
+	_delegate_runComputeShader.bind< RenderDeviceGL2, &RenderDeviceGL2::runComputeShader >( this );
+	_delegate_setShaderConst.bind< RenderDeviceGL2, &RenderDeviceGL2::setShaderConst >( this );
+	_delegate_setShaderSampler.bind< RenderDeviceGL2, &RenderDeviceGL2::setShaderSampler >( this );
+	_delegate_getDefaultVSCode.bind< RenderDeviceGL2, &RenderDeviceGL2::getDefaultVSCode >( this );
+	_delegate_getDefaultFSCode.bind< RenderDeviceGL2, &RenderDeviceGL2::getDefaultFSCode >( this );
+
+	_delegate_createRenderBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createRenderBuffer >( this );
+	_delegate_destroyRenderBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyRenderBuffer >( this );
+	_delegate_getRenderBufferTex.bind< RenderDeviceGL2, &RenderDeviceGL2::getRenderBufferTex >( this );
+	_delegate_setRenderBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::setRenderBuffer >( this );
+	_delegate_getRenderBufferData.bind< RenderDeviceGL2, &RenderDeviceGL2::getRenderBufferData >( this );
+	_delegate_getRenderBufferDimensions.bind< RenderDeviceGL2, &RenderDeviceGL2::getRenderBufferDimensions >( this );
+
+	_delegate_createOcclusionQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::createOcclusionQuery >( this );
+	_delegate_destroyQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyQuery >( this );
+	_delegate_beginQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::beginQuery >( this );
+	_delegate_endQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::endQuery >( this );
+	_delegate_getQueryResult.bind< RenderDeviceGL2, &RenderDeviceGL2::getQueryResult >( this );
+
+	_delegate_createGPUTimer.bind< RenderDeviceGL2, &RenderDeviceGL2::createGPUTimer >( this );
+	_delegate_commitStates.bind< RenderDeviceGL2, &RenderDeviceGL2::commitStates >( this );
+	_delegate_resetStates.bind< RenderDeviceGL2, &RenderDeviceGL2::resetStates >( this );
+	_delegate_clear.bind< RenderDeviceGL2, &RenderDeviceGL2::clear >( this );
+
+	_delegate_draw.bind< RenderDeviceGL2, &RenderDeviceGL2::draw >( this );
+	_delegate_drawIndexed.bind< RenderDeviceGL2, &RenderDeviceGL2::drawIndexed >( this );
+	_delegate_setStorageBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::setStorageBuffer >( this );
 }
 
 
@@ -665,7 +733,7 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 	tex.genMips = genMips;
 	tex.hasMips = hasMips;
 
-	if ( format > ( int ) textureGLFormats.size() ) ASSERT( 0 );
+	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
 
 	tex.glFmt = format != TextureFormats::DEPTH
 				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
