@@ -463,8 +463,6 @@ void MaterialResource::setElemParamStr( int elem, int elemIdx, int param, const 
 std::vector< MaterialHierarchy > MaterialClassCollection::_matHierarchy;
 
 std::string MaterialClassCollection::_returnedClassString;
-
-const int numberOfCharactersInClass = 64;
 //std::vector< std::string > MaterialClassCollection::_classes;
 
 void MaterialClassCollection::init()
@@ -512,6 +510,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 	// TODO: implement hashing
 
 	// Split material class levels to separate strings
+	constexpr size_t numberOfCharactersInClass = sizeof(MaterialClass::name);
 	char tmpStrings[ H3D_MATERIAL_HIERARCHY_LEVELS ][ numberOfCharactersInClass ] = { '\0' };
 	std::string subString; subString.reserve( 256 );
 	int lastDotPosition = 0;
@@ -528,7 +527,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 			subString.erase( numberOfCharactersInClass - 1, subString.length() - numberOfCharactersInClass - 1 );
 		}
 		
-		strncpy_s( tmpStrings[ i ], subString.c_str(), subString.size() );
+		strncpy_s( tmpStrings[ i ], numberOfCharactersInClass, subString.c_str(), subString.size() );
 
 		lastDotPosition = dotPos + 1;
 	}
@@ -574,7 +573,7 @@ int MaterialClassCollection::addClass( const std::string &matClass )
 
 		for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
 		{
-			strncpy_s( hierarchy.value[ i ].name, tmpStrings[ i ], numberOfCharactersInClass );
+			strncpy_s( hierarchy.value[ i ].name, numberOfCharactersInClass, tmpStrings[ i ], numberOfCharactersInClass );
 
 			if ( partialMatchIds[ i ] != 0 ) hierarchy.value[ i ].index = partialMatchIds[ i ];
 			else
