@@ -13,7 +13,7 @@
 #ifndef _utPlatform_H_
 #define _utPlatform_H_
 
-#if defined( _DEBUG )
+#if !defined( NDEBUG )
 	#include <assert.h>
 #endif
 
@@ -126,7 +126,7 @@ typedef unsigned long long uint64;
 #endif
 
 // Runtime assertion
-#if defined( _DEBUG )
+#if !defined( NDEBUG )
 #	define ASSERT( exp ) assert( exp );
 #else
 #	define ASSERT( exp )
