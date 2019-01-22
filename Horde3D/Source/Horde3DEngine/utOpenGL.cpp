@@ -10,7 +10,6 @@
 //
 // *************************************************************************************************
 
-#define _CRT_SECURE_NO_WARNINGS
 #include "utOpenGL.h"
 #include <cstdlib>
 #include <cstring>
@@ -594,13 +593,18 @@ bool isExtensionSupported( const char *extName )
 }
 
 
-void getOpenGLVersion()
+bool getOpenGLVersion()
 {
 	char version[8];
-	size_t len = strlen( (char *)glGetString( GL_VERSION ) );
+	const char* str = (const char *)glGetString( GL_VERSION );
+
+	if ( !str )
+		return false;
+
+	size_t len = strlen( str );
 	if( len >= 8 ) len = 7;
 	
-	strncpy( version, (char *)glGetString( GL_VERSION ), len );
+	strncpy( version, str, len );
 	version[len] = '\0';
 
 	char *pos1 = strtok( version, "." );
@@ -610,6 +614,8 @@ void getOpenGLVersion()
 		char *pos2 = strtok( 0x0, ". " );
 		if( pos2 ) glExt::minorVersion = atoi( pos2 );
 	}
+
+	return true;
 }
 
 
@@ -714,9 +720,10 @@ void initModernExtensions( bool &r )
 
 bool initOpenGLExtensions( bool forceLegacyFuncs )
 {
+	if ( !getOpenGLVersion() )
+		return false;
+
 	bool r = true;
-	
-	getOpenGLVersion();
 	
 	if ( forceLegacyFuncs )
 	{

@@ -485,7 +485,7 @@ uint32 ModelNode::calcLodLevel( const Vec3f &viewPoint ) const
 }
 
 
-void ModelNode::setCustomInstData( float *data, uint32 count )
+void ModelNode::setCustomInstData( const float *data, uint32 count )
 {
 	memcpy( _customInstData, data, std::min( count, ModelCustomVecCount * 4 ) * sizeof( float ) );
 }

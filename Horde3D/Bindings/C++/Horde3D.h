@@ -1939,7 +1939,7 @@ DLL H3DNode h3dGetNodeFindResult( int index );
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeUniforms( H3DNode node, float *uniformData, int count );
+DLL void h3dSetNodeUniforms( H3DNode node, const float *uniformData, int count );
 
 /* Function: h3dCastRay
 		Performs a recursive ray collision query.

@@ -124,7 +124,7 @@ public:
 	void updateTree();
 	virtual bool checkIntersection( const Vec3f &rayOrig, const Vec3f &rayDir, Vec3f &intsPos ) const;
 
-	virtual void setCustomInstData( float *data, uint32 count ) {}
+	virtual void setCustomInstData( const float *data, uint32 count ) {}
 
 	int getType() const { return _type; };
 	NodeHandle getHandle() const { return _handle; }
