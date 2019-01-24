@@ -29,9 +29,9 @@
 #		define PLATFORM_WIN
 #	endif
 #elif defined( __APPLE__ ) || defined( __APPLE_CC__ )
-#   if !defined( PLATFORM_MAC )
+#	if !defined( PLATFORM_MAC )
 #		define PLATFORM_MAC
-#   endif
+#	endif
 #else
 #	if !defined( PLATFORM_LINUX )
 #		define PLATFORM_LINUX
@@ -82,10 +82,10 @@
 #		define DLLEXP extern "C" __declspec( dllexport )
 #	else
 #		if defined( __GNUC__ ) && __GNUC__ >= 4
-#		  define DLLEXP extern "C" __attribute__ ((visibility("default")))
-#   	else
-#		  define DLLEXP extern "C"
-#   	endif
+#			define DLLEXP extern "C" __attribute__ ((visibility("default")))
+#		else
+#			define DLLEXP extern "C"
+#		endif
 #	endif
 #endif
 

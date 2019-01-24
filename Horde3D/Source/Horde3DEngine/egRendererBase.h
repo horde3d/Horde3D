@@ -634,7 +634,7 @@ public:
 	{
 		return _delegate_createShaderStorageBuffer.invoke( size, data );
 	}
-    void destroyBuffer( uint32& bufObj )
+	void destroyBuffer( uint32& bufObj )
 	{ 
 		_delegate_destroyBuffer.invoke( bufObj );
 	}

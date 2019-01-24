@@ -74,7 +74,7 @@ void createAssetList( const string &basePath, const string &assetPath, vector< s
 	struct stat fileStat;
 	string finalPath = basePath + assetPath;
 	DIR *dir = opendir( finalPath.c_str() );
-    if( dir == 0x0 ) return;
+	if( dir == 0x0 ) return;
 
 	while( (dirEnt = readdir( dir )) != 0x0 )
 	{
@@ -88,9 +88,9 @@ void createAssetList( const string &basePath, const string &assetPath, vector< s
 			files.push_back( dirEnt->d_name );
 	}
 
-    closedir( dir );
+	closedir( dir );
 
-    sort( directories.begin(), directories.end() );
+	sort( directories.begin(), directories.end() );
 	sort( files.begin(), files.end() );
 #endif
 

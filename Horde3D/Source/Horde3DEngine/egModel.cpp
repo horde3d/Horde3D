@@ -267,8 +267,8 @@ int ModelNode::getParamI( int param ) const
 		return _geometryRes != 0x0 ? _geometryRes->_handle : 0;
 	case ModelNodeParams::SWSkinningI:
 		return _softwareSkinning ? 1 : 0;
-  case ModelNodeParams::AnimCountI:
-    return _animCtrl.getAnimCount();
+	case ModelNodeParams::AnimCountI:
+		return _animCtrl.getAnimCount();
 	}
 
 	return SceneNode::getParamI( param );

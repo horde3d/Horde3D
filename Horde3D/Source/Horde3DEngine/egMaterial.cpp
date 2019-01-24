@@ -111,7 +111,7 @@ bool MaterialResource::load( const char *data, int size )
 		return raiseError( "Not a material resource file" );
 
 	// Class
-    _classID = MaterialClassCollection::addClass( rootNode.getAttribute( "class", "" ) );
+	_classID = MaterialClassCollection::addClass( rootNode.getAttribute( "class", "" ) );
 
 	// Link
 	if( strcmp( rootNode.getAttribute( "link", "" ), "" ) != 0 )
@@ -133,8 +133,8 @@ bool MaterialResource::load( const char *data, int size )
 		
 		node1 = node1.getNextSibling( "ShaderFlag" );
 	}
-    
-    // Shader
+
+	// Shader
 	node1 = rootNode.getFirstChild( "Shader" );
 	if( !node1.isEmpty() )
 	{

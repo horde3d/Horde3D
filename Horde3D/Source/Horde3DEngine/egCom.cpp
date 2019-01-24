@@ -179,15 +179,8 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 {
 	float time = _timer.getElapsedTimeMS() / 1000.0f;
 
-#if defined( PLATFORM_WIN )
-#pragma warning( push )
-#pragma warning( disable:4996 )
 	vsnprintf( _textBuf, 2048, msg, args );
-#pragma warning( pop )
-#else
-	vsnprintf( _textBuf, 2048, msg, args );
-#endif
-	
+
 	if( _messages.size() < _maxNumMessages - 1 )
 	{
 		_messages.push( LogMessage( _textBuf, level, time ) );
@@ -201,15 +194,15 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 		_callback(level, _textBuf);
 	}
 #if defined( H3D_DEBUGGER_OUTPUT )
-    const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
+	const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
 #if defined( PLATFORM_WIN )
 	OutputDebugStringA( headers[std::min( (uint32)level, (uint32)5 )] );
 	OutputDebugStringA( _textBuf );
 	OutputDebugString( TEXT("\r\n") );
 #else
-    fputs( headers[std::min( (uint32)level, (uint32)5 )], stderr );
-    fputs( _textBuf, stderr );
-    fputs( "\n", stderr );
+	fputs( headers[std::min( (uint32)level, (uint32)5 )], stderr );
+	fputs( _textBuf, stderr );
+	fputs( "\n", stderr );
 #endif
 #endif
 }

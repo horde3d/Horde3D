@@ -20,10 +20,10 @@
 #		define DLL extern "C" __declspec( dllimport )
 #	else
 #		if defined( __GNUC__ ) && __GNUC__ >= 4
-#		  define DLLEXP extern "C" __attribute__ ((visibility("default")))
-#   	else
-#		  define DLLEXP extern "C"
-#   	endif
+#			define DLLEXP extern "C" __attribute__ ((visibility("default")))
+#		else
+#			define DLLEXP extern "C"
+#		endif
 #	endif
 #endif
 

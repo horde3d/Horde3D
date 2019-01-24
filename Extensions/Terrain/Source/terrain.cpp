@@ -896,14 +896,14 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 				const float newV = (t * scale + minV) * _hmapSize + 0.5f;
 				uint32 index = ftoi_t( newV ) * (_hmapSize + 1) + ftoi_t( newU );
 
-                vertData = (float*) elemset_le(vertData, (s * scale + minU));
+				vertData = (float*) elemset_le(vertData, (s * scale + minU));
 
 				if( v == 0 || v == size - 1 || u == 0 || u == size - 1 )
 					vertData = (float*) elemset_le(vertData, (maxf( _heightData[index] / 65535.0f - _skirtHeight, 0 )));
 				else
 					vertData = (float*) elemset_le(vertData, (_heightData[index] / 65535.0f));
 
-                vertData = (float*) elemset_le(vertData, (t * scale + minV));
+				vertData = (float*) elemset_le(vertData, (t * scale + minV));
 			}
 		}
 
@@ -911,13 +911,13 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 		{
 			for( uint32 u = 0; u < size - 1; ++u )
 			{
-                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
 
-                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u + 1);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u + 1);
 			}
 		}
 		indexOffset += size * size;

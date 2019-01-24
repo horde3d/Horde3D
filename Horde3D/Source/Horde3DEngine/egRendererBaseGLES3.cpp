@@ -331,11 +331,11 @@ bool RenderDeviceGLES3::init()
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
 	
- 	if( !version || !renderer || !vendor )
-    	{
-        	Modules::log().writeError("OpenGL ES not initialized. Make sure you have a valid OpenGL ES context");
-        	return false;
-    	}
+	if( !version || !renderer || !vendor )
+	{
+		Modules::log().writeError("OpenGL ES not initialized. Make sure you have a valid OpenGL ES context");
+		return false;
+	}
 
 	Modules::log().writeInfo( "Initializing GLES3 backend using OpenGL driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
@@ -922,37 +922,37 @@ bool RenderDeviceGLES3::getTextureData( uint32 texObj, int slice, int mipLevel, 
 
 	// create a temporary fbo 
 	GLint currentFBO = 0;
-    GLuint tempFBO = 0;
-    glGetIntegerv( GL_FRAMEBUFFER_BINDING, &currentFBO );
-    glGenFramebuffers( 1, &tempFBO );
+	GLuint tempFBO = 0;
+	glGetIntegerv( GL_FRAMEBUFFER_BINDING, &currentFBO );
+	glGenFramebuffers( 1, &tempFBO );
 	glBindFramebuffer( GL_FRAMEBUFFER, tempFBO );
 
-    GLenum status;
+	GLenum status;
 
-    switch (target) {
-    case GL_TEXTURE_2D:
-    case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-    case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-    case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-    case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-        glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.glObj, mipLevel );
+	switch (target) {
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.glObj, mipLevel );
 		status = glCheckFramebufferStatus( GL_FRAMEBUFFER );
-        if ( status != GL_FRAMEBUFFER_COMPLETE ) 
+		 if ( status != GL_FRAMEBUFFER_COMPLETE ) 
 		{
 			return false;
-        }
+		}
 
-        glReadPixels( 0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
-        break;
-    case GL_TEXTURE_3D:
-        for (int i = 0; i < tex.depth; i++) {
+		glReadPixels( 0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+		break;
+	case GL_TEXTURE_3D:
+		for (int i = 0; i < tex.depth; i++) {
 			glFramebufferTexture3DOES( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex.glObj, mipLevel, i );
-            glReadPixels(0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, ( uint8 * ) buffer + 4 * i * tex.width * tex.height );
-        }
-        break;
-    }
+			glReadPixels(0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, ( uint8 * ) buffer + 4 * i * tex.width * tex.height );
+		}
+	break;
+	}
 
 	glBindFramebuffer( GL_FRAMEBUFFER, currentFBO );
 	glDeleteFramebuffers( 1, &tempFBO );
@@ -1963,11 +1963,13 @@ uint32 RenderDeviceGLES3::getQueryResult( uint32 queryObj )
 
 void RenderDeviceGLES3::checkError()
 {
+#if !defined( NDEBUG )
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
 	ASSERT( error != GL_INVALID_VALUE );
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
+#endif
 }
 
 

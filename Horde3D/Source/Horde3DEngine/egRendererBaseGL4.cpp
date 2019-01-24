@@ -1794,12 +1794,14 @@ uint32 RenderDeviceGL4::getQueryResult( uint32 queryObj )
 
 void RenderDeviceGL4::checkError()
 {
+#if !defined( NDEBUG )
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
 	ASSERT( error != GL_INVALID_VALUE );
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
 	ASSERT( error != GL_STACK_OVERFLOW && error != GL_STACK_UNDERFLOW );
+#endif
 }
 
 

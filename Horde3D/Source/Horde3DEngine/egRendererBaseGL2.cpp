@@ -224,7 +224,7 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_curGeometryIndex = 1;
 	_defaultFBO = 0;
 	_defaultFBOMultisampled = false;
-    _indexFormat = (uint32)IDXFMT_16;
+	_indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 	_tessPatchVerts = 0;
@@ -1566,12 +1566,14 @@ uint32 RenderDeviceGL2::getQueryResult( uint32 queryObj )
 
 void RenderDeviceGL2::checkError()
 {
+#if !defined( NDEBUG )
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
 	ASSERT( error != GL_INVALID_VALUE );
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
 	ASSERT( error != GL_STACK_OVERFLOW && error != GL_STACK_UNDERFLOW );
+#endif
 }
 
 

@@ -104,7 +104,7 @@ DLLEXP NodeHandle h3dextAddTerrainNode( NodeHandle parent, const char *name, Res
 
 
 DLLEXP ResHandle h3dextCreateTerrainGeoRes( NodeHandle node, const char *name, float meshQuality )
-{	
+{
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
 	if( sn != 0x0 && sn->getType() == SNT_TerrainNode )
 		return ((TerrainNode *)sn)->createGeometryResource( safeStr( name ), 1.0f / meshQuality );
