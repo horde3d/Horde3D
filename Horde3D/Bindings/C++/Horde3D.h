@@ -628,6 +628,19 @@ struct H3DModel
 	};
 };
 
+struct H3DMeshPrimType
+{
+	/*	Enum: H3DMeshParams
+			The available Mesh node primitive types.
+	 */
+	enum List
+	{
+		TriangleList = 0,
+		LineList = 1,
+		Patches = 2
+	};
+};
+
 struct H3DMesh
 {
 	/*	Enum: H3DMesh
@@ -640,7 +653,6 @@ struct H3DMesh
 		VertREndI    - Last vertex in Geometry resource of parent Model node [read-only]
 		LodLevelI    - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
 		               the model's current LOD level which is calculated based on the LOD distances (default: 0)
-		TessellatableI - specify if mesh can be tessellated (default: 0)
 	*/
 	enum List
 	{
@@ -649,8 +661,7 @@ struct H3DMesh
 		BatchCountI,
 		VertRStartI,
 		VertREndI,
-		LodLevelI,
-		TessellatableI
+		LodLevelI
 	};
 };
 
@@ -2169,6 +2180,7 @@ DLL void h3dUpdateModel( H3DNode modelNode, int flags );
 		parent       - handle to parent node to which the new node will be attached
 		name         - name of the node
 		materialRes  - material resource used by Mesh node
+		primType     - primitive type to draw
 		batchStart   - first triangle index of mesh in Geometry resource of parent Model node
 		batchCount   - number of triangle indices used for drawing mesh
 		vertRStart   - first vertex in Geometry resource of parent Model node
@@ -2177,7 +2189,7 @@ DLL void h3dUpdateModel( H3DNode modelNode, int flags );
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddMeshNode( H3DNode parent, const char *name, H3DRes materialRes, 
+DLL H3DNode h3dAddMeshNode( H3DNode parent, const char *name, H3DRes materialRes, int primType, 
                             int batchStart, int batchCount, int vertRStart, int vertREnd );
 
 
