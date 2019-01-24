@@ -70,7 +70,7 @@ struct DaeEffect
 			node6 = node6.getFirstChild( "float" );
 			if( !node6.isEmpty() ) 
 			{
-				shininess = (float) atof( node6.getText() );
+				shininess = toFloat( node6.getText() );
 				if( shininess > 1.0 )
 					shininess /= 128.0f;
 			}

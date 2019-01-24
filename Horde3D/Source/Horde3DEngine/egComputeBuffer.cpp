@@ -199,7 +199,7 @@ bool ComputeBufferResource::load( const char *data, int size )
 					return raiseError( "Data size in 'Data' section exceeds the specified buffer size" );
 
 				std::string val( valueStartPos, valueEndPos );
-				float fval = ( float ) atof( val.c_str() ); // atof ignores \n \r \t and spaces
+				float fval = toFloat( val.c_str() ); // toFloat ignores \n \r \t and spaces
 
 				memcpy( pBufData, &fval, 4 );
 

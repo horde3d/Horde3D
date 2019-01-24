@@ -144,12 +144,12 @@ SceneNodeTpl *TerrainNode::parsingFunc( map< string, string > &attribs )
 	itr = attribs.find( "meshQuality" );
 	if ( itr != attribs.end() )
 	{
-		terrainTpl->meshQuality = (float)atof( itr->second.c_str() );
+		terrainTpl->meshQuality = toFloat( itr->second.c_str() );
 	}
 	itr = attribs.find( "skirtHeight" );
 	if ( itr != attribs.end() )
 	{
-		terrainTpl->skirtHeight = (float)atof( itr->second.c_str() );
+		terrainTpl->skirtHeight = toFloat( itr->second.c_str() );
 	}
 	itr = attribs.find( "blockSize" );
 	if ( itr != attribs.end() )

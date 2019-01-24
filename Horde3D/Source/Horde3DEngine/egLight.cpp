@@ -71,23 +71,23 @@ SceneNodeTpl *LightNode::parsingFunc( map< string, string > &attribs )
 	if( itr != attribs.end() ) lightTpl->shadowContext = itr->second;
 	else result = false;
 	itr = attribs.find( "radius" );
-	if( itr != attribs.end() ) lightTpl->radius = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->radius = toFloat( itr->second.c_str() );
 	itr = attribs.find( "fov" );
-	if( itr != attribs.end() ) lightTpl->fov = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->fov = toFloat( itr->second.c_str() );
 	itr = attribs.find( "col_R" );
-	if( itr != attribs.end() ) lightTpl->col_R = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->col_R = toFloat( itr->second.c_str() );
 	itr = attribs.find( "col_G" );
-	if( itr != attribs.end() ) lightTpl->col_G = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->col_G = toFloat( itr->second.c_str() );
 	itr = attribs.find( "col_B" );
-	if( itr != attribs.end() ) lightTpl->col_B = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->col_B = toFloat( itr->second.c_str() );
 	itr = attribs.find( "colMult" );
-	if( itr != attribs.end() ) lightTpl->colMult = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->colMult = toFloat( itr->second.c_str() );
 	itr = attribs.find( "shadowMapCount" );
 	if( itr != attribs.end() ) lightTpl->shadowMapCount = atoi( itr->second.c_str() );
 	itr = attribs.find( "shadowSplitLambda" );
-	if( itr != attribs.end() ) lightTpl->shadowSplitLambda = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->shadowSplitLambda = toFloat( itr->second.c_str() );
 	itr = attribs.find( "shadowMapBias" );
-	if( itr != attribs.end() ) lightTpl->shadowMapBias = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->shadowMapBias = toFloat( itr->second.c_str() );
 	
 	if( !result )
 	{

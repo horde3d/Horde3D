@@ -14,6 +14,7 @@
 #define _utils_H_
 
 #include "utMath.h"
+#include "utPlatform.h"
 #include <cstring>
 #include <cstdlib>
 #include <string>
@@ -100,7 +101,7 @@ inline bool parseFloat( char *&str, float &f )
         }
     }
 	
-	// Exponent (use standard atof in this case)
+	// Exponent (use standard `toFloat` in this case)
 	if( *str == 'e' || *str == 'E')
 	{
 		while( *str && *str != ' ' && *str != '\t' && *str != '\n' && *str != '\r' )
@@ -112,7 +113,7 @@ inline bool parseFloat( char *&str, float &f )
 			memcpy( buf, firstChar, str - firstChar );
 			buf[str - firstChar] = '\0';
 
-			f = (float)atof( buf );
+			f = toFloat( buf );
 		}
 		else
 			return false;

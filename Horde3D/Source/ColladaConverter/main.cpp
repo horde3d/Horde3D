@@ -198,7 +198,7 @@ int main( int argc, char **argv )
 			else if( _stricmp( arg.c_str(), "-lodDist3" ) == 0 ) index = 2;
 			else if( _stricmp( arg.c_str(), "-lodDist4" ) == 0 ) index = 3;
 			
-			lodDists[index] = (float)atof( argv[++i] );
+			lodDists[index] = toFloat( argv[++i] );
 		}
 		else if( _stricmp( arg.c_str(), "-addModelName" ) == 0 )
 		{

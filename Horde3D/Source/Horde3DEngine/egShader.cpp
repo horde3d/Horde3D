@@ -535,7 +535,7 @@ bool ShaderResource::parseFXSection( char *data )
 				if( !tok.seekToken( ">" ) ) return raiseError( "FX: expected '>'", tok.getLine() );
 			
 			if( tok.checkToken( "=" ) )
-				uniform.defValues[0] = (float)atof( tok.getToken( floatnum ) );
+				uniform.defValues[0] = toFloat( tok.getToken( floatnum ) );
 			if( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
 
 			_uniforms.push_back( uniform );
@@ -555,10 +555,10 @@ bool ShaderResource::parseFXSection( char *data )
 			if( tok.checkToken( "=" ) )
 			{
 				if( !tok.checkToken( "{" ) ) return raiseError( "FX: expected '{'", tok.getLine() );
-				uniform.defValues[0] = (float)atof( tok.getToken( floatnum ) );
-				if( tok.checkToken( "," ) ) uniform.defValues[1] = (float)atof( tok.getToken( floatnum ) );
-				if( tok.checkToken( "," ) ) uniform.defValues[2] = (float)atof( tok.getToken( floatnum ) );
-				if( tok.checkToken( "," ) ) uniform.defValues[3] = (float)atof( tok.getToken( floatnum ) );
+				uniform.defValues[0] = toFloat( tok.getToken( floatnum ) );
+				if( tok.checkToken( "," ) ) uniform.defValues[1] = toFloat( tok.getToken( floatnum ) );
+				if( tok.checkToken( "," ) ) uniform.defValues[2] = toFloat( tok.getToken( floatnum ) );
+				if( tok.checkToken( "," ) ) uniform.defValues[3] = toFloat( tok.getToken( floatnum ) );
 				if( !tok.checkToken( "}" ) ) return raiseError( "FX: expected '}'", tok.getLine() );
 			}
 			if( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );

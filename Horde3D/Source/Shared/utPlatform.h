@@ -13,6 +13,8 @@
 #ifndef _utPlatform_H_
 #define _utPlatform_H_
 
+#include <locale.h>
+#include <memory>
 #if !defined( NDEBUG )
 	#include <assert.h>
 #endif
@@ -159,5 +161,33 @@ namespace StaticAssert
 #else 
 #define H3D_INLINE 
 #endif
+
+// Locale independent version of atof (taking always dot as decimal separator)
+#ifdef PLATFORM_MAC
+	#include <xlocale.h>
+#endif
+inline float toFloat(const char* str)
+{
+#ifdef PLATFORM_WIN
+	// Make a "C" locale instance in a unique_ptr RAII wrapper
+	static std::unique_ptr<__crt_locale_pointers, void(*)(_locale_t)> locale(
+		_create_locale(LC_ALL, "C"),
+		[](_locale_t locale) {
+			_free_locale(locale);
+		}
+	);
+	return _strtof_l(str, nullptr, locale.get());
+#else
+	// Make a "C" locale instance in a unique_ptr RAII wrapper
+	using locale_struct = std::remove_reference<decltype(*std::declval<locale_t>())>::type;
+	static std::unique_ptr<locale_struct, void(*)(locale_t)> locale(
+		newlocale(LC_ALL, "C", nullptr),
+		[](locale_t locale) {
+			freelocale(locale);
+		}
+	);
+	return strtof_l(str, nullptr, locale.get());
+#endif
+}
 
 #endif // _utPlatform_H_

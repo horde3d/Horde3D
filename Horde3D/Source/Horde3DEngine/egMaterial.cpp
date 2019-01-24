@@ -193,10 +193,10 @@ bool MaterialResource::load( const char *data, int size )
 		MatUniform uniform;
 		uniform.name = node1.getAttribute( "name" );
 
-		uniform.values[0] = (float)atof( node1.getAttribute( "a", "0" ) );
-		uniform.values[1] = (float)atof( node1.getAttribute( "b", "0" ) );
-		uniform.values[2] = (float)atof( node1.getAttribute( "c", "0" ) );
-		uniform.values[3] = (float)atof( node1.getAttribute( "d", "0" ) );
+		uniform.values[0] = toFloat( node1.getAttribute( "a", "0" ) );
+		uniform.values[1] = toFloat( node1.getAttribute( "b", "0" ) );
+		uniform.values[2] = toFloat( node1.getAttribute( "c", "0" ) );
+		uniform.values[3] = toFloat( node1.getAttribute( "d", "0" ) );
 
 		_uniforms.push_back( uniform );
 
