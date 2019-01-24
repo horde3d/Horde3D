@@ -97,6 +97,13 @@ static inline float fsel( float test, float a, float b )
 	return test >= 0 ? a : b;
 }
 
+// Computes a/b, rounded up
+// To be used for positive a and b and small numbers (beware of overflows)
+static inline int idivceil( int a, int b )
+{
+	return (a + b - 1) / b;
+}
+
 
 // -------------------------------------------------------------------------------------------------
 // Conversion

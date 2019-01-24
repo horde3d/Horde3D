@@ -465,7 +465,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 
 		for( int j = 0; j < mipCount; ++j )
 		{
-			size_t mipSize = std::max( width / blockSize, 1 ) * std::max( height / blockSize, 1 ) *
+			size_t mipSize = idivceil(width, blockSize) * idivceil(height, blockSize) *
 			                 depth * bytesPerBlock;
 			
 			if( pixels + mipSize > (unsigned char *)data + size )

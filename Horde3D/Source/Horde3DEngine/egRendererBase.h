@@ -678,7 +678,7 @@ public:
 			case TextureFormats::DXT1:
 			case TextureFormats::ETC1:
 			case TextureFormats::RGB8_ETC2:
-				return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 8;
+				return idivceil(width, 4) * idivceil(height, 4) * depth * 8;
 			case TextureFormats::DXT3:
 			case TextureFormats::DXT5:
 			case TextureFormats::RGBA8_ETC2:
@@ -699,7 +699,7 @@ public:
 			case TextureFormats::ASTC_10x10:
 			case TextureFormats::ASTC_12x10:
 			case TextureFormats::ASTC_12x12:
-				return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 16;
+				return idivceil(width, 4) * idivceil(height, 4) * depth * 16;
 			case TextureFormats::RGBA16F:
 				return width * height * depth * 8;
 			case TextureFormats::RGBA32F:
