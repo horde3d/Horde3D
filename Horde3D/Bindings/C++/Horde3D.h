@@ -872,9 +872,10 @@ DLL bool h3dGetError();
 	
 	Details:
 		This function initializes the graphics engine and makes it ready for use. It has to be the
-		first call to the engine except for getVersionString. In order to successfully initialize
-		the engine the calling application must provide a valid OpenGL context. The function can be
-		called several times on different rendering contexts in order to initialize them.
+		first call to the engine except for h3dGetVersionString and h3dSetMessageCallback. In order
+		to successfully initialize the engine the calling application must provide a valid OpenGL
+		context. The function can be called several times on different rendering contexts in order
+		to initialize them.
 	
 	Parameters:
 		deviceType - type of the render device
@@ -969,6 +970,20 @@ DLL void h3dClear();
 
 
 // --- General functions ---
+/*	Function: h3dSetMessageCallback
+		Registers a callback to be called each time the engine issues a message.
+
+	Details:
+		If 0 is provided as function pointer, the callback is deleted.
+
+	Parameters:
+		callaback  - function pointer to call
+
+	Returns:
+		true in case of success, otherwise false
+*/
+DLL void h3dSetMessageCallback(void (*callback)(int, const char*));
+
 /* Function: h3dGetMessage
 		Gets the next message from the message queue.
 	

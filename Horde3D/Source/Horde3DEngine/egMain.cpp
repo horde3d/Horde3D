@@ -163,6 +163,12 @@ DLLEXP void h3dClear()
 // General functions
 // =================================================================================================
 
+DLLEXP void h3dSetMessageCallback(void (*callback)(int, const char*))
+{
+	Modules::log().setMessageCallback(callback);
+}
+
+
 DLLEXP const char *h3dGetMessage( int *level, float *time )
 {
 //	static string msgText;

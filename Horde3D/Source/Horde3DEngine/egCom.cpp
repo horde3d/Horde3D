@@ -160,6 +160,14 @@ bool EngineConfig::setOption( EngineOptions::List param, float value )
 // Class EngineLog
 // *************************************************************************************************
 
+EngineLog::MessageCallback EngineLog::_callback = NULL;
+
+void EngineLog::setMessageCallback(MessageCallback f)
+{
+	_callback = f;
+}
+
+
 EngineLog::EngineLog()
 {
 	_timer.setEnabled( true );
@@ -189,6 +197,9 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 		_messages.push( LogMessage( "Message queue is full", 1, time ) );
 	}
 
+	if (_callback) {
+		_callback(level, _textBuf);
+	}
 #if defined( H3D_DEBUGGER_OUTPUT )
     const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
 #if defined( PLATFORM_WIN )

@@ -101,6 +101,10 @@ struct LogMessage
 class EngineLog
 {
 public:
+	typedef void (*MessageCallback)(int, const char*);
+	// This is callable before the engine has been initialised to allow to get all the messages
+	static void setMessageCallback(MessageCallback f);
+
 	EngineLog();
 
 	void writeError( const char *msg, ... );
@@ -118,6 +122,8 @@ protected:
 	void pushMessage( int level, const char *msg, va_list ap );
 
 protected:
+	static MessageCallback    _callback;
+
 	Timer                     _timer;
 	char                      _textBuf[2048];
 	uint32                    _maxNumMessages;
