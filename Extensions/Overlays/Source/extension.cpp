@@ -42,7 +42,7 @@ namespace Horde3DOverlays {
 // Public C API
 namespace Horde3DOverlays {
 
-DLLEXP void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG,
+H3D_IMPL void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG,
 	float colB, float colA, uint32 materialRes, int flags )
 {
 	Resource *resObj = Modules::resMan().resolveResHandle( materialRes );
@@ -52,14 +52,14 @@ DLLEXP void h3dShowOverlays( const float *verts, int vertCount, float colR, floa
 }
 
 
-DLLEXP void h3dClearOverlays()
+H3D_IMPL void h3dClearOverlays()
 {
 	OverlayRenderer::clearOverlays();
 }
 
 
-DLLEXP void h3dShowText( const char *text, float x, float y, float size, float colR,
-	float colG, float colB, ResHandle fontMaterialRes )
+H3D_IMPL void h3dShowText( const char *text, float x, float y, float size, float colR,
+                           float colG, float colB, ResHandle fontMaterialRes )
 {
 	Resource *resObj = Modules::resMan().resolveResHandle( fontMaterialRes );
 	APIFUNC_VALIDATE_RES_TYPE( resObj, ResourceTypes::Material, "h3dShowText", APIFUNC_RET_VOID );
@@ -67,9 +67,9 @@ DLLEXP void h3dShowText( const char *text, float x, float y, float size, float c
 }
 
 
-DLLEXP void h3dShowInfoBox( float x, float y, float width, const char *title,
-	int numRows, const char **column1, const char **column2,
-	ResHandle fontMaterialRes, ResHandle panelMaterialRes )
+H3D_IMPL void h3dShowInfoBox( float x, float y, float width, const char *title,
+                              int numRows, const char **column1, const char **column2,
+                              ResHandle fontMaterialRes, ResHandle panelMaterialRes )
 {
 	Resource *fontResObj = Modules::resMan().resolveResHandle( fontMaterialRes );
 	APIFUNC_VALIDATE_RES_TYPE( fontResObj, ResourceTypes::Material, "h3dShowInfoBox", APIFUNC_RET_VOID );
@@ -82,7 +82,7 @@ DLLEXP void h3dShowInfoBox( float x, float y, float width, const char *title,
 }
 
 
-DLLEXP void h3dShowFrameStats( ResHandle fontMaterialRes, ResHandle panelMaterialRes, int mode )
+H3D_IMPL void h3dShowFrameStats( ResHandle fontMaterialRes, ResHandle panelMaterialRes, int mode )
 {
 	Resource *fontResObj = Modules::resMan().resolveResHandle( fontMaterialRes );
 	APIFUNC_VALIDATE_RES_TYPE( fontResObj, ResourceTypes::Material, "h3dShowFrameStats", APIFUNC_RET_VOID );

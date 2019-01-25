@@ -77,16 +77,19 @@
 #endif
 
 
-#ifndef DLLEXP
+// H3D_IMPL is prepended to functions that implement the API (declared with H3D_API)
+#ifndef H3D_STATIC_LIBS
 #	ifdef PLATFORM_WIN
-#		define DLLEXP extern "C" __declspec( dllexport )
+#		define H3D_IMPL extern "C" __declspec( dllexport )
 #	else
 #		if defined( __GNUC__ ) && __GNUC__ >= 4
-#			define DLLEXP extern "C" __attribute__ ((visibility("default")))
+#			define H3D_IMPL extern "C" __attribute__ ((visibility("default")))
 #		else
-#			define DLLEXP extern "C"
+#			define H3D_IMPL extern "C"
 #		endif
 #	endif
+#else
+#	define H3D_IMPL extern "C"
 #endif
 
 #if defined( PLATFORM_WIN ) || defined( PLATFORM_MAC ) || defined ( PLATFORM_LINUX )

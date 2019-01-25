@@ -16,18 +16,6 @@
 
 #include "Horde3D.h"
 
-#ifndef DLL
-#	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
-#	else
-#		if defined( __GNUC__ ) && __GNUC__ >= 4
-#			define DLLEXP extern "C" __attribute__ ((visibility("default")))
-#		else
-#			define DLLEXP extern "C"
-#		endif
-#	endif
-#endif
-
 
 /*	Topic: Introduction
 		Some words about the Overlays Extension.
@@ -63,8 +51,8 @@
 	Returns:
 		nothing
 */
-DLL void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG, float colB,
-	                      float colA, H3DRes materialRes, int flags );
+H3D_API void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG, float colB,
+	                          float colA, H3DRes materialRes, int flags );
 
 
 /* Function: h3dClearOverlays
@@ -79,68 +67,68 @@ DLL void h3dShowOverlays( const float *verts, int vertCount, float colR, float c
 	Returns:
 		nothing
 */
-DLL void h3dClearOverlays();
+H3D_API void h3dClearOverlays();
 
 
 /* Function: h3dShowText
-	Shows text on the screen using a font texture.
+		Shows text on the screen using a font texture.
 
 	Details:
-	This utility function uses overlays to display a text string at a specified position on the screen.
-	The font texture of the specified font material has to be a regular 16x16 grid containing all
-	ASCII characters in row-major order.
+		This utility function uses overlays to display a text string at a specified position on the screen.
+		The font texture of the specified font material has to be a regular 16x16 grid containing all
+		ASCII characters in row-major order.
 
 	Parameters:
-	text              - text string to be displayed
-	x, y              - position of the lower left corner of the first character;
-	for more details on coordinate system see overlay documentation
-	size              - size (scale) factor of the font
-	colR, colG, colB  - font color
-	fontMaterialRes   - font material resource used for rendering
+		text              - text string to be displayed
+		x, y              - position of the lower left corner of the first character;
+		                    for more details on coordinate system see overlay documentation
+		size              - size (scale) factor of the font
+		colR, colG, colB  - font color
+		fontMaterialRes   - font material resource used for rendering
 
 	Returns:
-	nothing
+		nothing
 */
-DLL void h3dShowText( const char *text, float x, float y, float size,
-	float colR, float colG, float colB, H3DRes fontMaterialRes );
+H3D_API void h3dShowText( const char *text, float x, float y, float size,
+                          float colR, float colG, float colB, H3DRes fontMaterialRes );
 
 /* Function: h3dShowInfoBox
-	Shows a customizable info box on the screen.
+		Shows a customizable info box on the screen.
 
 	Details:
-	This utility function displays an info box with custom text for the current frame on the screen.
+		This utility function displays an info box with custom text for the current frame on the screen.
 
 	Parameters:
-	x, y              - position of the top left corner of the box;
-	for more details on coordinate system see overlay documentation
-	width             - maximum width of info box
-	title             - title string of info box
-	numRows           - Number of info rows
-	column1           - list of strings to print in first column (=numRows)
-	column2           - list of strings to print in second column (=numRows)
-	panelMaterialRes  - material resource used for drawing info box
+		x, y              - position of the top left corner of the box;
+		                    for more details on coordinate system see overlay documentation
+		width             - maximum width of info box
+		title             - title string of info box
+		numRows           - Number of info rows
+		column1           - list of strings to print in first column (=numRows)
+		column2           - list of strings to print in second column (=numRows)
+		panelMaterialRes  - material resource used for drawing info box
 
 	Returns:
-	nothing
+		nothing
 */
-DLL void h3dShowInfoBox( float x, float y, float width, const char *title,
-	int numRows, const char **column1, const char **column2,
-	H3DRes fontMaterialRes, H3DRes panelMaterialRes );
+H3D_API void h3dShowInfoBox( float x, float y, float width, const char *title,
+                             int numRows, const char **column1, const char **column2,
+                             H3DRes fontMaterialRes, H3DRes panelMaterialRes );
 
 /* Function: h3dutShowFrameStats
-	Shows frame statistics on the screen.
+		Shows frame statistics on the screen.
 
 	Details:
-	This utility function displays an info box with statistics for the current frame on the screen.
-	Since the statistic counters are reset after the call, the function should be called exactly once
-	per frame to obtain correct values.
+		This utility function displays an info box with statistics for the current frame on the screen.
+		Since the statistic counters are reset after the call, the function should be called exactly once
+		per frame to obtain correct values.
 
 	Parameters:
-	fontMaterialRes	  - font material resource used for drawing text
-	panelMaterialRes  - material resource used for drawing info box
-	mode              - display mode, specifying which data is shown (<= MaxStatMode)
+		fontMaterialRes	  - font material resource used for drawing text
+		panelMaterialRes  - material resource used for drawing info box
+		mode              - display mode, specifying which data is shown (<= MaxStatMode)
 
 	Returns:
-	nothing
+		nothing
 */
-DLL void h3dShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes, int mode );
+H3D_API void h3dShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes, int mode );

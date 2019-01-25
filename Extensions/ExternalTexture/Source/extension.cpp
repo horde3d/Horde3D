@@ -39,7 +39,7 @@ void ExternalTexture::release()
 }
 
 // Public C API
-DLLEXP bool h3dextImportTexture( Horde3D::ResHandle texRes, int texID )
+H3D_IMPL bool h3dextImportTexture( Horde3D::ResHandle texRes, int texID )
 {
 	Resource *res = Modules::resMan().resolveResHandle(texRes);
 	if( res == 0x0 || res->getType() != ResourceTypes::Texture )
@@ -54,7 +54,7 @@ DLLEXP bool h3dextImportTexture( Horde3D::ResHandle texRes, int texID )
 }
 
 // Public C API
-DLLEXP int h3dextGetGLTextureID( Horde3D::ResHandle texRes )
+H3D_IMPL int h3dextGetGLTextureID( Horde3D::ResHandle texRes )
 {
 	Resource *res = Modules::resMan().resolveResHandle(texRes);
 	if( res == 0x0 || res->getType() != ResourceTypes::Texture )

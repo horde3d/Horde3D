@@ -15,23 +15,9 @@
 
 #include "Horde3D.h"
 
-#ifndef DLL
-#	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
-#	else
-#		if defined( __GNUC__ ) && __GNUC__ >= 4
-#			define DLLEXP extern "C" __attribute__ ((visibility("default")))
-#		else
-#			define DLLEXP extern "C"
-#		endif
-#	endif
-#endif
-
 
 /*	Topic: Introduction
 		Some words about the ExternalTexture Extension.
-	
-
 */
 
 /* Function: h3dextImportTexture
@@ -51,7 +37,7 @@
 	Returns:
 		 true in case of success, false otherwise
 */
-DLL bool h3dextImportTexture( H3DRes texRes, int texID );
+H3D_API bool h3dextImportTexture( H3DRes texRes, int texID );
 
 /* Function: h3dextGetGLTextureID
 		Retrieve the native OpenGL Texture name of a Horde3D texture resource
@@ -68,4 +54,4 @@ DLL bool h3dextImportTexture( H3DRes texRes, int texID );
 	Returns:
 		 the OpenGL texture name (uint32)
 */
-DLL int h3dextGetGLTextureID( H3DRes texRes );
+H3D_API int h3dextGetGLTextureID( H3DRes texRes );
