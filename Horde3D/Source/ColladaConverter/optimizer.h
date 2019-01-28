@@ -17,6 +17,9 @@
 #include <set>
 #include <map>
 
+namespace Horde3D {
+namespace ColladaConnverter {
+
 
 struct TriGroup;
 struct Vertex;
@@ -52,5 +55,9 @@ public:
 	                                std::vector< unsigned int > &indices,
 	                                std::map< unsigned int, unsigned int > &vertMap );
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif	// _optimizer_H_

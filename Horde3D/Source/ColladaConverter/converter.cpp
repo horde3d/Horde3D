@@ -26,6 +26,9 @@
 #include <algorithm>
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConnverter {
+
 
 // little endian element writer
 template<class T>
@@ -1439,3 +1442,7 @@ bool Converter::writeAnimation( const string &assetPath, const string &assetName
 
 	return true;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

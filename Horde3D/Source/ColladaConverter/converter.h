@@ -17,7 +17,8 @@
 #include "utMath.h"
 #include <string.h> // memset
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct Joint;
@@ -183,5 +184,9 @@ private:
 	unsigned int                 _maxLodLevel;
 	bool                         _animNotSampled;
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _converter_H_

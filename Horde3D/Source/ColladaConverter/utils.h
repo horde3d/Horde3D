@@ -19,7 +19,8 @@
 #include <cstdlib>
 #include <string>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 void removeGate( std::string &s );
@@ -159,5 +160,8 @@ inline bool parseInt( char *&str, int &i )
 	return true;
 }
 
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _utils_H_

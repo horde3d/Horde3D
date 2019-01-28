@@ -15,6 +15,8 @@
 #include "utils.h"
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 ColladaDocument::ColladaDocument()
@@ -130,3 +132,7 @@ bool ColladaDocument::parseFile( const string &fileName )
 	
 	return true;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

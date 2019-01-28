@@ -18,7 +18,8 @@
 #include <string>
 #include <vector>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeEffect
@@ -194,5 +195,9 @@ struct DaeLibEffects
 		return true;
 	}
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeLibEffects_H_

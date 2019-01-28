@@ -20,7 +20,8 @@
 #include <vector>
 #include <algorithm>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeSampler
@@ -290,5 +291,9 @@ struct DaeLibAnimations
 		return true;
 	}
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeLibAnimations_H_

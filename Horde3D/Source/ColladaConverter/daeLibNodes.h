@@ -18,7 +18,8 @@
 #include <vector>
 #include "daeLibVisualScenes.h"
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeLibNodes
@@ -63,6 +64,10 @@ struct DaeLibNodes
 		
 		return true;
 	}
-
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
+
 #endif
