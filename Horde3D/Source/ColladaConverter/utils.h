@@ -14,6 +14,7 @@
 #define _utils_H_
 
 #include "utMath.h"
+#include "utPlatform.h"
 #include <cstring>
 #include <cstdlib>
 #include <string>
@@ -71,36 +72,36 @@ inline bool parseFloat( char *&str, float &f )
 	char *firstChar = str;
 	
 	// Handle sign
-    if( *str == '-' )
+	if( *str == '-' )
 	{
 		sign = -1.0;
-        ++str;
-    }
+		++str;
+	}
 	else if( *str == '+' )
 	{
 		++str;
 	}
 	
-    // Integral part
+	// Integral part
 	while( *str >= '0' && *str <= '9' )
 	{
-        value = value * 10.0f + (*str++ - '0');
+		value = value * 10.0f + (*str++ - '0');
 	}
 
 	// Fractional part
 	if( *str == '.' )
 	{
-        ++str;
+		++str;
 		float pow10 = 0.1f;
 
-        while( *str >= '0' && *str <= '9' )
+		while( *str >= '0' && *str <= '9' )
 		{
-            value += (*str++ - '0') * pow10;
-            pow10 *= 0.1f;
-        }
-    }
+			value += (*str++ - '0') * pow10;
+			pow10 *= 0.1f;
+		}
+	}
 	
-	// Exponent (use standard atof in this case)
+	// Exponent (use standard `toFloat` in this case)
 	if( *str == 'e' || *str == 'E')
 	{
 		while( *str && *str != ' ' && *str != '\t' && *str != '\n' && *str != '\r' )
@@ -112,7 +113,7 @@ inline bool parseFloat( char *&str, float &f )
 			memcpy( buf, firstChar, str - firstChar );
 			buf[str - firstChar] = '\0';
 
-			f = (float)atof( buf );
+			f = toFloat( buf );
 		}
 		else
 			return false;
@@ -141,8 +142,8 @@ inline bool parseInt( char *&str, int &i )
 	if( *str == '-' )
 	{
 		sign = -1;
-        ++str;
-    }
+		++str;
+	}
 	else if( *str == '+' )
 	{
 		++str;
@@ -151,7 +152,7 @@ inline bool parseInt( char *&str, int &i )
 	// Value
 	while( *str >= '0' && *str <= '9' )
 	{
-        value = (value * 10) + (*str++ - '0');
+		value = (value * 10) + (*str++ - '0');
 	}
 
 	i = value * sign;

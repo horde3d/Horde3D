@@ -5,7 +5,7 @@ SET(OVERLAYS_EXTENSION_SOURCES
 
 SET(OVERLAYS_EXTENSION_HEADERS	
 	extension.h	
-    overlays.h
+	overlays.h
 )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")

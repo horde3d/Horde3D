@@ -80,13 +80,13 @@ string cleanPath( string path )
 using namespace Horde3DUtils;
 
 
-DLLEXP const char *h3dutGetResourcePath( int type )
+H3D_IMPL const char *h3dutGetResourcePath( int type )
 {
 	return resourcePaths[type].c_str();
 }
 
 
-DLLEXP void h3dutSetResourcePath( int type, const char *path )
+H3D_IMPL void h3dutSetResourcePath( int type, const char *path )
 {
 	string s = path != 0x0 ? path : "";
 
@@ -94,7 +94,7 @@ DLLEXP void h3dutSetResourcePath( int type, const char *path )
 }
 
 
-DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
+H3D_IMPL bool h3dutLoadResourcesFromDisk( const char *contentDir )
 {
 	bool result = true;
 	string dir;
@@ -174,7 +174,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 }
 
 
-DLLEXP bool h3dutDumpMessages()
+H3D_IMPL bool h3dutDumpMessages()
 {
 	if( !outf.is_open() )
 	{
@@ -287,16 +287,14 @@ DLLEXP bool h3dutDumpMessages()
 }
 
 
-
-
-DLLEXP void h3dutFreeMem( char **ptr )
+H3D_IMPL void h3dutFreeMem( char **ptr )
 {
 	if( ptr == 0x0 ) return;
 	
 	delete[] *ptr; *ptr = 0x0;
 }
 
-DLLEXP H3DRes h3dutCreateGeometryRes( 
+H3D_IMPL H3DRes h3dutCreateGeometryRes( 
 	const char *name, 
 	int numVertices, int numTriangleIndices,
 	float *posData, 
@@ -446,8 +444,8 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 	return res;
 }
 
-DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height, int bpp,
-                                 char **outData, int *outSize )
+H3D_IMPL bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height, int bpp,
+                                   char **outData, int *outSize )
 {
 	if( outData == 0x0 || outSize == 0x0 ) return false;
 	
@@ -482,9 +480,9 @@ DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int hei
 }
 
 
-DLLEXP void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, float *oy, float *oz,
+H3D_IMPL void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, float *oy, float *oz,
                           float *dx, float *dy, float *dz )
-{				
+{
 	// Transform from normalized window [0, 1] to normalized device coordinates [-1, 1]
 	float cx( 2.0f * nwx - 1.0f );
 	float cy( 2.0f * nwy - 1.0f );   
@@ -537,8 +535,8 @@ DLLEXP void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, f
 	*dz = p1.z - p0.z;
 }
 
-DLLEXP H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy )
-{	
+H3D_IMPL H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy )
+{
 	float ox, oy, oz, dx, dy, dz;
 	h3dutPickRay( cameraNode, nwx, nwy, &ox, &oy, &oz, &dx, &dy, &dz );
 	
@@ -554,56 +552,57 @@ DLLEXP H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy )
 		else
 			return 0;
 	}
-
 }
 
 
-DLLEXP void h3dutGetScreenshotParam( int *width,  int *height ) {
-  h3dGetRenderTargetData( 0, "", 0, width, height, 0x0, 0x0, 0 );
+H3D_IMPL void h3dutGetScreenshotParam( int *width,  int *height )
+{
+	h3dGetRenderTargetData( 0, "", 0, width, height, 0x0, 0x0, 0 );
 }
 
-DLLEXP bool h3dutScreenshotRaw( unsigned char *rgb, int len_rgb )
-  {
-    // Ask Horde for the width and height of the screenshot.
-    int width, height;
-    h3dGetRenderTargetData( 0, "", 0, &width, &height, 0x0, 0x0, 0 );
 
-    // Sanity check: User must have provided a buffer that can hold the entire
-    // RGB image (each of the RGB components is an unsigned char).
-    if (len_rgb < width * height * 3) {
-      return false;
-    }
+H3D_IMPL bool h3dutScreenshotRaw( unsigned char *rgb, int len_rgb )
+{
+	// Ask Horde for the width and height of the screenshot.
+	int width, height;
+	h3dGetRenderTargetData( 0, "", 0, &width, &height, 0x0, 0x0, 0 );
 
-    // Ensure we have enough space in the auxiliary buffer. This buffer must be
-    // large enough to store each RGBA component as a *float* - *not* an
-    // unsinged char.
-    static vector<float> f32buf;
-    f32buf.reserve(width * height * 4);
+	// Sanity check: User must have provided a buffer that can hold the entire
+	// RGB image (each of the RGB components is an unsigned char).
+	if (len_rgb < width * height * 3) {
+		return false;
+	}
 
-    // Determine the size of the pixel buffer in *bytes*. This is somewhat
-    // unintuitive because Horde returns each of the RGBA components as a
-    // float32, not an unsigned integer.
-    const int num_bytes = width * height * 4 * sizeof(float);
+	// Ensure we have enough space in the auxiliary buffer. This buffer must be
+	// large enough to store each RGBA component as a *float* - *not* an
+	// unsinged char.
+	static vector<float> f32buf;
+	f32buf.reserve(width * height * 4);
 
-  // Copy the pixels (RGBA, float32) into the auxiliary buffer.
-  h3dGetRenderTargetData( 0, "", 0, 0x0, 0x0, 0x0, &f32buf[0], num_bytes);
+	// Determine the size of the pixel buffer in *bytes*. This is somewhat
+	// unintuitive because Horde returns each of the RGBA components as a
+	// float32, not an unsigned integer.
+	const int num_bytes = width * height * 4 * sizeof(float);
 
-  // Unpack the image from the auxiliary RGBA (float32) buffer into the user
-  // provide RGB (uint8) array.
+	// Copy the pixels (RGBA, float32) into the auxiliary buffer.
+	h3dGetRenderTargetData( 0, "", 0, 0x0, 0x0, 0x0, &f32buf[0], num_bytes);
+
+	// Unpack the image from the auxiliary RGBA (float32) buffer into the user
+	// provide RGB (uint8) array.
 	for( int y = 0; y < height; ++y ) {
-      for( int x = 0; x < width; ++x ) {
-        int idx = y * width + x;
-        rgb[3 * idx + 0] = ftoi_r( clamp( f32buf[4 * idx + 0], 0.f, 1.f ) * 255.f );
-        rgb[3 * idx + 1] = ftoi_r( clamp( f32buf[4 * idx + 1], 0.f, 1.f ) * 255.f );
-        rgb[3 * idx + 2] = ftoi_r( clamp( f32buf[4 * idx + 2], 0.f, 1.f ) * 255.f );
-      }
-  }
+		for( int x = 0; x < width; ++x ) {
+			int idx = y * width + x;
+			rgb[3 * idx + 0] = ftoi_r( clamp( f32buf[4 * idx + 0], 0.f, 1.f ) * 255.f );
+			rgb[3 * idx + 1] = ftoi_r( clamp( f32buf[4 * idx + 1], 0.f, 1.f ) * 255.f );
+			rgb[3 * idx + 2] = ftoi_r( clamp( f32buf[4 * idx + 2], 0.f, 1.f ) * 255.f );
+		}
+	}
 
-  return true;
+	return true;
 }
 
 
-DLLEXP bool h3dutScreenshot( const char *filename )
+H3D_IMPL bool h3dutScreenshot( const char *filename )
 {
 	if( filename == 0x0 ) return false;
 	
@@ -660,7 +659,7 @@ DLLEXP bool h3dutScreenshot( const char *filename )
 // DLL entry point
 // =================================================================================================
 
-#ifdef PLATFORM_WIN
+#if !defined H3D_STATIC_LIBS && defined PLATFORM_WIN
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
 {
    switch( ul_reason_for_call )

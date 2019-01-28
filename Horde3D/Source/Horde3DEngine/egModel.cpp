@@ -68,13 +68,13 @@ SceneNodeTpl *ModelNode::parsingFunc( map< string, string > &attribs )
 	}
 
 	itr = attribs.find( "lodDist1" );
-	if( itr != attribs.end() ) modelTpl->lodDist1 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist1 = toFloat( itr->second.c_str() );
 	itr = attribs.find( "lodDist2" );
-	if( itr != attribs.end() ) modelTpl->lodDist2 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist2 = toFloat( itr->second.c_str() );
 	itr = attribs.find( "lodDist3" );
-	if( itr != attribs.end() ) modelTpl->lodDist3 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist3 = toFloat( itr->second.c_str() );
 	itr = attribs.find( "lodDist4" );
-	if( itr != attribs.end() ) modelTpl->lodDist4 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist4 = toFloat( itr->second.c_str() );
 
 	if( !result )
 	{
@@ -267,8 +267,8 @@ int ModelNode::getParamI( int param ) const
 		return _geometryRes != 0x0 ? _geometryRes->_handle : 0;
 	case ModelNodeParams::SWSkinningI:
 		return _softwareSkinning ? 1 : 0;
-  case ModelNodeParams::AnimCountI:
-    return _animCtrl.getAnimCount();
+	case ModelNodeParams::AnimCountI:
+		return _animCtrl.getAnimCount();
 	}
 
 	return SceneNode::getParamI( param );

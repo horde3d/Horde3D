@@ -65,7 +65,7 @@ unsigned int MeshOptimizer::removeDegeneratedTriangles( TriGroup *triGroup, vect
 
 void MeshOptimizer::optimizeIndexOrder( TriGroup *triGroup, vector< Vertex > &vertices,
                                         vector< unsigned int > &indices,
-										map< unsigned int, unsigned int > &vertMap )
+                                        map< unsigned int, unsigned int > &vertMap )
 {
 	// Implementation of Linear-Speed Vertex Cache Optimisation by Tom Forsyth
 	// (see http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html)

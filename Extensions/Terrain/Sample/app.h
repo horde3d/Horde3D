@@ -23,10 +23,10 @@
 class TerrainSample : public SampleApplication
 {
 public:
-    TerrainSample( int argc, char** argv );
+	TerrainSample( int argc, char** argv );
 
 protected:
-    bool initResources();
+	bool initResources();
 };
 
 #endif // _app_H_

@@ -139,10 +139,10 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			params[2].setBool( false );
 			params[3].setBool( false );
 			params[4].setBool( false );
-			params[5].setFloat( (float)atof( node1.getAttribute( "col_R", "0" ) ) );
-			params[6].setFloat( (float)atof( node1.getAttribute( "col_G", "0" ) ) );
-			params[7].setFloat( (float)atof( node1.getAttribute( "col_B", "0" ) ) );
-			params[8].setFloat( (float)atof( node1.getAttribute( "col_A", "0" ) ) );
+			params[5].setFloat( toFloat( node1.getAttribute( "col_R", "0" ) ) );
+			params[6].setFloat( toFloat( node1.getAttribute( "col_G", "0" ) ) );
+			params[7].setFloat( toFloat( node1.getAttribute( "col_B", "0" ) ) );
+			params[8].setFloat( toFloat( node1.getAttribute( "col_A", "0" ) ) );
 			
 			if( _stricmp( node1.getAttribute( "depthBuf", "false" ), "true" ) == 0 ||
 			    _stricmp( node1.getAttribute( "depthBuf", "0" ), "1" ) == 0 )
@@ -258,10 +258,10 @@ const string PipelineResource::parseStage( XMLNode &node, PipelineStage &stage )
 			params.resize( 6 );
 			params[0].setResource( Modules::resMan().resolveResHandle( matRes ) );
 			params[1].setString( node1.getAttribute( "uniform" ) );
-			params[2].setFloat( (float)atof( node1.getAttribute( "a", "0" ) ) );
-			params[3].setFloat( (float)atof( node1.getAttribute( "b", "0" ) ) );
-			params[4].setFloat( (float)atof( node1.getAttribute( "c", "0" ) ) );
-			params[5].setFloat( (float)atof( node1.getAttribute( "d", "0" ) ) );
+			params[2].setFloat( toFloat( node1.getAttribute( "a", "0" ) ) );
+			params[3].setFloat( toFloat( node1.getAttribute( "b", "0" ) ) );
+			params[4].setFloat( toFloat( node1.getAttribute( "c", "0" ) ) );
+			params[5].setFloat( toFloat( node1.getAttribute( "d", "0" ) ) );
 		}
 		else
 		{
@@ -338,7 +338,7 @@ bool PipelineResource::createRenderTargets()
 		if( height == 0 ) height = ftoi_r( _baseHeight * rt.scale );
 		
 		rt.rendBuf = rdi->createRenderBuffer(
-			width, height, rt.format, rt.hasDepthBuf, rt.numColBufs, rt.samples );
+			width, height, rt.format, rt.hasDepthBuf, rt.numColBufs, rt.samples, false );
 		if( rt.rendBuf == 0 ) return false;
 	}
 	
@@ -405,7 +405,7 @@ bool PipelineResource::load( const char *data, int size )
 
 			uint32 width = atoi( node2.getAttribute( "width", "0" ) );
 			uint32 height = atoi( node2.getAttribute( "height", "0" ) );
-			float scale = (float)atof( node2.getAttribute( "scale", "1" ) );
+			float scale = toFloat( node2.getAttribute( "scale", "1" ) );
 
 			addRenderTarget( id, depth, numBuffers, format,
 				std::min( maxSamples, Modules::config().sampleCount ), width, height, scale );

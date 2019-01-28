@@ -927,7 +927,7 @@ bool Renderer::setMaterial( MaterialResource *materialRes, const string &shaderC
 
 bool Renderer::createShadowRB( uint32 width, uint32 height )
 {
-	_shadowRB = _renderDevice->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0 );
+	_shadowRB = _renderDevice->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0, false );
 	
 	return _shadowRB != 0;
 }
@@ -2211,6 +2211,10 @@ void Renderer::render( CameraNode *camNode )
 		}
 	}
 	
+	// Update mipmaps if necessary
+	if( _curCamera->_outputTex != 0x0 && _curCamera->_outputTex->hasMipMaps() )
+		_renderDevice->generateTextureMipmap( _curCamera->_outputTex->getTexObject() );
+
 	finishRendering();
 }
 

@@ -18,6 +18,6 @@
 
 int main( int argc, char** argv )
 {
-    TerrainSample app( argc, argv );
-    return app.run();
+	TerrainSample app( argc, argv );
+	return app.run();
 }

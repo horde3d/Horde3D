@@ -82,8 +82,8 @@ std::string safeStr( const char *str )
 }
 
 
-DLLEXP NodeHandle h3dextAddTerrainNode( NodeHandle parent, const char *name, ResHandle heightMapRes,
-                                        ResHandle materialRes )
+H3D_IMPL NodeHandle h3dextAddTerrainNode( NodeHandle parent, const char *name, ResHandle heightMapRes,
+                                          ResHandle materialRes )
 {
 	SceneNode *parentNode = Modules::sceneMan().resolveNodeHandle( parent );
 	if( parentNode == 0x0 ) return 0;
@@ -103,8 +103,8 @@ DLLEXP NodeHandle h3dextAddTerrainNode( NodeHandle parent, const char *name, Res
 }
 
 
-DLLEXP ResHandle h3dextCreateTerrainGeoRes( NodeHandle node, const char *name, float meshQuality )
-{	
+H3D_IMPL ResHandle h3dextCreateTerrainGeoRes( NodeHandle node, const char *name, float meshQuality )
+{
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
 	if( sn != 0x0 && sn->getType() == SNT_TerrainNode )
 		return ((TerrainNode *)sn)->createGeometryResource( safeStr( name ), 1.0f / meshQuality );

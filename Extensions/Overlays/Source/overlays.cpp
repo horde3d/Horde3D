@@ -27,7 +27,7 @@ namespace Horde3DOverlays {
 using namespace std;
 using namespace Horde3D;
 
-const uint32 MaxNumOverlayVerts = 2048;
+const uint32 MaxNumOverlayVerts = 8192;
 const uint32 QuadIdxBufCount = MaxNumOverlayVerts * 6;
 
 uint32 OverlayRenderer::_overlayGeo = 0;

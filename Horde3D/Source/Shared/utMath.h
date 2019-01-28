@@ -97,6 +97,13 @@ static inline float fsel( float test, float a, float b )
 	return test >= 0 ? a : b;
 }
 
+// Computes a/b, rounded up
+// To be used for positive a and b and small numbers (beware of overflows)
+static inline int idivceil( int a, int b )
+{
+	return (a + b - 1) / b;
+}
+
 
 // -------------------------------------------------------------------------------------------------
 // Conversion
@@ -544,18 +551,18 @@ public:
 		
 		Quaternion q1( q );
 
-        // Calculate cosine
-        float cosTheta = x * q.x + y * q.y + z * q.z + w * q.w;
+		// Calculate cosine
+		float cosTheta = x * q.x + y * q.y + z * q.z + w * q.w;
 
-        // Use the shortest path
-        if( cosTheta < 0 )
+		// Use the shortest path
+		if( cosTheta < 0 )
 		{
 			cosTheta = -cosTheta; 
 			q1.x = -q.x; q1.y = -q.y;
 			q1.z = -q.z; q1.w = -q.w;
-        }
+		}
 
-        // Initialize with linear interpolation
+		// Initialize with linear interpolation
 		float scale0 = 1 - t, scale1 = t;
 		
 		// Use spherical interpolation only if the quaternions are not very close
@@ -598,9 +605,9 @@ public:
 	{
 		float len = x * x + y * y + z * z + w * w;
 		if( len > 0 )
-        {
-            float invLen = 1.0f / len;
-            return Quaternion( -x * invLen, -y * invLen, -z * invLen, w * invLen );
+		{
+			float invLen = 1.0f / len;
+			return Quaternion( -x * invLen, -y * invLen, -z * invLen, w * invLen );
 		}
 		else return Quaternion();
 	}

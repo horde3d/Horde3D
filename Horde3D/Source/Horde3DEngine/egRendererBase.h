@@ -316,7 +316,11 @@ enum RDIShaderConstType
 	CONST_FLOAT3,
 	CONST_FLOAT4,
 	CONST_FLOAT44,
-	CONST_FLOAT33
+	CONST_FLOAT33,
+	CONST_INT,
+	CONST_INT2,
+	CONST_INT3,
+	CONST_INT4
 };
 
 // ---------------------------------------------------------
@@ -512,6 +516,7 @@ protected:
 	RDIDelegate< void ( uint32, uint32 ) >								_delegate_unmapBuffer;
 
 	RDIDelegate< uint32 ( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) > _delegate_createTexture;
+	RDIDelegate< void ( uint32 ) >										_delegate_generateTextureMipmap;
 	RDIDelegate< void ( uint32, int, int, const void * ) >				_delegate_uploadTextureData;
 	RDIDelegate< void ( uint32 & ) >									_delegate_destroyTexture;
 	RDIDelegate< void ( uint32, int, int, const void * ) >				_delegate_updateTextureData;
@@ -530,7 +535,7 @@ protected:
 	RDIDelegate< const char *() >										_delegate_getDefaultVSCode;
 	RDIDelegate< const char *() >										_delegate_getDefaultFSCode;
 
-	RDIDelegate< uint32 ( uint32, uint32, TextureFormats::List, bool, uint32, uint32 ) > _delegate_createRenderBuffer;
+	RDIDelegate< uint32 ( uint32, uint32, TextureFormats::List, bool, uint32, uint32, bool ) > _delegate_createRenderBuffer;
 	RDIDelegate< void ( uint32 & ) >									_delegate_destroyRenderBuffer;
 	RDIDelegate< uint32( uint32, uint32 ) >								_delegate_getRenderBufferTex;
 	RDIDelegate< void ( uint32 ) >										_delegate_setRenderBuffer;
@@ -629,7 +634,7 @@ public:
 	{
 		return _delegate_createShaderStorageBuffer.invoke( size, data );
 	}
-    void destroyBuffer( uint32& bufObj )
+	void destroyBuffer( uint32& bufObj )
 	{ 
 		_delegate_destroyBuffer.invoke( bufObj );
 	}
@@ -673,7 +678,7 @@ public:
 			case TextureFormats::DXT1:
 			case TextureFormats::ETC1:
 			case TextureFormats::RGB8_ETC2:
-				return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 8;
+				return idivceil(width, 4) * idivceil(height, 4) * depth * 8;
 			case TextureFormats::DXT3:
 			case TextureFormats::DXT5:
 			case TextureFormats::RGBA8_ETC2:
@@ -694,7 +699,7 @@ public:
 			case TextureFormats::ASTC_10x10:
 			case TextureFormats::ASTC_12x10:
 			case TextureFormats::ASTC_12x12:
-				return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 16;
+				return idivceil(width, 4) * idivceil(height, 4) * depth * 16;
 			case TextureFormats::RGBA16F:
 				return width * height * depth * 8;
 			case TextureFormats::RGBA32F:
@@ -709,6 +714,10 @@ public:
 	                      bool hasMips, bool genMips, bool compress, bool sRGB )
 	{ 
 		return _delegate_createTexture.invoke( type, width, height, depth, format, hasMips, genMips, compress, sRGB );
+	}
+	void generateTextureMipmap( uint32 texObj )
+	{
+		_delegate_generateTextureMipmap.invoke( texObj );
 	}
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 	{ 
@@ -730,10 +739,10 @@ public:
 	{
 		return _textureMem; 
 	}
-    void bindImageToTexture( uint32 texObj, void* eglImage )
-    {
+	void bindImageToTexture( uint32 texObj, void* eglImage )
+	{
 		return _delegate_bindImageToTexture.invoke( texObj, eglImage );
-    }
+	}
 
 	// Shaders
 	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
@@ -742,7 +751,7 @@ public:
 		return _delegate_createShader.invoke( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
 											  tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
 	}
-    void destroyShader( uint32& shaderId )
+	void destroyShader( uint32& shaderId )
 	{
 		_delegate_destroyShader.invoke( shaderId );
 	}
@@ -789,9 +798,9 @@ public:
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples )
+	                           bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
 	{
-		return _delegate_createRenderBuffer.invoke( width, height, format, depth, numColBufs, samples );
+		return _delegate_createRenderBuffer.invoke( width, height, format, depth, numColBufs, samples, hasMipmaps);
 	}
     void destroyRenderBuffer( uint32& rbObj )
 	{ 

@@ -15,57 +15,43 @@
 
 #include "Horde3D.h"
 
-#ifndef DLL
-#	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
-#	else
-#		if defined( __GNUC__ ) && __GNUC__ >= 4
-#		  define DLLEXP extern "C" __attribute__ ((visibility("default")))
-#   	else
-#		  define DLLEXP extern "C"
-#   	endif
-#	endif
-#endif
-
 
 /*	Topic: Introduction
-                Some words about the ExternalTexture Extension.
-	
-
+		Some words about the ExternalTexture Extension.
 */
 
 /* Function: h3dextImportTexture
-                Binds an existing OpenGL Texture name to a Horde3D texture
+		Binds an existing OpenGL Texture name to a Horde3D texture
 	
 	Details:
-                Calling this function will bind an existing OpenGL texture to a Horde3D texture. Any previously bound
-                OpenGL texture name will be released, but texture properties will remain. So keep in mind
-                that you allocate the texture resource within Horde3D already with the right properties before
-                replacing the texture ID with an external one. External textures are not released (no glDeleteTexture call). 
-                They have to be released by the creator. 
+		Calling this function will bind an existing OpenGL texture to a Horde3D texture. Any previously bound
+		OpenGL texture name will be released, but texture properties will remain. So keep in mind
+		that you allocate the texture resource within Horde3D already with the right properties before
+		replacing the texture ID with an external one. External textures are not released (no glDeleteTexture call). 
+		They have to be released by the creator. 
 	
 	Parameters:
-                texRes       - handle to an existing Horde3D texture resource
-                texID        - OpenGL texture name of an existing OpenGL texture                
+		texRes       - handle to an existing Horde3D texture resource
+		texID        - OpenGL texture name of an existing OpenGL texture                
 
 	Returns:
-                 true in case of success, false otherwise
+		 true in case of success, false otherwise
 */
-DLL bool h3dextImportTexture( H3DRes texRes, int texID );
+H3D_API bool h3dextImportTexture( H3DRes texRes, int texID );
 
 /* Function: h3dextGetGLTextureID
-                Retrieve the native OpenGL Texture name of a Horde3D texture resource
+		Retrieve the native OpenGL Texture name of a Horde3D texture resource
 
-        Details:
-                Calling this function will return the native OpenGL texture name of a Horde3D texture.
-                While this method contradicts the philosophy of having Horde3D as a backend independent
-                rendering engine, it might be handy for interfacing with other render libraries. So
-                this extension allows retrieving the OpenGL texture name for OpenGL2 and OpenGL 4 render backends.
+	Details:
+		Calling this function will return the native OpenGL texture name of a Horde3D texture.
+		While this method contradicts the philosophy of having Horde3D as a backend independent
+		rendering engine, it might be handy for interfacing with other render libraries. So
+		this extension allows retrieving the OpenGL texture name for OpenGL2 and OpenGL 4 render backends.
 
-        Parameters:
-                texRes       - handle to an existing Horde3D texture resource
+	Parameters:
+		texRes       - handle to an existing Horde3D texture resource
 
-        Returns:
-                 the OpenGL texture name (uint32)
+	Returns:
+		 the OpenGL texture name (uint32)
 */
-DLL int h3dextGetGLTextureID( H3DRes texRes );
+H3D_API int h3dextGetGLTextureID( H3DRes texRes );

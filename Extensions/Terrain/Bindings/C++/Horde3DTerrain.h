@@ -15,18 +15,6 @@
 
 #include "Horde3D.h"
 
-#ifndef DLL
-#	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
-#	else
-#		if defined( __GNUC__ ) && __GNUC__ >= 4
-#		  define DLLEXP extern "C" __attribute__ ((visibility("default")))
-#   	else
-#		  define DLLEXP extern "C"
-#   	endif
-#	endif
-#endif
-
 
 /*	Topic: Introduction
 		Some words about the Terrain Extension.
@@ -94,7 +82,7 @@ struct H3DEXTTerrain
 	Returns:
 		 handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dextAddTerrainNode( H3DNode parent, const char *name, H3DRes heightMapRes, H3DRes materialRes );
+H3D_API H3DNode h3dextAddTerrainNode( H3DNode parent, const char *name, H3DRes heightMapRes, H3DRes materialRes );
 
 
 /* Function: h3dextCreateTerrainGeoRes
@@ -114,4 +102,4 @@ DLL H3DNode h3dextAddTerrainNode( H3DNode parent, const char *name, H3DRes heigh
 	Returns:
 		 handle to the created Geometry resource or 0 in case of failure
 */
-DLL H3DRes h3dextCreateTerrainGeoRes( H3DNode node, const char *resName, float meshQuality );
+H3D_API H3DRes h3dextCreateTerrainGeoRes( H3DNode node, const char *resName, float meshQuality );
