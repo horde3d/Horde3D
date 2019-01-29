@@ -594,7 +594,7 @@ bool TextureResource::loadKTX( const char *data, int size )
 
 	if ( _texObject == 0 ) return raiseError( "Failed to create KTX texture" );
 
-	uint32 sliceCount = _texType == TextureTypes::TexCube ? 6 : 1;
+	//uint32 sliceCount = _texType == TextureTypes::TexCube ? 6 : 1;
 	unsigned char *pixels = ( unsigned char * ) ( data + sizeof( KTXHeader ) + ktxHeader.bytesOfKeyValueData );
 
 	int width = _width, height = _height, depth = _depth;
