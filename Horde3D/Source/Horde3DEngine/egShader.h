@@ -168,14 +168,14 @@ struct ShaderContext
 	
 	// RenderConfig
 	BlendModes::List                  blendStateSrc;
-	BlendModes::List				  blendStateDst;
+	BlendModes::List                  blendStateDst;
 	TestModes::List                   depthFunc;
 	CullModes::List                   cullMode;
-	uint16							  tessVerticesInPatchCount;
+	uint16                            tessVerticesInPatchCount;
 	bool                              depthTest;
 	bool                              writeDepth;
 	bool                              alphaToCoverage;
-	bool							  blendingEnabled;
+	bool                              blendingEnabled;
 	
 	// Shaders
 	std::vector< ShaderCombination >  shaderCombs;
@@ -184,10 +184,9 @@ struct ShaderContext
 
 
 	ShaderContext() :
-		blendStateSrc( BlendModes::Zero ), blendStateDst( BlendModes::Zero ), depthFunc( TestModes::LessEqual ),
-		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ), tessVerticesInPatchCount( 1 ),
-		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false ),
-		blendingEnabled( false ), flagMask( 0 )
+		flagMask( 0 ), blendStateSrc( BlendModes::Zero ), blendStateDst( BlendModes::Zero ), depthFunc( TestModes::LessEqual ),
+		cullMode( CullModes::Back ), tessVerticesInPatchCount( 1 ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ), blendingEnabled( false ),
+		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false )
 	{
 	}
 };
@@ -205,7 +204,7 @@ struct ShaderSampler
 	PTextureResource       defTex;
 	int                    texUnit;
 	uint32                 sampState;
-	uint32				   usage;
+	uint32                 usage;
 
 	ShaderSampler() :
 		type( TextureTypes::Tex2D ), texUnit( -1 ), sampState( 0 ), usage( 0 )
