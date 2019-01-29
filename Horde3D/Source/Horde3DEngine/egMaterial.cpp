@@ -605,7 +605,7 @@ const char * MaterialClassCollection::getClassString( int currentMaterialClass )
 
 	for ( size_t i = 0; i < H3D_MATERIAL_HIERARCHY_LEVELS; ++i )
 	{
-		if ( !strcmp( hierarchy.value[ i ].name, "" ) == 0 )
+		if ( strcmp( hierarchy.value[ i ].name, "" ) != 0 )
 		{
 			if ( previousStepSuccessful ) _returnedClassString.append( "." );
 
