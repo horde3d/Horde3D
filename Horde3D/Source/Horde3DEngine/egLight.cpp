@@ -283,13 +283,17 @@ void LightNode::calcScreenSpaceAABB( const Matrix4f &mat, float &x, float &y, fl
 		if( pts[i].x > max_x ) max_x = pts[i].x;
 		if( pts[i].y > max_y ) max_y = pts[i].y;
 	}
-	
+
 	// Clamp values
-	if( min_x < 0 ) min_x = 0; if( min_x > 1 ) min_x = 1;
-	if( max_x < 0 ) max_x = 0; if( max_x > 1 ) max_x = 1;
-	if( min_y < 0 ) min_y = 0; if( min_y > 1 ) min_y = 1;
-	if( max_y < 0 ) max_y = 0; if( max_y > 1 ) max_y = 1;
-	
+	if( min_x < 0 ) min_x = 0;
+	if( min_x > 1 ) min_x = 1;
+	if( max_x < 0 ) max_x = 0;
+	if( max_x > 1 ) max_x = 1;
+	if( min_y < 0 ) min_y = 0;
+	if( min_y > 1 ) min_y = 1;
+	if( max_y < 0 ) max_y = 0;
+	if( max_y > 1 ) max_y = 1;
+
 	x = min_x; y = min_y;
 	w = max_x - min_x; h = max_y - min_y;
 

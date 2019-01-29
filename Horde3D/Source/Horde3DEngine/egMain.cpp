@@ -560,9 +560,15 @@ H3D_IMPL void h3dGetNodeTransform( NodeHandle node, float *tx, float *ty, float 
 	Vec3f trans, rot, scale;
 	sn->getTransform( trans, rot, scale );
 
-	if( tx != 0x0 ) *tx = trans.x; if( ty != 0x0 ) *ty = trans.y; if( tz != 0x0 ) *tz = trans.z;
-	if( rx != 0x0 ) *rx = rot.x; if( ry != 0x0 ) *ry = rot.y; if( rz != 0x0 ) *rz = rot.z;
-	if( sx != 0x0 ) *sx = scale.x; if( sy != 0x0 ) *sy = scale.y; if( sz != 0x0 ) *sz = scale.z;
+	if( tx != 0x0 ) *tx = trans.x;
+	if( ty != 0x0 ) *ty = trans.y;
+	if( tz != 0x0 ) *tz = trans.z;
+	if( rx != 0x0 ) *rx = rot.x;
+	if( ry != 0x0 ) *ry = rot.y;
+	if( rz != 0x0 ) *rz = rot.z;
+	if( sx != 0x0 ) *sx = scale.x;
+	if( sy != 0x0 ) *sy = scale.y;
+	if( sz != 0x0 ) *sz = scale.z;
 }
 
 
