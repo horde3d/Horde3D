@@ -48,7 +48,7 @@ inline void fwrite_le(const T* data, size_t count, FILE* f)
     }
 }
 
-Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDists ) :
+Converter::Converter( ColladaDocument &doc, const string &outPath, const float *lodDists ) :
 	_daeDoc( doc )
 {
 	_outPath = outPath;

@@ -143,7 +143,7 @@ struct MorphTarget
 class Converter
 {
 public:
-	Converter( ColladaDocument &doc, const std::string &outPath, float *lodDists );
+	Converter( ColladaDocument &doc, const std::string &outPath, const float *lodDists );
 	~Converter();
 	
 	bool convertModel( bool optimize );
