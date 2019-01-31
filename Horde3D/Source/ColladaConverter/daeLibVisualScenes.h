@@ -19,7 +19,8 @@
 #include <vector>
 #include <map>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeTransformation
@@ -343,5 +344,9 @@ struct DaeLibVisScenes
 		return true;
 	}
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeLibVisualScenes_H_

@@ -17,6 +17,9 @@
 #include <algorithm>
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConnverter {
+
 
 void OptVertex::updateScore( int cacheIndex )
 {
@@ -222,3 +225,7 @@ float MeshOptimizer::calcCacheEfficiency( TriGroup *triGroup, vector< unsigned i
 	float atvr = (float)(triGroup->count + misses) / triGroup->count;
 	return atvr;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

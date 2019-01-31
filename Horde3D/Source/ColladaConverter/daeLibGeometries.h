@@ -20,7 +20,8 @@
 #include <string>
 #include <vector>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeVSource
@@ -469,5 +470,9 @@ public:
 		return true;
 	}
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeLibGeometries_H_

@@ -17,7 +17,8 @@
 #include "utMath.h"
 #include <string.h> // memset
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct Joint;
@@ -142,7 +143,7 @@ struct MorphTarget
 class Converter
 {
 public:
-	Converter( ColladaDocument &doc, const std::string &outPath, float *lodDists );
+	Converter( ColladaDocument &doc, const std::string &outPath, const float *lodDists );
 	~Converter();
 	
 	bool convertModel( bool optimize );
@@ -183,5 +184,9 @@ private:
 	unsigned int                 _maxLodLevel;
 	bool                         _animNotSampled;
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _converter_H_

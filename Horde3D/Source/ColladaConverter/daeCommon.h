@@ -18,7 +18,8 @@
 #include <string>
 #include <vector>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeSource
@@ -90,5 +91,9 @@ struct DaeSource
 		return true;
 	}
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeCommon_H_

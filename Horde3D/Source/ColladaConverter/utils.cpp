@@ -27,6 +27,8 @@
 #endif
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 void removeGate( string &s )
@@ -176,3 +178,7 @@ void createDirectories( const string &basePath, const string &newPath )
 		}
 	}
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

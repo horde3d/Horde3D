@@ -17,7 +17,8 @@
 #include <string>
 #include <vector>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeImage
@@ -94,5 +95,9 @@ struct DaeLibImages
 		return true;
 	}
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeLibImages_H_

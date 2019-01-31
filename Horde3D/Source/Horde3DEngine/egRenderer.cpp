@@ -1667,7 +1667,6 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 	GeometryResource *curGeoRes = 0x0;
 	MaterialResource *curMatRes = 0x0;
 
-	bool tessellationSupported = rdi->getCaps().tesselation;
 	DefaultShaderUniforms &uni = Modules::renderer()._uni;
 
 	// Loop over mesh queue

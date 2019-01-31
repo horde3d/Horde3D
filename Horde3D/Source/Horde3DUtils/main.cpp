@@ -161,7 +161,7 @@ H3D_IMPL bool h3dutLoadResourcesFromDisk( const char *contentDir )
 		}
 		else // Resource file not found
 		{
-			// Tell engine to use the dafault resource by using NULL as data pointer
+			// Tell engine to use the default resource by using NULL as data pointer
 			h3dLoadResource( res, 0x0, 0 );
 			result = false;
 		}

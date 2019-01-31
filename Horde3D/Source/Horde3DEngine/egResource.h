@@ -89,7 +89,7 @@ public:
 	ResHandle getHandle() const { return _handle; }
 	bool isLoaded() const { return _loaded; }
 	void addRef() { ++_refCount; }
-    void subRef() { --_refCount; ASSERT(_refCount >= 0 ); }
+    void subRef() { ASSERT(_refCount > 0 ); --_refCount; }
 
 protected:
 	int                  _type;

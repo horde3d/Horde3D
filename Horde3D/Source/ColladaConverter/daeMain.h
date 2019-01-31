@@ -23,6 +23,9 @@
 #include "daeLibAnimations.h"
 #include "daeLibNodes.h"
 
+namespace Horde3D {
+namespace ColladaConnverter {
+
 
 class ColladaDocument
 {
@@ -43,5 +46,9 @@ public:
 	DaeVisualScene     *scene;
 	bool               y_up;
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeMain_H_

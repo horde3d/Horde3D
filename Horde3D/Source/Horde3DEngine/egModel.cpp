@@ -527,8 +527,12 @@ void ModelNode::onFinishedUpdate()
 			Vec3f dmax = bmax - _geometryRes->_skelAABB.max;
 			
 			// Clamp so that bounding boxes can only grow and not shrink
-			if( dmin.x > 0 ) dmin.x = 0; if( dmin.y > 0 ) dmin.y = 0; if( dmin.z > 0 ) dmin.z = 0;
-			if( dmax.x < 0 ) dmax.x = 0; if( dmax.y < 0 ) dmax.y = 0; if( dmax.z < 0 ) dmax.z = 0;
+			if( dmin.x > 0 ) dmin.x = 0;
+			if( dmin.y > 0 ) dmin.y = 0;
+			if( dmin.z > 0 ) dmin.z = 0;
+			if( dmax.x < 0 ) dmax.x = 0;
+			if( dmax.y < 0 ) dmax.y = 0;
+			if( dmax.z < 0 ) dmax.z = 0;
 			
 			_meshList[i]->_bBox = _meshList[i]->_localBBox;
 			_meshList[i]->_bBox.min += dmin;
