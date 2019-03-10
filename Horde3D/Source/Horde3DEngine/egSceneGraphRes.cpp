@@ -54,15 +54,15 @@ void SceneGraphResource::release()
 void SceneGraphResource::parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &nodeTpl )
 {
 	nodeTpl.name = xmlNode.getAttribute( "name", "" );
-	nodeTpl.trans.x = (float)atof( xmlNode.getAttribute( "tx", "0" ) );
-	nodeTpl.trans.y = (float)atof( xmlNode.getAttribute( "ty", "0" ) );
-	nodeTpl.trans.z = (float)atof( xmlNode.getAttribute( "tz", "0" ) );
-	nodeTpl.rot.x = (float)atof( xmlNode.getAttribute( "rx", "0" ) );
-	nodeTpl.rot.y = (float)atof( xmlNode.getAttribute( "ry", "0" ) );
-	nodeTpl.rot.z = (float)atof( xmlNode.getAttribute( "rz", "0" ) );
-	nodeTpl.scale.x = (float)atof( xmlNode.getAttribute( "sx", "1" ) );
-	nodeTpl.scale.y = (float)atof( xmlNode.getAttribute( "sy", "1" ) );
-	nodeTpl.scale.z = (float)atof( xmlNode.getAttribute( "sz", "1" ) );
+	nodeTpl.trans.x = toFloat( xmlNode.getAttribute( "tx", "0" ) );
+	nodeTpl.trans.y = toFloat( xmlNode.getAttribute( "ty", "0" ) );
+	nodeTpl.trans.z = toFloat( xmlNode.getAttribute( "tz", "0" ) );
+	nodeTpl.rot.x = toFloat( xmlNode.getAttribute( "rx", "0" ) );
+	nodeTpl.rot.y = toFloat( xmlNode.getAttribute( "ry", "0" ) );
+	nodeTpl.rot.z = toFloat( xmlNode.getAttribute( "rz", "0" ) );
+	nodeTpl.scale.x = toFloat( xmlNode.getAttribute( "sx", "1" ) );
+	nodeTpl.scale.y = toFloat( xmlNode.getAttribute( "sy", "1" ) );
+	nodeTpl.scale.z = toFloat( xmlNode.getAttribute( "sz", "1" ) );
 
 	XMLNode node1 = xmlNode.getFirstChild( "Attachment" );
 	if( !node1.isEmpty() )

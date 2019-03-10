@@ -271,6 +271,7 @@ void RenderDeviceGLES3::initRDIFuncs()
 	_delegate_unmapBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::unmapBuffer >( this );
 
 	_delegate_createTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createTexture >( this );
+	_delegate_generateTextureMipmap.bind< RenderDeviceGLES3, &RenderDeviceGL3::generateTextureMipmap >( this );
 	_delegate_uploadTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::uploadTextureData >( this );
 	_delegate_destroyTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyTexture >( this );
 	_delegate_updateTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::updateTextureData >( this );
@@ -330,11 +331,11 @@ bool RenderDeviceGLES3::init()
 	char *renderer = (char *)glGetString( GL_RENDERER );
 	char *version = (char *)glGetString( GL_VERSION );
 	
- 	if( !version || !renderer || !vendor )
-    	{
-        	Modules::log().writeError("OpenGL ES not initialized. Make sure you have a valid OpenGL ES context");
-        	return false;
-    	}
+	if( !version || !renderer || !vendor )
+	{
+		Modules::log().writeError("OpenGL ES not initialized. Make sure you have a valid OpenGL ES context");
+		return false;
+	}
 
 	Modules::log().writeInfo( "Initializing GLES3 backend using OpenGL driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
@@ -407,7 +408,7 @@ bool RenderDeviceGLES3::init()
 
 	// Find supported depth format
 	_depthFormat = GL_DEPTH_COMPONENT32F;
-	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
+	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0, false ); 
 	if( testBuf == 0 )
 	{	
 		_depthFormat = GL_DEPTH_COMPONENT16;
@@ -826,6 +827,19 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 }
 
 
+void RenderDeviceGLES3::generateTextureMipmap( uint32 texObj )
+{
+	const RDITextureGL4 &tex = _textures.getRef( texObj );
+
+	glActiveTexture( GL_TEXTURE15 );
+	glBindTexture( tex.type, tex.glObj );
+	glGenerateMipmap( tex.type );
+	glBindTexture( tex.type, 0 );
+	if( _texSlots[15].texObj )
+		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+}
+
+
 void RenderDeviceGLES3::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	const RDITextureGLES3 &tex = _textures.getRef( texObj );
@@ -908,37 +922,37 @@ bool RenderDeviceGLES3::getTextureData( uint32 texObj, int slice, int mipLevel, 
 
 	// create a temporary fbo 
 	GLint currentFBO = 0;
-    GLuint tempFBO = 0;
-    glGetIntegerv( GL_FRAMEBUFFER_BINDING, &currentFBO );
-    glGenFramebuffers( 1, &tempFBO );
+	GLuint tempFBO = 0;
+	glGetIntegerv( GL_FRAMEBUFFER_BINDING, &currentFBO );
+	glGenFramebuffers( 1, &tempFBO );
 	glBindFramebuffer( GL_FRAMEBUFFER, tempFBO );
 
-    GLenum status;
+	GLenum status;
 
-    switch (target) {
-    case GL_TEXTURE_2D:
-    case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-    case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-    case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-    case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-    case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-        glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.glObj, mipLevel );
+	switch (target) {
+	case GL_TEXTURE_2D:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+	case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+	case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.glObj, mipLevel );
 		status = glCheckFramebufferStatus( GL_FRAMEBUFFER );
-        if ( status != GL_FRAMEBUFFER_COMPLETE ) 
+		 if ( status != GL_FRAMEBUFFER_COMPLETE ) 
 		{
 			return false;
-        }
+		}
 
-        glReadPixels( 0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
-        break;
-    case GL_TEXTURE_3D:
-        for (int i = 0; i < tex.depth; i++) {
+		glReadPixels( 0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, buffer );
+		break;
+	case GL_TEXTURE_3D:
+		for (int i = 0; i < tex.depth; i++) {
 			glFramebufferTexture3DOES( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex.glObj, mipLevel, i );
-            glReadPixels(0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, ( uint8 * ) buffer + 4 * i * tex.width * tex.height );
-        }
-        break;
-    }
+			glReadPixels(0, 0, tex.width, tex.height, GL_RGBA, GL_UNSIGNED_BYTE, ( uint8 * ) buffer + 4 * i * tex.width * tex.height );
+		}
+	break;
+	}
 
 	glBindFramebuffer( GL_FRAMEBUFFER, currentFBO );
 	glDeleteFramebuffers( 1, &tempFBO );
@@ -1360,6 +1374,18 @@ void RenderDeviceGLES3::setShaderConst( int loc, RDIShaderConstType type, void *
 	case CONST_FLOAT33:
 		glUniformMatrix3fv( loc, count, false, (float *)values );
 		break;
+	case CONST_INT:
+		glUniform1iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT2:
+		glUniform2iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT3:
+		glUniform3iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT4:
+		glUniform4iv( loc, count, (GLint *)values );
+		break;
 	}
 }
 
@@ -1534,7 +1560,7 @@ uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, Textu
 }*/
 
 uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	bool depth, uint32 numColBufs, uint32 samples )
+	                                          bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
 {
 	if ( ( format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F ) && !_caps.texFloat )
 	{
@@ -1570,7 +1596,7 @@ uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, Textu
 		{
 			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 			// Create a color texture
-			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, hasMipmaps, hasMipmaps, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[ j ] = texObj;
@@ -1937,11 +1963,13 @@ uint32 RenderDeviceGLES3::getQueryResult( uint32 queryObj )
 
 void RenderDeviceGLES3::checkError()
 {
+#if !defined( NDEBUG )
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
 	ASSERT( error != GL_INVALID_VALUE );
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
+#endif
 }
 
 

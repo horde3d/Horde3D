@@ -22,7 +22,7 @@ namespace Horde3DExternalTexture {
 class ExternalTexture : public Horde3D::IExtension
 {
 public:
-    virtual const char *getName() const { return "ExternalTexture"; }
+	virtual const char *getName() const { return "ExternalTexture"; }
 	virtual bool init();
 	virtual void release();
 };

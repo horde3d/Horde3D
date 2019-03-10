@@ -927,7 +927,7 @@ bool Renderer::setMaterial( MaterialResource *materialRes, const string &shaderC
 
 bool Renderer::createShadowRB( uint32 width, uint32 height )
 {
-	_shadowRB = _renderDevice->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0 );
+	_shadowRB = _renderDevice->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0, false );
 	
 	return _shadowRB != 0;
 }
@@ -1667,7 +1667,6 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 	GeometryResource *curGeoRes = 0x0;
 	MaterialResource *curMatRes = 0x0;
 
-	bool tessellationSupported = rdi->getCaps().tesselation;
 	DefaultShaderUniforms &uni = Modules::renderer()._uni;
 
 	// Loop over mesh queue
@@ -1730,8 +1729,6 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 		}
 
 		ShaderCombination *prevShader = Modules::renderer().getCurShader();
-		
-		RDIPrimType drawType = PRIM_TRILIST;
 
 		if( !debugView )
 		{
@@ -1747,9 +1744,6 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 				}
 				curMatRes = meshNode->getMaterialRes();
 			}
-
-			// Change draw type for tessellatable models
-			if ( meshNode->getTessellationStatus() == 1 && tessellationSupported ) drawType = PRIM_PATCHES;
 		}
 		else
 		{
@@ -1816,8 +1810,8 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 			rdi->beginQuery( queryObj );
 		
 		// Render
-		rdi->drawIndexed( drawType, meshNode->getBatchStart(), meshNode->getBatchCount(),
-		                   meshNode->getVertRStart(), meshNode->getVertREnd() - meshNode->getVertRStart() + 1 );
+		rdi->drawIndexed( meshNode->getPrimType(), meshNode->getBatchStart(), meshNode->getBatchCount(),
+		                  meshNode->getVertRStart(), meshNode->getVertREnd() - meshNode->getVertRStart() + 1 );
 		Modules::stats().incStat( EngineStats::BatchCount, 1 );
 		Modules::stats().incStat( EngineStats::TriCount, meshNode->getBatchCount() / 3.0f );
 
@@ -2046,7 +2040,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 				drawType = PRIM_TRILIST;
 				break;
 			case 1: // Lines
-				drawType = PRIM_LINES;
+				drawType = PRIM_LINELIST;
 				break;
 			case 2: // Points
 				drawType = PRIM_POINTS;
@@ -2216,6 +2210,10 @@ void Renderer::render( CameraNode *camNode )
 		}
 	}
 	
+	// Update mipmaps if necessary
+	if( _curCamera->_outputTex != 0x0 && _curCamera->_outputTex->hasMipMaps() )
+		_renderDevice->generateTextureMipmap( _curCamera->_outputTex->getTexObject() );
+
 	finishRendering();
 }
 

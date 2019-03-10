@@ -18,7 +18,8 @@
 #include <string>
 #include <vector>
 
-using namespace Horde3D;
+namespace Horde3D {
+namespace ColladaConnverter {
 
 
 struct DaeEffect
@@ -70,7 +71,7 @@ struct DaeEffect
 			node6 = node6.getFirstChild( "float" );
 			if( !node6.isEmpty() ) 
 			{
-				shininess = (float) atof( node6.getText() );
+				shininess = toFloat( node6.getText() );
 				if( shininess > 1.0 )
 					shininess /= 128.0f;
 			}
@@ -194,5 +195,9 @@ struct DaeLibEffects
 		return true;
 	}
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif // _daeLibEffects_H_

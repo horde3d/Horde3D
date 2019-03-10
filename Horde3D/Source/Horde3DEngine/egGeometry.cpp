@@ -354,7 +354,7 @@ bool GeometryResource::load( const char *data, int size )
 	pData = elemcpy_le(&count, (uint32*)(pData), 1);
 
 	_indexCount = count;
-    _16BitIndices = _vertCount <= 65536;
+	_16BitIndices = _vertCount <= 65536;
 	_indexData = new char[count * (_16BitIndices ? 2 : 4)];
 	if( _16BitIndices )
 	{

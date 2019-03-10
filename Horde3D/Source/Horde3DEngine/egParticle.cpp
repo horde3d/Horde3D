@@ -43,14 +43,14 @@ void ParticleChannel::reset()
 bool ParticleChannel::parse( XMLNode &node )
 {
 	if( node.getAttribute( "startMin" ) == 0x0 ) return false;
-	startMin = (float)atof( node.getAttribute( "startMin" ) );
+	startMin = toFloat( node.getAttribute( "startMin" ) );
 
 	if( node.getAttribute( "startMax" ) != 0x0 )
-		startMax = (float)atof( node.getAttribute( "startMax" ) );
+		startMax = toFloat( node.getAttribute( "startMax" ) );
 	else
 		startMax = startMin;
 	
-	endRate = (float)atof( node.getAttribute( "endRate", "1" ) );
+	endRate = toFloat( node.getAttribute( "endRate", "1" ) );
 
 	return true;
 }
@@ -123,8 +123,8 @@ bool ParticleEffectResource::load( const char *data, int size )
 	if( rootNode.getAttribute( "lifeMin" ) == 0x0 ) return raiseError( "Missing ParticleConfig attribute 'lifeMin'" );
 	if( rootNode.getAttribute( "lifeMax" ) == 0x0 ) return raiseError( "Missing ParticleConfig attribute 'lifeMax'" );
 
-	_lifeMin = (float)atof( rootNode.getAttribute( "lifeMin" ) );
-	_lifeMax = (float)atof( rootNode.getAttribute( "lifeMax" ) );
+	_lifeMin = toFloat( rootNode.getAttribute( "lifeMin" ) );
+	_lifeMax = toFloat( rootNode.getAttribute( "lifeMax" ) );
 
 	XMLNode node1 = rootNode.getFirstChild( "ChannelOverLife" );
 	while( !node1.isEmpty() )
@@ -367,17 +367,17 @@ SceneNodeTpl *EmitterNode::parsingFunc( map< string, string > &attribs )
 	if( itr != attribs.end() ) emitterTpl->respawnCount = atoi( itr->second.c_str() );
 	else result = false;
 	itr = attribs.find( "delay" );
-	if( itr != attribs.end() ) emitterTpl->delay = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) emitterTpl->delay = toFloat( itr->second.c_str() );
 	itr = attribs.find( "emissionRate" );
-	if( itr != attribs.end() ) emitterTpl->emissionRate = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) emitterTpl->emissionRate = toFloat( itr->second.c_str() );
 	itr = attribs.find( "spreadAngle" );
-	if( itr != attribs.end() ) emitterTpl->spreadAngle = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) emitterTpl->spreadAngle = toFloat( itr->second.c_str() );
 	itr = attribs.find( "forceX" );
-	if( itr != attribs.end() ) emitterTpl->fx = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) emitterTpl->fx = toFloat( itr->second.c_str() );
 	itr = attribs.find( "forceY" );
-	if( itr != attribs.end() ) emitterTpl->fy = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) emitterTpl->fy = toFloat( itr->second.c_str() );
 	itr = attribs.find( "forceZ" );
-	if( itr != attribs.end() ) emitterTpl->fz = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) emitterTpl->fz = toFloat( itr->second.c_str() );
 	
 	if( !result )
 	{

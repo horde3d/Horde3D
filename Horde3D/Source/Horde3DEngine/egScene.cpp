@@ -367,7 +367,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 					if ( !node->checkLodCorrectness( curLod ) ) continue;
 				}
 				
-				float sortKey = 0;
+				float sortKey;
 
 				switch( order )
 				{
@@ -379,6 +379,9 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 					break;
 				case RenderingOrder::BackToFront:
 					sortKey = -nearestDistToAABB( frustum1.getOrigin(), node->_bBox.min, node->_bBox.max );
+					break;
+				default:
+					sortKey = 0;
 					break;
 				}
 				

@@ -139,7 +139,7 @@ const std::array< ktxTexFormat, 25 > ktxSupportedFormats = { {
 	{ TextureFormats::ASTC_12x10, 0x93BC, 0x93DC }, // GL_COMPRESSED_RGBA_ASTC_12x10_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x10_KHR
 	{ TextureFormats::ASTC_12x12, 0x93BD, 0x93DD }, // GL_COMPRESSED_RGBA_ASTC_12x12_KHR, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR
 } };
- 		                                 
+
 
 unsigned char *TextureResource::mappedData = 0x0;
 int TextureResource::mappedWriteImage = -1;
@@ -212,7 +212,8 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 {	
 	_loaded = true;
 	_texFormat = fmt;
-	
+	_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
+
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	if( flags & ResourceFlags::TexRenderable )
@@ -220,12 +221,9 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		_flags &= ~ResourceFlags::TexCubemap;
 		_flags &= ~ResourceFlags::TexSRGB;
 		_flags |= ResourceFlags::NoTexCompression;
-		_flags |= ResourceFlags::NoTexMipmaps;
-
 		_texType = TextureTypes::Tex2D;
 		_sRGB = false;
-		_hasMipMaps= false;
-		_rbObj = rdi->createRenderBuffer( width, height, fmt, false, 1, 0 ); 
+		_rbObj = rdi->createRenderBuffer( width, height, fmt, false, 1, 0, _hasMipMaps ); 
 		_texObject = rdi->getRenderBufferTex( _rbObj, 0 );
 	}
 	else
@@ -239,7 +237,7 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
 		_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
 		_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
-		                                  _hasMipMaps, _hasMipMaps, false, _sRGB );
+		                                 _hasMipMaps, _hasMipMaps, false, _sRGB );
 		rdi->uploadTextureData( _texObject, 0, 0, pixels );
 		
 		delete[] pixels;
@@ -467,7 +465,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 
 		for( int j = 0; j < mipCount; ++j )
 		{
-			size_t mipSize = std::max( width / blockSize, 1 ) * std::max( height / blockSize, 1 ) *
+			size_t mipSize = idivceil(width, blockSize) * idivceil(height, blockSize) *
 			                 depth * bytesPerBlock;
 			
 			if( pixels + mipSize > (unsigned char *)data + size )
@@ -596,7 +594,7 @@ bool TextureResource::loadKTX( const char *data, int size )
 
 	if ( _texObject == 0 ) return raiseError( "Failed to create KTX texture" );
 
-	uint32 sliceCount = _texType == TextureTypes::TexCube ? 6 : 1;
+	//uint32 sliceCount = _texType == TextureTypes::TexCube ? 6 : 1;
 	unsigned char *pixels = ( unsigned char * ) ( data + sizeof( KTXHeader ) + ktxHeader.bytesOfKeyValueData );
 
 	int width = _width, height = _height, depth = _depth;

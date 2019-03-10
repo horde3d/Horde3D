@@ -26,6 +26,9 @@
 #include <algorithm>
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConnverter {
+
 
 // little endian element writer
 template<class T>
@@ -45,7 +48,7 @@ inline void fwrite_le(const T* data, size_t count, FILE* f)
     }
 }
 
-Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDists ) :
+Converter::Converter( ColladaDocument &doc, const string &outPath, const float *lodDists ) :
 	_daeDoc( doc )
 {
 	_outPath = outPath;
@@ -1439,3 +1442,7 @@ bool Converter::writeAnimation( const string &assetPath, const string &assetName
 
 	return true;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

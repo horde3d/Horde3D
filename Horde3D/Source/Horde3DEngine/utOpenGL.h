@@ -2170,7 +2170,7 @@ extern PFNGLDRAWTRANSFORMFEEDBACKSTREAMINSTANCEDPROC glDrawTransformFeedbackStre
 #ifndef GL_VERSION_4_3
 #define GL_VERSION_4_3 1
 
-//typedef void ( APIENTRY  *GLDEBUGPROC )( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam );
+typedef void ( GLAPIENTRY  *GLDEBUGPROC )( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam );
 #define GL_NUM_SHADING_LANGUAGE_VERSIONS  0x82E9
 #define GL_VERTEX_ATTRIB_ARRAY_LONG       0x874E
 #define GL_COMPRESSED_RGB8_ETC2           0x9274
@@ -2466,7 +2466,7 @@ typedef void ( GLAPIENTRYP PFNGLVERTEXATTRIBBINDINGPROC ) ( GLuint attribindex, 
 typedef void ( GLAPIENTRYP PFNGLVERTEXBINDINGDIVISORPROC ) ( GLuint bindingindex, GLuint divisor );
 typedef void ( GLAPIENTRYP PFNGLDEBUGMESSAGECONTROLPROC ) ( GLenum source, GLenum type, GLenum severity, GLsizei count, const GLuint *ids, GLboolean enabled );
 typedef void ( GLAPIENTRYP PFNGLDEBUGMESSAGEINSERTPROC ) ( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *buf );
-//typedef void ( GLAPIENTRYP PFNGLDEBUGMESSAGECALLBACKPROC ) ( GLDEBUGPROC callback, const void *userParam );
+typedef void ( GLAPIENTRYP PFNGLDEBUGMESSAGECALLBACKPROC ) ( GLDEBUGPROC callback, const void *userParam );
 typedef GLuint( GLAPIENTRYP PFNGLGETDEBUGMESSAGELOGPROC ) ( GLuint count, GLsizei bufSize, GLenum *sources, GLenum *types, GLuint *ids, GLenum *severities, GLsizei *lengths, GLchar *messageLog );
 typedef void ( GLAPIENTRYP PFNGLPUSHDEBUGGROUPPROC ) ( GLenum source, GLuint id, GLsizei length, const GLchar *message );
 typedef void ( GLAPIENTRYP PFNGLPOPDEBUGGROUPPROC ) ( void );
@@ -2510,7 +2510,7 @@ extern PFNGLVERTEXATTRIBBINDINGPROC glVertexAttribBinding;
 extern PFNGLVERTEXBINDINGDIVISORPROC glVertexBindingDivisor;
 extern PFNGLDEBUGMESSAGECONTROLPROC glDebugMessageControl;
 extern PFNGLDEBUGMESSAGEINSERTPROC glDebugMessageInsert;
-//extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback;
+extern PFNGLDEBUGMESSAGECALLBACKPROC glDebugMessageCallback;
 extern PFNGLGETDEBUGMESSAGELOGPROC glGetDebugMessageLog;
 extern PFNGLPUSHDEBUGGROUPPROC glPushDebugGroup;
 extern PFNGLPOPDEBUGGROUPPROC glPopDebugGroup;

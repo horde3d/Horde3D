@@ -230,9 +230,8 @@ bool TessellatorSample::initResources()
 	int vertices = h3dGetResParamI( geo, H3DGeoRes::GeometryElem, 0, H3DGeoRes::GeoVertexCountI );
 	
 	_model = h3dAddModelNode( H3DRootNode, "model", geo );
-	int mesh = h3dAddMeshNode( _model, "icosahedron", mat, 0, indices, 0, vertices - 1 );
+	int mesh = h3dAddMeshNode( _model, "icosahedron", mat, H3DMeshPrimType::Patches, 0, indices, 0, vertices - 1 );
 	h3dSetNodeTransform( mesh, 0, 0, 0, 0, 0, 0, 20, 20, 20 );
-	h3dSetNodeParamI( mesh, H3DMesh::TessellatableI, 1 ); // Set mesh to use tessellation
 
     // Add light source
 	H3DNode light = h3dAddLightNode( H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
@@ -297,7 +296,5 @@ void TessellatorSample::update()
 
 		_rotation += 0.05f;
 		h3dSetNodeTransform( _model, 0, 0, 0, _rotation, _rotation, 0, 1, 1, 1 );
-
-
 	}
 }

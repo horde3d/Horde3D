@@ -17,6 +17,9 @@
 #include <set>
 #include <map>
 
+namespace Horde3D {
+namespace ColladaConnverter {
+
 
 struct TriGroup;
 struct Vertex;
@@ -47,10 +50,14 @@ public:
 	static unsigned int removeDegeneratedTriangles( TriGroup *triGroup, std::vector< Vertex > &vertices,
 	                                                std::vector< unsigned int > &indices );
 	static float calcCacheEfficiency( TriGroup *triGroup, std::vector< unsigned int > &indices,
-                                      const unsigned int cacheSize = maxCacheSize );
+	                                  const unsigned int cacheSize = maxCacheSize );
 	static void optimizeIndexOrder( TriGroup *triGroup, std::vector< Vertex > &vertices,
 	                                std::vector< unsigned int > &indices,
-									std::map< unsigned int, unsigned int > &vertMap );
+	                                std::map< unsigned int, unsigned int > &vertMap );
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif	// _optimizer_H_

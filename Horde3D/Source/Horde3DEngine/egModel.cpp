@@ -68,13 +68,13 @@ SceneNodeTpl *ModelNode::parsingFunc( map< string, string > &attribs )
 	}
 
 	itr = attribs.find( "lodDist1" );
-	if( itr != attribs.end() ) modelTpl->lodDist1 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist1 = toFloat( itr->second.c_str() );
 	itr = attribs.find( "lodDist2" );
-	if( itr != attribs.end() ) modelTpl->lodDist2 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist2 = toFloat( itr->second.c_str() );
 	itr = attribs.find( "lodDist3" );
-	if( itr != attribs.end() ) modelTpl->lodDist3 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist3 = toFloat( itr->second.c_str() );
 	itr = attribs.find( "lodDist4" );
-	if( itr != attribs.end() ) modelTpl->lodDist4 = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) modelTpl->lodDist4 = toFloat( itr->second.c_str() );
 
 	if( !result )
 	{
@@ -267,8 +267,8 @@ int ModelNode::getParamI( int param ) const
 		return _geometryRes != 0x0 ? _geometryRes->_handle : 0;
 	case ModelNodeParams::SWSkinningI:
 		return _softwareSkinning ? 1 : 0;
-  case ModelNodeParams::AnimCountI:
-    return _animCtrl.getAnimCount();
+	case ModelNodeParams::AnimCountI:
+		return _animCtrl.getAnimCount();
 	}
 
 	return SceneNode::getParamI( param );
@@ -485,7 +485,7 @@ uint32 ModelNode::calcLodLevel( const Vec3f &viewPoint ) const
 }
 
 
-void ModelNode::setCustomInstData( float *data, uint32 count )
+void ModelNode::setCustomInstData( const float *data, uint32 count )
 {
 	memcpy( _customInstData, data, std::min( count, ModelCustomVecCount * 4 ) * sizeof( float ) );
 }
@@ -527,8 +527,12 @@ void ModelNode::onFinishedUpdate()
 			Vec3f dmax = bmax - _geometryRes->_skelAABB.max;
 			
 			// Clamp so that bounding boxes can only grow and not shrink
-			if( dmin.x > 0 ) dmin.x = 0; if( dmin.y > 0 ) dmin.y = 0; if( dmin.z > 0 ) dmin.z = 0;
-			if( dmax.x < 0 ) dmax.x = 0; if( dmax.y < 0 ) dmax.y = 0; if( dmax.z < 0 ) dmax.z = 0;
+			if( dmin.x > 0 ) dmin.x = 0;
+			if( dmin.y > 0 ) dmin.y = 0;
+			if( dmin.z > 0 ) dmin.z = 0;
+			if( dmax.x < 0 ) dmax.x = 0;
+			if( dmax.y < 0 ) dmax.y = 0;
+			if( dmax.z < 0 ) dmax.z = 0;
 			
 			_meshList[i]->_bBox = _meshList[i]->_localBBox;
 			_meshList[i]->_bBox.min += dmin;

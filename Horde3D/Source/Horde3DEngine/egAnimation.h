@@ -132,8 +132,8 @@ public:
 	bool setAnimParams( int stage, float time, float weight );
 	bool animate();
 
-    int  getAnimCount() const;
-    void getAnimParams( int stage, float *time, float *weight ) const;
+	int  getAnimCount() const;
+	void getAnimParams( int stage, float *time, float *weight ) const;
 
 protected:
 	void mapAnimRes( uint32 node, uint32 stage );

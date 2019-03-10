@@ -397,6 +397,11 @@ string ShaderResource::_tmpCodeCS = "";
 string ShaderResource::_tmpCodeTSCtl = "";
 string ShaderResource::_tmpCodeTSEval = "";
 
+// Parsing constants
+static const char *identifier = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
+static const char *intnum = "+-0123456789";
+static const char *floatnum = "+-0123456789.eE";
+
 
 ShaderResource::ShaderResource( const string &name, int flags ) :
 	Resource( ResourceTypes::Shader, name, flags )
@@ -510,11 +515,6 @@ bool ShaderResource::parseFXSection( char *data )
 		}
 		++p;
 	}
-	
-	// Parsing
-	const char *identifier = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
-	const char *intnum = "+-0123456789";
-	const char *floatnum = "+-0123456789.eE";
 
 	std::vector< uint8 > unitFree( Modules::renderer().getRenderDevice()->getCaps().maxTexUnitCount - 4, true ); // I don't understand why marciano excluded 4 texunits, but currently I'll leave it this way  
 //	bool unitFree[12] = {true, true, true, true, true, true, true, true, true, true, true, true}; 
@@ -535,7 +535,7 @@ bool ShaderResource::parseFXSection( char *data )
 				if( !tok.seekToken( ">" ) ) return raiseError( "FX: expected '>'", tok.getLine() );
 			
 			if( tok.checkToken( "=" ) )
-				uniform.defValues[0] = (float)atof( tok.getToken( floatnum ) );
+				uniform.defValues[0] = toFloat( tok.getToken( floatnum ) );
 			if( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
 
 			_uniforms.push_back( uniform );
@@ -555,10 +555,10 @@ bool ShaderResource::parseFXSection( char *data )
 			if( tok.checkToken( "=" ) )
 			{
 				if( !tok.checkToken( "{" ) ) return raiseError( "FX: expected '{'", tok.getLine() );
-				uniform.defValues[0] = (float)atof( tok.getToken( floatnum ) );
-				if( tok.checkToken( "," ) ) uniform.defValues[1] = (float)atof( tok.getToken( floatnum ) );
-				if( tok.checkToken( "," ) ) uniform.defValues[2] = (float)atof( tok.getToken( floatnum ) );
-				if( tok.checkToken( "," ) ) uniform.defValues[3] = (float)atof( tok.getToken( floatnum ) );
+				uniform.defValues[0] = toFloat( tok.getToken( floatnum ) );
+				if( tok.checkToken( "," ) ) uniform.defValues[1] = toFloat( tok.getToken( floatnum ) );
+				if( tok.checkToken( "," ) ) uniform.defValues[2] = toFloat( tok.getToken( floatnum ) );
+				if( tok.checkToken( "," ) ) uniform.defValues[3] = toFloat( tok.getToken( floatnum ) );
 				if( !tok.checkToken( "}" ) ) return raiseError( "FX: expected '}'", tok.getLine() );
 			}
 			if( !tok.checkToken( ";" ) ) return raiseError( "FX: expected ';'", tok.getLine() );
@@ -776,9 +776,6 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 {
 	ShaderContext context;
 	_tmpCodeVS = _tmpCodeFS = _tmpCodeGS = _tmpCodeCS = _tmpCodeTSCtl = _tmpCodeTSEval = "";
-	
-	const char *intnum = "+-0123456789";
-	const char *floatnum = "+-0123456789.eE";
 
 	bool vertexShaderAvailable, fragmentShaderAvailable, geometryShaderAvailable, computeShaderAvailable, 
 		 tessControlShaderAvailable, tessEvalShaderAvailable;

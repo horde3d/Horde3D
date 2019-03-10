@@ -18,7 +18,7 @@ Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of Direct
     - Support for post processing effects like bloom, DOF or motion blur
     - Support for almost all forward, deferred and High Dynamic Range rendering techniques
     - Support for real-time reflections and other techniques that require several cameras
-	- Support for geometry, tessellation and compute shaders
+    - Support for geometry, tessellation and compute shaders
     - Real-time shadows using Parallel Split Shadow Maps (PSSM)
     - Particle systems that can cast shadows and have effects like motion blur
 - Unified scene system
@@ -44,14 +44,14 @@ Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of Direct
 
 ## Building
 
-You need to have a C++ compiler and [CMake 2.8+](http://www.cmake.org/) installed.
+You need to have a C++11 compiler and [CMake 2.8+](http://www.cmake.org/) installed.
 
 ### Use of CMake
 
 **CMake** is a meta-build system, e.g. it creates Makefiles or Visual Studio files using Generators. The main ways to use CMake are `cmake-gui` (Qt Interface), `ccmake` (Curses Interface) and `cmake` (Commandline Interface). Instructions for commonly used generators:
 
 - [Qt Creator](http://qt-project.org/downloads#qt-creator): open `CMakeLists.txt` as new project, follow the instructions, hit build and you're done.
-- [Visual Studio](http://www.microsoft.com/visualstudio/eng/products/visual-studio-express-products): start `cmake-gui`, choose OGDF as source path, `build-vs` as build path, press generate, open `build-vs\Horde3D.sln` and start compiling. You could also generate the solution from the command line running ``mkdir build-vs && cd build-vs && cmake -G "Visual Studio XYZ" ..``, where XYZ is the correct identifier for the desired version of Visual Studio (i.e. `8 2005` for VS 2005, `9 2008` for VS 2008, `10` for VS 2010, `11` for VS 2011, etc. Please run ``cmake --help`` for more info).
+- [Visual Studio](http://www.microsoft.com/visualstudio/eng/products/visual-studio-express-products): start `cmake-gui`, choose OGDF as source path, `build-vs` as build path, press generate, open `build-vs\Horde3D.sln` and start compiling. You could also generate the solution from the command line running ``mkdir build-vs && cd build-vs && cmake -G "Visual Studio XYZ" ..``, where XYZ is the correct identifier for the desired version of Visual Studio (i.e. `14 2015` for VS 2015, `15 2015` for VS 2017, etc. Please run ``cmake --help`` for more info).
 - [Xcode](https://developer.apple.com/xcode/): open up a terminal, navigate to the repository and run ``mkdir build-xcode && cd build-xcode && cmake -G "Xcode" ..``, then open the generated project file inside Xcode.
 - [Makefiles](http://www.gnu.org/software/make/): open up a terminal, navigate to the repository and run ``mkdir build-make && cd build-make && cmake -G "Unix Makefiles" .. && make`` (hint: use `export JOBS=MAX` to speed things up).
 - [Ninja](http://martine.github.io/ninja/): open up a terminal, navigate to the repository and run ``mkdir build-ninja && cd build-ninja && cmake -G "Ninja" .. && ninja``.
@@ -82,7 +82,7 @@ for the editor via cmake set the HORDE3D_BUILD_EDITOR flag to ON (default is OFF
     cmake -DHORDE3D_BUILD_EDITOR=ON
 
 As the editor needs Lua as a dependency you can either make sure the Lua development files can be found by cmake, or Lua will be automatically downloaded by CMake.
-
+  
 ## What's next
 
 Here are some quick links to help you get started:

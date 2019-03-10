@@ -53,7 +53,7 @@ public:
 	
 	TextureResource( const std::string &name, int flags );
 	TextureResource( const std::string &name, uint32 width, uint32 height, uint32 depth,
-                    TextureFormats::List fmt, int flags );
+	                 TextureFormats::List fmt, int flags );
 	~TextureResource();
 	
 	void initDefault();

@@ -89,7 +89,7 @@ public:
 	ResHandle getHandle() const { return _handle; }
 	bool isLoaded() const { return _loaded; }
 	void addRef() { ++_refCount; }
-    void subRef() { --_refCount; ASSERT(_refCount >= 0 ); }
+    void subRef() { ASSERT(_refCount > 0 ); --_refCount; }
 
 protected:
 	int                  _type;
@@ -116,9 +116,9 @@ public:
 	~SmartResPtr() { subRef(); }
 
 	T &operator*() const { return *_ptr; }
-    T *operator->() const { return _ptr; }
+	T *operator->() const { return _ptr; }
 	operator T*() const { return _ptr; }
-    operator const T*() const { return _ptr; }
+	operator const T*() const { return _ptr; }
 	operator bool() const { return _ptr != 0x0; }
 	T *getPtr() const { return _ptr; }
 	
@@ -134,7 +134,7 @@ private:
 	void subRef() { if( _ptr != 0x0 ) _ptr->subRef(); }
 
 private:
-    T  *_ptr;
+	T  *_ptr;
 };
 
 typedef SmartResPtr< Resource > PResource;

@@ -97,6 +97,13 @@ static inline float fsel( float test, float a, float b )
 	return test >= 0 ? a : b;
 }
 
+// Computes a/b, rounded up
+// To be used for positive a and b and small numbers (beware of overflows)
+static inline int idivceil( int a, int b )
+{
+	return (a + b - 1) / b;
+}
+
 
 // -------------------------------------------------------------------------------------------------
 // Conversion
@@ -128,6 +135,144 @@ static inline int ftoi_r( double val )
 // -------------------------------------------------------------------------------------------------
 // Vector
 // -------------------------------------------------------------------------------------------------
+
+class Vec2f
+{
+public:
+	float x, y;
+	
+	
+	// ------------
+	// Constructors
+	// ------------
+	Vec2f() : x( 0.0f ), y( 0.0f )
+	{
+	}
+	
+	explicit Vec2f( Math::NoInitHint )
+	{
+		// Constructor without default initialization
+	}
+	
+	Vec2f( const float x, const float y ) : x( x ), y( y )
+	{
+	}
+	
+	Vec2f( const Vec2f &v ) : x( v.x ), y( v.y )
+	{
+	}
+	
+	// ------
+	// Access
+	// ------
+	float operator[]( unsigned int index ) const
+	{
+		return *(&x + index);
+	}
+
+	float &operator[]( unsigned int index )
+	{
+		return *(&x + index);
+	}
+	
+	// -----------
+	// Comparisons
+	// -----------
+	bool operator==( const Vec2f &v ) const
+	{
+		return (x > v.x - Math::Epsilon && x < v.x + Math::Epsilon &&
+				y > v.y - Math::Epsilon && y < v.y + Math::Epsilon);
+	}
+	
+	bool operator!=( const Vec2f &v ) const
+	{
+		return (x < v.x - Math::Epsilon || x > v.x + Math::Epsilon ||
+				y < v.y - Math::Epsilon || y > v.y + Math::Epsilon);
+	}
+	
+	// ---------------------
+	// Arithmetic operations
+	// ---------------------
+	Vec2f operator-() const
+	{
+		return Vec2f( -x, -y );
+	}
+	
+	Vec2f operator+( const Vec2f &v ) const
+	{
+		return Vec2f( x + v.x, y + v.y );
+	}
+	
+	Vec2f &operator+=( const Vec2f &v )
+	{
+		return *this = *this + v;
+	}
+	
+	Vec2f operator-( const Vec2f &v ) const
+	{
+		return Vec2f( x - v.x, y - v.y );
+	}
+	
+	Vec2f &operator-=( const Vec2f &v )
+	{
+		return *this = *this - v;
+	}
+	
+	Vec2f operator*( const float f ) const
+	{
+		return Vec2f( x * f, y * f );
+	}
+	
+	Vec2f &operator*=( const float f )
+	{
+		return *this = *this * f;
+	}
+	
+	Vec2f operator/( const float f ) const
+	{
+		return Vec2f( x / f, y / f );
+	}
+	
+	Vec2f &operator/=( const float f )
+	{
+		return *this = *this / f;
+	}
+	
+	// ----------------
+	// Special products
+	// ----------------
+	float dot( const Vec2f &v ) const
+	{
+		return x * v.x + y * v.y;
+	}
+	
+	// ----------------
+	// Other operations
+	// ----------------
+	float length() const
+	{
+		return sqrtf( x * x + y * y );
+	}
+	
+	Vec2f normalized() const
+	{
+		float invLen = 1.0f / length();
+		return Vec2f( x * invLen, y * invLen );
+	}
+	
+	void normalize()
+	{
+		float invLen = 1.0f / length();
+		x *= invLen;
+		y *= invLen;
+	}
+	
+	Vec2f lerp( const Vec2f &v, float f ) const
+	{
+		return Vec2f( x + (v.x - x) * f, y + (v.y - y) * f );
+	}
+};
+
 
 class Vec3f
 {
@@ -313,6 +458,22 @@ public:
 	{
 	}
 
+	// ------
+	// Access
+	// ------
+	float operator[]( unsigned int index ) const
+	{
+		return *(&x + index);
+	}
+
+	float &operator[]( unsigned int index )
+	{
+		return *(&x + index);
+	}
+
+	// ---------------------
+	// Arithmetic operations
+	// ---------------------
 	Vec4f operator+( const Vec4f &v ) const
 	{
 		return Vec4f( x + v.x, y + v.y, z + v.z, w + v.w );
@@ -390,18 +551,18 @@ public:
 		
 		Quaternion q1( q );
 
-        // Calculate cosine
-        float cosTheta = x * q.x + y * q.y + z * q.z + w * q.w;
+		// Calculate cosine
+		float cosTheta = x * q.x + y * q.y + z * q.z + w * q.w;
 
-        // Use the shortest path
-        if( cosTheta < 0 )
+		// Use the shortest path
+		if( cosTheta < 0 )
 		{
 			cosTheta = -cosTheta; 
 			q1.x = -q.x; q1.y = -q.y;
 			q1.z = -q.z; q1.w = -q.w;
-        }
+		}
 
-        // Initialize with linear interpolation
+		// Initialize with linear interpolation
 		float scale0 = 1 - t, scale1 = t;
 		
 		// Use spherical interpolation only if the quaternions are not very close
@@ -444,9 +605,9 @@ public:
 	{
 		float len = x * x + y * y + z * z + w * w;
 		if( len > 0 )
-        {
-            float invLen = 1.0f / len;
-            return Quaternion( -x * invLen, -y * invLen, -z * invLen, w * invLen );
+		{
+			float invLen = 1.0f / len;
+			return Quaternion( -x * invLen, -y * invLen, -z * invLen, w * invLen );
 		}
 		else return Quaternion();
 	}

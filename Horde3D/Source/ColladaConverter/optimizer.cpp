@@ -17,6 +17,9 @@
 #include <algorithm>
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConnverter {
+
 
 void OptVertex::updateScore( int cacheIndex )
 {
@@ -65,7 +68,7 @@ unsigned int MeshOptimizer::removeDegeneratedTriangles( TriGroup *triGroup, vect
 
 void MeshOptimizer::optimizeIndexOrder( TriGroup *triGroup, vector< Vertex > &vertices,
                                         vector< unsigned int > &indices,
-										map< unsigned int, unsigned int > &vertMap )
+                                        map< unsigned int, unsigned int > &vertMap )
 {
 	// Implementation of Linear-Speed Vertex Cache Optimisation by Tom Forsyth
 	// (see http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html)
@@ -222,3 +225,7 @@ float MeshOptimizer::calcCacheEfficiency( TriGroup *triGroup, vector< unsigned i
 	float atvr = (float)(triGroup->count + misses) / triGroup->count;
 	return atvr;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
