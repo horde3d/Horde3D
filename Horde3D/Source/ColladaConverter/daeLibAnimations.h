@@ -21,7 +21,7 @@
 #include <algorithm>
 
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 struct DaeSampler

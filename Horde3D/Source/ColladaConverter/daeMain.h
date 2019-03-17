@@ -24,7 +24,7 @@
 #include "daeLibNodes.h"
 
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 class ColladaDocument

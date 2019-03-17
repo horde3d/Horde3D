@@ -19,7 +19,7 @@
 #include "daeLibVisualScenes.h"
 
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 struct DaeLibNodes

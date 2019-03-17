@@ -18,7 +18,7 @@
 #include <string.h> // memset
 
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 struct Joint;
