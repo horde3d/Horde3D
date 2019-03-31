@@ -90,7 +90,7 @@ void * GLFWBackend::CreateWindow( const WindowCreateParameters &params )
 					 " a - " << _usedInitParams.alphaBits << " depth - " << _usedInitParams.depthBits << std::endl;
 		std::cout << "Sample count: " << _usedInitParams.sampleCount << std::endl;
 
-		return false;
+		return nullptr;
 	}
 
 	glfwSetWindowUserPointer( _wnd, this );
@@ -122,11 +122,11 @@ bool GLFWBackend::DestroyWindow( void *handle )
 	return true;
 }
 
-void GLFWBackend::SetWindowTitle( void *handle, const std::string &title )
+void GLFWBackend::SetWindowTitle( void *handle, const char *title )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
 	
-	glfwSetWindowTitle( wnd, title.c_str() );
+	glfwSetWindowTitle( wnd, title );
 }
 
 void GLFWBackend::SetCursorVisible( void *handle, bool visible )
@@ -143,33 +143,40 @@ void GLFWBackend::SwapBuffers( void *handle )
 	glfwSwapBuffers( wnd );
 }
 
-void GLFWBackend::Update()
+void GLFWBackend::ProcessEvents()
 {
 	glfwPollEvents();
+}
+
+void GLFWBackend::GetSize( void *handle, int *width, int *height )
+{
+	GLFWwindow *wnd = ( GLFWwindow * ) handle;
+
+	glfwGetWindowSize( wnd, width, height );
 }
 
 void GLFWBackend::windowCloseListener( GLFWwindow* win )
 {
 	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_quitEventHandler ) device->_quitEventHandler();
+	if ( device->_quitEventHandler.isInitialized() ) device->_quitEventHandler.invoke();
 }
 
 void GLFWBackend::windowResizeListener( GLFWwindow* win, int width, int height )
 {
 	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_windowResizeHandler ) device->_windowResizeHandler();
+	if ( device->_windowResizeHandler.isInitialized() ) device->_windowResizeHandler.invoke( width, height );
 }
 
 void GLFWBackend::keyPressListener( GLFWwindow* win, int key, int scancode, int action, int mods )
 {
 	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_keyEventHandler ) device->_keyEventHandler( key, action, mods );
+	if ( device->_keyEventHandler.isInitialized() ) device->_keyEventHandler.invoke( key, action, mods );
 }
 
 void GLFWBackend::mouseMoveListener( GLFWwindow* win, double x, double y )
 {
 	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_mouseMoveEventHandler ) device->_mouseMoveEventHandler( ( float ) x, ( float ) y, 0, 0 );
+	if ( device->_mouseMoveEventHandler.isInitialized() ) device->_mouseMoveEventHandler.invoke( ( float ) x, ( float ) y, 0, 0 );
 
 // 	if ( app && app->_running )
 // 	{
@@ -183,5 +190,11 @@ void GLFWBackend::mouseMoveListener( GLFWwindow* win, double x, double y )
 void GLFWBackend::mouseEnterListener( GLFWwindow* win, int entered )
 {
 	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_mouseEnterWindowEventHandler ) device->_mouseEnterWindowEventHandler( entered );
+	if ( device->_mouseEnterWindowEventHandler.isInitialized() ) device->_mouseEnterWindowEventHandler.invoke( entered );
 }
+
+bool GLFWBackend::CheckKeyDown( void *handle, int key )
+{
+	return glfwGetKey( ( GLFWwindow * ) handle, key ) == GLFW_PRESS;
+}
+

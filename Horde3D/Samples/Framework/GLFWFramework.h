@@ -16,13 +16,17 @@ public:
 
 	virtual bool DestroyWindow( void *handle ) override;
 
-	virtual void Update() override;
+	virtual void ProcessEvents() override;
 
-	virtual void SetWindowTitle( void *handle, const std::string &title ) override;
+	virtual void SetWindowTitle( void *handle, const char *title ) override;
 
 	virtual void SetCursorVisible( void *handle, bool visible ) override;
 
 	virtual void SwapBuffers( void *handle ) override;
+
+	virtual void GetSize( void *handle, int *width, int *height ) override;
+
+	virtual bool CheckKeyDown( void *handle, int key ) override;
 
 protected:
 	
@@ -32,6 +36,8 @@ protected:
 	static void keyPressListener( GLFWwindow* win, int key, int scancode, int action, int mods );
 	static void mouseMoveListener( GLFWwindow* win, double x, double y );
 	static void mouseEnterListener( GLFWwindow* win, int entered );
+
+
 
 protected:
 
