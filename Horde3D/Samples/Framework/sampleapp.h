@@ -133,7 +133,7 @@ protected:
     virtual void render();
     virtual void finalize();
     
-    virtual void keyEventHandler( int key, int scancode, int action, int mods );
+    virtual void keyEventHandler( int key, int keyState, int mods );
     virtual void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 
     void resizeViewport();
@@ -143,6 +143,9 @@ protected:
 	// Event handlers
 	void requestClosing();
 	
+	FrameworkBackend *getBackend() { return _backend; }
+	void *getWindowHandle() { return _winHandle; }
+
 //	static void keyEventHandler( int key, int scancode, int action, int mods );
 //	static void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 

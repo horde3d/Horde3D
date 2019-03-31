@@ -129,10 +129,10 @@ bool SampleApplication::init()
 {
 	// Init params can be changed in derived user applications
 	auto params = setupInitParameters();
-	if ( _backend->Init( params ) ) return false;
+	if ( !_backend->Init( params ) ) return false;
 
 	auto winParams = setupWindowParameters();
-	if ( _backend->CreateWindow( winParams ) ) return false;
+	if ( ( _winHandle = _backend->CreateWindow( winParams ) ) == nullptr ) return false;
 
 	// Initialize engine
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
@@ -174,8 +174,13 @@ bool SampleApplication::init()
 	h3dutDumpMessages();
 
 	// Attach input callbacks
-// 	_backend->RegisterKeyboardEventHandler( keyEventHandler );
-// 	_backend->RegisterMouseMoveEventHandler( mouseMoveHandler );
+	Delegate< void( int, int, int ) > keyboardDelegate;
+	keyboardDelegate.bind< SampleApplication, &SampleApplication::keyEventHandler >( this );
+ 	_backend->RegisterKeyboardEventHandler( keyboardDelegate );
+
+	Delegate< void( float, float, float, float ) > mouseMoveDelegate;
+	mouseMoveDelegate.bind< SampleApplication, &SampleApplication::mouseMoveHandler >( this );
+	_backend->RegisterMouseMoveEventHandler( mouseMoveDelegate );
 
 	// Indicate that everything is ok
 	_initialized = true;
@@ -622,9 +627,9 @@ void SampleApplication::finalize()
 }
 
 
-void SampleApplication::keyEventHandler( int key, int scancode, int action, int mods )
+void SampleApplication::keyEventHandler( int key, int keyState, int mods )
 {
-	if ( action != KEY_PRESS )
+	if ( keyState != KEY_PRESS )
         return;
 
     switch ( key )
