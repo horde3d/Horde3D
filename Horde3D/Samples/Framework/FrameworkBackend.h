@@ -152,6 +152,53 @@
 
 #define KEY_LAST               KEY_MENU
 
+//
+// Delegate interface inspired by works of marcmo (github.com/marcmo/delegates) 
+// and Stefan Reinalter (https://blog.molecular-matters.com/)
+//
+template <typename T>
+class Delegate {};
+
+template <typename R, typename... Params>
+class Delegate< R( Params... ) >
+{
+	typedef void* instancePtr;
+	typedef R( *internalFunction ) ( void *instance, Params... );
+	typedef std::pair< void *, internalFunction > methodStub;
+	bool initialized;
+
+	template <class C, R( C::*func )( Params... ) >
+	static inline R classMethodStub( void* instance, Params... args )
+	{
+		return ( static_cast< C* >( instance )->*func )( args... );
+	}
+
+public:
+
+	Delegate() : stub( nullptr, nullptr ), initialized( false )
+	{
+	}
+
+	bool isInitialized() { return initialized; }
+
+	template <class C, R( C::*func )( Params... ) >
+	void bind( C *instance )
+	{
+		stub.first = instance;
+		stub.second = &classMethodStub< C, func >;
+		initialized = true;
+	}
+
+	R invoke( Params... args )
+	{
+		return stub.second( stub.first, args... );
+	}
+private:
+
+	methodStub stub;
+};
+
+
 enum class RenderAPI : int
 {
 	OpenGL2 = 2,
@@ -192,14 +239,14 @@ struct WindowCreateParameters
 };
 
 // Event callbacks
-typedef void ( *KeyboardEventCallBack )( int key, int keyState, int modifiers );
-typedef void ( *MouseMoveEventCallBack )( float x, float y, float prev_x, float prev_y );
-typedef void ( *MouseButtonEventCallBack )( int mouseButton, int mouseButtonState, int actionCount );
-typedef void ( *MouseWheelEventCallBack )( int wheelX, int wheelY, int wheelXPrev, int wheelYPrev );
-typedef void ( *MouseEnterWindowEventCallBack )( int entered );
-typedef void ( *TouchEventCallBack )( int evType, float x, float y, float dx, float dy );
-typedef void ( *WindowResizeCallback )( int width, int height );
-typedef void ( *QuitEventCallBack )();
+typedef Delegate< void( int, int, int ) > KeyboardEventCallBack; // ( int key, int keyState, int modifiers );
+typedef Delegate< void( float, float, float, float ) > MouseMoveEventCallBack; // ( float x, float y, float prev_x, float prev_y );
+typedef Delegate< void( int, int, int ) > MouseButtonEventCallBack; // ( int mouseButton, int mouseButtonState, int actionCount );
+typedef Delegate< void( int, int, int, int ) > MouseWheelEventCallBack;  // ( int wheelX, int wheelY, int wheelXPrev, int wheelYPrev );
+typedef Delegate< void( int ) >  MouseEnterWindowEventCallBack; // ( int entered );
+typedef Delegate< void( int, float, float, float, float ) > TouchEventCallBack; // ( int evType, float x, float y, float dx, float dy );
+typedef Delegate< void( int, int ) > WindowResizeCallback; // ( int width, int height );
+typedef Delegate< void() > QuitEventCallBack;
 
 class FrameworkBackend
 {
@@ -223,7 +270,7 @@ public:
 
 	virtual void SetCursorVisible( void *handle, bool visible ) = 0;
 
-	virtual bool CheckKeyDown( void *handle, int key );
+	virtual bool CheckKeyDown( void *handle, int key ) = 0;
 
 	// Callbacks
 	void RegisterKeyboardEventHandler( KeyboardEventCallBack f ) { _keyEventHandler = f; }
@@ -245,13 +292,13 @@ public:
 protected:
 
 	// Event handlers
-	KeyboardEventCallBack		_keyEventHandler = nullptr;
-	MouseMoveEventCallBack		_mouseMoveEventHandler = nullptr;
-	MouseButtonEventCallBack	_mouseButtonEventHandler = nullptr;
-	MouseWheelEventCallBack		_mouseWheelEventHandler = nullptr;
-	MouseEnterWindowEventCallBack _mouseEnterWindowEventHandler = nullptr;
-	TouchEventCallBack			_touchEventHandler = nullptr;
-	WindowResizeCallback		_windowResizeHandler = nullptr;
-	QuitEventCallBack			_quitEventHandler = nullptr;
+	KeyboardEventCallBack		_keyEventHandler;
+	MouseMoveEventCallBack		_mouseMoveEventHandler;
+	MouseButtonEventCallBack	_mouseButtonEventHandler ;
+	MouseWheelEventCallBack		_mouseWheelEventHandler;
+	MouseEnterWindowEventCallBack _mouseEnterWindowEventHandler;
+	TouchEventCallBack			_touchEventHandler;
+	WindowResizeCallback		_windowResizeHandler;
+	QuitEventCallBack			_quitEventHandler;
 
 };
