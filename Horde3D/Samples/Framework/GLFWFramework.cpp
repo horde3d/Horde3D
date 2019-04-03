@@ -175,16 +175,14 @@ void GLFWBackend::keyPressListener( GLFWwindow* win, int key, int scancode, int 
 
 void GLFWBackend::mouseMoveListener( GLFWwindow* win, double x, double y )
 {
-	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_mouseMoveEventHandler.isInitialized() ) device->_mouseMoveEventHandler.invoke( ( float ) x, ( float ) y, 0, 0 );
+	static float prevMx = 0;
+	static float prevMy = 0;
 
-// 	if ( app && app->_running )
-// 	{
-// 		app->mouseMoveHandler( ( float ) x, ( float ) y, app->_prevMx, app->_prevMy );
-// 
-// 		app->_prevMx = ( float ) x;
-// 		app->_prevMy = ( float ) y;
-// 	}
+	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
+	if ( device->_mouseMoveEventHandler.isInitialized() ) device->_mouseMoveEventHandler.invoke( ( float ) x, ( float ) y, prevMx, prevMy );
+
+	prevMx = ( float ) x;
+	prevMy = ( float ) y;
 }
 
 void GLFWBackend::mouseEnterListener( GLFWwindow* win, int entered )

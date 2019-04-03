@@ -169,11 +169,16 @@ bool SampleApplication::init()
 	}
 
 	// Setup camera and resize buffers
-	resizeViewport();
+	int width, height;
+	getSize( width, height );
+	setViewportSize( width, height );
 
 	h3dutDumpMessages();
 
-	// Attach input callbacks
+	// Init cursor
+	_backend->SetCursorVisible( _winHandle, _winShowCursor );
+
+	// Attach callbacks
 	Delegate< void( int, int, int ) > keyboardDelegate;
 	keyboardDelegate.bind< SampleApplication, &SampleApplication::keyEventHandler >( this );
  	_backend->RegisterKeyboardEventHandler( keyboardDelegate );
@@ -181,6 +186,22 @@ bool SampleApplication::init()
 	Delegate< void( float, float, float, float ) > mouseMoveDelegate;
 	mouseMoveDelegate.bind< SampleApplication, &SampleApplication::mouseMoveHandler >( this );
 	_backend->RegisterMouseMoveEventHandler( mouseMoveDelegate );
+
+	Delegate< void( int, int, int ) > mouseButtonDelegate;
+	mouseButtonDelegate.bind< SampleApplication, &SampleApplication::mousePressHandler >( this );
+	_backend->RegisterMouseButtonEventHandler( mouseButtonDelegate );
+
+	Delegate< void( int ) > mouseEnterDelegate;
+	mouseEnterDelegate.bind< SampleApplication, &SampleApplication::mouseEnterHandler >( this );
+	_backend->RegisterMouseEnterWindowEventHandler( mouseEnterDelegate );
+
+	Delegate< void( int, int ) > windowResizeDelegate;
+	windowResizeDelegate.bind< SampleApplication, &SampleApplication::setViewportSize >( this );
+	_backend->RegisterWindowResizeEventHandler( windowResizeDelegate );
+
+	Delegate< void() > windowCloseDelegate;
+	windowCloseDelegate.bind< SampleApplication, &SampleApplication::requestClosing >( this );
+	_backend->RegisterQuitEventHandler( windowCloseDelegate );
 
 	// Indicate that everything is ok
 	_initialized = true;
@@ -378,6 +399,9 @@ int SampleApplication::run()
 #else
 	while ( _running )
 	{
+		// Handle fullscreen & sample count change
+		if ( !_initialized ) RecreateWindow();
+
 		mainLoop( this );
 	}
 #endif
@@ -461,6 +485,12 @@ void SampleApplication::requestClosing()
 #endif // __EMSCRIPTEN__
 }
 
+
+void SampleApplication::RecreateWindow()
+{
+	release();
+	init();
+}
 
 bool SampleApplication::initResources()
 {
@@ -714,11 +744,22 @@ void SampleApplication::mouseMoveHandler( float x, float y, float prev_x, float 
 }
 
 
-void SampleApplication::resizeViewport()
+void SampleApplication::mousePressHandler( int mouseButton, int mouseButtonState, int actionCount )
 {
-    int width, height;
-    getSize( width, height );
+	if ( _freezeMode == 2 || _benchmark ) return;
+	
+	// Should be done in derived application
+}
 
+
+void SampleApplication::mouseEnterHandler( int entered )
+{
+	_winHasCursor = entered != 0;
+}
+
+
+void SampleApplication::setViewportSize( int width, int height )
+{
     // Resize viewport
     h3dSetNodeParamI( _cam, H3DCamera::ViewportXI, 0 );
     h3dSetNodeParamI( _cam, H3DCamera::ViewportYI, 0 );

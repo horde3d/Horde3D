@@ -135,8 +135,10 @@ protected:
     
     virtual void keyEventHandler( int key, int keyState, int mods );
     virtual void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
+	virtual void mousePressHandler( int mouseButton, int mouseButtonState, int actionCount );
+	virtual void mouseEnterHandler( int entered );
 
-    void resizeViewport();
+    void setViewportSize( int width, int height );
 
 	static void mainLoop( void *arg );
 
@@ -145,7 +147,7 @@ protected:
 	
 	FrameworkBackend *getBackend() { return _backend; }
 	void *getWindowHandle() { return _winHandle; }
-
+	void RecreateWindow();
 //	static void keyEventHandler( int key, int scancode, int action, int mods );
 //	static void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 

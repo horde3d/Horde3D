@@ -179,7 +179,7 @@ public:
 	{
 	}
 
-	bool isInitialized() { return initialized; }
+	inline bool isInitialized() { return initialized; }
 
 	template <class C, R( C::*func )( Params... ) >
 	void bind( C *instance )
