@@ -24,6 +24,8 @@ class SDLBackend : public FrameworkBackend
 
 	virtual void GetSize( void *handle, int *width, int *height ) override;
 
+	virtual bool CheckKeyDown( void *handle, int key ) override;
+
 protected:
 
 	BackendInitParameters _usedInitParams;
