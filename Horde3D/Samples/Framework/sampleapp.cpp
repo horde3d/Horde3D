@@ -417,8 +417,8 @@ int SampleApplication::run()
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
 
-        double startTime = glfwGetTime();
-        while( glfwGetTime() - startTime < 5.0 )
+        t = std::chrono::high_resolution_clock::now();
+        while( std::chrono::duration_cast<std::chrono::duration< double > >( std::chrono::high_resolution_clock::now() - t ).count() < 5.0 )
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );

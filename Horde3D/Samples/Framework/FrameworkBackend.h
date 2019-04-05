@@ -152,6 +152,11 @@
 
 #define KEY_LAST               KEY_MENU
 
+// Mouse buttons
+#define MOUSE_RELEASE			0
+
+#define MOUSE_PRESS				1
+
 //
 // Delegate interface inspired by works of marcmo (github.com/marcmo/delegates) 
 // and Stefan Reinalter (https://blog.molecular-matters.com/)
