@@ -409,7 +409,7 @@ int SampleApplication::run()
 	// Show benchmark results
     if( _benchmark )
     {
-		auto t = std::chrono::high_resolution_clock::now();
+		auto t = std::chrono::steady_clock::now();
         double avgFPS = _benchmarkLength / ( std::chrono::duration_cast<std::chrono::duration< double > >( t - _t0 ).count() );
         const char* fpsLabel = "Average FPS:";
 		const char* fpsValue = new char[ 16 ];
@@ -417,8 +417,8 @@ int SampleApplication::run()
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
 
-        t = std::chrono::high_resolution_clock::now();
-        while( std::chrono::duration_cast<std::chrono::duration< double > >( std::chrono::high_resolution_clock::now() - t ).count() < 5.0 )
+        t = std::chrono::steady_clock::now();
+        while( std::chrono::duration_cast<std::chrono::duration< double > >( std::chrono::steady_clock::now() - t ).count() < 5.0 )
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
@@ -446,7 +446,7 @@ void SampleApplication::mainLoop( void *arg )
 
 	if ( firstCall )
 	{
-		app->_t0 = std::chrono::high_resolution_clock::now();
+		app->_t0 = std::chrono::steady_clock::now();
 		firstCall = false;
 	}
 
@@ -454,7 +454,7 @@ void SampleApplication::mainLoop( void *arg )
 	++frames;
 	if ( !app->_benchmark && frames >= 3 )
 	{
-		auto t = std::chrono::high_resolution_clock::now();
+		auto t = std::chrono::steady_clock::now();
 		fps = frames / ( float ) ( std::chrono::duration_cast< std::chrono::duration<double> >( t - app->_t0 ).count() );
 		if ( fps < 5 ) fps = H3D_FPS_REFERENCE;  // Handle breakpoints
 		frames = 0;
