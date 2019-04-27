@@ -23,6 +23,8 @@
 #include <memory>
 #include <array>
 
+#include "FrameworkBackend.h"
+
 using namespace std;
 
 struct Vec3
@@ -256,14 +258,14 @@ void TessellatorSample::releaseResources()
 }
 
 
-void TessellatorSample::keyEventHandler( int key, int scancode, int action, int mods )
+void TessellatorSample::keyEventHandler( int key, int keyState, int mods )
 {
-	SampleApplication::keyEventHandler( key, scancode, action, mods );
+	SampleApplication::keyEventHandler( key, keyState, mods );
 
-	if ( action != GLFW_PRESS )
+	if ( keyState != KEY_PRESS )
 		return;
 
-	if ( key == GLFW_KEY_UP )
+	if ( key == KEY_UP )
 	{
 		_tessInner++;
 		_tessOuter++;
@@ -273,7 +275,7 @@ void TessellatorSample::keyEventHandler( int key, int scancode, int action, int 
 		h3dSetMaterialUniform( mat, "tessLevelOuter", ( float ) _tessOuter, 0, 0, 0 );
 	}
 
-	if ( key == GLFW_KEY_DOWN )
+	if ( key == KEY_DOWN )
 	{
 		_tessInner == 1 ? 1 : _tessInner--;
 		_tessOuter == 1 ? 1 : _tessOuter--;

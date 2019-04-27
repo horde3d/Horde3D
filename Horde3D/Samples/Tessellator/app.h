@@ -28,7 +28,7 @@ protected:
     bool initResources();
     void releaseResources();
 
-	void keyEventHandler( int key, int scancode, int action, int mods );
+    virtual void keyEventHandler( int key, int keyState, int mods );
 
     void update();
 
