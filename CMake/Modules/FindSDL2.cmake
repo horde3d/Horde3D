@@ -167,7 +167,47 @@ IF(SDL2_LIBRARY_TEMP)
 ENDIF(SDL2_LIBRARY_TEMP)
 
 #message("</FindSDL2.cmake>")
+IF (HORDE3D_FORCE_DOWNLOAD_SDL)
+    # If not found, try to build with local sources.
+    # It uses CMake's "ExternalProject_Add" target.
+    MESSAGE(STATUS "Preparing external SDL project")
+    INCLUDE(ExternalProject)
 
-INCLUDE(FindPackageHandleStandardArgs)
+	INCLUDE(ExternalProject)
+    ExternalProject_Add(project_sdl
+        URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+        CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+        LOG_DOWNLOAD 1
+        LOG_UPDATE 1
+        LOG_CONFIGURE 1
+        LOG_BUILD 1
+        LOG_TEST 1
+        LOG_INSTALL 1
+    )
+	MESSAGE(STATUS "External SDL project done")
+	
+	ExternalProject_Get_Property(project_sdl install_dir)
+    SET(SDL2_INCLUDE_DIR
+        ${install_dir}/include/SDL2
+    )
+    
+    IF(MSVC)
+       SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.dll )
+    ELSE(MSVC)
+       SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
+    ENDIF(MSVC)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
+    add_library(SDL2_LIBRARY SHARED IMPORTED)
+    set_property(TARGET SDL2_LIBRARY PROPERTY IMPORTED_LOCATION  ${SDL_LIBRARY_PATH} )
+#    add_custom_command(OUTPUT ${SDL_LIBRARY_PATH} VERBATIM COMMAND ${CMAKE_COMMAND} -E echo "Building GLFW" DEPENDS project_glfw)
+#   add_custom_target(SDL_LIBRARY_EXTERN DEPENDS ${SDL_LIBRARY_PATH} project_glfw)
+    add_dependencies(SDL2_LIBRARY project_sdl)
+#    add_dependencies(SDL_LIBRARY SDL_LIBRARY_EXTERN)
+    set(SDL2_LIBRARY ${SDL_LIBRARY_PATH} ${CMAKE_THREAD_LIBS_INIT})
+
+ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
+	INCLUDE(FindPackageHandleStandardArgs)
+
+	FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
+ENDIF(HORDE3D_FORCE_DOWNLOAD_SDL)
+
