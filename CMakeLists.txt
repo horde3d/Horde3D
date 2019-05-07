@@ -31,8 +31,6 @@ if(HORDE3D_BUILD_EXAMPLES)
         option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" ON)
     endif()
 
-    message("Here")
-
     if(HORDE3D_USE_GLFW)
         # Look for required GLFW library.
         option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
