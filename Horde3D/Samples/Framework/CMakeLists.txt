@@ -32,7 +32,7 @@ elseif(HORDE3D_USE_SDL)
     add_definitions( -DSDL_BACKEND )
 
     if (HORDE3D_FORCE_DOWNLOAD_SDL)
-        add_definitions( SampleFramework project_sdl )
+        add_dependencies( SampleFramework project_sdl )
     endif()
 endif()
 
