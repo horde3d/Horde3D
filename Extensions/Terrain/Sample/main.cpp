@@ -19,5 +19,7 @@
 int main( int argc, char** argv )
 {
 	TerrainSample app( argc, argv );
+   	if ( !app.init() ) return 1;
+
 	return app.run();
 }
