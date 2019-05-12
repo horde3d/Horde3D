@@ -14,6 +14,9 @@ if(HORDE3D_USE_GLFW)
 
     add_definitions( -DGLFW_BACKEND )
 
+    if (HORDE3D_FORCE_DOWNLOAD_GLFW)
+        add_dependencies( SampleFramework project_glfw )
+    endif()
 elseif(HORDE3D_USE_SDL)
     include_directories(${SDL2_INCLUDE_DIR})
 
@@ -27,6 +30,10 @@ elseif(HORDE3D_USE_SDL)
                         ${CMAKE_CURRENT_LIST_DIR}/FrameworkBackend.h)
 
     add_definitions( -DSDL_BACKEND )
+
+    if (HORDE3D_FORCE_DOWNLOAD_SDL)
+        add_definitions( SampleFramework project_sdl )
+    endif()
 endif()
 
 #add_dependencies(SampleFramework project_glfw)
