@@ -235,7 +235,7 @@ BackendInitParameters SampleApplication::setupInitParameters()
 	{
 		case ( int ) RenderAPI::OpenGL2:
 			params.requestedAPI = RenderAPI::OpenGL2;
-			params.majorVersion = 3;
+			params.majorVersion = 2;
 			params.minorVersion = 1;
 			break;
 		case ( int ) RenderAPI::OpenGL4:

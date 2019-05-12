@@ -264,7 +264,7 @@ bool SDLBackend::Init( const BackendInitParameters &params )
 	switch ( params.requestedAPI )
 	{
 		case RenderAPI::OpenGL2:
-			SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY );
+//			SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY );
 
 			break;
 		case RenderAPI::OpenGL4:

@@ -4,8 +4,12 @@
 
 bool GLFWBackend::Init( const BackendInitParameters &params )
 {
-	if ( !glfwInit() ) return false;
-	
+	if ( !glfwInit() )
+	{
+		std::cout << "Cannot initialize GLFW! Exiting.";
+		return false;
+	}
+
 	// Specify surface parameters
 	glfwWindowHint( GLFW_RED_BITS, params.redBits );
 	glfwWindowHint( GLFW_GREEN_BITS, params.greenBits );
@@ -18,7 +22,7 @@ bool GLFWBackend::Init( const BackendInitParameters &params )
 	switch ( params.requestedAPI )
 	{
 		case RenderAPI::OpenGL2:
-			glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
+//			glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
 
 			break;
 		case RenderAPI::OpenGL4:
