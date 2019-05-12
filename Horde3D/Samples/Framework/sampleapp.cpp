@@ -158,6 +158,7 @@ bool SampleApplication::init()
 	h3dSetOption( H3DOptions::FastAnimation, 1 );
 	h3dSetOption( H3DOptions::SampleCount, ( float ) _sampleCount );
 	h3dSetOption( H3DOptions::DumpFailedShaders, 1 );
+	h3dSetOption( H3DOptions::GatherTimeStats, 1 ); // Set to 0 to improve performance on low-end machines
 
 	// Init resources
 	if ( !initResources() )
@@ -498,7 +499,7 @@ bool SampleApplication::initResources()
 	
 	// Pipelines
 	_pipelineRes[0] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/forward.pipeline.xml", 0 );
-	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.xml", 0 );
+	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.particles.xml", 0 );
 	_pipelineRes[2] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
 	
 	// Overlays
