@@ -140,7 +140,7 @@ protected:
 
     void setViewportSize( int width, int height );
 
-	static void mainLoop( void *arg );
+	static inline void mainLoop( void *arg );
 
 	// Event handlers
 	void requestClosing();
