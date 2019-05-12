@@ -362,7 +362,8 @@ void SDLBackend::SetWindowTitle( void *handle, const char *title )
 
 void SDLBackend::SetCursorVisible( void *handle, bool visible )
 {
-	SDL_ShowCursor( visible );
+//	SDL_ShowCursor( visible );
+	SDL_SetRelativeMouseMode( visible ? SDL_FALSE : SDL_TRUE );
 }
 
 void SDLBackend::GetSize( void *handle, int *width, int *height )
