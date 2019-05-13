@@ -192,7 +192,7 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
     )
     
     IF(MSVC)
-       SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.dll )
+       SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
     ELSE(MSVC)
        SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
     ENDIF(MSVC)
@@ -205,9 +205,27 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 #    add_dependencies(SDL_LIBRARY SDL_LIBRARY_EXTERN)
     set(SDL2_LIBRARY ${SDL_LIBRARY_PATH} ${CMAKE_THREAD_LIBS_INIT})
 
+	# Copy library to binaries folder
+	if(MSVC)
+		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}\\bin\\SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Debug\\" )
+		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}\\bin\\SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Release\\" )
+	endif()
+#	file(COPY ${SDL_LIBRARY_PATH} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+
 ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 	INCLUDE(FindPackageHandleStandardArgs)
 
 	FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
+
+	# Copy sdl lib to output folder, where other binaries reside
+	IF(MSVC)
+		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+		MESSAGE("${SDL_LIB_PATH}")
+
+		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
+	ENDIF()
 ENDIF(HORDE3D_FORCE_DOWNLOAD_SDL)
+
+
 
