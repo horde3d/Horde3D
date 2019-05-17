@@ -623,7 +623,7 @@ void TerrainNode::setParamI( int param, int value )
 			createBlockTree();
 			if( result ) return;
 		}
-		Modules::setError( "Invalid texture in h3dSetNodeParamI for H3DLight::HeightTexResI" );
+		Modules::setError( "Invalid texture in h3dSetNodeParamI for H3DEXTTerrain::HeightTexResI" );
 		return;
 	case TerrainNodeParams::MatResI:
 		res = Modules::resMan().resolveResHandle( value );

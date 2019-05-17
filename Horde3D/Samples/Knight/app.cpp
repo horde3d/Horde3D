@@ -21,6 +21,7 @@
 #include <math.h>
 #include <iomanip>
 
+#include "FrameworkBackend.h"
 #include "Horde3DOverlays.h"
 
 using namespace std;
@@ -36,7 +37,7 @@ KnightSample::KnightSample( int argc, char** argv ) :
     _helpRows += 1;
     
     // Default to HDR pipeline
-	_curPipeline = 0;//2;
+	_curPipeline = 2;
 }
 
 
@@ -132,18 +133,21 @@ void KnightSample::update()
     int freeze_mode = checkFlag( SampleApplication::FreezeMode );
     float frame_time = 1.0f / getFPS();
 
+	auto backend = getBackend();
+	auto window = getWindowHandle();
+
     // --------------
     // Key-down state
     // --------------
     if( freeze_mode != 2 )
     {
-        if( isKeyDown(GLFW_KEY_1) )
+        if( backend->CheckKeyDown( window, KEY_1) )
         {
             // Change blend weight
             _weight += frame_time;
             if( _weight > 1 ) _weight = 1;
         }
-        if( isKeyDown(GLFW_KEY_2) )
+        if( backend->CheckKeyDown( window, KEY_2) )
         {
             // Change blend weight
             _weight -= frame_time;

@@ -18,14 +18,17 @@
 #define _sample_app_H_
 
 #include "Horde3D.h"
-#include <GLFW/glfw3.h>
 #include <string>
+#include <chrono>
 
 #define H3D_RAD2DEG 57.324840764f
 #define H3D_DEG2RAD  0.017453292f
 #define H3D_FPS_REFERENCE 60.0f
 #define H3D_DEFAULT_SAMPLE_BENCHMARK_LENGTH 600
 
+class FrameworkBackend;
+struct BackendInitParameters;
+struct WindowCreateParameters;
 
 class SampleApplication
 {
@@ -55,6 +58,11 @@ public:
             int benchmark_length = H3D_DEFAULT_SAMPLE_BENCHMARK_LENGTH );
 	virtual ~SampleApplication();
 
+	bool init();
+
+
+	void release();
+
     const char *getResourcePath() const { return _resourcePath.c_str(); }
     const char *getTitle() const { return _winTitle.c_str(); }
     void getSize( int &width, int &height ) const;
@@ -62,7 +70,10 @@ public:
     float getFOV() const { return _fov; }
     float getNearPlane() const { return _nearPlane; }
     float getFarPlane() const { return _farPlane; }
-    float getStartTime() const { return (float) _t0; }
+	float getStartTime() const
+	{
+		return std::chrono::duration< float >( _t0.time_since_epoch() ).count();
+	}
     float getFPS() const { return _curFPS; }
 
     int checkFlag(ApplicationFlag flag) const {
@@ -94,7 +105,7 @@ public:
         return 0;
     }
 
-    bool isKeyDown( int key ) const { return glfwGetKey( _winHandle, key ) == GLFW_PRESS; }
+//    bool isKeyDown( int key ) const { return glfwGetKey( _winHandle, key ) == GLFW_PRESS; }
 
     void setTitle( const char* title );
     void setHelpPanel( int num_rows, char** column1, char** column2 = 0);
@@ -109,10 +120,11 @@ public:
     void setFreezeMode( int mode );
 
     int run();
-    void requestClosing();
 	
 protected:
-    GLFWwindow* getWindowHandle() const { return _winHandle; }
+//     GLFWwindow* getWindowHandle() const { return _winHandle; }
+	virtual BackendInitParameters setupInitParameters();
+	virtual WindowCreateParameters setupWindowParameters();
 
     virtual bool initResources();
     virtual void releaseResources();
@@ -121,22 +133,26 @@ protected:
     virtual void render();
     virtual void finalize();
     
-    virtual void keyEventHandler( int key, int scancode, int action, int mods );
+    virtual void keyEventHandler( int key, int keyState, int mods );
     virtual void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
+	virtual void mousePressHandler( int mouseButton, int mouseButtonState, int actionCount );
+	virtual void mouseEnterHandler( int entered );
 
-    void resizeViewport();
+    void setViewportSize( int width, int height );
+
+	static inline void mainLoop( void *arg );
+
+	// Event handlers
+	void requestClosing();
+	
+	FrameworkBackend *getBackend() { return _backend; }
+	void *getWindowHandle() { return _winHandle; }
+	void RecreateWindow();
+//	static void keyEventHandler( int key, int scancode, int action, int mods );
+//	static void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 
 private:
-	bool init();
-    void release();
 	
-	// GLFW listeners.
-    static void windowCloseListener(  GLFWwindow* win );
-    static void windowResizeListener(  GLFWwindow* win, int width, int height );
-    static void keyPressListener( GLFWwindow* win, int key, int scancode, int action, int mods );
-    static void mouseMoveListener( GLFWwindow* win, double x, double y );
-    static void mouseEnterListener( GLFWwindow* win, int entered );
-
 protected:
     // Camera movement
     float        _x, _y, _z, _rx, _ry;  // Viewer position and orientation
@@ -155,15 +171,18 @@ protected:
 	int			 _renderInterface;
 
 private:
+
+	FrameworkBackend *_backend = nullptr;
+
 	bool         _initialized;
 	bool         _running;
     std::string  _resourcePath;
     bool         _benchmark;
     int          _benchmarkLength;
     float        _curFPS;
-    double       _t0;
+	std::chrono::steady_clock::time_point      _t0;
 
-    GLFWwindow*  _winHandle;
+    void		*_winHandle;
 	std::string  _winTitle;
     int          _initWinWidth, _initWinHeight;
     int          _winSampleCount, _sampleCount;

@@ -25,7 +25,15 @@
 
 #include "Horde3DOverlays.h"
 
+#if defined ( GLFW_BACKEND )
+	#include "GLFWFramework.h"
+	typedef GLFWBackend Backend;
+#elif defined( SDL_BACKEND )
+	#include "SDLFramework.h"
+	typedef SDLBackend Backend;
+#endif
 using namespace std;
+#include <chrono>
 
 
 // Extracts an absolute path to the resources directory given the executable path.
@@ -89,7 +97,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _benchmark( checkForBenchmarkOption( argc, argv ) ),
     _benchmarkLength(benchmark_length),
     _curFPS(H3D_FPS_REFERENCE),
-    _winHandle(0),
+//    _winHandle(0),
     _winTitle(title),
     _initWinWidth(width), _initWinHeight(height),
     _winSampleCount(0), _sampleCount(0),
@@ -100,33 +108,186 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _statMode(0), _freezeMode(0),
     _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false)
 {
-    // Initialize GLFW
-    glfwInit();
+    // Initialize backend
+	_backend = new Backend();
 }
 
 
 SampleApplication::~SampleApplication()
 {
     release();
+	
+	if ( _backend )
+	{
+		_backend->Release();
+		delete _backend; _backend = nullptr;
+	}
+}
 
-    // Terminate GLFW
-    glfwTerminate();
+
+bool SampleApplication::init()
+{
+	// Init params can be changed in derived user applications
+	auto params = setupInitParameters();
+	if ( !_backend->Init( params ) ) return false;
+
+	auto winParams = setupWindowParameters();
+	if ( ( _winHandle = _backend->CreateWindow( winParams ) ) == nullptr ) return false;
+
+	// Initialize engine
+	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
+	{
+		std::cout << "Unable to initialize engine" << std::endl;
+
+		h3dutDumpMessages();
+		return false;
+	}
+
+	// Samples require overlays extension in order to display information
+	if ( !h3dCheckExtension( "Overlays" ) )
+	{
+		std::cout << "Unable to find overlays extension" << std::endl;
+		return false;
+	}
+
+	// Set options
+	h3dSetOption( H3DOptions::LoadTextures, 1 );
+	h3dSetOption( H3DOptions::TexCompression, 0 );
+	h3dSetOption( H3DOptions::MaxAnisotropy, 4 );
+	h3dSetOption( H3DOptions::ShadowMapSize, 2048 );
+	h3dSetOption( H3DOptions::FastAnimation, 1 );
+	h3dSetOption( H3DOptions::SampleCount, ( float ) _sampleCount );
+	h3dSetOption( H3DOptions::DumpFailedShaders, 1 );
+	h3dSetOption( H3DOptions::GatherTimeStats, 1 ); // Set to 0 to improve performance on low-end machines
+
+	// Init resources
+	if ( !initResources() )
+	{
+		std::cout << "Unable to initialize resources" << std::endl;
+
+		h3dutDumpMessages();
+		return false;
+	}
+
+	// Setup camera and resize buffers
+	int width, height;
+	getSize( width, height );
+	setViewportSize( width, height );
+
+	h3dutDumpMessages();
+
+	// Init cursor
+	_backend->SetCursorVisible( _winHandle, _winShowCursor );
+
+	// Attach callbacks
+	Delegate< void( int, int, int ) > keyboardDelegate;
+	keyboardDelegate.bind< SampleApplication, &SampleApplication::keyEventHandler >( this );
+ 	_backend->RegisterKeyboardEventHandler( keyboardDelegate );
+
+	Delegate< void( float, float, float, float ) > mouseMoveDelegate;
+	mouseMoveDelegate.bind< SampleApplication, &SampleApplication::mouseMoveHandler >( this );
+	_backend->RegisterMouseMoveEventHandler( mouseMoveDelegate );
+
+	Delegate< void( int, int, int ) > mouseButtonDelegate;
+	mouseButtonDelegate.bind< SampleApplication, &SampleApplication::mousePressHandler >( this );
+	_backend->RegisterMouseButtonEventHandler( mouseButtonDelegate );
+
+	Delegate< void( int ) > mouseEnterDelegate;
+	mouseEnterDelegate.bind< SampleApplication, &SampleApplication::mouseEnterHandler >( this );
+	_backend->RegisterMouseEnterWindowEventHandler( mouseEnterDelegate );
+
+	Delegate< void( int, int ) > windowResizeDelegate;
+	windowResizeDelegate.bind< SampleApplication, &SampleApplication::setViewportSize >( this );
+	_backend->RegisterWindowResizeEventHandler( windowResizeDelegate );
+
+	Delegate< void() > windowCloseDelegate;
+	windowCloseDelegate.bind< SampleApplication, &SampleApplication::requestClosing >( this );
+	_backend->RegisterQuitEventHandler( windowCloseDelegate );
+
+	// Indicate that everything is ok
+	_initialized = true;
+
+	return true;
+}
+
+
+void SampleApplication::release()
+{
+	if ( _winHandle )
+	{
+		// Release loaded resources
+		releaseResources();
+
+		// Release engine
+		h3dRelease();
+
+		// Destroy window
+		_backend->DestroyWindow( _winHandle );
+		_winHandle = nullptr;
+	}
+}
+
+
+BackendInitParameters SampleApplication::setupInitParameters()
+{
+	BackendInitParameters params;
+	switch ( _renderInterface )
+	{
+		case ( int ) RenderAPI::OpenGL2:
+			params.requestedAPI = RenderAPI::OpenGL2;
+			params.majorVersion = 2;
+			params.minorVersion = 1;
+			break;
+		case ( int ) RenderAPI::OpenGL4:
+			params.requestedAPI = RenderAPI::OpenGL4;
+#ifdef __APPLE__
+			// macOS supports GL up to 4.1, no support for compute shaders
+			params.majorVersion = 4;
+			params.minorVersion = 1;
+#else
+			// other OS support GL up to 4.6
+			params.majorVersion = 4;
+			params.minorVersion = 3;
+#endif
+			break;
+		case ( int ) RenderAPI::OpenGLES3:
+			params.requestedAPI = RenderAPI::OpenGLES3;
+			params.majorVersion = 3;
+			params.minorVersion = 0; // set to 3.0 in order to support IOS
+			break;
+		default:
+			break;
+	}
+
+	params.sampleCount = _winSampleCount;
+
+	return std::move( params );
+}
+
+
+WindowCreateParameters SampleApplication::setupWindowParameters()
+{
+	WindowCreateParameters winParams;
+	winParams.width = _initWinWidth;
+	winParams.height = _initWinHeight;
+	winParams.fullScreen = _winFullScreen;
+	winParams.windowTitle = _winTitle;
+	winParams.swapInterval = 0;
+
+	return std::move( winParams );
 }
 
 
 void SampleApplication::getSize( int &width, int &height ) const
 {
-    if ( _winHandle ) {
-        glfwGetWindowSize( _winHandle, &width, &height );
-    } else {
-        width = -1; height = -1;
-    }
+	if ( _winHandle ) _backend->GetSize( _winHandle, &width, &height );
+	else { width = -1; height = -1; }
 }
 
 
 void SampleApplication::setTitle( const char* title )
 {
-    glfwSetWindowTitle( _winHandle, title );
+	_backend->SetWindowTitle( _winHandle, title );
 
     _winTitle = title;
 }
@@ -200,7 +361,7 @@ void SampleApplication::enableWireframeMode( bool enabled )
 
 void SampleApplication::showCursor( bool visible )
 {
-    glfwSetInputMode( _winHandle, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED );
+	_backend->SetCursorVisible( _winHandle, visible );
 
     _winShowCursor = visible;
 }
@@ -226,64 +387,39 @@ void SampleApplication::setFreezeMode( int mode )
 
 int SampleApplication::run()
 {
-	
-	int frames = 0;
-	float fps = H3D_FPS_REFERENCE;
-	
+//	int frames = 0;
 	_running = true;
 
+	if ( !_initialized ) return -1;
+
 	// Game loop
-	while( _running )
+#ifdef __EMSCRIPTEN__
+	const int simulate_infinite_loop = 1; // call the function repeatedly
+	const int fps = -1; // call the function as fast as the browser wants to render (typically 60fps)
+	emscripten_set_main_loop_arg( mainloop, this, fps, simulate_infinite_loop );
+#else
+	while ( _running )
 	{
-        if ( !_initialized )
-        {
-            if( !init() )
-            {
-                glfwTerminate();
-                return -1;
-            }
-            _initialized = true;
-            _t0 = glfwGetTime();
-        }
-        
-        // 1. Calc FPS
-		++frames;
-        if( !_benchmark && frames >= 3 )
-		{
-			double t = glfwGetTime();
-            fps = frames / (float)(t - _t0);
-            if( fps < 5 ) fps = H3D_FPS_REFERENCE;  // Handle breakpoints
-			frames = 0;
-            _t0 = t;
-        }
+		// Handle fullscreen & sample count change
+		if ( !_initialized ) RecreateWindow();
 
-        _curFPS = _benchmark ? H3D_FPS_REFERENCE : fps;
-
-        // 2. Poll window events...
-        glfwPollEvents();
-
-        // 3. ...update logic...
-        update();
-
-        // 4. ...render and finalize frame.
-        render();
-        finalize();
-
-		if( _benchmark && frames == _benchmarkLength ) break;
+		mainLoop( this );
 	}
+#endif
 
 	// Show benchmark results
     if( _benchmark )
     {
-        double avgFPS = _benchmarkLength / (glfwGetTime() - _t0);
+		auto t = std::chrono::steady_clock::now();
+        double avgFPS = _benchmarkLength / ( std::chrono::duration_cast<std::chrono::duration< double > >( t - _t0 ).count() );
         const char* fpsLabel = "Average FPS:";
 		const char* fpsValue = new char[ 16 ];
         sprintf( (char*)fpsValue, "%.2f", avgFPS );
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
 
-        double startTime = glfwGetTime();
-        while( glfwGetTime() - startTime < 5.0 )
+        t = std::chrono::steady_clock::now();
+        while( std::chrono::duration_cast<std::chrono::duration< double > >( std::chrono::steady_clock::now() - t ).count() < 5.0 )
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
@@ -302,11 +438,60 @@ int SampleApplication::run()
 }
 
 
-void SampleApplication::requestClosing()
+void SampleApplication::mainLoop( void *arg )
 {
-	_running = false;
+	SampleApplication *app = static_cast< SampleApplication * > ( arg );
+	static float fps = H3D_FPS_REFERENCE;
+	static int frames = 0;
+	static bool firstCall = true;
+
+	if ( firstCall )
+	{
+		app->_t0 = std::chrono::steady_clock::now();
+		firstCall = false;
+	}
+
+	// 1. Calc FPS
+	++frames;
+	if ( !app->_benchmark && frames >= 3 )
+	{
+		auto t = std::chrono::steady_clock::now();
+		fps = frames / ( float ) ( std::chrono::duration_cast< std::chrono::duration<double> >( t - app->_t0 ).count() );
+		if ( fps < 5 ) fps = H3D_FPS_REFERENCE;  // Handle breakpoints
+		frames = 0;
+		app->_t0 = t;
+	}
+
+	app->_curFPS = app->_benchmark ? H3D_FPS_REFERENCE : fps;
+
+	// 2. Poll window events...
+	app->_backend->ProcessEvents();
+
+	// 3. ...update logic...
+	app->update();
+
+	// 4. ...render and finalize frame.
+	app->render();
+	app->finalize();
+
+	if ( app->_benchmark && frames == app->_benchmarkLength ) app->requestClosing();
 }
 
+void SampleApplication::requestClosing()
+{
+#ifdef __EMSCRIPTEN__
+	emscripten_cancel_main_loop();
+#else
+	_running = false;
+#endif // __EMSCRIPTEN__
+}
+
+
+void SampleApplication::RecreateWindow()
+{
+	release();
+	init();
+}
 
 bool SampleApplication::initResources()
 {
@@ -314,7 +499,7 @@ bool SampleApplication::initResources()
 	
 	// Pipelines
 	_pipelineRes[0] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/forward.pipeline.xml", 0 );
-	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.xml", 0 );
+	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.particles.xml", 0 );
 	_pipelineRes[2] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
 	
 	// Overlays
@@ -340,7 +525,6 @@ bool SampleApplication::initResources()
     if ( _helpRows > 11 ) { _helpLabels[11] = "LShift:"; _helpValues[11] = "Turbo"; }
 	
 	// 2. Load resources
-
     if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) )
 	{
         std::cout << "Error in loading resources" << std::endl;
@@ -369,9 +553,9 @@ void SampleApplication::update()
     {
         float curVel = _velocity / _curFPS * H3D_FPS_REFERENCE;
 
-        if( isKeyDown(GLFW_KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
+        if( _backend->CheckKeyDown( _winHandle, KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
 
-        if( isKeyDown(GLFW_KEY_W) )
+        if( _backend->CheckKeyDown( _winHandle, KEY_W ) )
         {
             // Move forward
             _x -= sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
@@ -379,7 +563,7 @@ void SampleApplication::update()
             _z -= cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
         }
 
-        if( isKeyDown(GLFW_KEY_S) )
+        if( _backend->CheckKeyDown( _winHandle, KEY_S ) )
         {
             // Move backward
             _x += sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
@@ -387,14 +571,14 @@ void SampleApplication::update()
             _z += cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
         }
 
-        if( isKeyDown(GLFW_KEY_A) )
+        if( _backend->CheckKeyDown( _winHandle, KEY_A ) )
         {
             // Strafe left
             _x += sinf( H3D_DEG2RAD * ( _ry - 90) ) * curVel;
             _z += cosf( H3D_DEG2RAD * ( _ry - 90 ) ) * curVel;
         }
 
-        if( isKeyDown(GLFW_KEY_D) )
+        if( _backend->CheckKeyDown( _winHandle, KEY_D ) )
         {
             // Strafe right
             _x += sinf( H3D_DEG2RAD * ( _ry + 90 ) ) * curVel;
@@ -470,72 +654,72 @@ void SampleApplication::finalize()
     h3dutDumpMessages();
 
     // Swap buffers
-    glfwSwapBuffers( _winHandle );
+    _backend->SwapBuffers( _winHandle );
 }
 
 
-void SampleApplication::keyEventHandler( int key, int scancode, int action, int mods )
+void SampleApplication::keyEventHandler( int key, int keyState, int mods )
 {
-    if (action != GLFW_PRESS)
+	if ( keyState != KEY_PRESS )
         return;
 
     switch ( key )
     {
-    case GLFW_KEY_ESCAPE:
+    case KEY_ESCAPE:
     {
         requestClosing();
     }
     break;
 
-    case GLFW_KEY_SPACE:
+    case KEY_SPACE:
     {
         setFreezeMode( _freezeMode + 1 );
     }
     break;
 
-    case GLFW_KEY_F1:
+    case KEY_F1:
     {
         showHelpPanel( !_showHelpPanel );
     }
     break;
 
-    case GLFW_KEY_F2:
+    case KEY_F2:
     {
         showStatPanel( _statMode + 1 );
     }
     break;
 
-    case GLFW_KEY_F3:
+    case KEY_F3:
     {
         setPipeline( (_curPipeline + 1) % 3 );
     }
     break;
 
-    case GLFW_KEY_F4:
+    case KEY_F4:
     {
         enableDebugViewMode( !_debugViewMode );
     }
     break;
 
-    case GLFW_KEY_F5:
+    case KEY_F5:
     {
         enableWireframeMode( !_wireframeMode );
     }
     break;
             
-    case GLFW_KEY_F6:
+    case KEY_F6:
     {
         setSampleCount( _sampleCount > 2 ? _sampleCount / 2 : 0 );
     }
     break;
 
-    case GLFW_KEY_F7:
+    case KEY_F7:
     {
         setSampleCount( _sampleCount ? _sampleCount * 2 : 2 );
     }
     break;
 
-    case GLFW_KEY_F11:
+    case KEY_F11:
     {
         toggleFullScreen();
     }
@@ -561,11 +745,22 @@ void SampleApplication::mouseMoveHandler( float x, float y, float prev_x, float 
 }
 
 
-void SampleApplication::resizeViewport()
+void SampleApplication::mousePressHandler( int mouseButton, int mouseButtonState, int actionCount )
 {
-    int width, height;
-    getSize( width, height );
+	if ( _freezeMode == 2 || _benchmark ) return;
+	
+	// Should be done in derived application
+}
 
+
+void SampleApplication::mouseEnterHandler( int entered )
+{
+	_winHasCursor = entered != 0;
+}
+
+
+void SampleApplication::setViewportSize( int width, int height )
+{
     // Resize viewport
     h3dSetNodeParamI( _cam, H3DCamera::ViewportXI, 0 );
     h3dSetNodeParamI( _cam, H3DCamera::ViewportYI, 0 );
@@ -580,186 +775,3 @@ void SampleApplication::resizeViewport()
 }
 
 
-bool SampleApplication::init()
-{
-    release();
-    
-    // Create OpenGL window
-    glfwWindowHint( GLFW_RED_BITS, 8 );
-    glfwWindowHint( GLFW_GREEN_BITS, 8 );
-    glfwWindowHint( GLFW_BLUE_BITS, 8 );
-    glfwWindowHint( GLFW_ALPHA_BITS, 8 );
-    glfwWindowHint( GLFW_DEPTH_BITS, 24 );
-    glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
-
-	if ( _renderInterface == H3DRenderDevice::OpenGL4 )
-	{
-#ifdef __APPLE__
-		glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
-		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1 );
-		glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#else
-        glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
-		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
-		glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-#endif
-	}
-	else if ( _renderInterface == H3DRenderDevice::OpenGLES3 )
-	{
-		glfwWindowHint( GLFW_CLIENT_API, GLFW_OPENGL_ES_API );
-		glfwWindowHint( GLFW_CONTEXT_CREATION_API, GLFW_EGL_CONTEXT_API );
- 		glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 3 );
- 		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 1 );
-	}
-
-    if ( _winFullScreen ) {
-        const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
-        _winHandle = glfwCreateWindow( mode->width, mode->height, _winTitle.c_str(), glfwGetPrimaryMonitor(), NULL );
-    } else {
-        _winHandle = glfwCreateWindow( _initWinWidth, _initWinHeight, _winTitle.c_str(), NULL, NULL );
-    }
-	
-    if( _winHandle == NULL )
-	{
-		// Fake message box
-        glfwDestroyWindow(_winHandle);
-		
-        _winHandle = glfwCreateWindow( 800, 50, "Unable to initialize engine!", NULL, NULL );
-		double startTime = glfwGetTime();
-        while( glfwGetTime() - startTime < 5.0 ) { /* Sleep */ }
-		
-		std::cout << "Unable to initialize window" << std::endl;
-		std::cout << "Make sure you have an OpenGL " << ((_renderInterface == H3DRenderDevice::OpenGL2) ? "2.0" : "4.3") << " compatible graphics card" << std::endl;
-		
-		return false;
-	}
-	
-    glfwSetWindowUserPointer( _winHandle, this );
-    glfwMakeContextCurrent( _winHandle );
-    glfwSetInputMode( _winHandle, GLFW_STICKY_KEYS, GL_TRUE );
-	
-	// Disable vertical synchronization
-    glfwSwapInterval( 0 );
-
-	// Set listeners
-    glfwSetWindowCloseCallback( _winHandle, windowCloseListener );
-    glfwSetWindowSizeCallback( _winHandle, windowResizeListener );
-	glfwSetKeyCallback( _winHandle, keyPressListener );
-	glfwSetCursorPosCallback( _winHandle, mouseMoveListener );
-    glfwSetCursorEnterCallback( _winHandle, mouseEnterListener );
-
-    // Init cursor
-    showCursor( _winShowCursor );
-    
-	// Initialize engine
-	if( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
-	{
-		std::cout << "Unable to initialize engine" << std::endl;
-		
-		h3dutDumpMessages();
-		return false;
-	}
-
-	// Samples require overlays extension in order to display information
-	if ( !h3dCheckExtension( "Overlays" ) )
-	{
-		std::cout << "Unable to find overlays extension" << std::endl;
-		return false;
-	}
-
-	// Set options
-	h3dSetOption( H3DOptions::LoadTextures, 1 );
-	h3dSetOption( H3DOptions::TexCompression, 0 );
-	h3dSetOption( H3DOptions::MaxAnisotropy, 4 );
-	h3dSetOption( H3DOptions::ShadowMapSize, 2048 );
-    h3dSetOption( H3DOptions::FastAnimation, 1 );
-    h3dSetOption( H3DOptions::SampleCount, (float) _sampleCount );
-	h3dSetOption( H3DOptions::DumpFailedShaders, 1 );
-
-	// Init resources
-    if( !initResources() )
-	{
-		std::cout << "Unable to initialize resources" << std::endl;
-		
-		h3dutDumpMessages();
-	    return false;
-    }
-
-    // Setup camera and resize buffers
-    resizeViewport();
-
-    h3dutDumpMessages();
-	return true;
-}
-
-
-void SampleApplication::release()
-{    
-    if( _winHandle )
-    {
-        // Release loaded resources
-        releaseResources();
-
-        // Release engine
-        h3dRelease();
-
-        // Destroy window
-        glfwDestroyWindow( _winHandle );
-        _winHandle = 0;
-    }
-}
-
-
-void SampleApplication::windowCloseListener(  GLFWwindow* win )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-    
-    if( app )
-        app->_running = false;
-}
-
-
-void SampleApplication::windowResizeListener(  GLFWwindow* win, int width, int height )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-
-    if( app )
-        app->resizeViewport();
-}
-
-
-void SampleApplication::keyPressListener( GLFWwindow* win, int key, int scancode, int action, int mods )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-    
-    if ( app && app->_running )
-    {
-        app->keyEventHandler(key, scancode, action, mods);
-    }
-}
-
-
-void SampleApplication::mouseMoveListener( GLFWwindow* win, double x, double y )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-    
-    if ( app && app->_running )
-    {
-        app->mouseMoveHandler( (float) x, (float) y, app->_prevMx, app->_prevMy );
-
-        app->_prevMx = (float) x;
-        app->_prevMy = (float) y;
-	}
-}
-
-
-void SampleApplication::mouseEnterListener( GLFWwindow* win, int entered )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-
-    if ( app && app->_running )
-    {
-        app->_winHasCursor = entered != 0;
-    }
-}

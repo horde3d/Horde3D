@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 
 # Project details.
 project(Horde3D)
@@ -15,18 +15,51 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
 # To build or not to build examples (removes GLFW dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
 
-# Look for required GLFW library.
+# Check the required windowing backend
 if(HORDE3D_BUILD_EXAMPLES)
-    option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
-    find_package(GLFW)
-    IF(GLFW_FOUND)
-        include_directories(${GLFW_INCLUDE_DIR})
-    ENDIF(GLFW_FOUND)
+    include(CMakeDependentOption)
+    # We can use SDL or GLFW
+
+    # SDL is the only choice for IOS and Android
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR 
+       ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR
+       ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" OFF)
+        option(HORDE3D_USE_GLFW "Use GLFW for window creation/event handling" ON)
+    else()
+        # IOS and android are not supported by glfw   
+        option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" ON)
+    endif()
+
+    if(HORDE3D_USE_GLFW)
+        # Look for required GLFW library.
+        option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
+        find_package(GLFW)
+        IF(GLFW_FOUND)
+            include_directories(${GLFW_INCLUDE_DIR})
+        ENDIF(GLFW_FOUND)
+    endif()
+
+    if(HORDE3D_USE_SDL)
+        # Look for required SDL library.
+        option(HORDE3D_FORCE_DOWNLOAD_SDL "Force linking Horde3D to a downloaded version of SDL" OFF)
+        find_package(SDL2)
+        IF(SDL2_FOUND)
+            include_directories(${SDL2_INCLUDE_DIR})
+        ENDIF(SDL2_FOUND)
+    endif()
+
+        # Only one library can be used, so disable the other one
+    if(GLFW_FOUND)
+        set(HORDE3D_USE_SDL OFF CACHE BOOL "Use SDL for window creation/event handling" FORCE)
+    elseif(SDL_FOUND)
+        set(HORDE3D_USE_GLFW OFF CACHE BOOL "Use GLFW for window creation/event handling" FORCE)
+    endif()
 else()
     message("Not building examples.")
 endif(HORDE3D_BUILD_EXAMPLES)
 
-# Backend selection
+# Render backend selection
 option(HORDE3D_USE_GL2 "Add OpenGL 2 render backend. Turns off ES3 render backend." ON)
 option(HORDE3D_USE_GL4 "Add OpenGL 4 render backend. Turns off ES3 render backend." ON)
 option(HORDE3D_USE_GLES3 "Add OpenGL ES 3 render backend. Turns off desktop GL backends." OFF)
@@ -48,6 +81,10 @@ if(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
 	
 	set(HORDE3D_USE_GLES3 OFF CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
 endif(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
+
+if (NOT HORDE3D_USE_GL2 AND NOT HORDE3D_USE_GL4 AND NOT HORDE3D_USE_GLES3 )
+    message( SEND_ERROR "Rendering backend is not selected!")
+endif()
 
 # Set binaries output folder.
 SET(HORDE3D_OUTPUT_PATH_PREFIX "${PROJECT_BINARY_DIR}/Binaries")
