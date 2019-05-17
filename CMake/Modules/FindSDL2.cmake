@@ -193,8 +193,13 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
     
     IF(MSVC)
        SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
-    ELSE(MSVC)
-       SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
+	ELSE(MSVC)
+		IF (UNIX AND NOT APPLE)
+			SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
+		ELSE()
+			# Mac
+			SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.dylib )
+		ENDIF()
     ENDIF(MSVC)
 
     add_library(SDL2_LIBRARY SHARED IMPORTED)
