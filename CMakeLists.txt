@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.7) # Native support for Android in CMAKE requires at least version 3.7.
 
 # Project details.
 project(Horde3D)
@@ -10,7 +10,7 @@ SET(${PROJECT_NAME}_MINOR_VERSION 0)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # Add local repository for FindXXX.cmake modules.
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/BuildTools/CMake/Modules/" ${CMAKE_MODULE_PATH})
 
 # To build or not to build examples (removes GLFW dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
