@@ -49,7 +49,8 @@ struct ModelUpdateFlags
 	enum Flags
 	{
 		Animation = 1,
-		Geometry = 2
+		Geometry = 2,
+		ChildNodes = 3
 	};
 };
 

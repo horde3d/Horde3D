@@ -810,11 +810,13 @@ struct H3DModelUpdateFlags
 		
 		Animation  - Apply animation
 		Geometry   - Apply morphers and software skinning
+		ChildNodes - Manually update child nodes and calculate their AABB. Useful when meshes are added procedurally to model
 	*/
 	enum Flags
 	{
 		Animation = 1,
-		Geometry = 2
+		Geometry = 2,
+		ChildNodes = 3
 	};
 };
 
