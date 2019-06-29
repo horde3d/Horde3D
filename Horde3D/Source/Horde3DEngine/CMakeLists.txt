@@ -148,3 +148,14 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	FIND_LIBRARY(CORE_FOUNDATION_LIBRARY CoreFoundation)
 	target_link_libraries(Horde3D ${OPENGL_LIBRARY} ${HORDE3D_EXTENSION_LIBS} ${CORE_FOUNDATION_LIBRARY})
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
+	FIND_PACKAGE(OpenGLESv2 REQUIRED)
+	# add additional include paths for egl and gles
+	include_directories(${EGL_INCLUDE_DIR} ${OPENGLES2_INCLUDE_DIR})
+
+	# For ES3, Android requires non-standard library libGLESv3, which CMAKE does not correctly find. Hack it here instead.
+	string( REPLACE "libGLESv2.so" "libGLESv3.so"  OPENGLES2_LIBRARIES ${OPENGLES2_LIBRARIES} )
+
+	target_link_libraries(Horde3D ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
+endif()
