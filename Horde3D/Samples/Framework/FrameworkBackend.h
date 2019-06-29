@@ -257,6 +257,8 @@ class FrameworkBackend
 {
 public:
 
+	virtual ~FrameworkBackend() {};
+
 	virtual bool Init( const BackendInitParameters &params ) = 0;
 
 	virtual void Release() = 0;

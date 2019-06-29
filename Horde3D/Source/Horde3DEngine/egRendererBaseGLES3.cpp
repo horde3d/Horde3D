@@ -271,7 +271,7 @@ void RenderDeviceGLES3::initRDIFuncs()
 	_delegate_unmapBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::unmapBuffer >( this );
 
 	_delegate_createTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createTexture >( this );
-	_delegate_generateTextureMipmap.bind< RenderDeviceGLES3, &RenderDeviceGL3::generateTextureMipmap >( this );
+	_delegate_generateTextureMipmap.bind< RenderDeviceGLES3, &RenderDeviceGLES3::generateTextureMipmap >( this );
 	_delegate_uploadTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::uploadTextureData >( this );
 	_delegate_destroyTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyTexture >( this );
 	_delegate_updateTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::updateTextureData >( this );
@@ -829,7 +829,7 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 
 void RenderDeviceGLES3::generateTextureMipmap( uint32 texObj )
 {
-	const RDITextureGL4 &tex = _textures.getRef( texObj );
+	const RDITextureGLES3 &tex = _textures.getRef( texObj );
 
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
@@ -2063,7 +2063,7 @@ void RenderDeviceGLES3::applyRenderStates()
 	if( _newRasterState.hash != _curRasterState.hash )
 	{
 		// Since OpenGL ES does not support glPolygonMode, we can only draw with lines for wireframe
-		if ( _newRasterState.fillMode != RS_FILL_SOLID ) _drawType = PRIM_LINES;
+		if ( _newRasterState.fillMode != RS_FILL_SOLID ) _drawType = PRIM_LINELIST;
 
 		if( _newRasterState.cullMode == RS_CULL_BACK )
 		{
