@@ -1505,7 +1505,8 @@ H3D_API H3DRes h3dCreateTexture( const char *name, int width, int height, int fm
 	Returns:
 		nothing
 */
-H3D_API void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble );
+H3D_API void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble,
+									const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble );
 
 /* Function: h3dSetMaterialUniform
 		Sets a shader uniform of a Material resource.
