@@ -243,6 +243,14 @@ struct WindowCreateParameters
 	bool fullScreen = false;
 };
 
+enum class LogMessageLevel : int
+{
+	Error = 0,
+	Warning,
+	Info,
+	Debug
+};
+
 // Event callbacks
 typedef Delegate< void( int, int, int ) > KeyboardEventCallBack; // ( int key, int keyState, int modifiers );
 typedef Delegate< void( float, float, float, float ) > MouseMoveEventCallBack; // ( float x, float y, float prev_x, float prev_y );
@@ -279,6 +287,10 @@ public:
 
 	virtual bool CheckKeyDown( void *handle, int key ) = 0;
 
+	virtual void LogMessage( LogMessageLevel messageLevel, const char *msg ) = 0;
+
+	virtual bool LoadResources( const char *contentDir ) = 0;
+	
 	// Callbacks
 	void RegisterKeyboardEventHandler( KeyboardEventCallBack f ) { _keyEventHandler = f; }
 

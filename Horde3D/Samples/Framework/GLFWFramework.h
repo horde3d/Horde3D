@@ -28,6 +28,10 @@ public:
 
 	virtual bool CheckKeyDown( void *handle, int key ) override;
 
+	virtual void LogMessage( LogMessageLevel messageLevel, const char *msg ) override;
+
+	virtual bool LoadResources( const char *contentDir ) override;
+
 protected:
 	
 	// GLFW listeners.

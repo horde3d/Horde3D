@@ -32,6 +32,7 @@
 	#include "SDLFramework.h"
 	typedef SDLBackend Backend;
 #endif
+
 using namespace std;
 #include <chrono>
 
@@ -57,6 +58,11 @@ std::string extractResourcePath( char *fullPath )
     const unsigned int nbRfind = 1;
 #endif
    
+#ifdef __ANDROID__
+    // Currently all assets are inside the apk in assets/Content folder. SDL searches in assets folder automatically. 
+    return "Content";
+#endif
+
     // Remove the token of path until the executable parent folder is reached
 	for( unsigned int i = 0; i < nbRfind; ++i )
 		s = s.substr( 0, s.rfind( delim ) );
@@ -137,7 +143,8 @@ bool SampleApplication::init()
 	// Initialize engine
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
-		std::cout << "Unable to initialize engine" << std::endl;
+        _backend->LogMessage( LogMessageLevel::Error, "Unable to initialize engine" );
+//		std::cout << "Unable to initialize engine" << std::endl;
 
 		h3dutDumpMessages();
 		return false;
@@ -146,7 +153,9 @@ bool SampleApplication::init()
 	// Samples require overlays extension in order to display information
 	if ( !h3dCheckExtension( "Overlays" ) )
 	{
-		std::cout << "Unable to find overlays extension" << std::endl;
+        _backend->LogMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
+
+///		std::cout << "Unable to find overlays extension" << std::endl;
 		return false;
 	}
 
@@ -163,7 +172,9 @@ bool SampleApplication::init()
 	// Init resources
 	if ( !initResources() )
 	{
-		std::cout << "Unable to initialize resources" << std::endl;
+        _backend->LogMessage( LogMessageLevel::Error, "Unable to initialize resources" );
+
+//		std::cout << "Unable to initialize resources" << std::endl;
 
 		h3dutDumpMessages();
 		return false;
@@ -525,9 +536,11 @@ bool SampleApplication::initResources()
     if ( _helpRows > 11 ) { _helpLabels[11] = "LShift:"; _helpValues[11] = "Turbo"; }
 	
 	// 2. Load resources
-    if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) )
+    if ( !_backend->LoadResources( _resourcePath.c_str() ) )
 	{
-        std::cout << "Error in loading resources" << std::endl;
+        _backend->LogMessage( LogMessageLevel::Error, "Error in loading resources" );
+
+//        std::cout << "Error in loading resources" << std::endl;
 
 		h3dutDumpMessages();
         return false;
@@ -635,8 +648,9 @@ void SampleApplication::render()
         ww-0.03f, 0.97f, 1, 0,
         ww-0.03f, 0.87f, 1, 1
     };
+
     h3dShowOverlays( ovLogo, 4, 1.f, 1.f, 1.f, 1.f, _logoMatRes, 0 );
-	
+
 	// Render scene
     h3dRender( _cam );
 }

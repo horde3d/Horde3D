@@ -1,6 +1,9 @@
 #include "GLFWFramework.h"
 
 #include <iostream>
+#include <array>
+
+#include "Horde3DUtils.h"
 
 bool GLFWBackend::Init( const BackendInitParameters &params )
 {
@@ -200,3 +203,17 @@ bool GLFWBackend::CheckKeyDown( void *handle, int key )
 	return glfwGetKey( ( GLFWwindow * ) handle, key ) == GLFW_PRESS;
 }
 
+void GLFWBackend::LogMessage( LogMessageLevel messageLevel, const char *msg )
+{
+	// As glfw is only used on desktop platforms, standard cout should be enough for most situations
+	static std::array< const char *, 4 > messageTypes = { "Error:", "Warning:", "Info:", "Debug:" };
+
+	if ( messageLevel < 0 || messageLevel > 3 ) messageLevel = LogMessageLevel::Info;
+
+	printf( "%s %s\n", messageTypes[ messageLevel ], msg );
+}
+
+bool GLFWBackend::LoadResources( const char *contentDir )
+{
+	return h3dutLoadResourcesFromDisk( contentDir );
+}

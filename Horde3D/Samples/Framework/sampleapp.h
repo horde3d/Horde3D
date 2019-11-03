@@ -128,7 +128,8 @@ protected:
 
     virtual bool initResources();
     virtual void releaseResources();
-    
+    bool loadResources( const char *contentDir );
+
     virtual void update();
     virtual void render();
     virtual void finalize();

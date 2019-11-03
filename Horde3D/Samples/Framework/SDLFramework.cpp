@@ -2,6 +2,11 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <array>
+#include <vector>
+
+#include "Horde3D.h"
+#include "Horde3DUtils.h"
 
 const std::unordered_map< int, int > keyToSDLKey = {
 	{ KEY_SPACE, SDL_SCANCODE_SPACE },
@@ -243,6 +248,111 @@ const std::unordered_map< int, int > sdlKeyToKey = {
 	{ SDL_SCANCODE_MENU, KEY_MENU },
 };
 
+bool loadResourcesBySDL( const char *contentDir )
+{
+	auto cleanPath = []( std::string &path )
+	{
+		// Remove spaces at the beginning
+		int cnt = 0;
+		for( int i = 0; i < (int)path.length(); ++i )
+		{
+			if( path[i] != ' ' ) break;
+			else ++cnt;
+		}
+		if( cnt > 0 ) path.erase( 0, cnt );
+
+		// Remove slashes, backslashes and spaces at the end
+		cnt = 0;
+		for( int i = (int)path.length() - 1; i >= 0; --i )
+		{
+			if( path[i] != '/' && path[i] != '\\' && path[i] != ' ' ) break;
+			else ++cnt;
+		}
+
+		if( cnt > 0 ) path.erase( path.length() - cnt, cnt );
+
+		return std::move( path );
+	};
+
+    bool result = true;
+	std::string dir;
+	std::vector< std::string > dirs;
+
+	// Split path string
+	char *c = (char *)contentDir;
+	do
+	{
+		if( *c != '|' && *c != '\0' )
+			dir += *c;
+		else
+		{
+			dir = cleanPath( dir );
+			if( dir != "" ) dir += '/';
+			dirs.push_back( dir );
+			dir = "";
+		}
+	} while( *c++ != '\0' );
+	
+	// Get the first resource that needs to be loaded
+	int res = h3dQueryUnloadedResource( 0 );
+	
+	char *dataBuf = 0;
+	size_t bufSize = 0;
+
+	while( res != 0 )
+	{
+		SDL_RWops *inf = nullptr;
+		
+		// Loop over search paths and try to open files
+		for( unsigned int i = 0; i < dirs.size(); ++i )
+		{
+			std::string fileName = dirs[i] + h3dGetResName( res );
+			SDL_LogInfo( 0, "Current file path: %s", fileName.c_str() );
+
+			inf = SDL_RWFromFile( fileName.c_str(), "rb" );
+			if( inf ) break;
+		}
+
+		// Open resource file
+		if( inf ) // Resource file found
+		{
+			// Find size of resource file
+			size_t fileSize = SDL_RWseek( inf, 0, RW_SEEK_END );
+			if( bufSize < fileSize  )
+			{
+				delete[] dataBuf;				
+				dataBuf = new char[fileSize];
+				if( !dataBuf )
+				{
+					bufSize = 0;
+					continue;
+				}
+				bufSize = fileSize;
+			}
+			if( fileSize == 0 )	continue;
+
+			// Copy resource file to memory
+			SDL_RWseek( inf, 0, RW_SEEK_SET );
+			SDL_RWread( inf, dataBuf, fileSize, 1 );
+			SDL_RWclose( inf );
+
+			// Send resource data to engine
+			result &= h3dLoadResource( res, dataBuf, ( int ) fileSize );
+		}
+		else // Resource file not found
+		{
+			// Tell engine to use the default resource by using NULL as data pointer
+			h3dLoadResource( res, 0x0, 0 );
+			result = false;
+		}
+		// Get next unloaded resource
+		res = h3dQueryUnloadedResource( 0 );
+	}
+	delete[] dataBuf;
+
+	return result;
+}
+
 bool SDLBackend::Init( const BackendInitParameters &params )
 {
 	if ( SDL_Init( SDL_INIT_VIDEO ) != 0 )
@@ -468,4 +578,22 @@ void SDLBackend::ProcessEvents()
 // 			handleKeys( e.text.text[ 0 ], x, y );
 // 		}
 	}
+}
+
+void SDLBackend::LogMessage( LogMessageLevel messageLevel, const char *msg ) 
+{
+	// SDL allows logging messages on android and ios
+	static std::array< const char *, 4 > messageTypes = { "Error:", "Warning:", "Info:", "Debug:" };
+	if ( (int) messageLevel < 0 || (int) messageLevel > 3 ) messageLevel = LogMessageLevel::Info;
+
+	SDL_Log( "%s %s\n", messageTypes[ (int) messageLevel ], msg );
+}
+
+bool SDLBackend::LoadResources( const char *contentDir )
+{
+#if defined( __ANDROID__ )
+    return loadResourcesBySDL( contentDir );
+#elif
+    return h3dutLoadResourcesFromDisk( contentDir );
+#endif
 }
