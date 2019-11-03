@@ -32,6 +32,10 @@
 #	if !defined( PLATFORM_MAC )
 #		define PLATFORM_MAC
 #	endif
+#elif defined( __ANDROID__ )
+#	if !defined( PLATFORM_ANDROID )
+#		define PLATFORM_ANDROID
+#	endif
 #else
 #	if !defined( PLATFORM_LINUX )
 #		define PLATFORM_LINUX

@@ -61,8 +61,8 @@ namespace glESExt
 namespace h3dGLES
 {
 	PFNGLQUERYCOUNTEREXTPROC glQueryCounterEXT = 0x0;
-	PFGLGETQUERYOBJECTIVEXTPROC glGetQueryObjectivEXT = 0x0;
-	PFGLGETQUERYOBJECTUI64VEXTPROC glGetQueryObjectui64vEXT = 0x0;
+	PFNGLGETQUERYOBJECTIVEXTPROC glGetQueryObjectivEXT = 0x0;
+	PFNGLGETQUERYOBJECTUI64VEXTPROC glGetQueryObjectui64vEXT = 0x0;
 
 	PFNGLTEXPARAMETERIIVEXTPROC glTexParameterIivEXT = 0x0;
 	PFNGLTEXPARAMETERIUIVEXTPROC glTexParameterIuivEXT = 0x0;
@@ -117,7 +117,7 @@ void getOpenGLESVersion()
 
 void *platformGetProcAddress( const char *funcName )
 {
-#if defined( PLATFORM_WIN ) || defined( PLATFORM_LINUX )
+#if defined( PLATFORM_WIN ) || defined( PLATFORM_LINUX ) || defined( PLATFORM_ANDROID )
 	return ( void * ) eglGetProcAddress( funcName );
 #else
 	return ( void* ) 0x0;
@@ -148,8 +148,8 @@ bool initOpenGLExtensions()
 	if ( glESExt::EXT_disjoint_timer_query )
 	{
 		r &= ( glQueryCounterEXT = ( PFNGLQUERYCOUNTEREXTPROC ) platformGetProcAddress( "glQueryCounterEXT" ) ) != 0x0;
-		r &= ( glGetQueryObjectivEXT = ( PFGLGETQUERYOBJECTIVEXTPROC ) platformGetProcAddress( "glGetQueryObjectivEXT" ) ) != 0x0;
-		r &= ( glGetQueryObjectui64vEXT = ( PFGLGETQUERYOBJECTUI64VEXTPROC ) platformGetProcAddress( "glGetQueryObjectui64vEXT" ) ) != 0x0;
+		r &= ( glGetQueryObjectivEXT = ( PFNGLGETQUERYOBJECTIVEXTPROC ) platformGetProcAddress( "glGetQueryObjectivEXT" ) ) != 0x0;
+		r &= ( glGetQueryObjectui64vEXT = ( PFNGLGETQUERYOBJECTUI64VEXTPROC ) platformGetProcAddress( "glGetQueryObjectui64vEXT" ) ) != 0x0;
 	}
 
 	glESExt::EXT_texture_border_clamp = checkExtensionSupported( "GL_EXT_texture_border_clamp" ) || checkExtensionSupported( "GL_OES_texture_border_clamp" );
@@ -168,16 +168,16 @@ bool initOpenGLExtensions()
 	glESExt::EXT_geometry_shader = checkExtensionSupported( "GL_EXT_geometry_shader" ) || checkExtensionSupported( "GL_OES_geometry_shader" );
 
 	glESExt::OES_texture_3D = checkExtensionSupported( "GL_OES_texture_3D" );
-	if ( glESExt::OES_texture_3D )
-	{
-		r &= ( glFramebufferTexture3DOES = ( PFNGLFRAMEBUFFERTEXTURE3DOESPROC) platformGetProcAddress( "glFramebufferTexture3DOES" ) ) != 0x0;
-	}
+	// if ( glESExt::OES_texture_3D )
+	// {
+	// 	r &= ( glFramebufferTexture3DOES = ( PFNGLFRAMEBUFFERTEXTURE3DOESPROC) platformGetProcAddress( "glFramebufferTexture3DOES" ) ) != 0x0;
+	// }
 
 	glESExt::OES_EGL_image_external = checkExtensionSupported( "GL_OES_EGL_image_external" );
-	if( glESExt::OES_EGL_image_external )
-	{
-		r &= ( glEGLImageTargetTexture2DOES = ( PFNGLEGLIMAGETARGETTEXTURE2DOESPROC ) platformGetProcAddress( "glEGLImageTargetTexture2DOES" ) ) != 0x0;
-	}
+	// if( glESExt::OES_EGL_image_external )
+	// {
+	// 	r &= ( glEGLImageTargetTexture2DOES = ( PFNGLEGLIMAGETARGETTEXTURE2DOESPROC ) platformGetProcAddress( "glEGLImageTargetTexture2DOES" ) ) != 0x0;
+	// }
 
 	return r;
 }

@@ -90,8 +90,9 @@ bool initOpenGLExtensions();
 #define GL_GLEXT_PROTOTYPES
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_NACL) || defined(PLATFORM_QNX)
 #include <GLES3/gl31.h>
-#define GL_GLEXT_PROTOTYPES
-#include <GLES2/gl2ext.h>
+// #define GL_GLEXT_PROTOTYPES
+// #include <GLES3/gl3platform.h>
+// #include <GLES2/gl2ext.h>
 #endif
 
 // =================================================================================================
@@ -171,12 +172,12 @@ extern PFNGLFRAMEBUFFERTEXTURE3DOESPROC glFramebufferTexture3DOES;
 #define	GL_QUERY_RESULT_AVAILABLE_EXT                   0x8867
 
 typedef void ( GLAPIENTRYP PFNGLQUERYCOUNTEREXTPROC ) ( GLuint id, GLenum target );
-typedef void ( GLAPIENTRYP PFGLGETQUERYOBJECTIVEXTPROC ) ( GLuint id, GLenum pname, GLint *params );
-typedef void ( GLAPIENTRYP PFGLGETQUERYOBJECTUI64VEXTPROC ) ( GLuint id, GLenum pname, GLuint64 *params );
+typedef void ( GLAPIENTRYP PFNGLGETQUERYOBJECTIVEXTPROC ) ( GLuint id, GLenum pname, GLint *params );
+typedef void ( GLAPIENTRYP PFNGLGETQUERYOBJECTUI64VEXTPROC ) ( GLuint id, GLenum pname, GLuint64 *params );
 
 extern PFNGLQUERYCOUNTEREXTPROC glQueryCounterEXT;
-extern PFGLGETQUERYOBJECTIVEXTPROC glGetQueryObjectivEXT;
-extern PFGLGETQUERYOBJECTUI64VEXTPROC glGetQueryObjectui64vEXT;
+extern PFNGLGETQUERYOBJECTIVEXTPROC glGetQueryObjectivEXT;
+extern PFNGLGETQUERYOBJECTUI64VEXTPROC glGetQueryObjectui64vEXT;
 
 #endif	//GL_EXT_disjoint_timer_query
 
