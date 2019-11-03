@@ -194,11 +194,13 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 		_callback(level, _textBuf);
 	}
 #if defined( H3D_DEBUGGER_OUTPUT )
-	const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
+	static const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
 #if defined( PLATFORM_WIN )
 	OutputDebugStringA( headers[std::min( (uint32)level, (uint32)5 )] );
 	OutputDebugStringA( _textBuf );
 	OutputDebugString( TEXT("\r\n") );
+#elif defined( PLATFORM_ANDROID )
+	__android_log_print( ANDROID_LOG_DEBUG, "h3d", "%s%s\n", headers[std::min( (uint32)level, (uint32)5 )], _textBuf );
 #else
 	fputs( headers[std::min( (uint32)level, (uint32)5 )], stderr );
 	fputs( _textBuf, stderr );
