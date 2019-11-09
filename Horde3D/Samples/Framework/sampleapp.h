@@ -140,6 +140,7 @@ protected:
 	virtual void mouseEnterHandler( int entered );
 
     void setViewportSize( int width, int height );
+    void setInvertedMouseMovement( bool invertX, bool invertY );
 
 	static inline void mainLoop( void *arg );
 
@@ -198,6 +199,8 @@ private:
     int          _freezeMode;
     bool         _debugViewMode, _wireframeMode;
     bool         _showHelpPanel;
+
+    bool         _invertMouseX, _invertMouseY;
 };
 
 #endif // _sample_app_H_

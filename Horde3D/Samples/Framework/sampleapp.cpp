@@ -107,12 +107,13 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _winTitle(title),
     _initWinWidth(width), _initWinHeight(height),
     _winSampleCount(0), _sampleCount(0),
-    _winFullScreen(fullscreen),
+    _winFullScreen( /*fullscreen*/ true),
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
     _fov(fov), _nearPlane(near_plane), _farPlane(far_plane),
     _statMode(0), _freezeMode(0),
-    _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false)
+    _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false),
+    _invertMouseX( false ), _invertMouseY( false )
 {
     // Initialize backend
 	_backend = new Backend();
@@ -393,6 +394,12 @@ void SampleApplication::showStatPanel( int mode )
 void SampleApplication::setFreezeMode( int mode )
 {
     _freezeMode = mode % 3;
+}
+
+
+void SampleApplication::setInvertedMouseMovement( bool invertX, bool invertY )
+{
+    _invertMouseX = invertX; _invertMouseY = invertY;
 }
 
 
@@ -750,8 +757,9 @@ void SampleApplication::mouseMoveHandler( float x, float y, float prev_x, float 
     float dy = prev_y - y;
 
 	// Look left/right
-    _ry -= dx * 0.3f;
-	
+    if ( !_invertMouseX ) _ry -= dx * 0.3f;
+	else _ry -= dx * -0.3f;
+
 	// Loop up/down but only in a limited range
     _rx += dy * 0.3f;
 	if( _rx > 90 ) _rx = 90; 
