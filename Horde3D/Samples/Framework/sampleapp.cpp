@@ -761,7 +761,9 @@ void SampleApplication::mouseMoveHandler( float x, float y, float prev_x, float 
 	else _ry -= dx * -0.3f;
 
 	// Loop up/down but only in a limited range
-    _rx += dy * 0.3f;
+    if ( !_invertMouseY ) _rx += dy * 0.3f;
+    else _rx += dy * -0.3f;
+    
 	if( _rx > 90 ) _rx = 90; 
 	if( _rx < -90 ) _rx = -90;
 }
