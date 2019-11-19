@@ -10,9 +10,9 @@ SET(${PROJECT_NAME}_MINOR_VERSION 0)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # Add local repository for FindXXX.cmake modules.
-SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/BuildTools/CMake/Modules/" ${CMAKE_MODULE_PATH})
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/BuildTools/CMake/Modules" ${CMAKE_MODULE_PATH})
 
-# To build or not to build examples (removes GLFW dependency)
+# To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
 
 # Check the required windowing backend
@@ -97,6 +97,13 @@ IF(${CMAKE_CFG_INTDIR} STREQUAL ".")
 ENDIF(${CMAKE_CFG_INTDIR} STREQUAL ".")
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/${HORDE3D_OUTPUT_PATH_SUFFIX} CACHE STRING "Where binaries and shared lib files go" FORCE)
+
+IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
+#     # Copy android project into build directory
+SET(HORDE3D_ANDROID_PROJECT_PATH "${PROJECT_SOURCE_DIR}/BuildTools/android")
+#     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}) 
+#     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/android/app/src/main/jniLibs/${ANDROID_ABI} )
+ENDIF()
 
 IF(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup ")

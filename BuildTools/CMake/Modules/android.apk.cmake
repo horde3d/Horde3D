@@ -3,6 +3,8 @@
 #*    Android apk tools
 #*
 #*  Copyright (C) 2002-2013 The PixelLight Team (http://www.pixellight.org/)
+#*	Copyright (C) 2019 The Horde3D Team (http://www.horde3d.org/)
+#*	
 #*
 #*  This file is part of PixelLight.
 #*
@@ -26,7 +28,7 @@
 ##################################################
 ## Options
 ##################################################
-set(ANDROID_APK_API_LEVEL "10" CACHE STRING "Android APK API level")
+set(ANDROID_APK_API_LEVEL "24" CACHE STRING "Android APK API level")
 set(ANDROID_APK_INSTALL "0" CACHE BOOL "Install created apk file on the device automatically?")
 set(ANDROID_APK_RUN "0" CACHE BOOL "Run created apk file on the device automatically? (installs it automatically as well, \"ANDROID_APK_INSTALL\"-option is ignored)")
 set(ANDROID_APK_SIGNER_KEYSTORE	"~/my-release-key.keystore" CACHE STRING "Keystore for signing the apk file (only required for release apk)")
@@ -44,20 +46,19 @@ set(ANDROID_THIS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})	# Directory this CMake fil
 ##
 ## @param name
 ##   Name of the project (e.g. "MyProject"), this will also be the name of the created apk file
-## @param apk_pacakge_name
-##   Pacakge name of the application
+## @param apk_package_name
+##   Package name of the application
 ## @param apk_directory
-##   Directory were to construct the apk file in (e.g. "${CMAKE_BINARY_DIR}/apk")
+##   Directory where to construct the apk file in (e.g. "${CMAKE_BINARY_DIR}/apk")
 ## @param libs_directory
 ##   Directory where the built android libraries will be POST_BUILD, e.g ${CMAKE_SOURCE_DIR}/libs 
 ## @param assets_directory
-##   Directory where the assets for the application are locatated
+##   Directory where the assets for the application are located
 ##   
 ## @remarks
 ##   Requires the following tools to be found automatically
-##   - "android" (part of the Android SDK)
 ##   - "adb" (part of the Android SDK)
-##   - "ant" (type e.g. "sudo apt-get install ant" on your Linux system to install Ant)
+##   - "gradle" (included)
 ##   - "jarsigner" (part of the JDK)
 ##   - "zipalign" (part of the Android SDK)
 ##################################################
@@ -65,82 +66,78 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
   set(ANDROID_NAME ${name})
   set(ANDROID_APK_PACKAGE ${apk_package_name})
 
+  # Set gradle find path
+  if( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows" )
+    set( GRADLE_BIN ${apk_directory}/gradlew.bat)
+  
+  endif()
+  
+  
+  # Copy project
+  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_directory
+      "${android_directory}" "${apk_directory}")
+  
   # Create the directory for the libraries
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/libs")
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jnilibs/${ANDROID_ABI}")
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/libs")
-  add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/libs" "${apk_directory}/libs/")
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jnilibs/${ANDROID_ABI}")
+  # add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
+  #   COMMAND ${CMAKE_COMMAND} -E copy_directory
+  #   "${CMAKE_SOURCE_DIR}/libs" "${apk_directory}/libs/")
   
-  # Create "build.xml", "default.properties", "local.properties" and "proguard.cfg" files
   if(CMAKE_BUILD_TYPE MATCHES Release)
     set(ANDROID_APK_DEBUGGABLE "false")
   else()
     set(ANDROID_APK_DEBUGGABLE "true")
   endif()
 
-  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/res")
-  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${android_directory}/res" "${apk_directory}/res/")
-
-  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/src")
-  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${android_directory}/src" "${apk_directory}/src/")
-
-  configure_file("${android_directory}/AndroidManifest.xml" "${apk_directory}/AndroidManifest.xml")
-
-  add_custom_command(TARGET ${ANDROID_NAME}
-    COMMAND android update project -t android-${ANDROID_APK_API_LEVEL} --name ${ANDROID_NAME} --path "${apk_directory}")
+#  configure_file("${android_directory}/AndroidManifest.xml" "${apk_directory}/AndroidManifest.xml")
 
   # Copy assets
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/assets")
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/assets")
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/assets/")
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/assets/Content")
   add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/assets" "${apk_directory}/assets/")
+    ${assets_directory} "${apk_directory}/app/src/main/assets/Content")
 
   # Build the apk file
   if(CMAKE_BUILD_TYPE MATCHES Release)
-    # Let Ant create the unsigned apk file
+    # Let Gradle create the unsigned apk file
     add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND ant release
-      WORKING_DIRECTORY "${apk_directory}")
+      COMMAND ${GRADLE_BIN} assembleRelease
+      WORKING_DIRECTORY "${apk_directory}/app")
 
     # Sign the apk file
     add_custom_command(TARGET ${ANDROID_NAME}
       COMMAND jarsigner -verbose -keystore ${ANDROID_APK_SIGNER_KEYSTORE} bin/${ANDROID_NAME}-unsigned.apk ${ANDROID_APK_SIGNER_ALIAS}
-      WORKING_DIRECTORY "${apk_directory}")
+      WORKING_DIRECTORY "${apk_directory}/app")
 
     # Align the apk file
     add_custom_command(TARGET ${ANDROID_NAME}
       COMMAND zipalign -v -f 4 bin/${ANDROID_NAME}-unsigned.apk bin/${ANDROID_NAME}.apk
-      WORKING_DIRECTORY "${apk_directory}")
+      WORKING_DIRECTORY "${apk_directory}/app")
     
     # Install current version on the device/emulator
     if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
       add_custom_command(TARGET ${ANDROID_NAME}
-	COMMAND adb install -r bin/${ANDROID_NAME}.apk
-	WORKING_DIRECTORY "${apk_directory}")
+      COMMAND adb install -r bin/${ANDROID_NAME}.apk
+      WORKING_DIRECTORY "${apk_directory}/app")
     endif()
   else()
-    # Let Ant create the unsigned apk file
+    # Let Gradle create the unsigned apk file
     add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND ant debug
-      WORKING_DIRECTORY "${apk_directory}")
+      COMMAND ${GRADLE_BIN} assembleDebug --no-daemon
+      WORKING_DIRECTORY "${apk_directory}/app")
     
     # Install current version on the device/emulator
     if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
       add_custom_command(TARGET ${ANDROID_NAME}
-	COMMAND adb install -r bin/${ANDROID_NAME}-debug.apk
-	WORKING_DIRECTORY "${apk_directory}")
+      COMMAND adb install -r bin/${ANDROID_NAME}-debug.apk
+      WORKING_DIRECTORY "${apk_directory}/app")
     endif()
   endif()
 

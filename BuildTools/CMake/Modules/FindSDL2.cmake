@@ -166,9 +166,11 @@ IF(SDL2_LIBRARY_TEMP)
 	SET(SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" CACHE INTERNAL "")
 ENDIF(SDL2_LIBRARY_TEMP)
 
-#message("</FindSDL2.cmake>")
+
 IF (HORDE3D_FORCE_DOWNLOAD_SDL)
-    # If not found, try to build with local sources.
+	# Download SDL sources and build it ourselves
+
+	# If not found, try to build with local sources.
     # It uses CMake's "ExternalProject_Add" target.
     MESSAGE(STATUS "Preparing external SDL project")
     INCLUDE(ExternalProject)
@@ -218,6 +220,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 #	file(COPY ${SDL_LIBRARY_PATH} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
 
 ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
+	# SDL is built somewhere else, use the prebuilt library
+
 	INCLUDE(FindPackageHandleStandardArgs)
 
 	FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
@@ -230,6 +234,15 @@ ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
 		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
 	ENDIF()
+
+	# For android make sdl library path available for other projects (used for samples in android build)
+	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
+		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+		MESSAGE("${SDL_LIB_PATH}")
+
+	#	file(COPY ${SDL_LIB_PATH}/libSDL2.so DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}) 
+	ENDIF()
+
 ENDIF(HORDE3D_FORCE_DOWNLOAD_SDL)
 
 
