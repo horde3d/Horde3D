@@ -1,0 +1,36 @@
+package com.horde3d.sampleapp;
+
+import org.libsdl.app.SDLActivity;
+
+public class Horde3DActivity extends SDLActivity
+{
+	 /**
+     * This method is called by SDL before loading the native shared libraries.
+     * It can be overridden to provide names of shared libraries to be loaded.
+     * The default implementation returns the defaults. It never returns null.
+     * An array returned by a new implementation must at least contain "SDL2".
+     * Also keep in mind that the order the libraries are loaded may matter.
+     *
+     * @return names of shared libraries to be loaded (e.g. "SDL2", "main").
+     */
+    @Override
+    protected String[] getLibraries() {
+        return new String[]{
+                "SDL2",
+                "Horde3D",
+                "Horde3DUtils",
+                "Knight"
+            //    "SDL2_image",
+//                "main"
+        };
+    }
+
+    /**
+     * This method returns the name of the application entry point
+     * It can be overridden by derived classes.
+     */
+    @Override
+    protected String getMainFunction() {
+        return "main";
+    }
+}
