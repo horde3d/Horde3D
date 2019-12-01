@@ -93,7 +93,8 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
     set(ANDROID_APK_DEBUGGABLE "true")
   endif()
 
-#  configure_file("${android_directory}/AndroidManifest.xml" "${apk_directory}/AndroidManifest.xml")
+  # Configure gradle project with correct package name
+  configure_file("${android_directory}/app/build.gradle.in" "${apk_directory}/app/build.gradle")
 
   # Copy assets
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
@@ -122,28 +123,34 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
       WORKING_DIRECTORY "${apk_directory}/app")
     
     # Install current version on the device/emulator
-    if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
-      add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND adb install -r bin/${ANDROID_NAME}.apk
-      WORKING_DIRECTORY "${apk_directory}/app")
-    endif()
+    # if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
+    #   add_custom_command(TARGET ${ANDROID_NAME}
+    #   COMMAND adb install -r bin/${ANDROID_NAME}.apk
+    #   WORKING_DIRECTORY "${apk_directory}/app")
+    # endif()
   else()
     # Let Gradle create the unsigned apk file
-    add_custom_command(TARGET ${ANDROID_NAME}
+    add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
       COMMAND ${GRADLE_BIN} assembleDebug --no-daemon
       WORKING_DIRECTORY "${apk_directory}/app")
     
+    # Rename the 'app' apk to target name
+    add_custom_command(TARGET ${ANDROID_NAME}
+      COMMAND ${CMAKE_COMMAND} -E rename 
+      "${apk_directory}../../../Binaries/Android/${CMAKE_BUILD_TYPE}/app-debug.apk" 
+      "${apk_directory}../../../Binaries/Android/${CMAKE_BUILD_TYPE}/${ANDROID_NAME}-debug.apk" )
+    
     # Install current version on the device/emulator
-    if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
-      add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND adb install -r bin/${ANDROID_NAME}-debug.apk
-      WORKING_DIRECTORY "${apk_directory}/app")
-    endif()
+    # if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
+    #   add_custom_command(TARGET ${ANDROID_NAME}
+    #   COMMAND adb install -r bin/${ANDROID_NAME}-debug.apk
+    #   WORKING_DIRECTORY "${apk_directory}/app")
+    # endif()
   endif()
 
   # Start the application
-  if(ANDROID_APK_RUN)
-    add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND adb shell am start -n ${ANDROID_APK_PACKAGE}/android.app.NativeActivity)
-  endif()
+  # if(ANDROID_APK_RUN)
+  #   add_custom_command(TARGET ${ANDROID_NAME}
+  #     COMMAND adb shell am start -n ${ANDROID_APK_PACKAGE}/android.app.NativeActivity)
+  # endif()
 endmacro(android_create_apk name apk_directory libs_directory assets_directory)
