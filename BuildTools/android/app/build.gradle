@@ -11,7 +11,7 @@ android {
     compileSdkVersion 26
     defaultConfig {
         if (buildAsApplication) {
-            applicationId "org.libsdl.app"
+            applicationId "com.horde3d.sampleapp"
         }
         minSdkVersion 24
         targetSdkVersion 26

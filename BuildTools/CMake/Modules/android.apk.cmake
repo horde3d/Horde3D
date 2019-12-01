@@ -6,7 +6,6 @@
 #*	Copyright (C) 2019 The Horde3D Team (http://www.horde3d.org/)
 #*	
 #*
-#*  This file is part of PixelLight.
 #*
 #*  Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 #*  and associated documentation files (the "Software"), to deal in the Software without
@@ -28,11 +27,12 @@
 ##################################################
 ## Options
 ##################################################
+set(ANDROID_SDK_BUILD_TOOLS_PATH "" CACHE STRING "Path to Android SDK build tools")
 set(ANDROID_APK_API_LEVEL "24" CACHE STRING "Android APK API level")
 set(ANDROID_APK_INSTALL "0" CACHE BOOL "Install created apk file on the device automatically?")
 set(ANDROID_APK_RUN "0" CACHE BOOL "Run created apk file on the device automatically? (installs it automatically as well, \"ANDROID_APK_INSTALL\"-option is ignored)")
 set(ANDROID_APK_SIGNER_KEYSTORE	"~/my-release-key.keystore" CACHE STRING "Keystore for signing the apk file (only required for release apk)")
-set(ANDROID_APK_SIGNER_ALIAS "myalias" CACHE STRING "Alias for signing the apk file (only required for release apk)")
+# set(ANDROID_APK_SIGNER_ALIAS "myalias" CACHE STRING "Alias for signing the apk file (only required for release apk)")
 
 ##################################################
 ## Variables
@@ -59,7 +59,7 @@ set(ANDROID_THIS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})	# Directory this CMake fil
 ##   Requires the following tools to be found automatically
 ##   - "adb" (part of the Android SDK)
 ##   - "gradle" (included)
-##   - "jarsigner" (part of the JDK)
+##   - "apksigner" (part of the Android SDK)
 ##   - "zipalign" (part of the Android SDK)
 ##################################################
 macro(android_create_apk name apk_package_name apk_directory libs_directory android_directory assets_directory)
@@ -69,7 +69,8 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
   # Set gradle find path
   if( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows" )
     set( GRADLE_BIN ${apk_directory}/gradlew.bat)
-  
+    set( ZIPALIGN_BIN ${ANDROID_SDK_BUILD_TOOLS_PATH}/zipalign.exe )
+    set( APKSIGNER_BIN ${ANDROID_SDK_BUILD_TOOLS_PATH}/apksigner.bat )
   endif()
   
   
@@ -112,16 +113,23 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
       COMMAND ${GRADLE_BIN} assembleRelease
       WORKING_DIRECTORY "${apk_directory}/app")
 
+    # Align the apk file
+    # Add -v key after ZIPALIGN_BIN for verbose info
+    add_custom_command(TARGET ${ANDROID_NAME}
+      COMMAND ${ZIPALIGN_BIN} -f 4 app-release-unsigned.apk app-release-aligned.apk
+      WORKING_DIRECTORY "${apk_directory}/app/build/outputs/apk/release")
+  
     # Sign the apk file
     add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND jarsigner -verbose -keystore ${ANDROID_APK_SIGNER_KEYSTORE} bin/${ANDROID_NAME}-unsigned.apk ${ANDROID_APK_SIGNER_ALIAS}
-      WORKING_DIRECTORY "${apk_directory}/app")
+      COMMAND ${APKSIGNER_BIN} sign --ks ${ANDROID_APK_SIGNER_KEYSTORE} app-release-aligned.apk 
+      WORKING_DIRECTORY "${apk_directory}/app/build/outputs/apk/release")
 
-    # Align the apk file
-    add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND zipalign -v -f 4 bin/${ANDROID_NAME}-unsigned.apk bin/${ANDROID_NAME}.apk
-      WORKING_DIRECTORY "${apk_directory}/app")
-    
+    # Rename the 'app' apk to target name
+    add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy 
+       "${apk_directory}/app/build/outputs/apk/release/app-release-aligned.apk" 
+       "${apk_directory}/../../Binaries/Android/${CMAKE_BUILD_TYPE}/${ANDROID_NAME}-signed.apk" )
+  
     # Install current version on the device/emulator
     # if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
     #   add_custom_command(TARGET ${ANDROID_NAME}
