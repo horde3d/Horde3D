@@ -23,11 +23,6 @@
 #include "rapidxml.h"
 
 
-inline void rapidxml::parse_error_handler( const char *what, void *where )
-{
-}
-
-
 namespace Horde3D {
 
 class XMLAttribute
@@ -88,15 +83,16 @@ protected:
 class XMLDoc
 {
 public:
-	XMLDoc() : buf( 0x0 ) {}
+	XMLDoc() : buf( 0x0 ), err(false) {}
 	~XMLDoc() { delete[] buf; }
 	
-	bool hasError() const { return doc.first_node() == 0x0; }
+	bool hasError() const { return err || doc.first_node() == 0x0; }
 	XMLNode getRootNode() const { return XMLNode( doc.first_node() ); }
 	
 	void parseString( char *text )
 	{
-		doc.parse< rapidxml::parse_validate_closing_tags >( text );
+		try { doc.parse< rapidxml::parse_validate_closing_tags >( text ); }
+		catch (const std::exception&) { err = true; }
 	}
 
 	void parseBuffer( const char *charbuf, int size )
@@ -130,6 +126,7 @@ public:
 private:
 	rapidxml::xml_document<>  doc;
 	char                      *buf;
+	bool                      err;
 };
 
 
