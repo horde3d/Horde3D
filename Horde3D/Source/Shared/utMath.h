@@ -63,17 +63,17 @@ namespace Math
 // General
 // -------------------------------------------------------------------------------------------------
 
-static inline float degToRad( float f ) 
+inline float degToRad( float f )
 {
 	return f * 0.017453293f;
 }
 
-static inline float radToDeg( float f ) 
+inline float radToDeg( float f )
 {
 	return f * 57.29577951f;
 }
 
-static inline float clamp( float f, float min, float max )
+inline float clamp( float f, float min, float max )
 {
 	if( f < min ) f = min;
 	else if( f > max ) f = max;
@@ -81,17 +81,17 @@ static inline float clamp( float f, float min, float max )
 	return f;
 }
 
-static inline float minf( float a, float b )
+inline float minf( float a, float b )
 {
 	return a < b ? a : b;
 }
 
-static inline float maxf( float a, float b )
+inline float maxf( float a, float b )
 {
 	return a > b ? a : b;
 }
 
-static inline float fsel( float test, float a, float b )
+inline float fsel( float test, float a, float b )
 {
 	// Branchless selection
 	return test >= 0 ? a : b;
@@ -99,7 +99,7 @@ static inline float fsel( float test, float a, float b )
 
 // Computes a/b, rounded up
 // To be used for positive a and b and small numbers (beware of overflows)
-static inline int idivceil( int a, int b )
+inline int idivceil( int a, int b )
 {
 	return (a + b - 1) / b;
 }
@@ -109,14 +109,14 @@ static inline int idivceil( int a, int b )
 // Conversion
 // -------------------------------------------------------------------------------------------------
 
-static inline int ftoi_t( double val )
+inline int ftoi_t( double val )
 {
 	// Float to int conversion using truncation
 	
 	return (int)val;
 }
 
-static inline int ftoi_r( double val )
+inline int ftoi_r( double val )
 {
 	// Fast round (banker's round) using Sree Kotay's method
 	// This function is much faster than a naive cast from float to int
@@ -155,10 +155,6 @@ public:
 	}
 	
 	Vec2f( const float x, const float y ) : x( x ), y( y )
-	{
-	}
-	
-	Vec2f( const Vec2f &v ) : x( v.x ), y( v.y )
 	{
 	}
 	
@@ -293,10 +289,6 @@ public:
 	}
 	
 	Vec3f( const float x, const float y, const float z ) : x( x ), y( y ), z( z ) 
-	{
-	}
-
-	Vec3f( const Vec3f &v ) : x( v.x ), y( v.y ), z( v.z )
 	{
 	}
 
