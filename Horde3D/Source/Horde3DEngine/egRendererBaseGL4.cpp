@@ -821,7 +821,7 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	glBindTexture( tex.type, tex.glObj );
 	
 	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+	glTexParameterfv( tex.type, GL_TEXTURE_BORDER_COLOR, borderColor );
 	
 	tex.samplerState = 0;
 	applySamplerState( tex );
