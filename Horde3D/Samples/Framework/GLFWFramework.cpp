@@ -5,7 +5,7 @@
 
 #include "Horde3DUtils.h"
 
-bool GLFWBackend::Init( const BackendInitParameters &params )
+bool GLFWBackend::init( const BackendInitParameters &params )
 {
 	if ( !glfwInit() )
 	{
@@ -61,12 +61,12 @@ bool GLFWBackend::Init( const BackendInitParameters &params )
 
 }
 
-void GLFWBackend::Release()
+void GLFWBackend::release()
 {
 	glfwTerminate();
 }
 
-void * GLFWBackend::CreateWindow( const WindowCreateParameters &params )
+void * GLFWBackend::createWindow( const WindowCreateParameters &params )
 {
 	// Create window
 	if ( params.fullScreen )
@@ -121,7 +121,7 @@ void * GLFWBackend::CreateWindow( const WindowCreateParameters &params )
 	return ( void * ) _wnd;
 }
 
-bool GLFWBackend::DestroyWindow( void *handle )
+bool GLFWBackend::destroyWindow( void *handle )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
 	glfwDestroyWindow( wnd );
@@ -129,33 +129,33 @@ bool GLFWBackend::DestroyWindow( void *handle )
 	return true;
 }
 
-void GLFWBackend::SetWindowTitle( void *handle, const char *title )
+void GLFWBackend::setWindowTitle( void *handle, const char *title )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
 	
 	glfwSetWindowTitle( wnd, title );
 }
 
-void GLFWBackend::SetCursorVisible( void *handle, bool visible )
+void GLFWBackend::setCursorVisible( void *handle, bool visible )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
 
 	glfwSetInputMode( wnd, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED );
 }
 
-void GLFWBackend::SwapBuffers( void *handle )
+void GLFWBackend::swapBuffers( void *handle )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
 
 	glfwSwapBuffers( wnd );
 }
 
-void GLFWBackend::ProcessEvents()
+void GLFWBackend::processEvents()
 {
 	glfwPollEvents();
 }
 
-void GLFWBackend::GetSize( void *handle, int *width, int *height )
+void GLFWBackend::getSize( void *handle, int *width, int *height )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
 
@@ -198,12 +198,12 @@ void GLFWBackend::mouseEnterListener( GLFWwindow* win, int entered )
 	if ( device->_mouseEnterWindowEventHandler.isInitialized() ) device->_mouseEnterWindowEventHandler.invoke( entered );
 }
 
-bool GLFWBackend::CheckKeyDown( void *handle, int key )
+bool GLFWBackend::checkKeyDown( void *handle, int key )
 {
 	return glfwGetKey( ( GLFWwindow * ) handle, key ) == GLFW_PRESS;
 }
 
-void GLFWBackend::LogMessage( LogMessageLevel messageLevel, const char *msg )
+void GLFWBackend::logMessage( LogMessageLevel messageLevel, const char *msg )
 {
 	// As glfw is only used on desktop platforms, standard cout should be enough for most situations
 	static std::array< const char *, 4 > messageTypes = { "Error:", "Warning:", "Info:", "Debug:" };
@@ -213,7 +213,7 @@ void GLFWBackend::LogMessage( LogMessageLevel messageLevel, const char *msg )
 	printf( "%s %s\n", messageTypes[ messageLevel ], msg );
 }
 
-bool GLFWBackend::LoadResources( const char *contentDir )
+bool GLFWBackend::loadResources( const char *contentDir )
 {
 	return h3dutLoadResourcesFromDisk( contentDir );
 }

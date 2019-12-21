@@ -353,7 +353,7 @@ bool loadResourcesBySDL( const char *contentDir )
 	return result;
 }
 
-bool SDLBackend::Init( const BackendInitParameters &params )
+bool SDLBackend::init( const BackendInitParameters &params )
 {
 	if ( SDL_Init( SDL_INIT_VIDEO ) != 0 )
 	{
@@ -402,13 +402,20 @@ bool SDLBackend::Init( const BackendInitParameters &params )
 	return true;
 }
 
-void SDLBackend::Release()
+void SDLBackend::release()
 {
 	SDL_Quit();
 }
 
-void * SDLBackend::CreateWindow( const WindowCreateParameters &params )
+void * SDLBackend::createWindow( const WindowCreateParameters &params )
 {
+	// Additional hints for mobile platforms
+	if ( _curPlatform == Platform::Android || _curPlatform == Platform::IOS )
+	{
+		// Currently force to landscape mode
+		SDL_SetHint( SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight" );
+	}
+
 	if ( params.fullScreen )
 	{
 		SDL_DisplayMode display;
@@ -454,7 +461,7 @@ void * SDLBackend::CreateWindow( const WindowCreateParameters &params )
 	return ( void * ) _wnd;
 }
 
-bool SDLBackend::DestroyWindow( void *handle )
+bool SDLBackend::destroyWindow( void *handle )
 {
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
@@ -463,27 +470,27 @@ bool SDLBackend::DestroyWindow( void *handle )
 	return true;
 }
 
-void SDLBackend::SetWindowTitle( void *handle, const char *title )
+void SDLBackend::setWindowTitle( void *handle, const char *title )
 {
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
 	SDL_SetWindowTitle( wnd, title );
 }
 
-void SDLBackend::SetCursorVisible( void *handle, bool visible )
+void SDLBackend::setCursorVisible( void *handle, bool visible )
 {
 //	SDL_ShowCursor( visible );
 	SDL_SetRelativeMouseMode( visible ? SDL_FALSE : SDL_TRUE );
 }
 
-void SDLBackend::GetSize( void *handle, int *width, int *height )
+void SDLBackend::getSize( void *handle, int *width, int *height )
 {
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
 	SDL_GetWindowSize( wnd, width, height );
 }
 
-bool SDLBackend::CheckKeyDown( void *handle, int key )
+bool SDLBackend::checkKeyDown( void *handle, int key )
 {
 	const Uint8 *state = SDL_GetKeyboardState( NULL );
 	if ( state[ keyToSDLKey.at( key ) ] ) return true;
@@ -491,14 +498,14 @@ bool SDLBackend::CheckKeyDown( void *handle, int key )
 	return false;
 }
 
-void SDLBackend::SwapBuffers( void *handle )
+void SDLBackend::swapBuffers( void *handle )
 {
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
 	SDL_GL_SwapWindow( wnd );
 }
 
-void SDLBackend::ProcessEvents()
+void SDLBackend::processEvents()
 {
 	// Event handler
 	SDL_Event e;
@@ -580,7 +587,7 @@ void SDLBackend::ProcessEvents()
 	}
 }
 
-void SDLBackend::LogMessage( LogMessageLevel messageLevel, const char *msg ) 
+void SDLBackend::logMessage( LogMessageLevel messageLevel, const char *msg ) 
 {
 	// SDL allows logging messages on android and ios
 	static std::array< const char *, 4 > messageTypes = { "Error:", "Warning:", "Info:", "Debug:" };
@@ -589,11 +596,11 @@ void SDLBackend::LogMessage( LogMessageLevel messageLevel, const char *msg )
 	SDL_Log( "%s %s\n", messageTypes[ (int) messageLevel ], msg );
 }
 
-bool SDLBackend::LoadResources( const char *contentDir )
+bool SDLBackend::loadResources( const char *contentDir )
 {
-#if defined( __ANDROID__ )
+#if defined( PLATFORM_ANDROID ) || defined ( PLATFORM_IOS )
     return loadResourcesBySDL( contentDir );
-#elif
+#else
     return h3dutLoadResourcesFromDisk( contentDir );
 #endif
 }
