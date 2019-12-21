@@ -166,11 +166,11 @@ void TextureResource::initializationFunc()
 
 	// Upload default textures
 	defTex2DObject = rdi->createTexture( TextureTypes::Tex2D, 4, 4, 1,
-	                                      TextureFormats::BGRA8, true, true, false, false );
+	                                      TextureFormats::BGRA8, 2, true, false, false );
 	rdi->uploadTextureData( defTex2DObject, 0, 0, texData );
 	
 	defTexCubeObject = rdi->createTexture( TextureTypes::TexCube, 4, 4, 1,
-	                                        TextureFormats::BGRA8, true, true, false, false );
+	                                        TextureFormats::BGRA8, 2, true, false, false );
 	for( uint32 i = 0; i < 6; ++i ) 
 	{
 		rdi->uploadTextureData( defTexCubeObject, i, 0, texData );
@@ -181,7 +181,7 @@ void TextureResource::initializationFunc()
 	memcpy( texData2 + 128, texData, 64 ); memcpy( texData2 + 192, texData, 64 );
 
 	defTex3DObject = rdi->createTexture( TextureTypes::Tex3D, 4, 4, 4,
-	                                      TextureFormats::BGRA8, true, true, false, false );
+	                                      TextureFormats::BGRA8, 2, true, false, false );
 	rdi->uploadTextureData( defTex3DObject, 0, 0, texData2 );
 	delete[] texData2;
 }
@@ -212,7 +212,7 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 {	
 	_loaded = true;
 	_texFormat = fmt;
-	_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
+	_maxMipLevel = (_flags & ResourceFlags::NoTexMipmaps) ? 0 : getMaxAtMipFullLevel();
 
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
@@ -223,7 +223,7 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		_flags |= ResourceFlags::NoTexCompression;
 		_texType = TextureTypes::Tex2D;
 		_sRGB = false;
-		_rbObj = rdi->createRenderBuffer( width, height, fmt, flags & ResourceFlags::TexDepthBuffer, 1, 0, _hasMipMaps );
+		_rbObj = rdi->createRenderBuffer( width, height, fmt, flags & ResourceFlags::TexDepthBuffer, 1, 0, _maxMipLevel );
 		_texObject = rdi->getRenderBufferTex( _rbObj, 0 );
 	}
 	else
@@ -235,9 +235,8 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		_texType = flags & ResourceFlags::TexCubemap ? TextureTypes::TexCube : TextureTypes::Tex2D;
 		if( depth > 1 ) _texType = TextureTypes::Tex3D;
 		_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
-		_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
 		_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
-		                                 _hasMipMaps, _hasMipMaps, false, _sRGB );
+		                                 _maxMipLevel, _maxMipLevel > 0, false, _sRGB );
 		rdi->uploadTextureData( _texObject, 0, 0, pixels );
 		
 		delete[] pixels;
@@ -258,7 +257,7 @@ void TextureResource::initDefault()
 	_texFormat = TextureFormats::BGRA8;
 	_width = 0; _height = 0; _depth = 0;
 	_sRGB = false;
-	_hasMipMaps = true;
+	_maxMipLevel = 0;
 	
 	if( _texType == TextureTypes::TexCube )
 		_texObject = defTexCubeObject;
@@ -309,7 +308,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 {
 	ASSERT_STATIC( sizeof( DDSHeader ) == 128 );
 
-    // all of the dds header is uint32 data, so we consider it a array of uint32s.
+	// all of the dds header is uint32 data, so we consider it a array of uint32s.
 	elemcpy_le((uint32*)(&ddsHeader), (uint32*)(data), 128 / sizeof(uint32));
 
 	// Check header
@@ -327,7 +326,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 	_texObject = 0;
 	_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
 	int mipCount = ddsHeader.dwFlags & DDSD_MIPMAPCOUNT ? ddsHeader.dwMipMapCount : 1;
-	_hasMipMaps = mipCount > 1 ? true : false;
+	_maxMipLevel = mipCount > 1 ? mipCount - 1 : 0;
 	bool dx10HeaderAvailable = false;
 
 	// Get texture type
@@ -450,7 +449,7 @@ bool TextureResource::loadDDS( const char *data, int size )
 
 	// Create texture
 	_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
-	                                  mipCount > 1, false, false, _sRGB );
+	                                 _maxMipLevel, false, false, _sRGB );
 	
 	if ( _texObject == 0 ) return raiseError( "Failed to create DDS texture" );
 
@@ -545,7 +544,7 @@ bool TextureResource::loadKTX( const char *data, int size )
 	_texObject = 0;
 	_sRGB = ( _flags & ResourceFlags::TexSRGB ) != 0;
 	uint32 mipCount = ktxHeader.numberOfMipmapLevels;
-	_hasMipMaps = mipCount > 1 ? true : false;
+	_maxMipLevel = mipCount > 1 ? mipCount - 1 : 0;
 
 	// Get texture type
 	if ( ktxHeader.numberOfFaces > 1 )
@@ -590,7 +589,7 @@ bool TextureResource::loadKTX( const char *data, int size )
 
 	// Create texture
 	_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
-		mipCount > 1, false, false, _sRGB );
+		_maxMipLevel, false, false, _sRGB );
 
 	if ( _texObject == 0 ) return raiseError( "Failed to create KTX texture" );
 
@@ -683,13 +682,13 @@ bool TextureResource::loadSTBI( const char *data, int size )
 	_texType = TextureTypes::Tex2D;
 	_texFormat = hdr ? TextureFormats::RGBA16F : TextureFormats::BGRA8;
 	_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
-	_hasMipMaps = !(_flags & ResourceFlags::NoTexMipmaps);
-	
+	_maxMipLevel = (_flags & ResourceFlags::NoTexMipmaps) ? 0 : getMaxAtMipFullLevel();
+
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Create and upload texture
 	_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
-		_hasMipMaps, _hasMipMaps, !(_flags & ResourceFlags::NoTexCompression), _sRGB );
+		_maxMipLevel, _maxMipLevel > 1, !(_flags & ResourceFlags::NoTexCompression), _sRGB );
 	rdi->uploadTextureData( _texObject, 0, 0, pixels );
 
 	stbi_image_free( pixels );
@@ -711,12 +710,9 @@ bool TextureResource::load( const char *data, int size )
 }
 
 
-int TextureResource::getMipCount() const
+uint32_t TextureResource::getMaxAtMipFullLevel() const
 {
-	if( _hasMipMaps )
-		return ftoi_t( log( (float)std::max( _width, _height ) ) / log( 2.0f ) );
-	else
-		return 0;
+	return ftoi_t( std::log2( std::max( _width, _height ) ) );
 }
 
 
@@ -727,7 +723,7 @@ int TextureResource::getElemCount( int elem ) const
 	case TextureResData::TextureElem:
 		return 1;
 	case TextureResData::ImageElem:
-		return _texType == TextureTypes::TexCube ? 6 * (getMipCount() + 1) : getMipCount() + 1;
+		return _texType == TextureTypes::TexCube ? 6 * (_maxMipLevel + 1) : _maxMipLevel + 1;
 	default:
 		return Resource::getElemCount( elem );
 	}
@@ -753,14 +749,14 @@ int TextureResource::getElemParamI( int elem, int elemIdx, int param ) const
 		case TextureResData::ImgWidthI:
 			if( elemIdx < getElemCount( elem ) )
 			{
-				int mipLevel = elemIdx % (getMipCount() + 1);
+				int mipLevel = elemIdx % (_maxMipLevel + 1);
 				return std::max( 1, _width >> mipLevel );
 			}
 			break;
 		case TextureResData::ImgHeightI:
 			if( elemIdx < getElemCount( elem ) )
 			{
-				int mipLevel = elemIdx % (getMipCount() + 1);
+				int mipLevel = elemIdx % (_maxMipLevel + 1);
 				return std::max( 1, _height >> mipLevel );
 			}
 			break;
@@ -786,8 +782,8 @@ void *TextureResource::mapStream( int elem, int elemIdx, int stream, bool read, 
 			
 			if( read )
 			{	
-				int slice = elemIdx / (getMipCount() + 1);
-				int mipLevel = elemIdx % (getMipCount() + 1);
+				int slice = elemIdx / (_maxMipLevel + 1);
+				int mipLevel = elemIdx % (_maxMipLevel + 1);
 				rdi->getTextureData( _texObject, slice, mipLevel, mappedData );
 			}
 
@@ -810,8 +806,8 @@ void TextureResource::unmapStream()
 	{
 		if( mappedWriteImage >= 0 )
 		{
-			int slice = mappedWriteImage / (getMipCount() + 1);
-			int mipLevel = mappedWriteImage % (getMipCount() + 1);
+			int slice = mappedWriteImage / (_maxMipLevel + 1);
+			int mipLevel = mappedWriteImage % (_maxMipLevel + 1);
 			Modules::renderer().getRenderDevice()->updateTextureData( _texObject, slice, mipLevel, mappedData );
 			mappedWriteImage = -1;
 		}

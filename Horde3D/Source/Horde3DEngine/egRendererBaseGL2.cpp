@@ -697,8 +697,8 @@ void RenderDeviceGL2::unmapBuffer( uint32 geoObj, uint32 bufObj )
 // =================================================================================================
 
 uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int height, int depth,
-                                    TextureFormats::List format,
-                                    bool hasMips, bool genMips, bool compress, bool sRGB )
+                                       TextureFormats::List format,
+                                       int maxMipLevel, bool genMips, bool compress, bool sRGB )
 {
 	ASSERT( depth > 0 );
 
@@ -732,7 +732,7 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 	tex.depth = depth;
 	tex.sRGB = sRGB && Modules::config().sRGBLinearization;
 	tex.genMips = genMips;
-	tex.hasMips = hasMips;
+	tex.hasMips = maxMipLevel > 0;
 
 	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
 
@@ -743,7 +743,9 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 	glGenTextures( 1, &tex.glObj );
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
-	
+
+	glTexParameteri( tex.type, GL_TEXTURE_MAX_LEVEL, maxMipLevel );
+
 	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glTexParameterfv( tex.type, GL_TEXTURE_BORDER_COLOR, borderColor );
 	
@@ -755,8 +757,7 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
 
 	// Calculate memory requirements
-	tex.memSize = calcTextureSize( format, width, height, depth );
-	if( hasMips || genMips ) tex.memSize += ftoi_r( tex.memSize * 1.0f / 3.0f );
+	tex.memSize = calcTextureSize( format, width, height, depth, maxMipLevel );
 	if( type == TextureTypes::TexCube ) tex.memSize *= 6;
 	_textureMem += tex.memSize;
 	
@@ -1186,7 +1187,7 @@ void RenderDeviceGL2::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 // =================================================================================================
 
 uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-                                            bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
+                                            bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
 	{
@@ -1223,7 +1224,7 @@ uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, Texture
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
 			// Create a color texture
-			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, hasMipmaps, hasMipmaps, false, false );
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, maxMipLevel, maxMipLevel > 0, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
@@ -1275,7 +1276,7 @@ uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, Texture
 	{
 		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
 		// Create a depth texture
-		uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, false, false, false, false );
+		uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, 0, false, false, false );
 		ASSERT( texObj != 0 );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
 		uploadTextureData( texObj, 0, 0, 0x0 );

@@ -72,7 +72,7 @@ public:
 	uint32 getDepth() const { return _depth; }
 	uint32 getTexObject() const { return _texObject; }
 	uint32 getRBObject() const { return _rbObj; }
-	bool hasMipMaps() const { return _hasMipMaps; }
+	uint32 getMaxMipLevel() const { return _maxMipLevel; }
 
 public:
 	static uint32	defTex2DObject;
@@ -87,8 +87,8 @@ protected:
 	bool loadKTX( const char *data, int size );
 	bool loadDDS( const char *data, int size );
 	bool loadSTBI( const char *data, int size );
-	int getMipCount() const;
-	
+    uint32 getMaxAtMipFullLevel() const;
+
 protected:
 	static unsigned char  *mappedData;
 	static int            mappedWriteImage;
@@ -97,9 +97,9 @@ protected:
 	TextureFormats::List  _texFormat;
 	int                   _width, _height, _depth;
 	uint32                _texObject;
-	uint32                _rbObj;  // Used when texture is renderable
+	uint32                _rbObj;           // Used when texture is renderable
+	uint32                _maxMipLevel;     // number of mip levels = _maxMipLevel + 1
 	bool                  _sRGB;
-	bool                  _hasMipMaps;
 
 	friend class ResourceManager;
 };
