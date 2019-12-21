@@ -809,8 +809,12 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 	glGenTextures( 1, &tex.glObj );
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
-	
-	glTexParameteri( tex.type, GL_TEXTURE_MAX_LEVEL, maxMipLevel );
+
+	if ( tex.type != GL_TEXTURE_3D ) {
+		glTexStorage2D( tex.type, maxMipLevel+1, tex.glFmt, tex.width, tex.height );
+	} else {
+		glTexStorage3D( tex.type, maxMipLevel+1, tex.glFmt, tex.width, tex.height, tex.depth );
+	}
 
 	tex.samplerState = 0;
 	applySamplerState( tex );
@@ -863,21 +867,21 @@ void RenderDeviceGLES3::uploadTextureData( uint32 texObj, int slice, int mipLeve
 			GL_TEXTURE_2D : (GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice);
 		
 		if( compressed )
-			glCompressedTexImage2D( target, mipLevel, tex.glFmt, width, height, 0,
-			                        calcTextureSize( format, width, height, 1 ), pixels );
+			glCompressedTexSubImage2D( target, mipLevel, 0, 0, width, height,
+			                           tex.glFmt, calcTextureSize( format, width, height, 1 ), pixels );
 		else
-			glTexImage2D( target, mipLevel, tex.glFmt, width, height, 0, inputFormat, inputType, pixels );
+			glTexSubImage2D( target, mipLevel, 0, 0, width, height, inputFormat, inputType, pixels );
 	}
 	else if ( tex.type == textureTypes[ TextureTypes::Tex3D ] )
 	{
 		int depth = std::max( tex.depth >> mipLevel, 1 );
 		
 		if( compressed )
-			glCompressedTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			                        calcTextureSize( format, width, height, depth ), pixels );	
+			glCompressedTexSubImage3D( GL_TEXTURE_3D, mipLevel, 0, 0, 0, width, height, depth,
+			                           tex.glFmt, calcTextureSize( format, width, height, depth ), pixels );
 		else
-			glTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			              inputFormat, inputType, pixels );
+			glTexSubImage3D( GL_TEXTURE_3D, mipLevel, 0, 0, 0, width, height, depth,
+			                 inputFormat, inputType, pixels );
 	}
 
 	if( tex.genMips && (tex.type != GL_TEXTURE_CUBE_MAP || slice == 5) )
