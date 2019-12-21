@@ -27,7 +27,7 @@ set(HORDE3D_SOURCES
 	egShader.cpp
 	egTexture.cpp
 	utImage.cpp
-	config.h
+#	config.h
 	egAnimatables.h
 	egAnimation.h
 	egCamera.h
@@ -62,14 +62,16 @@ add_definitions(-DCMAKE )
 
 if (USE_GL2 OR USE_GL4)
 	if (USE_GL2)
-		add_definitions(-DH3D_USE_GL2)
+#		add_definitions(-DH3D_USE_GL2)
+		set( H3D_USE_GL2 1 )
 
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL2.h")
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL2.cpp")
 	endif (USE_GL2)
 
 	if (USE_GL4)
-		add_definitions(-DH3D_USE_GL4)
+#		add_definitions(-DH3D_USE_GL4)
+		set( H3D_USE_GL4 1 )
 
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL4.h")
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL4.cpp")
@@ -80,8 +82,9 @@ if (USE_GL2 OR USE_GL4)
 endif(USE_GL2 OR USE_GL4)
 
 if (USE_GLES3)
-	add_definitions(-DH3D_USE_GLES3)
-	
+#	add_definitions(-DH3D_USE_GLES3)
+	set( H3D_USE_GLES3 1 )
+
 	# remove other opengl render backends from build
 	list(APPEND HORDE3D_SOURCES "egRendererBaseGLES3.h")
 	list(APPEND HORDE3D_SOURCES "egRendererBaseGLES3.cpp")
@@ -89,6 +92,9 @@ if (USE_GLES3)
 	list(APPEND HORDE3D_SOURCES "utOpenGLES3.cpp")
 
 endif (USE_GLES3)
+
+# Add renderers, specified during build, in the config.h file
+configure_file( config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
 add_library(Horde3D SHARED
 	${HORDE3D_SOURCES}

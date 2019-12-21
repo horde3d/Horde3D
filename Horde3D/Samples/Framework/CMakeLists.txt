@@ -36,4 +36,7 @@ elseif(HORDE3D_USE_SDL)
     endif()
 endif()
 
+# Sample framework should see generated config to get supported renderers
+include_directories( ${CMAKE_BINARY_DIR} )
+
 #add_dependencies(SampleFramework project_glfw)
