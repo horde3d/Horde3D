@@ -30,6 +30,16 @@ class FrameworkBackend;
 struct BackendInitParameters;
 struct WindowCreateParameters;
 
+struct RenderCapabilities
+{
+	enum List 
+	{
+		GeometryShader = 2,
+		TessellationShader = 4,
+		ComputeShader = 8
+	};
+};
+
 class SampleApplication
 {
 public:
@@ -51,7 +61,6 @@ public:
     SampleApplication(
             int argc, char** argv,
             const char* title = "Horde3D Sample",
-			int renderer = H3DRenderDevice::OpenGL4,
             float fov = 45.0f, float near_plane = 0.1f, float far_plane = 1000.0f,
             int width = 1280, int height = 720,
             bool fullscreen = false, bool show_cursor = false,
@@ -119,6 +128,8 @@ public:
     void showStatPanel( int mode );
     void setFreezeMode( int mode );
 
+	void setRequiredCapabilities( int caps );
+
     int run();
 	
 protected:
@@ -128,7 +139,6 @@ protected:
 
     virtual bool initResources();
     virtual void releaseResources();
-    bool loadResources( const char *contentDir );
 
     virtual void update();
     virtual void render();
@@ -149,7 +159,7 @@ protected:
 	
 	FrameworkBackend *getBackend() { return _backend; }
 	void *getWindowHandle() { return _winHandle; }
-	void RecreateWindow();
+	void recreateWindow();
 //	static void keyEventHandler( int key, int scancode, int action, int mods );
 //	static void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 
@@ -171,6 +181,7 @@ protected:
     H3DRes       _fontMatRes, _panelMatRes, _logoMatRes;
     H3DNode      _cam;
 	int			 _renderInterface;
+	int			 _renderCaps;
 
 private:
 

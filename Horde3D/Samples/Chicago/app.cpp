@@ -25,7 +25,7 @@ using namespace std;
 
 
 ChicagoSample::ChicagoSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Chicago - Horde3D Sample", H3DRenderDevice::OpenGL4 ),
+    SampleApplication( argc, argv, "Chicago - Horde3D Sample", H3DRenderDevice::OpenGL2 ),
     _crowdSim(0)
 {
     _x = 15; _y = 3; _z = 20;

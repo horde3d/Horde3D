@@ -22,7 +22,7 @@ using namespace std;
 
 
 TerrainSample::TerrainSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Terrain - Horde3D Sample", H3DRenderDevice::OpenGL2, 45.0f, 0.1f, 2000.0f )
+    SampleApplication( argc, argv, "Terrain - Horde3D Sample", 45.0f, 0.1f, 2000.0f )
 {
 	_x = 512; _y = 120; _z = 512;
 	_rx = 0; _ry = 225;

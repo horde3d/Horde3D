@@ -22,6 +22,10 @@
 #include <cstdio>
 #include <math.h>
 #include <iomanip>
+#include <chrono>
+
+#include "utPlatform.h"
+#include "config.h"
 
 #include "Horde3DOverlays.h"
 
@@ -34,8 +38,6 @@
 #endif
 
 using namespace std;
-#include <chrono>
-
 
 // Extracts an absolute path to the resources directory given the executable path.
 // It assumes that the ressources can be found in "[app path]/../../Content".
@@ -85,7 +87,6 @@ bool checkForBenchmarkOption( int argc, char** argv )
 
 SampleApplication::SampleApplication(int argc, char** argv,
         const char* title,
-        int renderer,
         float fov, float near_plane, float far_plane,
         int width, int height,
         bool fullscreen, bool show_cursor,
@@ -96,7 +97,6 @@ SampleApplication::SampleApplication(int argc, char** argv,
 	_helpRows(12), _helpLabels(0), _helpValues(0),
     _curPipeline(0),
     _cam(0),
-    _renderInterface( renderer ),
     _initialized(false),
     _running(false),
     _resourcePath( extractResourcePath( argv[0] ) ),
@@ -126,7 +126,7 @@ SampleApplication::~SampleApplication()
 	
 	if ( _backend )
 	{
-		_backend->Release();
+		_backend->release();
 		delete _backend; _backend = nullptr;
 	}
 }
@@ -136,15 +136,15 @@ bool SampleApplication::init()
 {
 	// Init params can be changed in derived user applications
 	auto params = setupInitParameters();
-	if ( !_backend->Init( params ) ) return false;
+	if ( !_backend->init( params ) ) return false;
 
 	auto winParams = setupWindowParameters();
-	if ( ( _winHandle = _backend->CreateWindow( winParams ) ) == nullptr ) return false;
+	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) return false;
 
 	// Initialize engine
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
-        _backend->LogMessage( LogMessageLevel::Error, "Unable to initialize engine" );
+        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize engine" );
 //		std::cout << "Unable to initialize engine" << std::endl;
 
 		h3dutDumpMessages();
@@ -154,7 +154,7 @@ bool SampleApplication::init()
 	// Samples require overlays extension in order to display information
 	if ( !h3dCheckExtension( "Overlays" ) )
 	{
-        _backend->LogMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
+        _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
 
 ///		std::cout << "Unable to find overlays extension" << std::endl;
 		return false;
@@ -173,7 +173,7 @@ bool SampleApplication::init()
 	// Init resources
 	if ( !initResources() )
 	{
-        _backend->LogMessage( LogMessageLevel::Error, "Unable to initialize resources" );
+        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
 
 //		std::cout << "Unable to initialize resources" << std::endl;
 
@@ -189,32 +189,32 @@ bool SampleApplication::init()
 	h3dutDumpMessages();
 
 	// Init cursor
-	_backend->SetCursorVisible( _winHandle, _winShowCursor );
+	_backend->setCursorVisible( _winHandle, _winShowCursor );
 
 	// Attach callbacks
 	Delegate< void( int, int, int ) > keyboardDelegate;
 	keyboardDelegate.bind< SampleApplication, &SampleApplication::keyEventHandler >( this );
- 	_backend->RegisterKeyboardEventHandler( keyboardDelegate );
+ 	_backend->registerKeyboardEventHandler( keyboardDelegate );
 
 	Delegate< void( float, float, float, float ) > mouseMoveDelegate;
 	mouseMoveDelegate.bind< SampleApplication, &SampleApplication::mouseMoveHandler >( this );
-	_backend->RegisterMouseMoveEventHandler( mouseMoveDelegate );
+	_backend->registerMouseMoveEventHandler( mouseMoveDelegate );
 
 	Delegate< void( int, int, int ) > mouseButtonDelegate;
 	mouseButtonDelegate.bind< SampleApplication, &SampleApplication::mousePressHandler >( this );
-	_backend->RegisterMouseButtonEventHandler( mouseButtonDelegate );
+	_backend->registerMouseButtonEventHandler( mouseButtonDelegate );
 
 	Delegate< void( int ) > mouseEnterDelegate;
 	mouseEnterDelegate.bind< SampleApplication, &SampleApplication::mouseEnterHandler >( this );
-	_backend->RegisterMouseEnterWindowEventHandler( mouseEnterDelegate );
+	_backend->registerMouseEnterWindowEventHandler( mouseEnterDelegate );
 
 	Delegate< void( int, int ) > windowResizeDelegate;
 	windowResizeDelegate.bind< SampleApplication, &SampleApplication::setViewportSize >( this );
-	_backend->RegisterWindowResizeEventHandler( windowResizeDelegate );
+	_backend->registerWindowResizeEventHandler( windowResizeDelegate );
 
 	Delegate< void() > windowCloseDelegate;
 	windowCloseDelegate.bind< SampleApplication, &SampleApplication::requestClosing >( this );
-	_backend->RegisterQuitEventHandler( windowCloseDelegate );
+	_backend->registerQuitEventHandler( windowCloseDelegate );
 
 	// Indicate that everything is ok
 	_initialized = true;
@@ -234,7 +234,7 @@ void SampleApplication::release()
 		h3dRelease();
 
 		// Destroy window
-		_backend->DestroyWindow( _winHandle );
+		_backend->destroyWindow( _winHandle );
 		_winHandle = nullptr;
 	}
 }
@@ -242,6 +242,18 @@ void SampleApplication::release()
 
 BackendInitParameters SampleApplication::setupInitParameters()
 {
+	// Check available render interfaces
+#if defined( H3D_USE_GL4 ) && defined( H3D_USE_GL2 )
+	// Try gl4 by default, will fallback to gl2 in case of failure
+	_renderInterface = H3DRenderDevice::OpenGL4;
+#elif H3D_USE_GLES3
+	_renderInterface = H3DRenderDevice::OpenGLES3;
+#elif H3D_USE_GL4
+	_renderInterface = H3DRenderDevice::OpenGL4;
+#elif H3D_USE_GL2
+	_renderInterface = H3DRenderDevice::OpenGL2;
+#endif
+
 	BackendInitParameters params;
 	switch ( _renderInterface )
 	{
@@ -252,20 +264,22 @@ BackendInitParameters SampleApplication::setupInitParameters()
 			break;
 		case ( int ) RenderAPI::OpenGL4:
 			params.requestedAPI = RenderAPI::OpenGL4;
-#ifdef __APPLE__
-			// macOS supports GL up to 4.1, no support for compute shaders
 			params.majorVersion = 4;
-			params.minorVersion = 1;
-#else
-			// other OS support GL up to 4.6
-			params.majorVersion = 4;
-			params.minorVersion = 3;
-#endif
+			params.minorVersion = 0;
+
+			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 1;
+			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 3;
+			
 			break;
 		case ( int ) RenderAPI::OpenGLES3:
 			params.requestedAPI = RenderAPI::OpenGLES3;
 			params.majorVersion = 3;
-			params.minorVersion = 0; // set to 3.0 in order to support IOS
+			params.minorVersion = 0; 
+
+			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 1;
+			if ( _renderCaps & RenderCapabilities::GeometryShader ) params.minorVersion = 2;
+			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 2;
+
 			break;
 		default:
 			break;
@@ -292,14 +306,14 @@ WindowCreateParameters SampleApplication::setupWindowParameters()
 
 void SampleApplication::getSize( int &width, int &height ) const
 {
-	if ( _winHandle ) _backend->GetSize( _winHandle, &width, &height );
+	if ( _winHandle ) _backend->getSize( _winHandle, &width, &height );
 	else { width = -1; height = -1; }
 }
 
 
 void SampleApplication::setTitle( const char* title )
 {
-	_backend->SetWindowTitle( _winHandle, title );
+	_backend->setWindowTitle( _winHandle, title );
 
     _winTitle = title;
 }
@@ -373,7 +387,7 @@ void SampleApplication::enableWireframeMode( bool enabled )
 
 void SampleApplication::showCursor( bool visible )
 {
-	_backend->SetCursorVisible( _winHandle, visible );
+	_backend->setCursorVisible( _winHandle, visible );
 
     _winShowCursor = visible;
 }
@@ -394,6 +408,12 @@ void SampleApplication::showStatPanel( int mode )
 void SampleApplication::setFreezeMode( int mode )
 {
     _freezeMode = mode % 3;
+}
+
+
+void SampleApplication::setRequiredCapabilities( int caps )
+{
+	_renderCaps = caps;
 }
 
 
@@ -419,7 +439,7 @@ int SampleApplication::run()
 	while ( _running )
 	{
 		// Handle fullscreen & sample count change
-		if ( !_initialized ) RecreateWindow();
+		if ( !_initialized ) recreateWindow();
 
 		mainLoop( this );
 	}
@@ -483,7 +503,7 @@ void SampleApplication::mainLoop( void *arg )
 	app->_curFPS = app->_benchmark ? H3D_FPS_REFERENCE : fps;
 
 	// 2. Poll window events...
-	app->_backend->ProcessEvents();
+	app->_backend->processEvents();
 
 	// 3. ...update logic...
 	app->update();
@@ -505,7 +525,7 @@ void SampleApplication::requestClosing()
 }
 
 
-void SampleApplication::RecreateWindow()
+void SampleApplication::recreateWindow()
 {
 	release();
 	init();
@@ -543,9 +563,9 @@ bool SampleApplication::initResources()
     if ( _helpRows > 11 ) { _helpLabels[11] = "LShift:"; _helpValues[11] = "Turbo"; }
 	
 	// 2. Load resources
-    if ( !_backend->LoadResources( _resourcePath.c_str() ) )
+    if ( !_backend->loadResources( _resourcePath.c_str() ) )
 	{
-        _backend->LogMessage( LogMessageLevel::Error, "Error in loading resources" );
+        _backend->logMessage( LogMessageLevel::Error, "Error in loading resources" );
 
 //        std::cout << "Error in loading resources" << std::endl;
 
@@ -573,9 +593,9 @@ void SampleApplication::update()
     {
         float curVel = _velocity / _curFPS * H3D_FPS_REFERENCE;
 
-        if( _backend->CheckKeyDown( _winHandle, KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
+        if( _backend->checkKeyDown( _winHandle, KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
 
-        if( _backend->CheckKeyDown( _winHandle, KEY_W ) )
+        if( _backend->checkKeyDown( _winHandle, KEY_W ) )
         {
             // Move forward
             _x -= sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
@@ -583,7 +603,7 @@ void SampleApplication::update()
             _z -= cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
         }
 
-        if( _backend->CheckKeyDown( _winHandle, KEY_S ) )
+        if( _backend->checkKeyDown( _winHandle, KEY_S ) )
         {
             // Move backward
             _x += sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
@@ -591,14 +611,14 @@ void SampleApplication::update()
             _z += cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
         }
 
-        if( _backend->CheckKeyDown( _winHandle, KEY_A ) )
+        if( _backend->checkKeyDown( _winHandle, KEY_A ) )
         {
             // Strafe left
             _x += sinf( H3D_DEG2RAD * ( _ry - 90) ) * curVel;
             _z += cosf( H3D_DEG2RAD * ( _ry - 90 ) ) * curVel;
         }
 
-        if( _backend->CheckKeyDown( _winHandle, KEY_D ) )
+        if( _backend->checkKeyDown( _winHandle, KEY_D ) )
         {
             // Strafe right
             _x += sinf( H3D_DEG2RAD * ( _ry + 90 ) ) * curVel;
@@ -675,7 +695,7 @@ void SampleApplication::finalize()
     h3dutDumpMessages();
 
     // Swap buffers
-    _backend->SwapBuffers( _winHandle );
+    _backend->swapBuffers( _winHandle );
 }
 
 

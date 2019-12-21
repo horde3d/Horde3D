@@ -189,6 +189,8 @@ TessellatorSample::TessellatorSample( int argc, char** argv ) :
 	_tessInner = _tessOuter = 1;
 	_rotation = 0;
 	_helpRows += 2;
+
+	setRequiredCapabilities( RenderCapabilities::TessellationShader );
 }
 
 
