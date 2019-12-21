@@ -232,7 +232,7 @@ public:
 	// Textures
 // 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
-	                      bool hasMips, bool genMips, bool compress, bool sRGB );
+	                      int maxMipLevel, bool genMips, bool compress, bool sRGB );
 	void generateTextureMipmap( uint32 texObj );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	void destroyTexture( uint32 &texObj );
@@ -258,7 +258,7 @@ public:
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps );
+	                           bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel );
 	void destroyRenderBuffer(uint32 &rbObj );
 	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex );
 	void setRenderBuffer( uint32 rbObj );

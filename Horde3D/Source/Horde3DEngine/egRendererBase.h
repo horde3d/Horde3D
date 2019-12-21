@@ -515,7 +515,7 @@ protected:
 	RDIDelegate< void* ( uint32, uint32, uint32, uint32, RDIBufferMappingTypes ) > _delegate_mapBuffer;
 	RDIDelegate< void ( uint32, uint32 ) >								_delegate_unmapBuffer;
 
-	RDIDelegate< uint32 ( TextureTypes::List, int, int, int, TextureFormats::List, bool, bool, bool, bool ) > _delegate_createTexture;
+	RDIDelegate< uint32 ( TextureTypes::List, int, int, int, TextureFormats::List, int, bool, bool, bool ) > _delegate_createTexture;
 	RDIDelegate< void ( uint32 ) >										_delegate_generateTextureMipmap;
 	RDIDelegate< void ( uint32, int, int, const void * ) >				_delegate_uploadTextureData;
 	RDIDelegate< void ( uint32 & ) >									_delegate_destroyTexture;
@@ -535,7 +535,7 @@ protected:
 	RDIDelegate< const char *() >										_delegate_getDefaultVSCode;
 	RDIDelegate< const char *() >										_delegate_getDefaultFSCode;
 
-	RDIDelegate< uint32 ( uint32, uint32, TextureFormats::List, bool, uint32, uint32, bool ) > _delegate_createRenderBuffer;
+	RDIDelegate< uint32 ( uint32, uint32, TextureFormats::List, bool, uint32, uint32, uint32 ) > _delegate_createRenderBuffer;
 	RDIDelegate< void ( uint32 & ) >									_delegate_destroyRenderBuffer;
 	RDIDelegate< uint32( uint32, uint32 ) >								_delegate_getRenderBufferTex;
 	RDIDelegate< void ( uint32 ) >										_delegate_setRenderBuffer;
@@ -710,10 +710,21 @@ public:
 				return 0;
 		}
 	}
+	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth, int maxMipLevel )
+	{
+		uint32 size = 0;
+		for ( int level = 0; level <= maxMipLevel; ++level ) {
+			size += calcTextureSize(format, width, height, depth);
+			if ( width > 1 ) width >>= 1;
+			if ( height > 1 ) height >>= 1;
+			if ( depth > 1 ) depth >>= 1;
+		}
+		return size;
+	}
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
-	                      bool hasMips, bool genMips, bool compress, bool sRGB )
-	{ 
-		return _delegate_createTexture.invoke( type, width, height, depth, format, hasMips, genMips, compress, sRGB );
+	                      int maxMipLevel, bool genMips, bool compress, bool sRGB )
+	{
+		return _delegate_createTexture.invoke( type, width, height, depth, format, maxMipLevel, genMips, compress, sRGB );
 	}
 	void generateTextureMipmap( uint32 texObj )
 	{
@@ -798,12 +809,12 @@ public:
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
+	                           bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel )
 	{
-		return _delegate_createRenderBuffer.invoke( width, height, format, depth, numColBufs, samples, hasMipmaps);
+		return _delegate_createRenderBuffer.invoke( width, height, format, depth, numColBufs, samples, maxMipLevel);
 	}
     void destroyRenderBuffer( uint32& rbObj )
-	{ 
+	{
 		_delegate_destroyRenderBuffer.invoke( rbObj );
 	}
 	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex ) 
