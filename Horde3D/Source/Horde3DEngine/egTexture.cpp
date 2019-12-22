@@ -231,14 +231,20 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		uint32 size = rdi->calcTextureSize( _texFormat, width, height, depth );
 		unsigned char *pixels = new unsigned char[size];
 		memset( pixels, 0, size );
-		
+
 		_texType = flags & ResourceFlags::TexCubemap ? TextureTypes::TexCube : TextureTypes::Tex2D;
 		if( depth > 1 ) _texType = TextureTypes::Tex3D;
 		_sRGB = (_flags & ResourceFlags::TexSRGB) != 0;
 		_texObject = rdi->createTexture( _texType, _width, _height, _depth, _texFormat,
 		                                 _maxMipLevel, _maxMipLevel > 0, false, _sRGB );
-		rdi->uploadTextureData( _texObject, 0, 0, pixels );
-		
+
+		int nSlices = _texType != TextureTypes::TexCube ? 6 : 1;
+		for ( int mipLevel = 0; mipLevel <= _maxMipLevel; ++mipLevel ) {
+			for (int slice = 0; slice < nSlices; ++slice ) {
+				rdi->uploadTextureData( _texObject, slice, mipLevel, pixels );
+			}
+		}
+
 		delete[] pixels;
 		if( _texObject == 0 ) initDefault();
 	}
