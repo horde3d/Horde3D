@@ -51,6 +51,18 @@ void SceneGraphResource::release()
 }
 
 
+bool SceneGraphResource::raiseError( const string &msg )
+{
+	// Reset
+	release();
+	initDefault();
+
+	Modules::log().writeError( "SceneGraph resource '%s': %s", _name.c_str(), msg.c_str() );
+
+	return false;
+}
+
+
 void SceneGraphResource::parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &nodeTpl )
 {
 	nodeTpl.name = xmlNode.getAttribute( "name", "" );
@@ -73,7 +85,7 @@ void SceneGraphResource::parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &no
 }
 
 
-void SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
+bool SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
 {
 	SceneNodeTpl *nodeTpl = 0x0;
 
@@ -140,7 +152,7 @@ void SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
 		{
 			Modules::log().writeWarning( "SceneGraph resource '%s': Unknown node type or missing attribute for '%s'",
 										 _name.c_str(), xmlNode.getName() );
-			return;
+			return false;
 		}
 	}
 	
@@ -153,6 +165,8 @@ void SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
 
 		xmlNode1 = xmlNode1.getNextSibling();
 	}
+
+	return true;
 }
 
 
@@ -163,22 +177,14 @@ bool SceneGraphResource::load( const char *data, int size )
 	XMLDoc doc;
 	doc.parseBuffer( data, size );
 	if( doc.hasError() )
-	{
-		return false;
-	}
+		return raiseError( "XML parsing error" );
 
 	// Parse scene nodes and load resources
 	XMLNode rootNode = doc.getRootNode();
-	if( !rootNode.isEmpty() )
-	{	
-		parseNode( rootNode, 0x0 );
-	}
-	else
-	{
-		return false;
-	}
+	if( rootNode.isEmpty() )
+		return raiseError( "Empty XML" );
 
-	return true;
+	return parseNode( rootNode, 0x0 );
 }
 
 }  // namespace

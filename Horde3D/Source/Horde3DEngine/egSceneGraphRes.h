@@ -44,8 +44,9 @@ public:
 	SceneNodeTpl *getRootNode() const { return _rootNode; }
 
 private:
+	bool raiseError( const std::string &msg );
 	void parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &nodeTpl );
-	void parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl );
+	bool parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl );
 
 private:
 	SceneNodeTpl	*_rootNode;

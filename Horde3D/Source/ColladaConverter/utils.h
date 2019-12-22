@@ -20,7 +20,7 @@
 #include <string>
 
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 void removeGate( std::string &s );

@@ -772,8 +772,8 @@ void RenderDeviceGL4::unmapBuffer( uint32 geoObj, uint32 bufObj )
 // =================================================================================================
 
 uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int height, int depth,
-									TextureFormats::List format,
-									bool hasMips, bool genMips, bool compress, bool sRGB )
+                                       TextureFormats::List format,
+                                       int maxMipLevel, bool genMips, bool compress, bool sRGB )
 {
 	H3D_UNUSED_VAR( compress );
 	ASSERT( depth > 0 );
@@ -808,7 +808,7 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	tex.depth = depth;
 	tex.sRGB = sRGB && Modules::config().sRGBLinearization;
 	tex.genMips = genMips;
-	tex.hasMips = hasMips;
+	tex.hasMips = maxMipLevel > 0;
 	
 	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
 
@@ -819,9 +819,60 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 	glGenTextures( 1, &tex.glObj );
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
-	
+
+	if ( glTexStorage2D && glTexStorage3D ) {
+		// Prefer immutable format texture if available
+		if ( tex.type != GL_TEXTURE_3D ) {
+			glTexStorage2D( tex.type, maxMipLevel+1, tex.glFmt, tex.width, tex.height );
+		} else {
+			glTexStorage3D( tex.type, maxMipLevel+1, tex.glFmt, tex.width, tex.height, tex.depth );
+		}
+	}
+	else
+	{
+		// Alternatively, allocate space for mutable format texture
+		bool compressed = isCompressedTextureFormat( format );
+		int inputType = textureGLFormats[ format ].glInputType;
+		int inputFormat = textureGLFormats[ format ].glInputFormat;
+		int nSlices = tex.type != TextureTypes::TexCube ? 6 : 1;
+
+		for ( int mipLevel = 0; mipLevel <= maxMipLevel; ++mipLevel )
+		{
+			// Calculate size of next mipmap using "floor" convention
+			int mipWidth = std::max( tex.width >> mipLevel, 1 ), mipHeight = std::max( tex.height >> mipLevel, 1 );
+
+			for (int slice = 0; slice < nSlices; ++slice )
+			{
+				if ( tex.type == textureTypes[ TextureTypes::Tex2D ] || tex.type == textureTypes[ TextureTypes::TexCube ] )
+				{
+					int target = ( tex.type == textureTypes[ TextureTypes::Tex2D ] ) ?
+						GL_TEXTURE_2D : (GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice);
+
+					if( compressed )
+						glCompressedTexImage2D( target, mipLevel, tex.glFmt, mipWidth, mipHeight, 0,
+												calcTextureSize( format, mipWidth, mipHeight, 1 ), nullptr );
+					else
+						glTexImage2D( target, mipLevel, tex.glFmt, mipWidth, mipHeight, 0, inputFormat, inputType, nullptr );
+				}
+				else if ( tex.type == textureTypes[ TextureTypes::Tex3D ] )
+				{
+					int depth = std::max( tex.depth >> mipLevel, 1 );
+
+					if( compressed )
+						glCompressedTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, mipWidth, mipHeight, depth, 0,
+												calcTextureSize( format, mipWidth, mipHeight, depth ), nullptr );
+					else
+						glTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, mipWidth, mipHeight, depth, 0,
+									  inputFormat, inputType, nullptr );
+				}
+			}
+		}
+
+		glTexParameteri( tex.type, GL_TEXTURE_MAX_LEVEL, maxMipLevel );
+	}
+
 	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+	glTexParameterfv( tex.type, GL_TEXTURE_BORDER_COLOR, borderColor );
 	
 	tex.samplerState = 0;
 	applySamplerState( tex );
@@ -831,8 +882,7 @@ uint32 RenderDeviceGL4::createTexture( TextureTypes::List type, int width, int h
 		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
 
 	// Calculate memory requirements
-	tex.memSize = calcTextureSize( format, width, height, depth );
-	if( hasMips || genMips ) tex.memSize += ftoi_r( tex.memSize * 1.0f / 3.0f );
+	tex.memSize = calcTextureSize( format, width, height, depth, maxMipLevel );
 	if( type == TextureTypes::TexCube ) tex.memSize *= 6;
 	_textureMem += tex.memSize;
 	
@@ -875,21 +925,21 @@ void RenderDeviceGL4::uploadTextureData( uint32 texObj, int slice, int mipLevel,
 			GL_TEXTURE_2D : (GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice);
 		
 		if( compressed )
-			glCompressedTexImage2D( target, mipLevel, tex.glFmt, width, height, 0,
-									calcTextureSize( format, width, height, 1 ), pixels );
+			glCompressedTexSubImage2D( target, mipLevel, 0, 0, width, height,
+			                           tex.glFmt, calcTextureSize( format, width, height, 1 ), pixels );
 		else
-			glTexImage2D( target, mipLevel, tex.glFmt, width, height, 0, inputFormat, inputType, pixels );
+			glTexSubImage2D( target, mipLevel, 0, 0, width, height, inputFormat, inputType, pixels );
 	}
 	else if ( tex.type == textureTypes[ TextureTypes::Tex3D ] )
 	{
 		int depth = std::max( tex.depth >> mipLevel, 1 );
 		
 		if( compressed )
-			glCompressedTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-									calcTextureSize( format, width, height, depth ), pixels );	
+			glCompressedTexSubImage3D( GL_TEXTURE_3D, mipLevel, 0, 0, 0, width, height, depth,
+			                           tex.glFmt, calcTextureSize( format, width, height, depth ), pixels );
 		else
-			glTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-						  inputFormat, inputType, pixels );
+			glTexSubImage3D( GL_TEXTURE_3D, mipLevel, 0, 0, 0, width, height, depth,
+			                 inputFormat, inputType, pixels );
 	}
 
 	if( tex.genMips && (tex.type != GL_TEXTURE_CUBE_MAP || slice == 5) )
@@ -1412,7 +1462,7 @@ void RenderDeviceGL4::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 // =================================================================================================
 
 uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-                                            bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
+                                            bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
 	{
@@ -1449,7 +1499,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
 			// Create a color texture
-			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, hasMipmaps, hasMipmaps, false, false );
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, maxMipLevel, maxMipLevel > 0, false, false );
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
@@ -1501,7 +1551,7 @@ uint32 RenderDeviceGL4::createRenderBuffer( uint32 width, uint32 height, Texture
 	{
 		glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 		// Create a depth texture
-		uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, false, false, false, false );
+		uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, 0, false, false, false );
 		ASSERT( texObj != 0 );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
 		uploadTextureData( texObj, 0, 0, 0x0 );
@@ -2130,8 +2180,9 @@ void RenderDeviceGL4::resetStates()
 	_pendingMask = 0xFFFFFFFF;
 	commitStates();
 
+	glEnable( GL_TEXTURE_CUBE_MAP_SEAMLESS );
 //	glBindVertexArray( 0 );
- 	glBindBuffer( GL_ARRAY_BUFFER, 0 );
+	glBindBuffer( GL_ARRAY_BUFFER, 0 );
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
 
 	glBindFramebuffer( GL_FRAMEBUFFER, _defaultFBO );

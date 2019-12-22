@@ -233,9 +233,10 @@ struct H3DResFlags
 		NoTexMipmaps      - Disables generation of mipmaps for Texture resource.
 		TexCubemap        - Sets Texture resource to be a cubemap.
 		TexDynamic        - Enables more efficient updates of Texture resource streams.
-		TexRenderable     - Makes Texture resource usable as render target.
 		TexSRGB           - Indicates that Texture resource is in sRGB color space and should be converted
 		                    to linear space when being sampled.
+		TexRenderable     - Makes Texture resource usable as render target.
+		TexDepthBuffer    - When Textures is renderable, creates a depth buffer along with the color buffer.
 	*/
 	enum Flags
 	{
@@ -244,8 +245,9 @@ struct H3DResFlags
 		NoTexMipmaps = 4,
 		TexCubemap = 8,
 		TexDynamic = 16,
-		TexRenderable = 32,
-		TexSRGB = 64
+		TexSRGB = 32,
+		TexRenderable = 64,
+		TexDepthBuffer = 128,
 	};
 };
 

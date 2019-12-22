@@ -18,7 +18,7 @@
 #include <vector>
 
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 struct DaeWeight
