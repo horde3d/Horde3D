@@ -246,11 +246,11 @@ BackendInitParameters SampleApplication::setupInitParameters()
 #if defined( H3D_USE_GL4 ) && defined( H3D_USE_GL2 )
 	// Try gl4 by default, will fallback to gl2 in case of failure
 	_renderInterface = H3DRenderDevice::OpenGL4;
-#elif H3D_USE_GLES3
+#elif defined( H3D_USE_GLES3 )
 	_renderInterface = H3DRenderDevice::OpenGLES3;
-#elif H3D_USE_GL4
+#elif defined( H3D_USE_GL4 )
 	_renderInterface = H3DRenderDevice::OpenGL4;
-#elif H3D_USE_GL2
+#elif defined( H3D_USE_GL2 )
 	_renderInterface = H3DRenderDevice::OpenGL2;
 #endif
 
