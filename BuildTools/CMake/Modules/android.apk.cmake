@@ -104,6 +104,16 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
   # Configure gradle project with correct package name
   configure_file("${android_directory}/app/build.gradle.in" "${apk_directory}/app/build.gradle")
 
+  # Configure java Activity to load correct sample
+  configure_file("${android_directory}/app/src/main/java/com/horde3d/sampleapp/Horde3DActivity.java.in" "${apk_directory}/app/src/main/java/com/horde3d/sampleapp/Horde3DActivity.java")
+  
+  # Configure strings.xml to show correct sample name
+  configure_file("${android_directory}/app/src/main/res/values/strings.xml.in" "${apk_directory}/app/src/main/res/values/strings.xml")
+  # Gradle does not like strings.xml.in which is also copied to this folder and does not compile
+  # Manually remove this file (a bit of a hack) 
+  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove "${apk_directory}/app/src/main/res/values/strings.xml.in")
+
   # Copy assets
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/assets")
