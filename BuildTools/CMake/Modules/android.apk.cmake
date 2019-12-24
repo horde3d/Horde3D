@@ -32,6 +32,9 @@ set(ANDROID_APK_API_LEVEL "24" CACHE STRING "Android APK API level")
 set(ANDROID_APK_INSTALL "0" CACHE BOOL "Install created apk file on the device automatically?")
 set(ANDROID_APK_RUN "0" CACHE BOOL "Run created apk file on the device automatically? (installs it automatically as well, \"ANDROID_APK_INSTALL\"-option is ignored)")
 set(ANDROID_APK_SIGNER_KEYSTORE	"~/my-release-key.keystore" CACHE STRING "Keystore for signing the apk file (only required for release apk)")
+set(ANDROID_APK_SIGNER_KEYSTORE_PASS	"" CACHE STRING "Keystore password (only required for release apk). If string is null password will be asked during build. ANDROID_APK_SIGNER_KEY_PASS should also be provided")
+set(ANDROID_APK_SIGNER_KEY_PASS	"" CACHE STRING "Private key password (only required for release apk). If string is null password will be asked during build. ANDROID_APK_SIGNER_KEYSTORE_PASS should also be provided")
+
 # set(ANDROID_APK_SIGNER_ALIAS "myalias" CACHE STRING "Alias for signing the apk file (only required for release apk)")
 
 ##################################################
@@ -79,6 +82,10 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
       COMMAND ${CMAKE_COMMAND} -E copy_directory
       "${android_directory}" "${apk_directory}")
   
+  # Remove build directory
+  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/build")
+  
   # Create the directory for the libraries
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jnilibs/${ANDROID_ABI}")
@@ -120,9 +127,18 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
       WORKING_DIRECTORY "${apk_directory}/app/build/outputs/apk/release")
   
     # Sign the apk file
-    add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND ${APKSIGNER_BIN} sign --ks ${ANDROID_APK_SIGNER_KEYSTORE} app-release-aligned.apk 
-      WORKING_DIRECTORY "${apk_directory}/app/build/outputs/apk/release")
+    if( ANDROID_APK_SIGNER_KEYSTORE_PASS STREQUAL "" OR ANDROID_APK_SIGNER_KEY_PASS STREQUAL "" )
+      # Passwords have to be input during build
+      add_custom_command(TARGET ${ANDROID_NAME}
+        COMMAND ${APKSIGNER_BIN} sign --ks ${ANDROID_APK_SIGNER_KEYSTORE} app-release-aligned.apk 
+        WORKING_DIRECTORY "${apk_directory}/app/build/outputs/apk/release")
+
+    else()
+        # Passwords are provided to Cmake
+        add_custom_command(TARGET ${ANDROID_NAME}
+          COMMAND ${APKSIGNER_BIN} sign --ks ${ANDROID_APK_SIGNER_KEYSTORE} --ks-pass pass:${ANDROID_APK_SIGNER_KEYSTORE_PASS} --key-pass pass:${ANDROID_APK_SIGNER_KEY_PASS} app-release-aligned.apk 
+          WORKING_DIRECTORY "${apk_directory}/app/build/outputs/apk/release")  
+    endif()
 
     # Rename the 'app' apk to target name
     add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
