@@ -847,6 +847,7 @@ void RenderDeviceGLES3::generateTextureMipmap( uint32 texObj )
 
 void RenderDeviceGLES3::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
+	ASSERT( pixels );
 	const RDITextureGLES3 &tex = _textures.getRef( texObj );
 	TextureFormats::List format = tex.format;
 
@@ -1603,7 +1604,6 @@ uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, Textu
 			// Create a color texture
 			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, maxMipLevel, maxMipLevel > 0, false, false );
 			ASSERT( texObj != 0 );
-			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[ j ] = texObj;
 			RDITextureGLES3 &tex = _textures.getRef( texObj );
 			// Attach the texture
@@ -1670,7 +1670,6 @@ uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, Textu
 			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, 0, false, false, false );
 			ASSERT( texObj != 0 );
 			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
-			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.depthTex = texObj;
 			RDITextureGLES3 &tex = _textures.getRef( texObj );
 			// Attach the texture
