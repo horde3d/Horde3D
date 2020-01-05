@@ -22,7 +22,7 @@
 #include "utDebug.h"
 
 #if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined( H3D_USE_GLES3 )
-#	if defined( H3D_USE_GL2)
+#	if defined( H3D_USE_GL2 )
 #		include "egRendererBaseGL2.h"
 #	endif
 #	if defined( H3D_USE_GL4 )

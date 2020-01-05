@@ -16,6 +16,7 @@
 
 #include "crowd.h"
 #include "../Framework/sampleapp.h"
+#include "../Framework/FrameworkBackend.h"
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
@@ -33,7 +34,7 @@ void CrowdSim::chooseDestination( Particle &p )
 }
 
 
-void CrowdSim::init()
+void CrowdSim::init( FrameworkBackend *backend )
 {
 	// Init random generator
 	//srand( (unsigned int)time( NULL ) );
@@ -42,7 +43,9 @@ void CrowdSim::init()
 	// Load character with walk animation
 	H3DRes characterRes = h3dAddResource( H3DResTypes::SceneGraph, "models/man/man.scene.xml", 0 );
 	H3DRes characterWalkRes = h3dAddResource( H3DResTypes::Animation, "animations/man.anim", 0 );
-	h3dutLoadResourcesFromDisk( _contentDir.c_str() );
+
+	backend->loadResources( _contentDir.c_str() );
+//	h3dutLoadResourcesFromDisk( _contentDir.c_str() );
 	
 	// Add characters
     for( unsigned int i = 0; i < 100; ++i )

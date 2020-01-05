@@ -29,8 +29,24 @@
 #		define PLATFORM_WIN
 #	endif
 #elif defined( __APPLE__ ) || defined( __APPLE_CC__ )
+#include "AvailabilityMacros.h"
+#include "TargetConditionals.h"
+#if TARGET_OS_IPHONE
+#	if !defined( PLATFORM_IOS )
+#		define PLATFORM_IOS
+#	endif
+#else
 #	if !defined( PLATFORM_MAC )
 #		define PLATFORM_MAC
+#	endif
+#endif
+#elif defined( __ANDROID__ )
+#	if !defined( PLATFORM_ANDROID )
+#		define PLATFORM_ANDROID
+#	endif
+#elif defined( __EMSCRIPTEN__ )
+#	if !defined( PLATFORM_EMSCRIPTEN )
+#		define PLATFORM_EMSCRIPTEN
 #	endif
 #else
 #	if !defined( PLATFORM_LINUX )

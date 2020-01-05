@@ -18,11 +18,13 @@
 #include "Horde3DUtils.h"
 #include "Horde3DTerrain.h"
 
+#include "FrameworkBackend.h"
+
 using namespace std;
 
 
 TerrainSample::TerrainSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Terrain - Horde3D Sample", H3DRenderDevice::OpenGL2, 45.0f, 0.1f, 2000.0f )
+    SampleApplication( argc, argv, "Terrain - Horde3D Sample", 45.0f, 0.1f, 2000.0f )
 {
 	_x = 512; _y = 120; _z = 512;
 	_rx = 0; _ry = 225;
@@ -41,7 +43,7 @@ bool TerrainSample::initResources()
 	
 	// 2. Load resources
 
-	if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
 	{
 		h3dutDumpMessages();
 		return false;

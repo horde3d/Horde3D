@@ -166,26 +166,44 @@ IF(SDL2_LIBRARY_TEMP)
 	SET(SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" CACHE INTERNAL "")
 ENDIF(SDL2_LIBRARY_TEMP)
 
-#message("</FindSDL2.cmake>")
+
 IF (HORDE3D_FORCE_DOWNLOAD_SDL)
-    # If not found, try to build with local sources.
+	# Download SDL sources and build it ourselves
+
+	# If not found, try to build with local sources.
     # It uses CMake's "ExternalProject_Add" target.
     MESSAGE(STATUS "Preparing external SDL project")
     INCLUDE(ExternalProject)
 
 	INCLUDE(ExternalProject)
-    ExternalProject_Add(project_sdl
-        URL https://www.libsdl.org/release/SDL2-2.0.9.zip
-        CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-        LOG_DOWNLOAD 1
-        LOG_UPDATE 1
-        LOG_CONFIGURE 1
-        LOG_BUILD 1
-        LOG_TEST 1
-        LOG_INSTALL 1
-    )
-	MESSAGE(STATUS "External SDL project done")
-	
+	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
+		# Create external project for sdl with parameters specific for android
+		ExternalProject_Add(project_sdl
+		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DANDROID_ABI=${ANDROID_ABI} -DANDROID_DL_LIBRARY=${ANDROID_DL_LIBRARY}
+		LOG_DOWNLOAD 1
+		LOG_UPDATE 1
+		LOG_CONFIGURE 1
+		LOG_BUILD 1
+		LOG_TEST 1
+		LOG_INSTALL 1
+		)
+
+		MESSAGE(STATUS "External SDL project done")
+	else() # other platforms
+		ExternalProject_Add(project_sdl
+			URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+			CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+			LOG_DOWNLOAD 1
+			LOG_UPDATE 1
+			LOG_CONFIGURE 1
+			LOG_BUILD 1
+			LOG_TEST 1
+			LOG_INSTALL 1
+		)
+		MESSAGE(STATUS "External SDL project done")
+	endif()
+
 	ExternalProject_Get_Property(project_sdl install_dir)
     SET(SDL2_INCLUDE_DIR
         ${install_dir}/include/SDL2
@@ -194,7 +212,9 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
     IF(MSVC)
        SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
 	ELSE(MSVC)
-		IF (UNIX AND NOT APPLE)
+		IF (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+			SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.so )
+		ELSEIF (UNIX AND NOT APPLE)
 			SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
 		ELSE()
 			# Mac
@@ -215,9 +235,15 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}\\bin\\SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Debug\\" )
 		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}\\bin\\SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Release\\" )
 	endif()
-#	file(COPY ${SDL_LIBRARY_PATH} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+
+	# For android make sdl library path available for other projects (used for samples in android build)
+	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
+		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+	ENDIF()
 
 ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
+	# SDL is built somewhere else, use the prebuilt library
+
 	INCLUDE(FindPackageHandleStandardArgs)
 
 	FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
@@ -230,6 +256,15 @@ ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
 		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
 	ENDIF()
+
+	# For android make sdl library path available for other projects (used for samples in android build)
+	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
+		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+		MESSAGE("${SDL_LIB_PATH}")
+
+	#	file(COPY ${SDL_LIB_PATH}/libSDL2.so DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}) 
+	ENDIF()
+
 ENDIF(HORDE3D_FORCE_DOWNLOAD_SDL)
 
 

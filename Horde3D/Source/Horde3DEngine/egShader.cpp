@@ -436,10 +436,9 @@ void ShaderResource::initializationFunc()
 		{
 			_vertPreamble = "#version 300 es\n precision highp float;\n";
 			_fragPreamble = "#version 300 es\n precision highp float;\n precision highp sampler2D;\n precision highp sampler2DShadow;\n";
-			
-			if ( Modules::renderer().getRenderDevice()->getCaps().geometryShaders ) 
-				_geomPreamble = "#version 300 es\n#extension GL_EXT_geometry_shader : enable\n";
-			
+			_geomPreamble = "#version 320 es\n";
+			_tessCtlPreamble = "#version 320 es\n";
+			_tessEvalPreamble = "#version 320 es\n";
 			_computePreamble = "#version 310 es\n";
 
 			break;

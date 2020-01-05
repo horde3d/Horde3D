@@ -21,7 +21,7 @@ OpenGL4
 {
 	context COMPUTE
 	{
-		ComputeShader = compile GLSL CS_PARTICLESOLVER;
+		ComputeShader = compile GLSL CS_PARTICLESOLVER_GL4;
 	}
 	
 	context AMBIENT
@@ -35,7 +35,25 @@ OpenGL4
 	}
 }
 
-[[CS_PARTICLESOLVER]]
+OpenGLES3
+{
+	context COMPUTE
+	{
+		ComputeShader = compile GLSL CS_PARTICLESOLVER_GLES3;
+	}
+	
+	context AMBIENT
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		GeometryShader = compile GLSL GS_TRIANGULATE_GL4;
+		PixelShader = compile GLSL FS_AMBIENT_GL4;
+		
+//		ZWriteEnable = false;
+		BlendMode = AddBlended;
+	}
+}
+
+[[CS_PARTICLESOLVER_GL4]]
 // =================================================================================================
 
 uniform float totalParticles;
@@ -88,6 +106,7 @@ void main()
 	data.particlesBuf[index] = particle;
 }
 
+
 [[VS_GENERAL_GL4]]
 // =================================================================================================
 #include "shaders/utilityLib/vertCommon.glsl"
@@ -109,6 +128,7 @@ void main( void )
 	
 	gl_Position = pos;
 }
+
 
 [[GS_TRIANGULATE_GL4]]
 // =================================================================================================
@@ -165,7 +185,6 @@ void main()
 }
 
 
-
 [[FS_AMBIENT_GL4]]
 // =================================================================================================
 uniform sampler2D albedoMap;
@@ -181,4 +200,62 @@ void main()
 	if ( texColor.a < 0.1 ) discard;
 	
 	fragColor = vec4( color * texColor.xyz, texColor.a );
+}
+
+
+// =================================================================================================
+// GLES 3
+// =================================================================================================
+
+[[CS_PARTICLESOLVER_GLES3]]
+// =================================================================================================
+
+uniform float totalParticles;
+uniform float deltaTime;
+uniform vec4 attractor;
+
+struct Particle
+{
+	vec4 position;
+	vec4 velocity;
+};
+
+const int maxThreadsInGroup = 128;
+ 
+layout (std430, binding = 1) buffer ParticleData
+{ 
+	Particle particlesBuf[];
+} data;
+
+layout(local_size_x = 32, local_size_y = 32) in;
+
+/////////////////////
+vec3 calculate(vec3 anchor, vec3 position)
+{
+	vec3 direction = anchor - position;
+	float dist = length(direction);
+	direction /= dist;
+
+	return direction * max(0.01, (1.0 / (dist * dist)));
+}
+
+void main()
+{
+	int index = int(gl_WorkGroupID.x * maxThreadsInGroup) + int(gl_WorkGroupID.y * gl_NumWorkGroups.x * maxThreadsInGroup) + gl_LocalInvocationIndex; 
+
+	if( index >= totalParticles ) 
+		return;
+
+	Particle particle = data.particlesBuf[ index ];
+
+	vec4 position = particle.position; 
+	vec4 velocity = particle.velocity; 
+
+	velocity += vec4( calculate( attractor.xyz, position.xyz ), 0 );
+	velocity += vec4( calculate( -attractor.xyz, position.xyz ), 0 ) ;
+	
+	particle.position = position + velocity * deltaTime;
+	particle.velocity = velocity;
+
+	data.particlesBuf[index] = particle;
 }

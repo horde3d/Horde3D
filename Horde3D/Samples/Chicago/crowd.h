@@ -21,6 +21,8 @@
 #include <vector>
 #include <string>
 
+// Forward declarations
+class FrameworkBackend;
 
 struct Particle
 {
@@ -46,7 +48,7 @@ class CrowdSim
 public:
 	CrowdSim( const std::string& contentDir ) : _contentDir( contentDir ) {}
 
-	void init();
+	void init( FrameworkBackend *backend );
 	void update( float fps );
 
 private:

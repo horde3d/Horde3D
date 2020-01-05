@@ -28,7 +28,7 @@ using namespace std;
 
 
 KnightSample::KnightSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Knight - Horde3D Sample", H3DRenderDevice::OpenGL4 ),
+    SampleApplication( argc, argv, "Knight - Horde3D Sample" ),
     _animTime(0),
     _weight(1.0f)
 {
@@ -38,6 +38,12 @@ KnightSample::KnightSample( int argc, char** argv ) :
     
     // Default to HDR pipeline
 	_curPipeline = 2;
+
+#ifdef __ANDROID__
+	// Currently hardcode displaying additional info
+	showStatPanel( 1 ); 
+	setInvertedMouseMovement( true, false );
+#endif
 }
 
 
@@ -77,7 +83,7 @@ bool KnightSample::initResources()
 
 	// 2. Load resources
 
-    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
 	{
 		h3dutDumpMessages();
         return false;
@@ -141,13 +147,13 @@ void KnightSample::update()
     // --------------
     if( freeze_mode != 2 )
     {
-        if( backend->CheckKeyDown( window, KEY_1) )
+        if( backend->checkKeyDown( window, KEY_1) )
         {
             // Change blend weight
             _weight += frame_time;
             if( _weight > 1 ) _weight = 1;
         }
-        if( backend->CheckKeyDown( window, KEY_2) )
+        if( backend->checkKeyDown( window, KEY_2) )
         {
             // Change blend weight
             _weight -= frame_time;

@@ -8,6 +8,9 @@ SET(OVERLAYS_EXTENSION_HEADERS
 	overlays.h
 )
 
+# CMAKE_BINARY_DIR is used for inclusion of automatically generated files
+include_directories( ${CMAKE_BINARY_DIR} )
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpic")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic")

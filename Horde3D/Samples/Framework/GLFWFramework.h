@@ -8,25 +8,29 @@ class GLFWBackend : public FrameworkBackend
 {
 public:
 
-	virtual bool Init( const BackendInitParameters &params ) override;
+	virtual bool init( const BackendInitParameters &params ) override;
 
-	virtual void Release() override;
+	virtual void release() override;
 
-	virtual void * CreateWindow( const WindowCreateParameters &params ) override;
+	virtual void *createWindow( const WindowCreateParameters &params ) override;
 
-	virtual bool DestroyWindow( void *handle ) override;
+	virtual bool destroyWindow( void *handle ) override;
 
-	virtual void ProcessEvents() override;
+	virtual void processEvents() override;
 
-	virtual void SetWindowTitle( void *handle, const char *title ) override;
+	virtual void setWindowTitle( void *handle, const char *title ) override;
 
-	virtual void SetCursorVisible( void *handle, bool visible ) override;
+	virtual void setCursorVisible( void *handle, bool visible ) override;
 
-	virtual void SwapBuffers( void *handle ) override;
+	virtual void swapBuffers( void *handle ) override;
 
-	virtual void GetSize( void *handle, int *width, int *height ) override;
+	virtual void getSize( void *handle, int *width, int *height ) override;
 
-	virtual bool CheckKeyDown( void *handle, int key ) override;
+	virtual bool checkKeyDown( void *handle, int key ) override;
+
+	virtual void logMessage( LogMessageLevel messageLevel, const char *msg ) override;
+
+	virtual bool loadResources( const char *contentDir ) override;
 
 protected:
 	

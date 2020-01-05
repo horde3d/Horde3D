@@ -1,5 +1,6 @@
 #pragma once
 
+#include "utPlatform.h"
 #include <string>
 
 // Keyboard keys (from GLFW)
@@ -204,6 +205,16 @@ private:
 };
 
 
+enum class Platform
+{
+	Windows,
+	Linux,
+	MacOS,
+	Android,
+	IOS,
+	Emscripten
+};
+
 enum class RenderAPI : int
 {
 	OpenGL2 = 2,
@@ -243,6 +254,14 @@ struct WindowCreateParameters
 	bool fullScreen = false;
 };
 
+enum class LogMessageLevel : int
+{
+	Error = 0,
+	Warning,
+	Info,
+	Debug
+};
+
 // Event callbacks
 typedef Delegate< void( int, int, int ) > KeyboardEventCallBack; // ( int key, int keyState, int modifiers );
 typedef Delegate< void( float, float, float, float ) > MouseMoveEventCallBack; // ( float x, float y, float prev_x, float prev_y );
@@ -257,42 +276,68 @@ class FrameworkBackend
 {
 public:
 
-	virtual bool Init( const BackendInitParameters &params ) = 0;
+	FrameworkBackend()
+	{
+		// Set platform
+#if defined( PLATFORM_WIN )
+		_curPlatform = Platform::Windows;
+#elif defined( PLATFORM_LINUX )
+		_curPlatform = Platform::Linux;
+#elif defined( PLATFORM_MAC )
+		_curPlatform = Platform::MacOS;
+#elif defined( PLATFORM_ANDROID )
+		_curPlatform = Platform::Android;
+#elif defined( PLATFORM_IOS )
+		_curPlatform = Platform::IOS;
+#elif defined( PLATFORM_EMSCRIPTEN )
+		_curPlatform = Platform::Emscripten;
+#endif
+	}
 
-	virtual void Release() = 0;
+	virtual ~FrameworkBackend() {};
 
-	virtual void *CreateWindow( const WindowCreateParameters &params ) = 0;
+	virtual bool init( const BackendInitParameters &params ) = 0;
 
-	virtual bool DestroyWindow( void *handle ) = 0;
+	virtual void release() = 0;
 
-	virtual void SwapBuffers( void *handle ) = 0;
+	virtual void *createWindow( const WindowCreateParameters &params ) = 0;
 
-	virtual void ProcessEvents() = 0;
+	virtual bool destroyWindow( void *handle ) = 0;
 
-	virtual void GetSize( void *handle, int *width, int *height ) = 0;
+	virtual void swapBuffers( void *handle ) = 0;
 
-	virtual void SetWindowTitle( void *handle, const char *title ) = 0;
+	virtual void processEvents() = 0;
 
-	virtual void SetCursorVisible( void *handle, bool visible ) = 0;
+	virtual void getSize( void *handle, int *width, int *height ) = 0;
 
-	virtual bool CheckKeyDown( void *handle, int key ) = 0;
+	virtual void setWindowTitle( void *handle, const char *title ) = 0;
+
+	virtual void setCursorVisible( void *handle, bool visible ) = 0;
+
+	virtual bool checkKeyDown( void *handle, int key ) = 0;
+
+	virtual void logMessage( LogMessageLevel messageLevel, const char *msg ) = 0;
+
+	virtual bool loadResources( const char *contentDir ) = 0;
+	
+	Platform getPlatform() { return _curPlatform; }
 
 	// Callbacks
-	void RegisterKeyboardEventHandler( KeyboardEventCallBack f ) { _keyEventHandler = f; }
+	void registerKeyboardEventHandler( KeyboardEventCallBack f ) { _keyEventHandler = f; }
 
-	void RegisterMouseMoveEventHandler( MouseMoveEventCallBack f ) { _mouseMoveEventHandler = f; };
+	void registerMouseMoveEventHandler( MouseMoveEventCallBack f ) { _mouseMoveEventHandler = f; };
 
-	void RegisterMouseButtonEventHandler( MouseButtonEventCallBack f ) { _mouseButtonEventHandler = f; };
+	void registerMouseButtonEventHandler( MouseButtonEventCallBack f ) { _mouseButtonEventHandler = f; };
 
-	void RegisterMouseWheelEventHandler( MouseWheelEventCallBack f ) { _mouseWheelEventHandler = f; };
+	void registerMouseWheelEventHandler( MouseWheelEventCallBack f ) { _mouseWheelEventHandler = f; };
 
-	void RegisterMouseEnterWindowEventHandler( MouseEnterWindowEventCallBack f ) { _mouseEnterWindowEventHandler = f; };
+	void registerMouseEnterWindowEventHandler( MouseEnterWindowEventCallBack f ) { _mouseEnterWindowEventHandler = f; };
 
-	void RegisterTouchEventHandler( TouchEventCallBack f ) { _touchEventHandler = f; };
+	void registerTouchEventHandler( TouchEventCallBack f ) { _touchEventHandler = f; };
 
-	void RegisterWindowResizeEventHandler( WindowResizeCallback f ) { _windowResizeHandler = f; };
+	void registerWindowResizeEventHandler( WindowResizeCallback f ) { _windowResizeHandler = f; };
 
-	void RegisterQuitEventHandler( QuitEventCallBack f ) { _quitEventHandler = f; };
+	void registerQuitEventHandler( QuitEventCallBack f ) { _quitEventHandler = f; };
 
 protected:
 
@@ -306,4 +351,6 @@ protected:
 	WindowResizeCallback		_windowResizeHandler;
 	QuitEventCallBack			_quitEventHandler;
 
+	// Platform we are running on
+	Platform					_curPlatform;
 };

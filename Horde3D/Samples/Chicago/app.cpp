@@ -21,11 +21,13 @@
 #include <math.h>
 #include <iomanip>
 
+#include "../Framework/FrameworkBackend.h"
+
 using namespace std;
 
 
 ChicagoSample::ChicagoSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Chicago - Horde3D Sample", H3DRenderDevice::OpenGL4 ),
+    SampleApplication( argc, argv, "Chicago - Horde3D Sample" ),
     _crowdSim(0)
 {
     _x = 15; _y = 3; _z = 20;
@@ -59,7 +61,7 @@ bool ChicagoSample::initResources()
 
     // 2. Load resources
 
-    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
     {
 		h3dutDumpMessages();
         return false;
@@ -93,7 +95,7 @@ bool ChicagoSample::initResources()
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
 
     _crowdSim = new CrowdSim( getResourcePath() );
-	_crowdSim->init();
+	_crowdSim->init( getBackend() );
 
 	return true;
 }

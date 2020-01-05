@@ -271,7 +271,7 @@ void RenderDeviceGLES3::initRDIFuncs()
 	_delegate_unmapBuffer.bind< RenderDeviceGLES3, &RenderDeviceGLES3::unmapBuffer >( this );
 
 	_delegate_createTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::createTexture >( this );
-	_delegate_generateTextureMipmap.bind< RenderDeviceGLES3, &RenderDeviceGL3::generateTextureMipmap >( this );
+	_delegate_generateTextureMipmap.bind< RenderDeviceGLES3, &RenderDeviceGLES3::generateTextureMipmap >( this );
 	_delegate_uploadTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::uploadTextureData >( this );
 	_delegate_destroyTexture.bind< RenderDeviceGLES3, &RenderDeviceGLES3::destroyTexture >( this );
 	_delegate_updateTextureData.bind< RenderDeviceGLES3, &RenderDeviceGLES3::updateTextureData >( this );
@@ -396,11 +396,11 @@ bool RenderDeviceGLES3::init()
 	_caps.texNPOT = true;
 	_caps.rtMultisampling = true;
 	_caps.geometryShaders = glESExt::EXT_geometry_shader;
-	_caps.tesselation = false;
-	_caps.computeShaders = true;
+	_caps.tesselation = glESExt::majorVersion * 10 + glESExt::minorVersion >= 32;
+	_caps.computeShaders = glESExt::majorVersion * 10 + glESExt::minorVersion >= 31;
 	_caps.instancing = true;
-	_caps.maxJointCount = 75; // currently, will be changed soon
-	_caps.maxTexUnitCount = 16; // 
+	_caps.maxJointCount = 75; // mobile devices are similar to OpenGL2 devices, no more than 256 vec4,  
+	_caps.maxTexUnitCount = 16; // so 75 joints is a hardware limit for practically all devices
 	_caps.texDXT = glESExt::EXT_texture_compression_dxt1 && glESExt::EXT_texture_compression_s3tc;
 	_caps.texETC2 = true;
 	_caps.texBPTC = glESExt::EXT_texture_compression_bptc;
@@ -759,7 +759,7 @@ void RenderDeviceGLES3::unmapBuffer( uint32 geoObj, uint32 bufObj )
 
 uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int height, int depth,
 										 TextureFormats::List format,
-										 bool hasMips, bool genMips, bool compress, bool sRGB )
+										 int maxMipLevel, bool genMips, bool compress, bool sRGB )
 {
 	ASSERT( depth > 0 );
 
@@ -834,7 +834,7 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 
 void RenderDeviceGLES3::generateTextureMipmap( uint32 texObj )
 {
-	const RDITextureGL4 &tex = _textures.getRef( texObj );
+	const RDITextureGLES3 &tex = _textures.getRef( texObj );
 
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
@@ -1097,57 +1097,57 @@ uint32 RenderDeviceGLES3::createShaderProgram( const char *vertexShaderSrc, cons
 	}
 	
 	// Tesselation control shader
-// 	if ( tessControlShaderSrc )
-// 	{
-// 		tsC = glCreateShader( GL_TESS_CONTROL_SHADER );
-// 		glShaderSource( tsC, 1, &tessControlShaderSrc, 0x0 );
-// 		glCompileShader( tsC );
-// 		glGetShaderiv( tsC, GL_COMPILE_STATUS, &status );
-// 		if ( !status )
-// 		{
-// 			glGetShaderiv( tsC, GL_INFO_LOG_LENGTH, &infologLength );
-// 			if ( infologLength > 1 )
-// 			{
-// 				infoLog = new char[ infologLength ];
-// 				glGetShaderInfoLog( tsC, infologLength, &charsWritten, infoLog );
-// 				_shaderLog = _shaderLog + "[Tesselation Control Shader]\n" + infoLog;
-// 				delete[] infoLog; infoLog = 0x0;
-// 			}
-// 
-// 			glDeleteShader( vs );
-// 			glDeleteShader( fs );
-// 			if ( gs ) glDeleteShader( gs );
-// 			glDeleteShader( tsC );
-// 			return 0;
-// 		}
-// 	}
-// 
-// 	// Tesselation evaluation shader
-// 	if ( tessEvalShaderSrc )
-// 	{
-// 		tsE = glCreateShader( GL_TESS_EVALUATION_SHADER );
-// 		glShaderSource( tsE, 1, &tessEvalShaderSrc, 0x0 );
-// 		glCompileShader( tsE );
-// 		glGetShaderiv( tsE, GL_COMPILE_STATUS, &status );
-// 		if ( !status )
-// 		{
-// 			glGetShaderiv( tsE, GL_INFO_LOG_LENGTH, &infologLength );
-// 			if ( infologLength > 1 )
-// 			{
-// 				infoLog = new char[ infologLength ];
-// 				glGetShaderInfoLog( tsE, infologLength, &charsWritten, infoLog );
-// 				_shaderLog = _shaderLog + "[Tesselation Evaluation Shader]\n" + infoLog;
-// 				delete[] infoLog; infoLog = 0x0;
-// 			}
-// 
-// 			glDeleteShader( vs );
-// 			glDeleteShader( fs );
-// 			if ( gs ) glDeleteShader( gs );
-// 			glDeleteShader( tsC );
-// 			glDeleteShader( tsE );
-// 			return 0;
-// 		}
-// 	}
+	if ( tessControlShaderSrc )
+	{
+		tsC = glCreateShader( GL_TESS_CONTROL_SHADER );
+		glShaderSource( tsC, 1, &tessControlShaderSrc, 0x0 );
+		glCompileShader( tsC );
+		glGetShaderiv( tsC, GL_COMPILE_STATUS, &status );
+		if ( !status )
+		{
+			glGetShaderiv( tsC, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( tsC, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Tesselation Control Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
+
+			glDeleteShader( vs );
+			glDeleteShader( fs );
+			if ( gs ) glDeleteShader( gs );
+			glDeleteShader( tsC );
+			return 0;
+		}
+	}
+
+	// Tesselation evaluation shader
+	if ( tessEvalShaderSrc )
+	{
+		tsE = glCreateShader( GL_TESS_EVALUATION_SHADER );
+		glShaderSource( tsE, 1, &tessEvalShaderSrc, 0x0 );
+		glCompileShader( tsE );
+		glGetShaderiv( tsE, GL_COMPILE_STATUS, &status );
+		if ( !status )
+		{
+			glGetShaderiv( tsE, GL_INFO_LOG_LENGTH, &infologLength );
+			if ( infologLength > 1 )
+			{
+				infoLog = new char[ infologLength ];
+				glGetShaderInfoLog( tsE, infologLength, &charsWritten, infoLog );
+				_shaderLog = _shaderLog + "[Tesselation Evaluation Shader]\n" + infoLog;
+				delete[] infoLog; infoLog = 0x0;
+			}
+
+			glDeleteShader( vs );
+			glDeleteShader( fs );
+			if ( gs ) glDeleteShader( gs );
+			glDeleteShader( tsC );
+			glDeleteShader( tsE );
+			return 0;
+		}
+	}
 
 	// Compute shader
 	if ( computeShaderSrc )
@@ -2067,7 +2067,7 @@ void RenderDeviceGLES3::applyRenderStates()
 	if( _newRasterState.hash != _curRasterState.hash )
 	{
 		// Since OpenGL ES does not support glPolygonMode, we can only draw with lines for wireframe
-		if ( _newRasterState.fillMode != RS_FILL_SOLID ) _drawType = PRIM_LINES;
+		if ( _newRasterState.fillMode != RS_FILL_SOLID ) _drawType = PRIM_LINELIST;
 
 		if( _newRasterState.cullMode == RS_CULL_BACK )
 		{
@@ -2139,7 +2139,7 @@ void RenderDeviceGLES3::applyRenderStates()
 	// Number of vertices in patch. Used in tesselation.
 	if ( _tessPatchVerts != _lastTessPatchVertsValue )
 	{
-//		glPatchParameteri( GL_PATCH_VERTICES, _tessPatchVerts );
+		glPatchParameteri( GL_PATCH_VERTICES, _tessPatchVerts );
 
 		_lastTessPatchVertsValue = _tessPatchVerts;
 	}

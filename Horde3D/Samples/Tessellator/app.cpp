@@ -189,6 +189,8 @@ TessellatorSample::TessellatorSample( int argc, char** argv ) :
 	_tessInner = _tessOuter = 1;
 	_rotation = 0;
 	_helpRows += 2;
+
+	setRequiredCapabilities( RenderCapabilities::TessellationShader );
 }
 
 
@@ -212,8 +214,16 @@ bool TessellatorSample::initResources()
 	_helpLabels[ _helpRows - 2 ] = "Up:"; _helpValues[ _helpRows - 2 ] = "Increase tessellation";
 	_helpLabels[ _helpRows - 1 ] = "Down:"; _helpValues[ _helpRows - 1 ] = "Decrease tessellation";
 
+	auto platform = getBackend()->getPlatform();
+	if ( platform == Platform::Android )
+	{
+		// force #version 320 es to all shader types to eliminate compile error on mali
+		h3dSetShaderPreambles( "#version 320 es\n precision highp float;\n", 
+		"#version 320 es\n precision highp float;\n precision highp sampler2D;\n precision highp sampler2DShadow;\n", "#version 320 es", "#version 320 es", "#version 320 es", "#version 320 es" );
+	}
+
     // 2. Load resources
-    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
     {
 		h3dutDumpMessages();
         return false;

@@ -27,7 +27,7 @@ set(HORDE3D_SOURCES
 	egShader.cpp
 	egTexture.cpp
 	utImage.cpp
-	config.h
+#	config.h
 	egAnimatables.h
 	egAnimation.h
 	egCamera.h
@@ -62,14 +62,16 @@ add_definitions(-DCMAKE )
 
 if (USE_GL2 OR USE_GL4)
 	if (USE_GL2)
-		add_definitions(-DH3D_USE_GL2)
+#		add_definitions(-DH3D_USE_GL2)
+		set( H3D_USE_GL2 1 )
 
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL2.h")
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL2.cpp")
 	endif (USE_GL2)
 
 	if (USE_GL4)
-		add_definitions(-DH3D_USE_GL4)
+#		add_definitions(-DH3D_USE_GL4)
+		set( H3D_USE_GL4 1 )
 
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL4.h")
 		list(APPEND HORDE3D_SOURCES "egRendererBaseGL4.cpp")
@@ -80,8 +82,9 @@ if (USE_GL2 OR USE_GL4)
 endif(USE_GL2 OR USE_GL4)
 
 if (USE_GLES3)
-	add_definitions(-DH3D_USE_GLES3)
-	
+#	add_definitions(-DH3D_USE_GLES3)
+	set( H3D_USE_GLES3 1 )
+
 	# remove other opengl render backends from build
 	list(APPEND HORDE3D_SOURCES "egRendererBaseGLES3.h")
 	list(APPEND HORDE3D_SOURCES "egRendererBaseGLES3.cpp")
@@ -89,6 +92,9 @@ if (USE_GLES3)
 	list(APPEND HORDE3D_SOURCES "utOpenGLES3.cpp")
 
 endif (USE_GLES3)
+
+# Add renderers, specified during build, in the config.h file
+configure_file( config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
 add_library(Horde3D SHARED
 	${HORDE3D_SOURCES}
@@ -153,3 +159,16 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	FIND_LIBRARY(CORE_FOUNDATION_LIBRARY CoreFoundation)
 	target_link_libraries(Horde3D ${OPENGL_LIBRARY} ${HORDE3D_EXTENSION_LIBS} ${CORE_FOUNDATION_LIBRARY})
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
+	FIND_PACKAGE(OpenGLESv2 REQUIRED)
+	find_library( log-lib log )
+			  
+	# add additional include paths for egl and gles
+	include_directories(${EGL_INCLUDE_DIR} ${OPENGLES2_INCLUDE_DIR})
+
+	# For ES3, Android requires non-standard library libGLESv3, which CMAKE does not correctly find. Hack it here instead.
+	string( REPLACE "libGLESv2.so" "libGLESv3.so"  OPENGLES2_LIBRARIES ${OPENGLES2_LIBRARIES} )
+
+	target_link_libraries(Horde3D ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES} ${log-lib} ${HORDE3D_EXTENSION_LIBS})
+endif()

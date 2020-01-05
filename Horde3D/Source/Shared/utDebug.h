@@ -15,6 +15,9 @@
 
 #include "utPlatform.h"
 
+#if defined( PLATFORM_ANDROID) 
+#include <android/log.h>
+#endif
 
 #if defined( PLATFORM_WIN ) && defined( _MSC_VER ) && defined( _DEBUG )
 

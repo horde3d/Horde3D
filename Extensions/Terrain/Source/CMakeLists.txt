@@ -8,6 +8,8 @@ SET(TERRAIN_EXTENSION_HEADERS
 	extension.h	
 )
 
+include_directories( ${CMAKE_BINARY_DIR} )
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
