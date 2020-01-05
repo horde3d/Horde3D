@@ -18,6 +18,8 @@
 #include "Horde3DUtils.h"
 #include "Horde3DTerrain.h"
 
+#include "FrameworkBackend.h"
+
 using namespace std;
 
 
@@ -41,7 +43,7 @@ bool TerrainSample::initResources()
 	
 	// 2. Load resources
 
-	if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
 	{
 		h3dutDumpMessages();
 		return false;

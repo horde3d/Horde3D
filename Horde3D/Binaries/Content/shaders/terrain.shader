@@ -70,7 +70,7 @@ OpenGLES3
 	context ATTRIBPASS
 	{
 		VertexShader = compile GLSL VS_GENERAL_GL4;
-		PixelShader = compile GLSL FS_ATTRIBPASS_GL4;
+		PixelShader = compile GLSL FS_ATTRIBPASS_GLES3;
 	}
 
 	context SHADOWMAP
@@ -91,7 +91,7 @@ OpenGLES3
 	context AMBIENT
 	{
 		VertexShader = compile GLSL VS_GENERAL_GL4;
-		PixelShader = compile GLSL FS_AMBIENT_GL4;
+		PixelShader = compile GLSL FS_AMBIENT_GLES3;
 	}
 }
 
@@ -186,6 +186,35 @@ vec3 light = -normalize( sunDir.xyz );
 
 void main( void )
 {
+	vec3 detailCol = texture( detailMap, texCoords * 300.0 ).rgb;
+	vec4 texel = texture( heightNormMap, texCoords ) * 2.0 - 1.0;
+	float ny = sqrt( max( 1.0 - texel.b*texel.b - texel.a*texel.a, 0.0 ) );		// Use max because of numerical issues
+	vec3 normal = vec3( texel.b, ny, texel.a );
+	
+	setMatID( 1.0 );
+	setPos( pos.xyz - viewerPos );
+	setNormal( normalize( normal ) );
+	setAlbedo( detailCol );
+	setSpecParams( vec3( 0.0, 0.0, 0.0 ), 0.0 );
+}
+
+
+[[FS_ATTRIBPASS_GLES3]]
+// =================================================================================================
+
+#include "shaders/utilityLib/fragDeferredWriteGL4.glsl"
+
+uniform vec3 viewerPos;
+uniform vec4 sunDir;
+uniform sampler2D heightNormMap, detailMap;
+in vec4 pos;
+in vec2 texCoords;
+
+
+void main( void )
+{
+	vec3 light = -normalize( sunDir.xyz );
+
 	vec3 detailCol = texture( detailMap, texCoords * 300.0 ).rgb;
 	vec4 texel = texture( heightNormMap, texCoords ) * 2.0 - 1.0;
 	float ny = sqrt( max( 1.0 - texel.b*texel.b - texel.a*texel.a, 0.0 ) );		// Use max because of numerical issues
@@ -349,6 +378,30 @@ vec3 light = -normalize( sunDir.xyz );
 
 void main( void )
 {
+	vec3 detailCol = texture( detailMap, texCoords * 300.0 ).rgb;
+	vec4 texel = texture( heightNormMap, texCoords ) * 2.0 - 1.0;
+	float ny = sqrt( max( 1.0 - texel.b*texel.b - texel.a*texel.a, 0.0 ) );		// Use max because of numerical issues
+	vec3 normal = vec3( texel.b, ny, texel.a );
+	
+	// Wrap lighting fur sun
+	float l = max( dot( normal, light ), 0.0 ) * 0.5 + 0.5;
+	
+	fragColor = vec4( detailCol * l, 1.0 );
+}
+
+[[FS_AMBIENT_GLES3]]
+// =================================================================================================
+
+uniform vec4 sunDir;
+uniform sampler2D heightNormMap, detailMap;
+in vec2 texCoords;
+
+out vec4 fragColor;
+
+void main( void )
+{
+	vec3 light = -normalize( sunDir.xyz );
+
 	vec3 detailCol = texture( detailMap, texCoords * 300.0 ).rgb;
 	vec4 texel = texture( heightNormMap, texCoords ) * 2.0 - 1.0;
 	float ny = sqrt( max( 1.0 - texel.b*texel.b - texel.a*texel.a, 0.0 ) );		// Use max because of numerical issues

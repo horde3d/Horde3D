@@ -11,15 +11,10 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
                            LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
 
     ### Copy engine libraries and SDL library
-    # Horde3D
     add_custom_command( TARGET Knight POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:Horde3D>/$<TARGET_FILE_NAME:Horde3D> "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
- 
-    # Horde3D Utils
     add_custom_command( TARGET Knight POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:Horde3DUtils>/$<TARGET_FILE_NAME:Horde3DUtils> "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
-
-    # SDL
     add_custom_command( TARGET Knight POST_BUILD
                         COMMAND ${CMAKE_COMMAND} -E copy ${SDL_LIB_PATH}/libSDL2.so "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
 

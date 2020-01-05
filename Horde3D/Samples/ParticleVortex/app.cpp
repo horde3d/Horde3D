@@ -24,6 +24,8 @@
 #include <string.h>
 #include <memory>
 
+#include "../Framework/FrameworkBackend.h"
+
 using namespace std;
 
 struct ParticleData
@@ -52,6 +54,7 @@ ParticleVortexSample::ParticleVortexSample( int argc, char** argv ) :
 
 	_animTime = 0;
 
+	showStatPanel( 1 ); 
 	setRequiredCapabilities( RenderCapabilities::ComputeShader | RenderCapabilities::GeometryShader );
 }
 
@@ -145,7 +148,7 @@ bool ParticleVortexSample::initResources()
 
     // 3. Load resources
 
-    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
     {
 		h3dutDumpMessages();
         return false;
@@ -175,11 +178,23 @@ bool ParticleVortexSample::initResources()
 	h3dSetMaterialUniform( _computeMatRes, "totalParticles", ( float ) particlesCount, 0, 0, 0 );
 
 	// Calculate number of groups for compute shader
-	size_t numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
-	double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
-	root = ceil( root );
-	_computeGroupX = _computeGroupY = ( unsigned int ) root;
-
+	auto platform = getBackend()->getPlatform();
+	if ( platform == Platform::Android )
+	{
+		// some android phones do not support 1024 compute workgroups and support only 128. Handle that case
+		size_t numGroups = ( particlesCount % 128 != 0 ) ? ( ( particlesCount / 128 ) + 1 ) : ( particlesCount / 128 );
+		double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
+		root = ceil( root );
+		_computeGroupX = _computeGroupY = ( unsigned int ) root;
+	}
+	else
+	{
+		size_t numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
+		double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
+		root = ceil( root );
+		_computeGroupX = _computeGroupY = ( unsigned int ) root;
+	}
+	
 	return true;
 }
 
