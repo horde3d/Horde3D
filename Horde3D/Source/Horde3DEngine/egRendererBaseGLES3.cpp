@@ -759,7 +759,7 @@ void RenderDeviceGLES3::unmapBuffer( uint32 geoObj, uint32 bufObj )
 
 uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int height, int depth,
 										 TextureFormats::List format,
-										 bool hasMips, bool genMips, bool compress, bool sRGB )
+										 int maxMipLevel, bool genMips, bool compress, bool sRGB )
 {
 	ASSERT( depth > 0 );
 
