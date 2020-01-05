@@ -31,7 +31,7 @@
 
 using namespace std;
 using namespace Horde3D;
-using namespace ColladaConnverter;
+using namespace ColladaConverter;
 
 
 struct AssetTypes

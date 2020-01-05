@@ -27,7 +27,7 @@
 
 using namespace std;
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 // little endian element writer

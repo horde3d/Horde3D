@@ -361,6 +361,13 @@ void ModelNode::update( int flags )
 		// Update geometry for morphers or software skinning
 		updateGeometry();
 	}
+
+	if ( flags & ModelUpdateFlags::ChildNodes )
+	{
+		// Manually update child nodes and model AABB
+		markDirty();
+		SceneNode::updateTree();
+	}
 }
 
 

@@ -20,7 +20,7 @@
 #include <map>
 
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 struct DaeTransformation

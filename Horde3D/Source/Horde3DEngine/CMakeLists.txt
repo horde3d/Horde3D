@@ -100,6 +100,11 @@ add_library(Horde3D SHARED
 	${HORDE3D_SOURCES}
 	)
 
+option(RAPIDXML_NO_EXCEPTIONS "Disabling rapidxml exceptions will terminating application on xml parsing error" ON)
+if (RAPIDXML_NO_EXCEPTIONS)
+	add_definitions(-DRAPIDXML_NO_EXCEPTIONS)
+endif(RAPIDXML_NO_EXCEPTIONS)
+
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 	IF(MSVC)

@@ -31,11 +31,6 @@
 #ifndef RAPIDXML_HPP_INCLUDED
 #define RAPIDXML_HPP_INCLUDED
 
-// =================================================================================================
-#define RAPIDXML_NO_EXCEPTIONS
-
-// =================================================================================================
-
 // If standard library is disabled, user must provide implementations of required functions and typedefs
 #if !defined(RAPIDXML_NO_STDLIB)
     #include <cstdlib>      // For std::size_t

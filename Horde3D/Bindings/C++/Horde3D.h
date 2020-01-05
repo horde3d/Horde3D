@@ -233,9 +233,10 @@ struct H3DResFlags
 		NoTexMipmaps      - Disables generation of mipmaps for Texture resource.
 		TexCubemap        - Sets Texture resource to be a cubemap.
 		TexDynamic        - Enables more efficient updates of Texture resource streams.
-		TexRenderable     - Makes Texture resource usable as render target.
 		TexSRGB           - Indicates that Texture resource is in sRGB color space and should be converted
 		                    to linear space when being sampled.
+		TexRenderable     - Makes Texture resource usable as render target.
+		TexDepthBuffer    - When Textures is renderable, creates a depth buffer along with the color buffer.
 	*/
 	enum Flags
 	{
@@ -244,8 +245,9 @@ struct H3DResFlags
 		NoTexMipmaps = 4,
 		TexCubemap = 8,
 		TexDynamic = 16,
-		TexRenderable = 32,
-		TexSRGB = 64
+		TexSRGB = 32,
+		TexRenderable = 64,
+		TexDepthBuffer = 128,
 	};
 };
 
@@ -810,11 +812,13 @@ struct H3DModelUpdateFlags
 		
 		Animation  - Apply animation
 		Geometry   - Apply morphers and software skinning
+		ChildNodes - Manually update child nodes and calculate their AABB. Useful when meshes are added procedurally to model
 	*/
 	enum Flags
 	{
 		Animation = 1,
-		Geometry = 2
+		Geometry = 2,
+		ChildNodes = 3
 	};
 };
 
@@ -1503,8 +1507,8 @@ H3D_API H3DRes h3dCreateTexture( const char *name, int width, int height, int fm
 	Returns:
 		nothing
 */
-H3D_API void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble, 
-                                    const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble );
+H3D_API void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble,
+									const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble );
 
 /* Function: h3dSetMaterialUniform
 		Sets a shader uniform of a Material resource.

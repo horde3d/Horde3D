@@ -652,11 +652,45 @@ void *platGetProcAddress( const char *funcName )
 #endif
 }
 
+
 void initLegacyExtensions( bool &r )
 {
-	glExt::EXT_framebuffer_object = isExtensionSupported( "GL_EXT_framebuffer_object" );
-	if ( glExt::EXT_framebuffer_object )
+	bool ARB_framebuffer_object = isExtensionSupported( "GL_ARB_framebuffer_object" );
+	if ( ARB_framebuffer_object )
 	{
+		// this extension is composed of extensions EXT_framebuffer_object EXT_framebuffer_blit
+		// EXT_framebuffer_multisample EXT_packed_depth_stencil
+		glExt::EXT_framebuffer_object = true;
+		glExt::EXT_framebuffer_multisample = true;
+		
+		r &= ( glIsRenderbufferEXT = ( PFNGLISRENDERBUFFEREXTPROC ) platGetProcAddress( "glIsRenderbuffer" ) ) != 0x0;
+		r &= ( glBindRenderbufferEXT = ( PFNGLBINDRENDERBUFFEREXTPROC ) platGetProcAddress( "glBindRenderbuffer" ) ) != 0x0;
+		r &= ( glDeleteRenderbuffersEXT = ( PFNGLDELETERENDERBUFFERSEXTPROC ) platGetProcAddress( "glDeleteRenderbuffers" ) ) != 0x0;
+		r &= ( glGenRenderbuffersEXT = ( PFNGLGENRENDERBUFFERSEXTPROC ) platGetProcAddress( "glGenRenderbuffers" ) ) != 0x0;
+		r &= ( glRenderbufferStorageEXT = ( PFNGLRENDERBUFFERSTORAGEEXTPROC ) platGetProcAddress( "glRenderbufferStorage" ) ) != 0x0;
+		r &= ( glGetRenderbufferParameterivEXT = ( PFNGLGETRENDERBUFFERPARAMETERIVEXTPROC ) platGetProcAddress( "glGetRenderbufferParameteriv" ) ) != 0x0;
+		r &= ( glIsFramebufferEXT = ( PFNGLISFRAMEBUFFEREXTPROC ) platGetProcAddress( "glIsFramebuffer" ) ) != 0x0;
+		r &= ( glBindFramebufferEXT = ( PFNGLBINDFRAMEBUFFEREXTPROC ) platGetProcAddress( "glBindFramebuffer" ) ) != 0x0;
+		r &= ( glDeleteFramebuffersEXT = ( PFNGLDELETEFRAMEBUFFERSEXTPROC ) platGetProcAddress( "glDeleteFramebuffers" ) ) != 0x0;
+		r &= ( glGenFramebuffersEXT = ( PFNGLGENFRAMEBUFFERSEXTPROC ) platGetProcAddress( "glGenFramebuffers" ) ) != 0x0;
+		r &= ( glCheckFramebufferStatusEXT = ( PFNGLCHECKFRAMEBUFFERSTATUSEXTPROC ) platGetProcAddress( "glCheckFramebufferStatus" ) ) != 0x0;
+		r &= ( glFramebufferTexture1DEXT = ( PFNGLFRAMEBUFFERTEXTURE1DEXTPROC ) platGetProcAddress( "glFramebufferTexture1D" ) ) != 0x0;
+		r &= ( glFramebufferTexture2DEXT = ( PFNGLFRAMEBUFFERTEXTURE2DEXTPROC ) platGetProcAddress( "glFramebufferTexture2D" ) ) != 0x0;
+		r &= ( glFramebufferTexture3DEXT = ( PFNGLFRAMEBUFFERTEXTURE3DEXTPROC ) platGetProcAddress( "glFramebufferTexture3D" ) ) != 0x0;
+		r &= ( glFramebufferRenderbufferEXT = ( PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC ) platGetProcAddress( "glFramebufferRenderbuffer" ) ) != 0x0;
+		r &= ( glGetFramebufferAttachmentParameterivEXT = ( PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC ) platGetProcAddress( "glGetFramebufferAttachmentParameteriv" ) ) != 0x0;
+		r &= ( glGenerateMipmapEXT = ( PFNGLGENERATEMIPMAPEXTPROC ) platGetProcAddress( "glGenerateMipmap" ) ) != 0x0;
+		
+		// From GL_EXT_framebuffer_blit
+		r &= ( glBlitFramebufferEXT = ( PFNGLBLITFRAMEBUFFEREXTPROC ) platGetProcAddress( "glBlitFramebuffer" ) ) != 0x0;
+		// From GL_EXT_framebuffer_multisample
+		r &= ( glRenderbufferStorageMultisampleEXT = ( PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC ) platGetProcAddress( "glRenderbufferStorageMultisample" ) ) != 0x0;
+	}
+	else
+	{
+		glExt::EXT_framebuffer_object = isExtensionSupported( "GL_EXT_framebuffer_object" );
+		if ( glExt::EXT_framebuffer_object )
+		{
 		r &= ( glIsRenderbufferEXT = ( PFNGLISRENDERBUFFEREXTPROC ) platGetProcAddress( "glIsRenderbufferEXT" ) ) != 0x0;
 		r &= ( glBindRenderbufferEXT = ( PFNGLBINDRENDERBUFFEREXTPROC ) platGetProcAddress( "glBindRenderbufferEXT" ) ) != 0x0;
 		r &= ( glDeleteRenderbuffersEXT = ( PFNGLDELETERENDERBUFFERSEXTPROC ) platGetProcAddress( "glDeleteRenderbuffersEXT" ) ) != 0x0;
@@ -674,25 +708,26 @@ void initLegacyExtensions( bool &r )
 		r &= ( glFramebufferRenderbufferEXT = ( PFNGLFRAMEBUFFERRENDERBUFFEREXTPROC ) platGetProcAddress( "glFramebufferRenderbufferEXT" ) ) != 0x0;
 		r &= ( glGetFramebufferAttachmentParameterivEXT = ( PFNGLGETFRAMEBUFFERATTACHMENTPARAMETERIVEXTPROC ) platGetProcAddress( "glGetFramebufferAttachmentParameterivEXT" ) ) != 0x0;
 		r &= ( glGenerateMipmapEXT = ( PFNGLGENERATEMIPMAPEXTPROC ) platGetProcAddress( "glGenerateMipmapEXT" ) ) != 0x0;
+		}
+	
+		glExt::EXT_framebuffer_multisample = isExtensionSupported( "GL_EXT_framebuffer_multisample" ) &&
+											 isExtensionSupported( "GL_EXT_framebuffer_blit" );
+		
+		if ( glExt::EXT_framebuffer_multisample )
+		{
+			// From GL_EXT_framebuffer_blit
+			r &= ( glBlitFramebufferEXT = ( PFNGLBLITFRAMEBUFFEREXTPROC ) platGetProcAddress( "glBlitFramebufferEXT" ) ) != 0x0;
+			// From GL_EXT_framebuffer_multisample
+			r &= ( glRenderbufferStorageMultisampleEXT = ( PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC ) platGetProcAddress( "glRenderbufferStorageMultisampleEXT" ) ) != 0x0;
+		}
 	}
-
-	glExt::EXT_framebuffer_multisample = isExtensionSupported( "GL_EXT_framebuffer_multisample" ) &&
-		isExtensionSupported( "GL_EXT_framebuffer_blit" );
-
-	if ( glExt::EXT_framebuffer_multisample )
-	{
-		// From GL_EXT_framebuffer_blit
-		r &= ( glBlitFramebufferEXT = ( PFNGLBLITFRAMEBUFFEREXTPROC ) platGetProcAddress( "glBlitFramebufferEXT" ) ) != 0x0;
-		// From GL_EXT_framebuffer_multisample
-		r &= ( glRenderbufferStorageMultisampleEXT = ( PFNGLRENDERBUFFERSTORAGEMULTISAMPLEEXTPROC ) platGetProcAddress( "glRenderbufferStorageMultisampleEXT" ) ) != 0x0;
-	}
-
+	
 	glExt::ARB_texture_float = isExtensionSupported( "GL_ARB_texture_float" ) ||
-		isExtensionSupported( "GL_ATI_texture_float" );
-
+							   isExtensionSupported( "GL_ATI_texture_float" );
+	
 	glExt::ARB_texture_non_power_of_two = isExtensionSupported( "GL_ARB_texture_non_power_of_two" );
-
-	glExt::ARB_timer_query = isExtensionSupported( "GL_ARB_timer_query" );
+	
+	glExt::ARB_timer_query = isExtensionSupported( "GL_ARB_timer_query" ) || isExtensionSupported( "GL_EXT_timer_query" );
 	if ( glExt::ARB_timer_query )
 	{
 		r &= ( glQueryCounterARB = ( PFNGLQUERYCOUNTERPROC ) platGetProcAddress( "glQueryCounter" ) ) != 0x0;
@@ -705,7 +740,7 @@ void initLegacyExtensions( bool &r )
 	{
 		r &= ( glTexBufferARB = ( PFNGLTEXBUFFERPROC ) platGetProcAddress( "glTexBuffer" ) ) != 0x0;
 	}
-
+	
 	glExt::EXT_texture_sRGB = isExtensionSupported( "GL_EXT_texture_sRGB" );
 
 	glExt::ARB_texture_rg = isExtensionSupported( "GL_ARB_texture_rg" );

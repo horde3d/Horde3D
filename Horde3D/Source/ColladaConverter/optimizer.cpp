@@ -18,7 +18,7 @@
 
 using namespace std;
 namespace Horde3D {
-namespace ColladaConnverter {
+namespace ColladaConverter {
 
 
 void OptVertex::updateScore( int cacheIndex )

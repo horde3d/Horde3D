@@ -53,8 +53,9 @@ struct ResourceFlags
 		NoTexMipmaps = 4,
 		TexCubemap = 8,
 		TexDynamic = 16,
-		TexRenderable = 32,
-		TexSRGB = 64
+		TexSRGB = 32,
+		TexRenderable = 64,
+		TexDepthBuffer = 128,
 	};
 };
 

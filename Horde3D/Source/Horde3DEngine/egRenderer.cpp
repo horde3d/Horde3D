@@ -272,7 +272,7 @@ bool Renderer::init( RenderBackendType::List type )
 
 	// Create default shadow map
 	float shadowTex[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-	_defShadowMap = _renderDevice->createTexture( TextureTypes::Tex2D, 4, 4, 1, TextureFormats::DEPTH, false, false, false, false );
+	_defShadowMap = _renderDevice->createTexture( TextureTypes::Tex2D, 4, 4, 1, TextureFormats::DEPTH, 0, false, false, false );
 	_renderDevice->uploadTextureData( _defShadowMap, 0, 0, shadowTex );
 
 	// Create index buffer used for drawing particles
@@ -757,7 +757,7 @@ bool Renderer::setMaterialRec( MaterialResource *materialRes, const string &shad
 		{
 			if( materialRes->_samplers[j].name == sampler.id )
 			{
-                if( materialRes->_samplers[j].texRes && materialRes->_samplers[j].texRes->isLoaded() )
+				if( materialRes->_samplers[j].texRes && materialRes->_samplers[j].texRes->isLoaded() )
 					texRes = materialRes->_samplers[j].texRes;
 				break;
 			}
@@ -927,7 +927,7 @@ bool Renderer::setMaterial( MaterialResource *materialRes, const string &shaderC
 
 bool Renderer::createShadowRB( uint32 width, uint32 height )
 {
-	_shadowRB = _renderDevice->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0, false );
+	_shadowRB = _renderDevice->createRenderBuffer( width, height, TextureFormats::BGRA8, true, 0, 0, 0 );
 	
 	return _shadowRB != 0;
 }
@@ -2075,7 +2075,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 		}
 		
 		// Wait for completion of compute operation (writing to buffer)
-        rdi->setMemoryBarrier( VertexBufferBarrier );
+		rdi->setMemoryBarrier( VertexBufferBarrier );
 
 		// Render
 		rdi->draw( drawType, 0, compNode->_elementsCount );
@@ -2211,7 +2211,7 @@ void Renderer::render( CameraNode *camNode )
 	}
 	
 	// Update mipmaps if necessary
-	if( _curCamera->_outputTex != 0x0 && _curCamera->_outputTex->hasMipMaps() )
+	if( _curCamera->_outputTex != 0x0 && _curCamera->_outputTex->getMaxMipLevel() > 0 )
 		_renderDevice->generateTextureMipmap( _curCamera->_outputTex->getTexObject() );
 
 	finishRendering();
@@ -2258,7 +2258,7 @@ void Renderer::renderDebugView()
 	setShaderComb( &_defColorShader );
 	commitGeneralUniforms();
 	
-    Matrix4f identity;
+	Matrix4f identity;
 	_renderDevice->setShaderConst( _defColorShader.uniLocs[ _uni.worldMat ], CONST_FLOAT44, &identity.x[0] );
 	color[0] = 0.4f; color[1] = 0.4f; color[2] = 0.4f; color[3] = 1;
 	_renderDevice->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );

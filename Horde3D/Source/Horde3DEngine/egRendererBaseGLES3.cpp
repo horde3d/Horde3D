@@ -798,7 +798,7 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 	tex.depth = depth;
 	tex.sRGB = sRGB && Modules::config().sRGBLinearization;
 	tex.genMips = genMips;
-	tex.hasMips = hasMips;
+	tex.hasMips = maxMipLevel > 0;
 
 	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
 
@@ -809,7 +809,13 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 	glGenTextures( 1, &tex.glObj );
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
-	
+
+	if ( tex.type != GL_TEXTURE_3D ) {
+		glTexStorage2D( tex.type, maxMipLevel+1, tex.glFmt, tex.width, tex.height );
+	} else {
+		glTexStorage3D( tex.type, maxMipLevel+1, tex.glFmt, tex.width, tex.height, tex.depth );
+	}
+
 	tex.samplerState = 0;
 	applySamplerState( tex );
 	
@@ -818,8 +824,7 @@ uint32 RenderDeviceGLES3::createTexture( TextureTypes::List type, int width, int
 		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
 
 	// Calculate memory requirements
-	tex.memSize = calcTextureSize( format, width, height, depth );
-	if( hasMips || genMips ) tex.memSize += ftoi_r( tex.memSize * 1.0f / 3.0f );
+	tex.memSize = calcTextureSize( format, width, height, depth, maxMipLevel );
 	if( type == TextureTypes::TexCube ) tex.memSize *= 6;
 	_textureMem += tex.memSize;
 	
@@ -842,6 +847,7 @@ void RenderDeviceGLES3::generateTextureMipmap( uint32 texObj )
 
 void RenderDeviceGLES3::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
+	ASSERT( pixels );
 	const RDITextureGLES3 &tex = _textures.getRef( texObj );
 	TextureFormats::List format = tex.format;
 
@@ -862,21 +868,21 @@ void RenderDeviceGLES3::uploadTextureData( uint32 texObj, int slice, int mipLeve
 			GL_TEXTURE_2D : (GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice);
 		
 		if( compressed )
-			glCompressedTexImage2D( target, mipLevel, tex.glFmt, width, height, 0,
-			                        calcTextureSize( format, width, height, 1 ), pixels );
+			glCompressedTexSubImage2D( target, mipLevel, 0, 0, width, height,
+			                           tex.glFmt, calcTextureSize( format, width, height, 1 ), pixels );
 		else
-			glTexImage2D( target, mipLevel, tex.glFmt, width, height, 0, inputFormat, inputType, pixels );
+			glTexSubImage2D( target, mipLevel, 0, 0, width, height, inputFormat, inputType, pixels );
 	}
 	else if ( tex.type == textureTypes[ TextureTypes::Tex3D ] )
 	{
 		int depth = std::max( tex.depth >> mipLevel, 1 );
 		
 		if( compressed )
-			glCompressedTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			                        calcTextureSize( format, width, height, depth ), pixels );	
+			glCompressedTexSubImage3D( GL_TEXTURE_3D, mipLevel, 0, 0, 0, width, height, depth,
+			                           tex.glFmt, calcTextureSize( format, width, height, depth ), pixels );
 		else
-			glTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			              inputFormat, inputType, pixels );
+			glTexSubImage3D( GL_TEXTURE_3D, mipLevel, 0, 0, 0, width, height, depth,
+			                 inputFormat, inputType, pixels );
 	}
 
 	if( tex.genMips && (tex.type != GL_TEXTURE_CUBE_MAP || slice == 5) )
@@ -1560,7 +1566,7 @@ uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, Textu
 }*/
 
 uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                                          bool depth, uint32 numColBufs, uint32 samples, bool hasMipmaps )
+	                                          bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel )
 {
 	if ( ( format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F ) && !_caps.texFloat )
 	{
@@ -1596,9 +1602,8 @@ uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, Textu
 		{
 			glBindFramebuffer( GL_FRAMEBUFFER, rb.fbo );
 			// Create a color texture
-			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, hasMipmaps, hasMipmaps, false, false );
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, maxMipLevel, maxMipLevel > 0, false, false );
 			ASSERT( texObj != 0 );
-			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[ j ] = texObj;
 			RDITextureGLES3 &tex = _textures.getRef( texObj );
 			// Attach the texture
@@ -1662,10 +1667,9 @@ uint32 RenderDeviceGLES3::createRenderBuffer( uint32 width, uint32 height, Textu
 		}
 		else
 		{
-			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, false, false, false, false );
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, 0, false, false, false );
 			ASSERT( texObj != 0 );
 			glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
-			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.depthTex = texObj;
 			RDITextureGLES3 &tex = _textures.getRef( texObj );
 			// Attach the texture
