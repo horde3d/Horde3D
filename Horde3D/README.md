@@ -1,4 +1,4 @@
-Horde3D SDK v1.0.0
+Horde3D SDK v2.0.0
 ==================
 
 > Next-Generation Graphics Engine
