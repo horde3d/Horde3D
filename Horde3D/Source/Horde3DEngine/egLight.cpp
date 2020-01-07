@@ -35,6 +35,8 @@ LightNode::LightNode( const LightNodeTpl &lightTpl ) :
 	_shadowMapCount = lightTpl.shadowMapCount;
 	_shadowSplitLambda = lightTpl.shadowSplitLambda;
 	_shadowMapBias = lightTpl.shadowMapBias;
+
+	_occlusionCullingSupported = true;
 }
 
 

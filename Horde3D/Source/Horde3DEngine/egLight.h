@@ -102,9 +102,6 @@ private:
 	uint32                 _shadowMapCount;
 	float                  _shadowSplitLambda, _shadowMapBias;
 
-	std::vector< uint32 >  _occQueries;
-	std::vector< uint32 >  _lastVisited;
-
 	friend class SceneManager;
 	friend class Renderer;
 };

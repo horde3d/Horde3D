@@ -120,9 +120,6 @@ protected:
 	ModelNode           *_parentModel;
 	BoundingBox         _localBBox;
 
-	std::vector< uint32 >  _occQueries;
-	std::vector< uint32 >  _lastVisited;
-
 	friend class SceneManager;
 	friend class SceneNode;
 	friend class ModelNode;

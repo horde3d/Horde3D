@@ -299,6 +299,8 @@ EmitterNode::EmitterNode( const EmitterNodeTpl &emitterTpl ) :
 	SceneNode( emitterTpl )
 {
 	_renderable = true;
+	_occlusionCullingSupported = true;
+
 	_materialRes = emitterTpl.matRes;
 	_effectRes = emitterTpl.effectRes;
 	_particleCount = emitterTpl.maxParticleCount;

@@ -117,6 +117,9 @@ public:
 	virtual uint32 calcLodLevel( const Vec3f &viewPoint ) const;
 	virtual bool checkLodCorrectness( uint32 lodLevel ) const;
 
+	bool checkOcclusionSupported() { return _occlusionCullingSupported; }
+	uint32 getOcclusionResult( uint32 occlusionSet );
+
 	bool checkLodSupport() { return _lodSupported; }
 
 	virtual bool canAttach( SceneNode &parent ) const;
@@ -150,6 +153,10 @@ protected:
 protected:
 	Matrix4f                    _relTrans, _absTrans;  // Transformation matrices
 	std::vector< SceneNode * >  _children;  // Child nodes
+
+	std::vector< uint32 >		_occQueries;
+	std::vector< uint32 >		_occQueriesLastVisited;
+
 	std::string                 _name;
 	std::string                 _attachment;  // User defined data
 	BoundingBox                 _bBox;  // AABB in world space
@@ -164,7 +171,7 @@ protected:
 	bool                        _transformed;
 	bool                        _renderable;
 	bool						_lodSupported;
-
+	bool						_occlusionCullingSupported;
 
 	friend class SceneManager;
 	friend class SpatialGraph;

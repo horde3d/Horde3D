@@ -33,7 +33,7 @@ using namespace std;
 SceneNode::SceneNode( const SceneNodeTpl &tpl ) :
 	_name( tpl.name ), _attachment( tpl.attachmentString ), _parent( 0x0 ), _type( tpl.type ),
 	_handle( 0 ), _sgHandle( 0 ), _flags( 0 ), _sortKey( 0 ), _dirty( true ), _transformed( true ),
-	_renderable( false ), _lodSupported( false )
+	_renderable( false ), _lodSupported( false ), _occlusionCullingSupported( false )
 {
 	_relTrans = Matrix4f::ScaleMat( tpl.scale.x, tpl.scale.y, tpl.scale.z );
 	_relTrans.rotate( degToRad( tpl.rot.x ), degToRad( tpl.rot.y ), degToRad( tpl.rot.z ) );
@@ -180,6 +180,13 @@ bool SceneNode::checkLodCorrectness( uint32 lodLevel ) const
 	return true;
 }
 
+
+uint32 SceneNode::getOcclusionResult( uint32 occlusionSet )
+{
+	if ( occlusionSet >= _occQueries.size() ) return Math::MaxUInt32; 
+	
+	return _occQueries[ occlusionSet ];
+}
 
 bool SceneNode::canAttach( SceneNode &/*parent*/ ) const
 {
@@ -745,30 +752,16 @@ bool SceneManager::getCastRayResult( int index, CastRayResult &crr )
 
 int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool checkOcclusion, bool calcLod )
 {
-	// Note: This function is a bit hacky with all the hard-coded node types
-	// TODO: Generalize function
 	if( node._dirty ) updateNodes();
 
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	// Check occlusion
-	if( checkOcclusion && cam._occSet >= 0 )
+	if( checkOcclusion && cam._occSet >= 0 && node.checkOcclusionSupported() )
 	{
-		if( node.getType() == SceneNodeTypes::Mesh && cam._occSet < (int)((MeshNode *)&node)->_occQueries.size() )
-		{
-			if( rdi->getQueryResult( ((MeshNode *)&node)->_occQueries[cam._occSet] ) < 1 )
-				return -1;
-		}
-		else if( node.getType() == SceneNodeTypes::Emitter && cam._occSet < (int)((EmitterNode *)&node)->_occQueries.size() )
-		{
-			if( rdi->getQueryResult( ((EmitterNode *)&node)->_occQueries[cam._occSet] ) < 1 )
-				return -1;
-		}
-		else if( node.getType() == SceneNodeTypes::Light && cam._occSet < (int)((LightNode *)&node)->_occQueries.size() )
-		{
-			if( rdi->getQueryResult( ((LightNode *)&node)->_occQueries[cam._occSet] ) < 1 )
-				return -1;
-		}
+		uint32 query = node.getOcclusionResult( cam._occSet );
+		if ( query != Math::MaxUInt32 && rdi->getQueryResult( query ) < 1 ) // Math::MaxUInt32 means incorrect result
+			return -1;
 	}
 	
 	// Frustum culling

@@ -1380,18 +1380,18 @@ void Renderer::drawLightGeometry( const string &shaderContext, int theClass,
 			if( occSet > (int)_curLight->_occQueries.size() - 1 )
 			{
 				_curLight->_occQueries.resize( occSet + 1, 0 );
-				_curLight->_lastVisited.resize( occSet + 1, 0 );
+				_curLight->_occQueriesLastVisited.resize( occSet + 1, 0 );
 			}
 			if( _curLight->_occQueries[occSet] == 0 )
 			{
 				_curLight->_occQueries[occSet] = _renderDevice->createOcclusionQuery();
-				_curLight->_lastVisited[occSet] = 0;
+				_curLight->_occQueriesLastVisited[occSet] = 0;
 			}
 			else
 			{
-				if( _curLight->_lastVisited[occSet] != Modules::renderer().getFrameID() )
+				if( _curLight->_occQueriesLastVisited[occSet] != Modules::renderer().getFrameID() )
 				{
-					_curLight->_lastVisited[occSet] = Modules::renderer().getFrameID();
+					_curLight->_occQueriesLastVisited[occSet] = Modules::renderer().getFrameID();
 				
 					Vec3f bbMin, bbMax;
 					_curLight->getFrustum().calcAABB( bbMin, bbMax );
@@ -1491,18 +1491,18 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 			if( occSet > (int)_curLight->_occQueries.size() - 1 )
 			{
 				_curLight->_occQueries.resize( occSet + 1, 0 );
-				_curLight->_lastVisited.resize( occSet + 1, 0 );
+				_curLight->_occQueriesLastVisited.resize( occSet + 1, 0 );
 			}
 			if( _curLight->_occQueries[occSet] == 0 )
 			{
 				_curLight->_occQueries[occSet] = _renderDevice->createOcclusionQuery();
-				_curLight->_lastVisited[occSet] = 0;
+				_curLight->_occQueriesLastVisited[occSet] = 0;
 			}
 			else
 			{
-				if( _curLight->_lastVisited[occSet] != Modules::renderer().getFrameID() )
+				if( _curLight->_occQueriesLastVisited[occSet] != Modules::renderer().getFrameID() )
 				{
-					_curLight->_lastVisited[occSet] = Modules::renderer().getFrameID();
+					_curLight->_occQueriesLastVisited[occSet] = Modules::renderer().getFrameID();
 				
 					Vec3f bbMin, bbMax;
 					_curLight->getFrustum().calcAABB( bbMin, bbMax );
@@ -1690,19 +1690,19 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 			if( occSet > (int)meshNode->_occQueries.size() - 1 )
 			{
 				meshNode->_occQueries.resize( occSet + 1, 0 );
-				meshNode->_lastVisited.resize( occSet + 1, 0 );
+				meshNode->_occQueriesLastVisited.resize( occSet + 1, 0 );
 			}
 			if( meshNode->_occQueries[occSet] == 0 )
 			{
 				queryObj = rdi->createOcclusionQuery();
 				meshNode->_occQueries[occSet] = queryObj;
-				meshNode->_lastVisited[occSet] = 0;
+				meshNode->_occQueriesLastVisited[occSet] = 0;
 			}
 			else
 			{
-				if( meshNode->_lastVisited[occSet] != Modules::renderer().getFrameID() )
+				if( meshNode->_occQueriesLastVisited[occSet] != Modules::renderer().getFrameID() )
 				{
-					meshNode->_lastVisited[occSet] = Modules::renderer().getFrameID();
+					meshNode->_occQueriesLastVisited[occSet] = Modules::renderer().getFrameID();
 				
 					// Check query result (viewer must be outside of bounding box)
 					if( nearestDistToAABB( frust1->getOrigin(), meshNode->getBBox().min,
@@ -1863,19 +1863,19 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 			if( occSet > (int)emitter->_occQueries.size() - 1 )
 			{
 				emitter->_occQueries.resize( occSet + 1, 0 );
-				emitter->_lastVisited.resize( occSet + 1, 0 );
+				emitter->_occQueriesLastVisited.resize( occSet + 1, 0 );
 			}
 			if( emitter->_occQueries[occSet] == 0 )
 			{
 				queryObj = rdi->createOcclusionQuery();
 				emitter->_occQueries[occSet] = queryObj;
-				emitter->_lastVisited[occSet] = 0;
+				emitter->_occQueriesLastVisited[occSet] = 0;
 			}
 			else
 			{
-				if( emitter->_lastVisited[occSet] != Modules::renderer().getFrameID() )
+				if( emitter->_occQueriesLastVisited[occSet] != Modules::renderer().getFrameID() )
 				{
-					emitter->_lastVisited[occSet] = Modules::renderer().getFrameID();
+					emitter->_occQueriesLastVisited[occSet] = Modules::renderer().getFrameID();
 				
 					// Check query result (viewer must be outside of bounding box)
 					if( nearestDistToAABB( frust1->getOrigin(), emitter->getBBox().min,
