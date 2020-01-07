@@ -239,9 +239,10 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		                                 _maxMipLevel, _maxMipLevel > 0, false, _sRGB );
 
 		int nSlices = _texType != TextureTypes::TexCube ? 6 : 1;
-		for ( int mipLevel = 0; mipLevel <= _maxMipLevel; ++mipLevel ) {
+		for ( uint32 mipLevel = 0; mipLevel <= _maxMipLevel; ++mipLevel )
+		{
 			for (int slice = 0; slice < nSlices; ++slice ) {
-				rdi->uploadTextureData( _texObject, slice, mipLevel, pixels );
+				rdi->uploadTextureData( _texObject, slice, (int) mipLevel, pixels );
 			}
 		}
 
