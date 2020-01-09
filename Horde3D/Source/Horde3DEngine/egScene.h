@@ -230,11 +230,13 @@ class SpatialGraph
 public:
 	SpatialGraph();
 	
-	void addNode( SceneNode &sceneNode );
-	void removeNode( uint32 sgHandle );
-	void updateNode( uint32 sgHandle );
+	virtual ~SpatialGraph();
 
-	void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
+	virtual void addNode( SceneNode &sceneNode );
+	virtual void removeNode( uint32 sgHandle );
+	virtual void updateNode( uint32 sgHandle );
+
+	virtual void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
 	                   RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderQueue );
 
 	std::vector< SceneNode * > &getLightQueue() { return _lightQueue; }
@@ -276,6 +278,8 @@ class SceneManager
 public:
 	SceneManager();
 	~SceneManager();
+
+	void registerSpatialGraph( SpatialGraph *graph );
 
 	void registerNodeType( int nodeType, const std::string &typeString, NodeTypeParsingFunc pf,
 	                       NodeTypeFactoryFunc ff );

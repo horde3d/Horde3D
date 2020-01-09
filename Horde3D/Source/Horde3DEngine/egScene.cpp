@@ -188,6 +188,7 @@ uint32 SceneNode::getOcclusionResult( uint32 occlusionSet )
 	return _occQueries[ occlusionSet ];
 }
 
+
 bool SceneNode::canAttach( SceneNode &/*parent*/ ) const
 {
 	return true;
@@ -292,6 +293,12 @@ SpatialGraph::SpatialGraph()
 {
 	_lightQueue.reserve( 20 );
 	_renderQueue.reserve( 500 );
+}
+
+
+SpatialGraph::~SpatialGraph()
+{
+
 }
 
 
@@ -417,7 +424,8 @@ SceneManager::SceneManager() : _rayNum( 0 )
 	rootNode->_handle = RootNode;
 	_nodes.push_back( rootNode );
 
-	_spatialGraph = new SpatialGraph();
+	// setup default spatial graph
+	registerSpatialGraph( new SpatialGraph() );
 }
 
 
@@ -431,6 +439,13 @@ SceneManager::~SceneManager()
 	}
 }
 
+
+void SceneManager::registerSpatialGraph( SpatialGraph *graph )
+{
+	if ( _spatialGraph ) delete _spatialGraph;
+	
+	_spatialGraph = graph;
+}
 
 void SceneManager::registerNodeType( int nodeType, const string &typeString, NodeTypeParsingFunc pf,
                                      NodeTypeFactoryFunc ff )
