@@ -458,6 +458,13 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 		std::cout << "Warning: Unable to set VSync! SDL Error: " << SDL_GetError() << std::endl;
 	}
 
+	// Get correct mouse position
+	int tempX, tempY;
+	SDL_PumpEvents();
+	SDL_GetMouseState( &tempX, &tempY );
+
+	_prevMouseX = tempX; _prevMouseY = tempY;
+
 	return ( void * ) _wnd;
 }
 
@@ -510,8 +517,6 @@ void SDLBackend::processEvents()
 	// Event handler
 	SDL_Event e;
 
-	static float prevMx = 0;
-	static float prevMy = 0;
 	static int prevWheelx = 0;
 	static int prevWheely = 0;
 	
@@ -522,10 +527,10 @@ void SDLBackend::processEvents()
 		{
 			case SDL_MOUSEMOTION:
 				if ( _mouseMoveEventHandler.isInitialized() ) 
-					_mouseMoveEventHandler.invoke( ( float ) e.motion.x, ( float ) e.motion.y, prevMx, prevMy );
+					_mouseMoveEventHandler.invoke( ( float ) e.motion.x, ( float ) e.motion.y, _prevMouseX, _prevMouseY );
 
-				prevMx = ( float ) e.motion.x;
-				prevMy = ( float ) e.motion.y;
+				_prevMouseX = ( float ) e.motion.x;
+				_prevMouseY = ( float ) e.motion.y;
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if ( _mouseButtonEventHandler.isInitialized() )

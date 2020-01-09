@@ -32,7 +32,10 @@ class SDLBackend : public FrameworkBackend
 
 protected:
 
-	BackendInitParameters _usedInitParams;
-	SDL_Window * _wnd = nullptr;
-	SDL_GLContext _ctx = nullptr;
+	BackendInitParameters	_usedInitParams;
+	SDL_Window				*_wnd = nullptr;
+	SDL_GLContext			_ctx = nullptr;
+
+	float					_prevMouseX = 0;
+	float					_prevMouseY = 0;
 };
