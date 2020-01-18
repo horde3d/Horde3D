@@ -148,6 +148,8 @@ protected:
     virtual void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 	virtual void mousePressHandler( int mouseButton, int mouseButtonState, int actionCount );
 	virtual void mouseEnterHandler( int entered );
+    virtual void touchEventHandler( int evType, float touchPosX, float touchPosY, float prevPosX, float prevPosY, int fingerID );
+    virtual void multiTouchHandler( int touchX, int touchY, float distance, float angle, int prevTouchX, int prevTouchY );
 
     void setViewportSize( int width, int height );
     void setInvertedMouseMovement( bool invertX, bool invertY );

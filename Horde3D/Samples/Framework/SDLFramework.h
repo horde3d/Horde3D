@@ -36,6 +36,8 @@ protected:
 	SDL_Window				*_wnd = nullptr;
 	SDL_GLContext			_ctx = nullptr;
 
+	int						_currentWidth;
+	int						_currentHeight;
 	float					_prevMouseX = 0;
 	float					_prevMouseY = 0;
 };

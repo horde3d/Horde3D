@@ -222,6 +222,13 @@ enum class RenderAPI : int
 	OpenGLES3 = 8
 };
 
+enum class TouchEvents : int
+{
+	FingerUp = 2,
+	FingerDown = 4,
+	FingerMove = 8
+};
+
 struct BackendInitParameters
 {
 	/* Surface parameters */
@@ -268,9 +275,10 @@ typedef Delegate< void( float, float, float, float ) > MouseMoveEventCallBack; /
 typedef Delegate< void( int, int, int ) > MouseButtonEventCallBack; // ( int mouseButton, int mouseButtonState, int actionCount );
 typedef Delegate< void( int, int, int, int ) > MouseWheelEventCallBack;  // ( int wheelX, int wheelY, int wheelXPrev, int wheelYPrev );
 typedef Delegate< void( int ) >  MouseEnterWindowEventCallBack; // ( int entered );
-typedef Delegate< void( int, float, float, float, float ) > TouchEventCallBack; // ( int evType, float x, float y, float dx, float dy );
 typedef Delegate< void( int, int ) > WindowResizeCallback; // ( int width, int height );
 typedef Delegate< void() > QuitEventCallBack;
+typedef Delegate< void( int, float, float, float, float, int ) > TouchEventCallBack; // ( int evType, float x, float y, float dx, float dy, int fingerID );
+typedef Delegate< void( int, int, float, float, int, int ) > MultiTouchEventCallback;
 
 class FrameworkBackend
 {
@@ -333,11 +341,13 @@ public:
 
 	void registerMouseEnterWindowEventHandler( MouseEnterWindowEventCallBack f ) { _mouseEnterWindowEventHandler = f; };
 
-	void registerTouchEventHandler( TouchEventCallBack f ) { _touchEventHandler = f; };
-
 	void registerWindowResizeEventHandler( WindowResizeCallback f ) { _windowResizeHandler = f; };
 
 	void registerQuitEventHandler( QuitEventCallBack f ) { _quitEventHandler = f; };
+
+	void registerTouchEventHandler( TouchEventCallBack f ) { _touchEventHandler = f; };
+
+	void registerMultiTouchEventHandler( MultiTouchEventCallback f ) { _multiTouchHandler = f; };
 
 protected:
 
@@ -350,6 +360,7 @@ protected:
 	TouchEventCallBack			_touchEventHandler;
 	WindowResizeCallback		_windowResizeHandler;
 	QuitEventCallBack			_quitEventHandler;
+	MultiTouchEventCallback		_multiTouchHandler;
 
 	// Platform we are running on
 	Platform					_curPlatform;

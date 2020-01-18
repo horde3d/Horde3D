@@ -414,6 +414,7 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	{
 		// Currently force to landscape mode
 		SDL_SetHint( SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight" );
+		SDL_SetHint( SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH, "1" );
 	}
 
 	if ( params.fullScreen )
@@ -458,6 +459,9 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 		std::cout << "Warning: Unable to set VSync! SDL Error: " << SDL_GetError() << std::endl;
 	}
 
+	// Store window size
+	_currentWidth = params.width; _currentHeight = params.height;
+
 	// Get correct mouse position
 	int tempX, tempY;
 	SDL_PumpEvents();
@@ -495,6 +499,8 @@ void SDLBackend::getSize( void *handle, int *width, int *height )
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
 	SDL_GetWindowSize( wnd, width, height );
+
+	_currentWidth = *width; _currentHeight = *height;
 }
 
 bool SDLBackend::checkKeyDown( void *handle, int key )
@@ -519,7 +525,25 @@ void SDLBackend::processEvents()
 
 	static int prevWheelx = 0;
 	static int prevWheely = 0;
-	
+	static int touchLocationX = 0;
+	static int touchLocationY = 0;
+	static int prevTouchLocationX = 0;
+	static int prevTouchLocationY = 0;
+
+	// Generic touch handling 
+	auto touch = [&]( int touchType )
+	{
+		touchLocationX = e.tfinger.x * _currentWidth;
+		touchLocationY = e.tfinger.y * _currentHeight;
+
+		if ( _touchEventHandler.isInitialized() )
+			_touchEventHandler.invoke( touchType, touchLocationX, touchLocationY, 
+																prevTouchLocationX, prevTouchLocationY, (int) e.tfinger.fingerId );
+
+		prevTouchLocationX = touchLocationX;
+		prevTouchLocationY = touchLocationY;
+	};
+
 	// Handle events on queue
 	while ( SDL_PollEvent( &e ) != 0 )
 	{
@@ -564,10 +588,25 @@ void SDLBackend::processEvents()
 
 				break;
 			case SDL_FINGERDOWN:
+				touch( (int) TouchEvents::FingerDown );
 				break;
 			case SDL_FINGERUP:
+				touch( (int) TouchEvents::FingerUp );
 				break;
 			case SDL_FINGERMOTION:
+				touch( (int) TouchEvents::FingerMove );
+				break;
+			case SDL_MULTIGESTURE:
+				touchLocationX = e.mgesture.x * _currentWidth;
+				touchLocationY = e.mgesture.y * _currentHeight;
+
+				if ( _multiTouchHandler.isInitialized() )
+					_multiTouchHandler.invoke( touchLocationX, touchLocationY, e.mgesture.dDist, e.mgesture.dTheta, 
+											   prevTouchLocationX, prevTouchLocationY );
+
+				prevTouchLocationX = touchLocationX;
+				prevTouchLocationY = touchLocationY;
+
 				break;
 			case SDL_QUIT:
 				if ( _quitEventHandler.isInitialized() ) _quitEventHandler.invoke();
