@@ -38,12 +38,6 @@ KnightSample::KnightSample( int argc, char** argv ) :
     
     // Default to HDR pipeline
 	_curPipeline = 2;
-
-#ifdef __ANDROID__
-	// Currently hardcode displaying additional info
-	showStatPanel( 1 ); 
-	setInvertedMouseMovement( true, false );
-#endif
 }
 
 
@@ -129,6 +123,14 @@ bool KnightSample::initResources()
 	h3dSetMaterialUniform( matRes, "hdrBrightThres", 0.5f, 0, 0, 0 );
 	h3dSetMaterialUniform( matRes, "hdrBrightOffset", 0.08f, 0, 0, 0 );
 	
+	// Set platform specific options
+	auto platform = getBackend()->getPlatform();
+	if ( platform == Platform::Android || platform == Platform::IOS )
+	{
+		// Enable FPS output
+		showStatPanel( 1 );
+	}
+
 	return true;
 }
 
