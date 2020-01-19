@@ -47,6 +47,7 @@ protected:
 
 	BackendInitParameters	_usedInitParams;
 	GLFWwindow				*_wnd = nullptr;
-	float					_prevMx;
-	float					_prevMy;
+
+	float					_prevMouseX = 0;
+	float					_prevMouseY = 0;
 };

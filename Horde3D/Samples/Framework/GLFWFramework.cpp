@@ -115,6 +115,14 @@ void * GLFWBackend::createWindow( const WindowCreateParameters &params )
 	glfwSetCursorEnterCallback( _wnd, mouseEnterListener );
 //	glfwSetErrorCallback();
 
+	// Get correct mouse position
+	glfwPollEvents();
+
+	double tempX, tempY;
+	glfwGetCursorPos( _wnd, &tempX, &tempY );
+	_prevMouseX = (float) tempX;
+	_prevMouseY = (float) tempY;
+
 	// Init cursor
 // 	showCursor( _winShowCursor );
 
@@ -182,14 +190,12 @@ void GLFWBackend::keyPressListener( GLFWwindow* win, int key, int scancode, int 
 
 void GLFWBackend::mouseMoveListener( GLFWwindow* win, double x, double y )
 {
-	static float prevMx = 0;
-	static float prevMy = 0;
-
 	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_mouseMoveEventHandler.isInitialized() ) device->_mouseMoveEventHandler.invoke( ( float ) x, ( float ) y, prevMx, prevMy );
+	if ( device->_mouseMoveEventHandler.isInitialized() ) device->_mouseMoveEventHandler.invoke( ( float ) x, ( float ) y, 
+														  device->_prevMouseX, device->_prevMouseY );
 
-	prevMx = ( float ) x;
-	prevMy = ( float ) y;
+	device->_prevMouseX = ( float ) x;
+	device->_prevMouseY = ( float ) y;
 }
 
 void GLFWBackend::mouseEnterListener( GLFWwindow* win, int entered )
@@ -208,9 +214,9 @@ void GLFWBackend::logMessage( LogMessageLevel messageLevel, const char *msg )
 	// As glfw is only used on desktop platforms, standard cout should be enough for most situations
 	static std::array< const char *, 4 > messageTypes = { "Error:", "Warning:", "Info:", "Debug:" };
 
-	if ( messageLevel < 0 || messageLevel > 3 ) messageLevel = LogMessageLevel::Info;
+	if ( (int) messageLevel < 0 || (int) messageLevel > 3 ) messageLevel = LogMessageLevel::Info;
 
-	printf( "%s %s\n", messageTypes[ messageLevel ], msg );
+	printf( "%s %s\n", messageTypes[ (int) messageLevel ], msg );
 }
 
 bool GLFWBackend::loadResources( const char *contentDir )

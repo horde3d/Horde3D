@@ -23,6 +23,7 @@
 #include <math.h>
 #include <iomanip>
 #include <chrono>
+#include <array>
 
 #include "utPlatform.h"
 #include "config.h"
@@ -107,7 +108,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _winTitle(title),
     _initWinWidth(width), _initWinHeight(height),
     _winSampleCount(0), _sampleCount(0),
-    _winFullScreen( /*fullscreen*/ true),
+    _winFullScreen( fullscreen ),
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
     _fov(fov), _nearPlane(near_plane), _farPlane(far_plane),
@@ -145,7 +146,6 @@ bool SampleApplication::init()
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
         _backend->logMessage( LogMessageLevel::Error, "Unable to initialize engine" );
-//		std::cout << "Unable to initialize engine" << std::endl;
 
 		h3dutDumpMessages();
 		return false;
@@ -156,7 +156,6 @@ bool SampleApplication::init()
 	{
         _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
 
-///		std::cout << "Unable to find overlays extension" << std::endl;
 		return false;
 	}
 
@@ -174,8 +173,6 @@ bool SampleApplication::init()
 	if ( !initResources() )
 	{
         _backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
-
-//		std::cout << "Unable to initialize resources" << std::endl;
 
 		h3dutDumpMessages();
 		return false;
@@ -215,6 +212,14 @@ bool SampleApplication::init()
 	Delegate< void() > windowCloseDelegate;
 	windowCloseDelegate.bind< SampleApplication, &SampleApplication::requestClosing >( this );
 	_backend->registerQuitEventHandler( windowCloseDelegate );
+
+    Delegate< void( int, int, int, int ) > touchDelegate;
+	touchDelegate.bind< SampleApplication, &SampleApplication::touchEventHandler >( this );
+	_backend->registerTouchEventHandler( touchDelegate );
+
+    Delegate< void( int, int, float, float, int, int ) > multiTouchDelegate;
+	multiTouchDelegate.bind< SampleApplication, &SampleApplication::multiTouchHandler >( this );
+	_backend->registerMultiTouchEventHandler( multiTouchDelegate );
 
 	// Indicate that everything is ok
 	_initialized = true;
@@ -571,8 +576,6 @@ bool SampleApplication::initResources()
 	{
         _backend->logMessage( LogMessageLevel::Error, "Error in loading resources" );
 
-//        std::cout << "Error in loading resources" << std::endl;
-
 		h3dutDumpMessages();
         return false;
     }
@@ -798,6 +801,138 @@ void SampleApplication::mousePressHandler( int mouseButton, int mouseButtonState
 	if ( _freezeMode == 2 || _benchmark ) return;
 	
 	// Should be done in derived application
+}
+
+
+void SampleApplication::touchEventHandler( int evType, int touchPosX, int touchPosY, int fingerID )
+{
+    if( _freezeMode == 2 || _benchmark ) return;
+
+    // Modern displays support up to 10 fingers, but 5 should be enough for now
+    static std::array< FingerData, 5 > fingers;
+    static bool multiTouchInProgress = false;
+
+    switch ( evType )
+    {
+    case (int) TouchEvents::FingerDown :
+    {
+        int fingersDownCount = 0;
+        bool alreadyAdded = false;
+        for ( size_t i = 0; i < fingers.size(); ++i )
+        {
+            if ( fingers[ i ].active )
+            {
+                fingersDownCount++;
+            }
+            else
+            {
+                if ( fingers[ i ].fingerID == fingerID || alreadyAdded ) continue; // Prevent from adding already added finger data
+
+                FingerData &data = fingers[ i ];
+                data.fingerID = fingerID;
+                data.lastPosX = touchPosX;
+                data.lastPosY = touchPosY;
+                data.active = true;
+
+                alreadyAdded = true; // Signal that finger already added in this event handler
+
+                fingersDownCount++;
+            }
+        }
+
+        // More than one finger down means multitouch, handle it
+        if ( fingersDownCount > 1 ) multiTouchInProgress = true;
+
+        break;
+    }
+    case (int) TouchEvents::FingerUp :
+    {
+        int fingersDownCount = 0;
+        for ( size_t i = 0; i < fingers.size(); ++i )
+        {
+            if ( fingers[ i ].fingerID == fingerID ) // Check for finger that is no longer on the screen
+            {
+                fingers[ i ].active = false; 
+                fingers[ i ].fingerID = -1;
+            }
+            else if ( fingers[ i ].active ) // Count fingers still on the screen
+            {
+                fingersDownCount++;
+            }
+        }
+
+        if ( fingersDownCount <= 1 ) multiTouchInProgress = false;
+
+        break;
+    }
+    case (int) TouchEvents::FingerMove :
+    {
+        // Currently use only one finger
+        FingerData *data = nullptr;
+        for (size_t i = 0; i < fingers.size(); ++i)
+        {
+            if ( fingers[ i ].active && fingers[ i ].fingerID == fingerID )
+            {
+                data = &fingers[ i ];
+                break;
+            }
+        }
+        
+        if ( !data ) break;
+
+        float dx = touchPosX - data->lastPosX;
+        float dy = data->lastPosY - touchPosY;
+
+        // Store touch position for later use
+        data->lastPosX = touchPosX;
+        data->lastPosY = touchPosY;
+
+        if ( multiTouchInProgress ) break;
+
+        // Look left/right
+        if ( !_invertMouseX ) _ry -= dx * 0.3f;
+        else _ry -= dx * -0.3f;
+
+        // Loop up/down but only in a limited range
+        if ( !_invertMouseY ) _rx += dy * 0.3f;
+        else _rx += dy * -0.3f;
+        
+        if( _rx > 90 ) _rx = 90; 
+        if( _rx < -90 ) _rx = -90;
+
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+
+void SampleApplication::multiTouchHandler( int touchPosX, int touchPosY, float dist, float angle, int prevTouchPosX, int prevTouchPosY )
+{
+    if( _freezeMode == 2 || _benchmark ) return;
+
+    // Pinch detected
+    if( fabs( dist ) > 0.0002 )
+    {
+        float curVel = _velocity * 5 / _curFPS * H3D_FPS_REFERENCE;
+
+        // Pinch open
+        if( dist > 0 )
+        {
+             // Move forward
+            _x -= sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _y -= sinf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _z -= cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+        }
+        else // Pinch close
+        {
+            // Move backward
+            _x += sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _y += sinf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _z += cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+        }
+    }
 }
 
 

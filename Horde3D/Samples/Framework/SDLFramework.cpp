@@ -414,6 +414,7 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	{
 		// Currently force to landscape mode
 		SDL_SetHint( SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight" );
+		SDL_SetHint( SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH, "1" );
 	}
 
 	if ( params.fullScreen )
@@ -458,6 +459,16 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 		std::cout << "Warning: Unable to set VSync! SDL Error: " << SDL_GetError() << std::endl;
 	}
 
+	// Store window size
+	_currentWidth = params.width; _currentHeight = params.height;
+
+	// Get correct mouse position
+	int tempX, tempY;
+	SDL_PumpEvents();
+	SDL_GetMouseState( &tempX, &tempY );
+
+	_prevMouseX = tempX; _prevMouseY = tempY;
+
 	return ( void * ) _wnd;
 }
 
@@ -488,6 +499,8 @@ void SDLBackend::getSize( void *handle, int *width, int *height )
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
 	SDL_GetWindowSize( wnd, width, height );
+
+	_currentWidth = *width; _currentHeight = *height;
 }
 
 bool SDLBackend::checkKeyDown( void *handle, int key )
@@ -510,11 +523,26 @@ void SDLBackend::processEvents()
 	// Event handler
 	SDL_Event e;
 
-	static float prevMx = 0;
-	static float prevMy = 0;
 	static int prevWheelx = 0;
 	static int prevWheely = 0;
-	
+	static int touchLocationX = 0;
+	static int touchLocationY = 0;
+	static int prevTouchLocationX = 0;
+	static int prevTouchLocationY = 0;
+
+	// Generic touch handling 
+	auto touch = [&]( int touchType )
+	{
+		touchLocationX = e.tfinger.x * _currentWidth;
+		touchLocationY = e.tfinger.y * _currentHeight;
+
+		if ( _touchEventHandler.isInitialized() )
+			_touchEventHandler.invoke( touchType, touchLocationX, touchLocationY, (int) e.tfinger.fingerId );
+
+		prevTouchLocationX = touchLocationX;
+		prevTouchLocationY = touchLocationY;
+	};
+
 	// Handle events on queue
 	while ( SDL_PollEvent( &e ) != 0 )
 	{
@@ -522,10 +550,10 @@ void SDLBackend::processEvents()
 		{
 			case SDL_MOUSEMOTION:
 				if ( _mouseMoveEventHandler.isInitialized() ) 
-					_mouseMoveEventHandler.invoke( ( float ) e.motion.x, ( float ) e.motion.y, prevMx, prevMy );
+					_mouseMoveEventHandler.invoke( ( float ) e.motion.x, ( float ) e.motion.y, _prevMouseX, _prevMouseY );
 
-				prevMx = ( float ) e.motion.x;
-				prevMy = ( float ) e.motion.y;
+				_prevMouseX = ( float ) e.motion.x;
+				_prevMouseY = ( float ) e.motion.y;
 				break;
 			case SDL_MOUSEBUTTONDOWN:
 				if ( _mouseButtonEventHandler.isInitialized() )
@@ -559,10 +587,25 @@ void SDLBackend::processEvents()
 
 				break;
 			case SDL_FINGERDOWN:
+				touch( (int) TouchEvents::FingerDown );
 				break;
 			case SDL_FINGERUP:
+				touch( (int) TouchEvents::FingerUp );
 				break;
 			case SDL_FINGERMOTION:
+				touch( (int) TouchEvents::FingerMove );
+				break;
+			case SDL_MULTIGESTURE:
+				touchLocationX = e.mgesture.x * _currentWidth;
+				touchLocationY = e.mgesture.y * _currentHeight;
+
+				if ( _multiTouchHandler.isInitialized() )
+					_multiTouchHandler.invoke( touchLocationX, touchLocationY, e.mgesture.dDist, e.mgesture.dTheta, 
+											   prevTouchLocationX, prevTouchLocationY );
+
+				prevTouchLocationX = touchLocationX;
+				prevTouchLocationY = touchLocationY;
+
 				break;
 			case SDL_QUIT:
 				if ( _quitEventHandler.isInitialized() ) _quitEventHandler.invoke();
