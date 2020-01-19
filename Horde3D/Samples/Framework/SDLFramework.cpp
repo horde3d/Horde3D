@@ -537,8 +537,7 @@ void SDLBackend::processEvents()
 		touchLocationY = e.tfinger.y * _currentHeight;
 
 		if ( _touchEventHandler.isInitialized() )
-			_touchEventHandler.invoke( touchType, touchLocationX, touchLocationY, 
-																prevTouchLocationX, prevTouchLocationY, (int) e.tfinger.fingerId );
+			_touchEventHandler.invoke( touchType, touchLocationX, touchLocationY, (int) e.tfinger.fingerId );
 
 		prevTouchLocationX = touchLocationX;
 		prevTouchLocationY = touchLocationY;

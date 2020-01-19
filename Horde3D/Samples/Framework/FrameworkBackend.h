@@ -277,7 +277,7 @@ typedef Delegate< void( int, int, int, int ) > MouseWheelEventCallBack;  // ( in
 typedef Delegate< void( int ) >  MouseEnterWindowEventCallBack; // ( int entered );
 typedef Delegate< void( int, int ) > WindowResizeCallback; // ( int width, int height );
 typedef Delegate< void() > QuitEventCallBack;
-typedef Delegate< void( int, float, float, float, float, int ) > TouchEventCallBack; // ( int evType, float x, float y, float dx, float dy, int fingerID );
+typedef Delegate< void( int, int, int, int ) > TouchEventCallBack; // ( int evType, int touchX, int touchY, int fingerID );
 typedef Delegate< void( int, int, float, float, int, int ) > MultiTouchEventCallback;
 
 class FrameworkBackend
