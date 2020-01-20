@@ -211,6 +211,14 @@ protected:
 // Spatial Graph
 // =================================================================================================
 
+enum class RenderViewType
+{
+	Unknown,
+	Camera,
+	Light,
+	Shadow
+};
+
 struct RenderQueueItem
 {
 	SceneNode  *node;
@@ -219,10 +227,28 @@ struct RenderQueueItem
 
 	RenderQueueItem() {}
 	RenderQueueItem( int type, float sortKey, SceneNode *node )
-		: node( node ), type( type ), sortKey( sortKey ) {}
+		: node( node ), type( type ), sortKey( sortKey )
+	{
+	}
 };
 
 typedef std::vector< RenderQueueItem > RenderQueue;
+
+struct RenderView
+{
+	Frustum			frustum;
+	SceneNode		*node;
+	RenderViewType	type;
+
+	RenderQueue		objects;
+
+	RenderView() : node( nullptr ), type( RenderViewType::Unknown )
+	{
+
+	}
+
+	RenderView( RenderViewType viewType, SceneNode *viewNode, Frustum &f );
+};
 
 
 class SpatialGraph
@@ -245,8 +271,11 @@ public:
 protected:
 	std::vector< SceneNode * >     _nodes;		// Renderable nodes and lights
 	std::vector< uint32 >          _freeList;
-	std::vector< SceneNode * >     _lightQueue;
-	RenderQueue                    _renderQueue;
+
+	std::vector< RenderView >	   _views;
+
+// 	std::vector< SceneNode * >     _lightQueue;
+// 	RenderQueue                    _renderQueue;
 };
 
 

@@ -289,10 +289,37 @@ SceneNode *GroupNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 // Class SpatialGraph
 // =================================================================================================
 
+// TODO: move to config.h
+// Memory reserve options for different render queue types
+constexpr int ReservedObjectsForCameraView = 512;
+constexpr int ReservedObjectsForLightView = 128;
+constexpr int ReservedObjectsForShadowView = 128;
+
+RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, Frustum &f ) : type( viewType ), node( viewNode ), frustum( f )
+{
+	// Reserve memory beforehand based on view type
+	switch ( viewType )
+	{
+		case RenderViewType::Camera:
+			objects.reserve( ReservedObjectsForCameraView );
+			break;
+		case RenderViewType::Light:
+			objects.reserve( ReservedObjectsForLightView );
+			break;
+		case RenderViewType::Shadow:
+			objects.reserve( ReservedObjectsForShadowView );
+			break;
+		default:
+			break;
+	}
+}
+
+// =================================================================================================
+
 SpatialGraph::SpatialGraph()
 {
-	_lightQueue.reserve( 20 );
-	_renderQueue.reserve( 500 );
+// 	_lightQueue.reserve( 20 );
+// 	_renderQueue.reserve( 500 );
 }
 
 
