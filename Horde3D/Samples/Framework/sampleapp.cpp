@@ -112,7 +112,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
     _fov(fov), _nearPlane(near_plane), _farPlane(far_plane),
-    _statMode(0), _freezeMode(0),
+    _statMode(0), _freezeMode(0), _renderCaps( 0 ), _renderInterface( 0 ),
     _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false),
     _invertMouseX( false ), _invertMouseY( false )
 {
