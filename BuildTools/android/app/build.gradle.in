@@ -58,13 +58,13 @@ dependencies {
 }
 
 afterEvaluate {
-    assembleDebug.doLast {
-        copy {
-            from 'build/outputs/apk/debug'
-            into '../../../Binaries/Android/${CMAKE_BUILD_TYPE}'
-            include '**/*.apk'
-        }
-    } 
+//    assembleDebug.doLast {
+//        copy {
+//            from 'build/outputs/apk/debug'
+//            into '../../../Binaries/Android/${CMAKE_BUILD_TYPE}'
+//            include '**/*.apk'
+//       }
+//    } 
 
 //    assembleRelease.doLast {
 //        copy {

@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <array>
 #include <vector>
+#include <sstream> 
 
 #include "Horde3D.h"
 #include "Horde3DUtils.h"
@@ -434,18 +435,22 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	{
 		SDL_DestroyWindow( _wnd );
 
-		std::cout << "Unable to initialize window!" << std::endl;
-		std::cout << "Context parameters:" << std::endl;
-		std::cout << "API: " << ( _usedInitParams.requestedAPI == RenderAPI::OpenGLES3 ? "OpenGL ES" : "OpenGL" ) << std::endl;
-		std::cout << "API version: " << "Major - " << _usedInitParams.majorVersion << "; Minor - " << _usedInitParams.minorVersion << std::endl;
+		logMessage( LogMessageLevel::Error, "Unable to initialize window!" );
+
+		std::stringstream msg;
+		msg << "Context parameters:" << std::endl;
+		msg << "API: " << ( _usedInitParams.requestedAPI == RenderAPI::OpenGLES3 ? "OpenGL ES" : "OpenGL" ) << std::endl;
+		msg << "API version: " << "Major - " << _usedInitParams.majorVersion << "; Minor - " << _usedInitParams.minorVersion << std::endl;
 
 		if ( _usedInitParams.requestedAPI != RenderAPI::OpenGLES3 && _usedInitParams.requestedAPI != RenderAPI::OpenGL2 )
-			std::cout << "Compatibility profile: " << _usedInitParams.forceGLCompatibilityProfile << std::endl;
+			msg << "Compatibility profile: " << _usedInitParams.forceGLCompatibilityProfile << std::endl;
 
-		std::cout << std::endl << "Surface parameters:" << std::endl;
-		std::cout << "Bits: r - " << _usedInitParams.redBits << " g - " << _usedInitParams.greenBits << " b - " << _usedInitParams.blueBits <<
+		msg << std::endl << "Surface parameters:" << std::endl;
+		msg << "Bits: r - " << _usedInitParams.redBits << " g - " << _usedInitParams.greenBits << " b - " << _usedInitParams.blueBits <<
 			" a - " << _usedInitParams.alphaBits << " depth - " << _usedInitParams.depthBits << std::endl;
-		std::cout << "Sample count: " << _usedInitParams.sampleCount << std::endl;
+		msg << "Sample count: " << _usedInitParams.sampleCount << std::endl;
+
+		logMessage( LogMessageLevel::Error, msg.str().c_str() );
 
 		return nullptr;
 	}
@@ -456,7 +461,9 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	// Enable/Disable vertical synchronization
 	if ( SDL_GL_SetSwapInterval( params.swapInterval ) < 0 )
 	{
-		std::cout << "Warning: Unable to set VSync! SDL Error: " << SDL_GetError() << std::endl;
+		std::stringstream msg;
+		msg << "Warning: Unable to set VSync! SDL Error: " << SDL_GetError() << std::endl;
+		logMessage( LogMessageLevel::Warning, msg.str().c_str() );
 	}
 
 	// Store window size

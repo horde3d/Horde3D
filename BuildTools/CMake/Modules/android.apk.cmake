@@ -3,7 +3,7 @@
 #*    Android apk tools
 #*
 #*  Copyright (C) 2002-2013 The PixelLight Team (http://www.pixellight.org/)
-#*	Copyright (C) 2019 The Horde3D Team (http://www.horde3d.org/)
+#*	Copyright (C) 2019-2020 The Horde3D Team (http://www.horde3d.org/)
 #*	
 #*
 #*
@@ -69,11 +69,18 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
   set(ANDROID_NAME ${name})
   set(ANDROID_APK_PACKAGE ${apk_package_name})
 
+  # Set ANDROID_SDK_ROOT variable required on Linux
+  set(ANDROID_SDK_ROOT ${ANDROID_SDK_BUILD_TOOLS_PATH}../..)
+
   # Set gradle find path
   if( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Windows" )
     set( GRADLE_BIN ${apk_directory}/gradlew.bat)
     set( ZIPALIGN_BIN ${ANDROID_SDK_BUILD_TOOLS_PATH}/zipalign.exe )
     set( APKSIGNER_BIN ${ANDROID_SDK_BUILD_TOOLS_PATH}/apksigner.bat )
+  elseif( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux" )
+    set( GRADLE_BIN ${apk_directory}/gradlew)
+    set( ZIPALIGN_BIN ${ANDROID_SDK_BUILD_TOOLS_PATH}/zipalign )
+    set( APKSIGNER_BIN ${ANDROID_SDK_BUILD_TOOLS_PATH}/apksigner )
   endif()
   
   
@@ -88,9 +95,9 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
   
   # Create the directory for the libraries
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jnilibs/${ANDROID_ABI}")
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jnilibs/${ANDROID_ABI}")
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
   # add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
   #   COMMAND ${CMAKE_COMMAND} -E copy_directory
   #   "${CMAKE_SOURCE_DIR}/libs" "${apk_directory}/libs/")
@@ -125,9 +132,15 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
 
   # Build the apk file
   if(CMAKE_BUILD_TYPE MATCHES Release)
+    # Check that path to keystore file is provided
+    if( ANDROID_APK_SIGNER_KEYSTORE STREQUAL "" )
+      message( SEND_ERROR "Please provide keystore file as it is required for release builds/to run on Android devices.")
+    endif()
+
     # Let Gradle create the unsigned apk file
     add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND ${GRADLE_BIN} assembleRelease
+      COMMAND ${CMAKE_COMMAND} -E env "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT_PATH}"
+      ${GRADLE_BIN} assembleRelease
       WORKING_DIRECTORY "${apk_directory}/app")
 
     # Align the apk file
@@ -165,14 +178,15 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
   else()
     # Let Gradle create the unsigned apk file
     add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
-      COMMAND ${GRADLE_BIN} assembleDebug --no-daemon
+      COMMAND ${CMAKE_COMMAND} -E env "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT_PATH}"
+      ${GRADLE_BIN} assembleDebug --no-daemon
       WORKING_DIRECTORY "${apk_directory}/app")
     
     # Rename the 'app' apk to target name
-    add_custom_command(TARGET ${ANDROID_NAME}
-      COMMAND ${CMAKE_COMMAND} -E rename 
-      "${apk_directory}../../../Binaries/Android/${CMAKE_BUILD_TYPE}/app-debug.apk" 
-      "${apk_directory}../../../Binaries/Android/${CMAKE_BUILD_TYPE}/${ANDROID_NAME}-debug.apk" )
+    add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy 
+       "${apk_directory}/app/build/outputs/apk/debug/app-debug.apk" 
+       "${apk_directory}/../../Binaries/Android/${CMAKE_BUILD_TYPE}/${ANDROID_NAME}-debug.apk" )
     
     # Install current version on the device/emulator
     # if(ANDROID_APK_INSTALL OR ANDROID_APK_RUN)
