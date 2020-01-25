@@ -6,17 +6,17 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
         main.cpp
     )
 
-    # Set output path to android project jnilibs, where gradle can find the built application in .so form
+    # Set output path to android project jniLibs, where gradle can find the built application in .so form
     set_target_properties( Knight PROPERTIES 
-                           LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
+                           LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jniLibs/${ANDROID_ABI}" )
 
     ### Copy engine libraries and SDL library
     add_custom_command( TARGET Knight POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:Horde3D>/$<TARGET_FILE_NAME:Horde3D> "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
+                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:Horde3D>/$<TARGET_FILE_NAME:Horde3D> "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jniLibs/${ANDROID_ABI}" )
     add_custom_command( TARGET Knight POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:Horde3DUtils>/$<TARGET_FILE_NAME:Horde3DUtils> "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
+                        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE_DIR:Horde3DUtils>/$<TARGET_FILE_NAME:Horde3DUtils> "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jniLibs/${ANDROID_ABI}" )
     add_custom_command( TARGET Knight POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy ${SDL_LIB_PATH}/libSDL2.so "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jnilibs/${ANDROID_ABI}" )
+                        COMMAND ${CMAKE_COMMAND} -E copy ${SDL_LIB_PATH}/libSDL2.so "${PROJECT_BINARY_DIR}/Android/Knight/app/src/main/jniLibs/${ANDROID_ABI}" )
 
     # Create apk
     android_create_apk( Knight "com.horde3d.knight" "${PROJECT_BINARY_DIR}/Android/Knight" "" 

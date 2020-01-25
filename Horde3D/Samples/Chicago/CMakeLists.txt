@@ -7,9 +7,9 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
 		main.cpp
 	)
 
-	set( OUT_PATH "${PROJECT_BINARY_DIR}/Android/Chicago/app/src/main/jnilibs/${ANDROID_ABI}" )
+	set( OUT_PATH "${PROJECT_BINARY_DIR}/Android/Chicago/app/src/main/jniLibs/${ANDROID_ABI}" )
 
-	# Set output path to android project jnilibs, where gradle can find the built application in .so form
+	# Set output path to android project jniLibs, where gradle can find the built application in .so form
 	set_target_properties( Chicago PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${OUT_PATH} )
 
 	### Copy engine libraries and SDL library

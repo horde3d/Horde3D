@@ -99,8 +99,16 @@ ENDIF(${CMAKE_CFG_INTDIR} STREQUAL ".")
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/${HORDE3D_OUTPUT_PATH_SUFFIX} CACHE STRING "Where binaries and shared lib files go" FORCE)
 
 IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
-#     # Copy android project into build directory
-SET(HORDE3D_ANDROID_PROJECT_PATH "${PROJECT_SOURCE_DIR}/BuildTools/android")
+    # Copy android project into build directory
+    SET(HORDE3D_ANDROID_PROJECT_PATH "${PROJECT_SOURCE_DIR}/BuildTools/android")
+
+    # For Linux we have to set ANDROID_SDK_ROOT variable
+    set(ANDROID_SDK_ROOT_PATH "" CACHE STRING "Path to Android SDK")
+
+    # Set rendering interface to GLES3
+    set(USE_GLES3 TRUE)
+	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+	set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
 #     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}) 
 #     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/android/app/src/main/jniLibs/${ANDROID_ABI} )
 ENDIF()

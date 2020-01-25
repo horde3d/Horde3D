@@ -95,9 +95,9 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
   
   # Create the directory for the libraries
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jnilibs/${ANDROID_ABI}")
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jnilibs/${ANDROID_ABI}")
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
   # add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
   #   COMMAND ${CMAKE_COMMAND} -E copy_directory
   #   "${CMAKE_SOURCE_DIR}/libs" "${apk_directory}/libs/")
