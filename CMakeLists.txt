@@ -108,7 +108,12 @@ IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
     # Set rendering interface to GLES3
     set(USE_GLES3 TRUE)
 	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
-	set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+    
+    # On Linux set gradlew to be executable (a bit of a hack)
+    if( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux" )
+        execute_process( COMMAND chmod "+x" "${PROJECT_SOURCE_DIR}/BuildTools/android/gradlew" )
+    endif()
 #     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}) 
 #     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/android/app/src/main/jniLibs/${ANDROID_ABI} )
 ENDIF()
