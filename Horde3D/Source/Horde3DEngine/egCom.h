@@ -152,7 +152,8 @@ struct EngineStats
 		ParticleGPUTime,
 		TextureVMem,
 		GeometryVMem,
-		ComputeGPUTime
+		ComputeGPUTime,
+		CullingTime
 	};
 };
 
@@ -180,6 +181,8 @@ protected:
 	Timer     _animTimer;
 	Timer     _geoUpdateTimer;
 	Timer     _particleSimTimer;
+	Timer	  _cullingTimer;
+
 	float     _frameTime;
 
 	GPUTimer  *_fwdLightsGPUTimer;
@@ -187,7 +190,6 @@ protected:
 	GPUTimer  *_shadowsGPUTimer;
 	GPUTimer  *_particleGPUTimer;
 	GPUTimer  *_computeGPUTimer;
-
 	friend class ProfSample;
 };
 
