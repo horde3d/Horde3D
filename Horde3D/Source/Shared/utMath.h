@@ -1185,5 +1185,27 @@ inline float nearestDistToAABB( const Vec3f &pos, const Vec3f &mins, const Vec3f
 	return nearestVec.length();
 }
 
+inline bool linePlaneIntersection( const Vec3f &lineStart, const Vec3f &lineEnd, const Vec3f &planePoint, const Vec3f &planeNormal, Vec3f &intersectionPoint )
+{
+	Vec3f u, h;
+	float dot;
+
+	u = lineEnd - lineStart;
+	h = lineStart - planePoint;
+	dot = planeNormal.dot( u );
+
+	if ( fabsf( dot ) > FLT_EPSILON )
+	{
+		float lambda = -planeNormal.dot( h ) / dot;
+		intersectionPoint = lineStart + u * lambda;
+		return true;
+	}
+	else
+	{
+		/* The segment is parallel to plane */
+		return false;
+	}
+}
+
 }
 #endif // _utMath_H_

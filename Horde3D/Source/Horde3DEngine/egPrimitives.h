@@ -132,6 +132,7 @@ public:
 	bool cullSphere( Vec3f pos, float rad ) const;
 	bool cullBox( BoundingBox &b ) const;
 	bool cullFrustum( const Frustum &frust ) const;
+	bool cullFrustum( const Frustum &frust, Vec3f &min, Vec3f &max ) const;
 
 	void calcAABB( Vec3f &mins, Vec3f &maxs ) const;
 
