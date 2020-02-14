@@ -102,6 +102,8 @@ private:
 	uint32                 _shadowMapCount;
 	float                  _shadowSplitLambda, _shadowMapBias;
 
+	int					   _shadowRenderParamsID; // id for shadow parameters (frustums, matrices) queue in renderer
+
 	friend class SceneManager;
 	friend class Renderer;
 };
