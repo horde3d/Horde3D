@@ -295,7 +295,9 @@ constexpr int ReservedObjectsForCameraView = 512;
 constexpr int ReservedObjectsForLightView = 128;
 constexpr int ReservedObjectsForShadowView = 128;
 
-RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, Frustum &f ) : type( viewType ), node( viewNode ), frustum( f )
+constexpr int ReservedViews = 64;
+
+RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f ) : type( viewType ), node( viewNode ), frustum( f ), updated( false )
 {
 	// Reserve memory beforehand based on view type
 	switch ( viewType )
@@ -320,6 +322,9 @@ SpatialGraph::SpatialGraph()
 {
 // 	_lightQueue.reserve( 20 );
 // 	_renderQueue.reserve( 500 );
+	_views.resize( ReservedViews );
+
+	_lastFilter = RenderingOrder::None;
 }
 
 
@@ -355,8 +360,8 @@ void SpatialGraph::removeNode( uint32 sgHandle )
 	if( sgHandle == 0 || _nodes[sgHandle - 1] == 0x0 ) return;
 
 	// Reset queues
-	_lightQueue.resize( 0 );
-	_renderQueue.resize( 0 );
+// 	_lightQueue.resize( 0 );
+// 	_renderQueue.resize( 0 );
 	
 	_nodes[sgHandle - 1]->_sgHandle = 0;
 	_nodes[sgHandle - 1] = 0x0;
@@ -441,6 +446,118 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 }
 
 
+void SpatialGraph::updateQueues( uint32 filterIgnore )
+{
+	Modules::sceneMan().updateNodes();
+
+	Vec3f camPos;
+	if ( Modules::renderer().getCurCamera() != 0x0 )
+		camPos = Modules::renderer().getCurCamera()->getAbsPos();
+	else
+	{
+		// Camera should already be there as the first view
+		if ( !_views.empty() )
+		{
+			CameraNode *cam = ( CameraNode * ) _views[ 0 ].node;
+			camPos = cam->getAbsPos();
+		}
+	}
+	
+	// Check that update filter is not changed
+	// If changed, force update for all views
+	if ( filterIgnore != _lastFilter )
+	{
+		for ( size_t i = 0; i < _views.size(); ++i )
+		{
+			_views[ i ].updated = false;
+		}
+	}
+
+	RenderView *v = nullptr;
+
+	// Culling
+	for ( size_t i = 0, s = _nodes.size(); i < s; ++i )
+	{
+		SceneNode *node = _nodes[ i ];
+		if ( node == 0x0 || ( node->_flags & filterIgnore ) || !node->_renderable ) continue;
+
+		for ( size_t view = 0; view < _views.size(); ++view )
+		{
+			v = &_views[ view ];
+
+			// Skip views that are already updated
+			if ( !v->updated && !v->frustum.cullBox( node->_bBox ) )
+			{
+				if ( view == 0 && node->_lodSupported ) // Check lod only for first view (camera)
+				{
+					uint32 curLod = node->calcLodLevel( camPos );
+					if ( !node->checkLodCorrectness( curLod ) ) break;
+				}
+
+				// Calculate bounding box for all objects in the view
+				v->objectsAABB.makeUnion( node->_bBox );
+
+				// sortKey will be computed in the sorting function basing on requested sorting algorithm
+				v->objects.emplace_back( RenderQueueItem( node->_type, 0, node ) );
+			}
+		}
+	}
+
+	// Mark all current views as updated
+	for ( size_t i = 0; i < _views.size(); ++i )
+	{
+		_views[ i ].updated = true;
+	}
+}
+
+
+void SpatialGraph::clearViews()
+{
+	// FIX
+	_views.clear();
+}
+
+int SpatialGraph::addView( RenderViewType type, SceneNode *node, const Frustum &f )
+{
+	// FIX
+	_views.emplace_back( RenderView( type, node, f ) );
+	return _views.size() - 1;
+}
+
+void SpatialGraph::sortViewObjects( int viewID, RenderingOrder::List order )
+{
+	if ( viewID < 0 || viewID >= _views.size() ) return;
+
+	float sortKey;
+	RenderView *view = &_views[ viewID ];
+
+	for ( size_t i = 0; i < view->objects.size(); ++i )
+	{
+		SceneNode *node = view->objects[ i ].node;
+		switch ( order )
+		{
+			case RenderingOrder::StateChanges:
+				sortKey = node->_sortKey;
+				break;
+			case RenderingOrder::FrontToBack:
+				sortKey = nearestDistToAABB( view->frustum.getOrigin(), node->_bBox.min, node->_bBox.max );
+				break;
+			case RenderingOrder::BackToFront:
+				sortKey = -nearestDistToAABB( view->frustum.getOrigin(), node->_bBox.min, node->_bBox.max );
+				break;
+			default:
+				sortKey = 0;
+				break;
+		}
+
+		view->objects[ i ].sortKey = sortKey;
+	}
+
+	// Sort
+	if ( order != RenderingOrder::None )
+		std::sort( view->objects.begin(), view->objects.end(), RenderQueueItemCompFunc() );
+}
+
 // *************************************************************************************************
 // Class SceneManager
 // *************************************************************************************************
@@ -519,6 +636,18 @@ void SceneManager::updateQueues( const Frustum &frustum1, const Frustum *frustum
                                  uint32 filterIgnore, bool lightQueue, bool renderableQueue )
 {
 	_spatialGraph->updateQueues( frustum1, frustum2, order, filterIgnore, lightQueue, renderableQueue );
+}
+
+
+void SceneManager::updateQueues( uint32 filterIgnore )
+{
+	_spatialGraph->updateQueues( filterIgnore );
+}
+
+
+void SceneManager::sortViewObjects( int viewID, RenderingOrder::List order )
+{
+	_spatialGraph->sortViewObjects( viewID, order );
 }
 
 
@@ -813,6 +942,16 @@ int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool ch
 		return node.calcLodLevel( cam.getAbsPos() );
 	else
 		return 0;
+}
+
+int SceneManager::addRenderView( RenderViewType type, SceneNode *node, const Frustum &f )
+{
+	_spatialGraph->addView( type, node, f );
+}
+
+void SceneManager::clearRenderViews()
+{
+	_spatialGraph->clearViews();
 }
 
 }  // namespace
