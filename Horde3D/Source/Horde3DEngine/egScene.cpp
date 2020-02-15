@@ -318,7 +318,7 @@ RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, const Frus
 
 // =================================================================================================
 
-SpatialGraph::SpatialGraph()
+SpatialGraph::SpatialGraph() : _currentView( -1 ), _totalViews( 0 )
 {
 // 	_lightQueue.reserve( 20 );
 // 	_renderQueue.reserve( 500 );
@@ -360,8 +360,8 @@ void SpatialGraph::removeNode( uint32 sgHandle )
 	if( sgHandle == 0 || _nodes[sgHandle - 1] == 0x0 ) return;
 
 	// Reset queues
-// 	_lightQueue.resize( 0 );
-// 	_renderQueue.resize( 0 );
+	_lightQueue.resize( 0 );
+	_renderQueue.resize( 0 );
 	
 	_nodes[sgHandle - 1]->_sgHandle = 0;
 	_nodes[sgHandle - 1] = 0x0;
@@ -446,7 +446,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 }
 
 
-void SpatialGraph::updateQueues( uint32 filterIgnore )
+void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /*= false*/ )
 {
 	Modules::sceneMan().updateNodes();
 
@@ -463,14 +463,19 @@ void SpatialGraph::updateQueues( uint32 filterIgnore )
 		}
 	}
 	
+	// Clear without affecting capacity
+	_lightQueue.resize( 0 );
+
 	// Check that update filter is not changed
 	// If changed, force update for all views
-	if ( filterIgnore != _lastFilter )
+	if ( forceUpdateAllViews )
 	{
-		for ( size_t i = 0; i < _views.size(); ++i )
+		for ( size_t i = 0; i < _totalViews; ++i )
 		{
 			_views[ i ].updated = false;
 		}
+
+		_lastFilter = filterIgnore;
 	}
 
 	RenderView *v = nullptr;
@@ -481,7 +486,7 @@ void SpatialGraph::updateQueues( uint32 filterIgnore )
 		SceneNode *node = _nodes[ i ];
 		if ( node == 0x0 || ( node->_flags & filterIgnore ) || !node->_renderable ) continue;
 
-		for ( size_t view = 0; view < _views.size(); ++view )
+		for ( size_t view = 0; view < _totalViews; ++view )
 		{
 			v = &_views[ view ];
 
@@ -503,30 +508,61 @@ void SpatialGraph::updateQueues( uint32 filterIgnore )
 		}
 	}
 
-	// Mark all current views as updated
-	for ( size_t i = 0; i < _views.size(); ++i )
+	// Post culling actions
+	for ( size_t i = 0; i < _totalViews; ++i )
 	{
-		_views[ i ].updated = true;
+		if ( _views[ i ].type == RenderViewType::Light ) _lightQueue.emplace_back( _views[ i ].node ); // Update light queue
+		_views[ i ].updated = true; 	// Mark all current views as updated
 	}
 }
 
 
 void SpatialGraph::clearViews()
 {
-	// FIX
-	_views.clear();
+	for ( size_t i = 0; i < _views.size(); ++i )
+	{
+		// Clear view information for later use
+		RenderView &view = _views[ i ];
+		view.node = nullptr;
+		view.frustum = Frustum();
+		view.objects.resize( 0 );
+		view.objectsAABB.clear();
+		view.type = RenderViewType::Unknown;
+		view.updated = false;
+	}
+
+	_totalViews = 0;
 }
 
 int SpatialGraph::addView( RenderViewType type, SceneNode *node, const Frustum &f )
 {
-	// FIX
-	_views.emplace_back( RenderView( type, node, f ) );
-	return _views.size() - 1;
+	if ( _totalViews < _views.size() )
+	{
+		// Fast addition to queue
+		RenderView &view = _views[ _totalViews ];
+		view.frustum = f;
+		view.node = node;
+		view.type = type;
+
+		_totalViews++;
+	} 
+	else
+	{
+		// Reallocate required, suballocations would be made when constructing RenderView
+		
+		// Performance warning: in case of the scene with lots of views it is recommended to 
+		// change the constant in config.h that handles reserved space for views
+		_views.resize( _totalViews + ( _totalViews / 4 ) ); // increase queue by 25 percent
+		addView( type, node, f );
+	}
+
+	return _totalViews - 1;
 }
+
 
 void SpatialGraph::sortViewObjects( int viewID, RenderingOrder::List order )
 {
-	if ( viewID < 0 || viewID >= _views.size() ) return;
+	if ( viewID < 0 || viewID >= _totalViews ) return;
 
 	float sortKey;
 	RenderView *view = &_views[ viewID ];
@@ -558,11 +594,31 @@ void SpatialGraph::sortViewObjects( int viewID, RenderingOrder::List order )
 		std::sort( view->objects.begin(), view->objects.end(), RenderQueueItemCompFunc() );
 }
 
+
+void SpatialGraph::sortViewObjects( RenderingOrder::List order )
+{
+	sortViewObjects( _currentView, order );
+}
+
+
+RenderQueue & SpatialGraph::getRenderQueue()
+{
+	if ( _currentView != -1 ) return _views[ _currentView ].objects;
+	else return _renderQueue;
+}
+
+
+void SpatialGraph::setCurrentView( int viewID )
+{
+	if ( viewID < 0 || viewID >= _totalViews ) _currentView = -1;
+	else _currentView = viewID;
+}
+
 // *************************************************************************************************
 // Class SceneManager
 // *************************************************************************************************
 
-SceneManager::SceneManager() : _rayNum( 0 )
+SceneManager::SceneManager() : _rayNum( 0 ), _spatialGraph( nullptr )
 {
 	SceneNode *rootNode = GroupNode::factoryFunc( GroupNodeTpl( "RootNode" ) );
 	rootNode->_handle = RootNode;
@@ -639,9 +695,9 @@ void SceneManager::updateQueues( const Frustum &frustum1, const Frustum *frustum
 }
 
 
-void SceneManager::updateQueues( uint32 filterIgnore )
+void SceneManager::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /* = false */ )
 {
-	_spatialGraph->updateQueues( filterIgnore );
+	_spatialGraph->updateQueues( filterIgnore, forceUpdateAllViews );
 }
 
 
@@ -650,6 +706,11 @@ void SceneManager::sortViewObjects( int viewID, RenderingOrder::List order )
 	_spatialGraph->sortViewObjects( viewID, order );
 }
 
+
+void SceneManager::sortViewObjects( RenderingOrder::List order )
+{
+	_spatialGraph->sortViewObjects( order );
+}
 
 NodeHandle SceneManager::parseNode( SceneNodeTpl &tpl, SceneNode *parent )
 {
@@ -946,12 +1007,17 @@ int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool ch
 
 int SceneManager::addRenderView( RenderViewType type, SceneNode *node, const Frustum &f )
 {
-	_spatialGraph->addView( type, node, f );
+	return _spatialGraph->addView( type, node, f );
 }
 
 void SceneManager::clearRenderViews()
 {
 	_spatialGraph->clearViews();
+}
+
+void SceneManager::setCurrentView( int viewID )
+{
+	_spatialGraph->setCurrentView( viewID );
 }
 
 }  // namespace

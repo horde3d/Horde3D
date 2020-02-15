@@ -32,6 +32,9 @@
 #	include "egRendererBaseGLES3.h"
 #endif
 
+// Constants
+constexpr int defaultCameraView = 0;
+
 namespace Horde3D {
 
 using namespace std;
@@ -68,7 +71,10 @@ Renderer::Renderer()
 	_occProxies[ 1 ].reserve( 100 ); // lights
 
 	// create default engine uniforms that will be automatically searched for in every shader
-	_engineUniforms.reserve( 25 );
+	_engineUniforms.reserve( 64 );
+
+	// reserve memory for shadow parameters
+	_shadowParams.reserve( 128 );
 
 	// General uniforms
 //	registerEngineUniform( "shadowMap" );
@@ -538,6 +544,53 @@ void Renderer::drawCone( float height, float radius, const Matrix4f &transMat )
 }
 
 
+void Renderer::prepareRenderViews()
+{
+	SceneManager &scm = Modules::sceneMan();
+
+	Timer *timer = Modules::stats().getTimer( EngineStats::CullingTime );
+	if ( Modules::config().gatherTimeStats ) timer->setEnabled( true );
+
+	// Clear old views 
+	scm.clearRenderViews();
+
+	// Add views for camera and lights based on their frustums
+	scm.addRenderView( RenderViewType::Camera, _curCamera, _curCamera->getFrustum() );
+
+	for ( size_t i = 0; i < scm._nodes.size(); ++i )
+	{
+		if ( scm._nodes[ i ]->_type != SceneNodeTypes::Light ) continue;
+
+		LightNode *light = ( LightNode * ) scm._nodes[ i ];
+		if ( _curCamera->getFrustum().cullFrustum( light->getFrustum() ) ) continue;
+
+		// Light is in current camera view, so add it as a render view 
+		light->_renderViewID = scm.addRenderView( RenderViewType::Light, light, light->getFrustum() );
+	}
+
+	// Generate render queue for camera and lights
+	scm.updateQueues( SceneNodeFlags::NoDraw );
+
+	// Generate shadow frustums and their render queues
+	auto &views = scm.getRenderViews();
+	for ( size_t i = 0; i < views.size(); ++i )
+	{
+		RenderView *view = &views[ i ];
+		if ( view->type != RenderViewType::Light ) continue;
+
+		// Skip lights that do not produce shadows
+		LightNode *light = ( LightNode * ) view->node;
+		if ( light->_shadowMapCount == 0 ) continue; 
+
+		light->_shadowRenderParamsID = prepareShadowMapFrustum( light, view->objectsAABB );
+	}
+
+	// Shadow frustums are ready, prepare render queues for them
+	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow );
+
+	timer->setEnabled( false );
+}
+
 // =================================================================================================
 // Material System
 // =================================================================================================
@@ -957,65 +1010,60 @@ void Renderer::setupShadowMap( bool noShadows )
 }
 
 
-Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const Vec3f lightPos, const Matrix4f &lightViewProjMat )
+Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const LightNode *light, const Matrix4f &lightViewProjMat )
 {
-	float frustMinX =  Math::MaxFloat, bbMinX =  Math::MaxFloat;
-	float frustMinY =  Math::MaxFloat, bbMinY =  Math::MaxFloat;
-	float frustMinZ =  Math::MaxFloat, bbMinZ =  Math::MaxFloat;
+	float frustMinX = Math::MaxFloat, bbMinX = Math::MaxFloat;
+	float frustMinY = Math::MaxFloat, bbMinY = Math::MaxFloat;
+	float frustMinZ = Math::MaxFloat, bbMinZ = Math::MaxFloat;
 	float frustMaxX = -Math::MaxFloat, bbMaxX = -Math::MaxFloat;
 	float frustMaxY = -Math::MaxFloat, bbMaxY = -Math::MaxFloat;
 	float frustMaxZ = -Math::MaxFloat, bbMaxZ = -Math::MaxFloat;
-	
-	// Find post-projective space AABB of all objects in frustum
-	Modules::sceneMan().updateQueues( frustSlice, 0x0, RenderingOrder::None,
-		SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
-	RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
-	
-	for( size_t i = 0, s = renderQueue.size(); i < s; ++i )
+
+	// Find frustum intersection and create aabb from it
+	Vec3f min, max;
+	if ( frustSlice.cullFrustum( light->getFrustum(), min, max ) ) 
 	{
-		const BoundingBox &aabb = renderQueue[i].node->getBBox();
-		
-		// Check if light is inside AABB
-		if( lightPos.x >= aabb.min.x && lightPos.y >= aabb.min.y && lightPos.z >= aabb.min.z &&
-			lightPos.x <= aabb.max.x && lightPos.y <= aabb.max.y && lightPos.z <= aabb.max.z )
+		BoundingBox bb;
+		bb.min = min;
+		bb.max = max;
+
+		for ( uint32 j = 0; j < 8; ++j )
 		{
-			bbMinX = bbMinY = bbMinZ = -1;
-			bbMaxX = bbMaxY = bbMaxZ = 1;
-			break;
-		}
-		
-		for( uint32 j = 0; j < 8; ++j )
-		{
-			Vec4f v1 = lightViewProjMat * Vec4f( aabb.getCorner( j ) );
+			Vec4f v1 = lightViewProjMat * Vec4f( bb.getCorner( j ) );
 			v1.w = 1.f / fabsf( v1.w );
 			v1.x *= v1.w; v1.y *= v1.w; v1.z *= v1.w;
-			
-			if( v1.x < bbMinX ) bbMinX = v1.x;
-			if( v1.y < bbMinY ) bbMinY = v1.y;
-			if( v1.z < bbMinZ ) bbMinZ = v1.z;
-			if( v1.x > bbMaxX ) bbMaxX = v1.x;
-			if( v1.y > bbMaxY ) bbMaxY = v1.y;
-			if( v1.z > bbMaxZ ) bbMaxZ = v1.z;
+
+			if ( v1.x < bbMinX ) bbMinX = v1.x;
+			if ( v1.y < bbMinY ) bbMinY = v1.y;
+			if ( v1.z < bbMinZ ) bbMinZ = v1.z;
+			if ( v1.x > bbMaxX ) bbMaxX = v1.x;
+			if ( v1.y > bbMaxY ) bbMaxY = v1.y;
+			if ( v1.z > bbMaxZ ) bbMaxZ = v1.z;
 		}
+	}
+	else
+	{
+		bbMinX = bbMinY = bbMinZ = -1;
+		bbMaxX = bbMaxY = bbMaxZ = 1;
 	}
 
 	// Find post-projective space AABB of frustum slice if light is not inside
-	if( frustSlice.cullSphere( _curLight->_absPos, 0 ) )
+	if ( frustSlice.cullSphere( light->_absPos, 0 ) )
 	{
 		// Get frustum in post-projective space
-		for( uint32 i = 0; i < 8; ++i )
+		for ( uint32 i = 0; i < 8; ++i )
 		{
 			// Frustum slice
 			Vec4f v1 = lightViewProjMat * Vec4f( frustSlice.getCorner( i ) );
 			v1.w = 1.f / fabsf( v1.w );  // Use absolute value to reduce problems with back projection when v1.w < 0
 			v1.x *= v1.w; v1.y *= v1.w; v1.z *= v1.w;
 
-			if( v1.x < frustMinX ) frustMinX = v1.x;
-			if( v1.y < frustMinY ) frustMinY = v1.y;
-			if( v1.z < frustMinZ ) frustMinZ = v1.z;
-			if( v1.x > frustMaxX ) frustMaxX = v1.x;
-			if( v1.y > frustMaxY ) frustMaxY = v1.y;
-			if( v1.z > frustMaxZ ) frustMaxZ = v1.z;
+			if ( v1.x < frustMinX ) frustMinX = v1.x;
+			if ( v1.y < frustMinY ) frustMinY = v1.y;
+			if ( v1.z < frustMinZ ) frustMinZ = v1.z;
+			if ( v1.x > frustMaxX ) frustMaxX = v1.x;
+			if ( v1.y > frustMaxY ) frustMaxY = v1.y;
+			if ( v1.z > frustMaxZ ) frustMaxZ = v1.z;
 		}
 	}
 	else
@@ -1033,25 +1081,281 @@ Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const Vec3f lightP
 	float maxZ = clamp( minf( frustMaxZ, bbMaxZ ), -1, 1 );
 
 	// Zoom-in slice to make better use of available shadow map space
-	float scaleX = 2.0f / (maxX - minX);
-	float scaleY = 2.0f / (maxY - minY);
-	float scaleZ = 2.0f / (maxZ - minZ);
+	float scaleX = 2.0f / ( maxX - minX );
+	float scaleY = 2.0f / ( maxY - minY );
+	float scaleZ = 2.0f / ( maxZ - minZ );
 
-	float offsetX = -0.5f * (maxX + minX) * scaleX;
-	float offsetY = -0.5f * (maxY + minY) * scaleY;
-	float offsetZ = -0.5f * (maxZ + minZ) * scaleZ;
+	float offsetX = -0.5f * ( maxX + minX ) * scaleX;
+	float offsetY = -0.5f * ( maxY + minY ) * scaleY;
+	float offsetZ = -0.5f * ( maxZ + minZ ) * scaleZ;
 
 	// Build final matrix
-	float cropMat[16] = { scaleX, 0, 0, 0,
-	                      0, scaleY, 0, 0,
-	                      0, 0, scaleZ, 0,
-	                      offsetX, offsetY, offsetZ, 1 };
+	float cropMat[ 16 ] = { scaleX, 0, 0, 0,
+		0, scaleY, 0, 0,
+		0, 0, scaleZ, 0,
+		offsetX, offsetY, offsetZ, 1 };
 
-	return Matrix4f( cropMat );
+	return std::move( Matrix4f( cropMat ) );
+}
+
+
+int Renderer::prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB )
+{
+	if ( !light )
+	{
+		Modules::log().writeDebugInfo( "Renderer::prepareShadowMapFrustum. Incorrect light sent to function!" );
+		return -1;
+	}
+
+	// Find depth range of lit geometry
+	float minDist = Math::MaxFloat, maxDist = 0.0f;
+	for ( uint32 i = 0; i < 8; ++i )
+	{
+		float dist = -( _curCamera->getViewMat() * viewBB.getCorner( i ) ).z;
+		if ( dist < minDist ) minDist = dist;
+		if ( dist > maxDist ) maxDist = dist;
+	}
+
+	// Don't adjust near plane; this means less precision if scene is far away from viewer but that
+	// shouldn't be too noticeable and brings better performance since the nearer split volumes are empty
+	minDist = _curCamera->_frustNear;
+
+	// Calculate split distances using PSSM scheme
+	const float nearDist = maxf( minDist, _curCamera->_frustNear );
+	const float farDist = maxf( maxDist, minDist + 0.01f );
+	const uint32 numMaps = light->_shadowMapCount;
+	const float lambda = light->_shadowSplitLambda;
+
+	ShadowParameters params;
+	params.splitPlanes[ 0 ] = nearDist;
+	params.splitPlanes[ numMaps ] = farDist;
+
+	for ( uint32 i = 1; i < numMaps; ++i )
+	{
+		float f = ( float ) i / numMaps;
+		float logDist = nearDist * powf( farDist / nearDist, f );
+		float uniformDist = nearDist + ( farDist - nearDist ) * f;
+
+		params.splitPlanes[ i ] = ( 1 - lambda ) * uniformDist + lambda * logDist;  // Lerp
+	}
+
+	// Split viewing frustum into slices and render shadow maps
+	Frustum frustum;
+	for ( uint32 i = 0; i < numMaps; ++i )
+	{
+		// Create frustum slice
+		if ( !_curCamera->_orthographic )
+		{
+			float newLeft = _curCamera->_frustLeft * params.splitPlanes[ i ] / _curCamera->_frustNear;
+			float newRight = _curCamera->_frustRight * params.splitPlanes[ i ] / _curCamera->_frustNear;
+			float newBottom = _curCamera->_frustBottom * params.splitPlanes[ i ] / _curCamera->_frustNear;
+			float newTop = _curCamera->_frustTop * params.splitPlanes[ i ] / _curCamera->_frustNear;
+			frustum.buildViewFrustum( _curCamera->_absTrans, newLeft, newRight, newBottom, newTop,
+				params.splitPlanes[ i ], params.splitPlanes[ i + 1 ] );
+		}
+		else
+		{
+			frustum.buildBoxFrustum( _curCamera->_absTrans, _curCamera->_frustLeft, _curCamera->_frustRight,
+				_curCamera->_frustBottom, _curCamera->_frustTop,
+				-params.splitPlanes[ i ], -params.splitPlanes[ i + 1 ] );
+		}
+
+		// Get light projection matrix
+		float ymax = _curCamera->_frustNear * tanf( degToRad( light->_fov / 2 ) );
+		float xmax = ymax * 1.0f;  // ymax * aspect
+		Matrix4f lightProjMat = Matrix4f::PerspectiveMat(
+			-xmax, xmax, -ymax, ymax, _curCamera->_frustNear, light->_radius );
+
+		// Build optimized light projection matrix
+		Matrix4f lightViewProjMat = lightProjMat * light->getViewMat();
+		lightProjMat = calcCropMatrix( frustum, light, lightViewProjMat ) * lightProjMat;
+
+		// Generate final frustum with shadow casters for current slice
+		frustum.buildViewFrustum( light->getViewMat(), lightProjMat );
+		
+		params.lightMats[ i ] = lightProjMat * light->getViewMat();
+
+		// Create and store view and other shadow parameters
+		int view = Modules::sceneMan().addRenderView( RenderViewType::Shadow, (SceneNode *) light, frustum );
+		params.viewID[ i ] = view;
+		params.lightProjMatrix[ i ] = lightProjMat;
+	}
+
+	// Store complete shadow parameters for one light
+	_shadowParams.emplace_back( params );
+
+	return ( int ) _shadowParams.size() - 1;
 }
 
 
 void Renderer::updateShadowMap()
+{
+	if ( _curLight == 0x0 || _curLight->_shadowRenderParamsID == -1 ) return;
+
+	uint32 prevRendBuf = _renderDevice->_curRendBuf;
+	int prevVPX = _renderDevice->_vpX, prevVPY = _renderDevice->_vpY, prevVPWidth = _renderDevice->_vpWidth, prevVPHeight = _renderDevice->_vpHeight;
+
+	int shadowRTWidth, shadowRTHeight;
+	_renderDevice->getRenderBufferDimensions( _shadowRB, &shadowRTWidth, &shadowRTHeight );
+
+	_renderDevice->setViewport( 0, 0, shadowRTWidth, shadowRTHeight );
+	_renderDevice->setRenderBuffer( _shadowRB );
+
+	_renderDevice->setColorWriteMask( false );
+	_renderDevice->setDepthMask( true );
+	_renderDevice->clear( CLR_DEPTH, 0x0, 1.f );
+
+	// ********************************************************************************************
+	// Cascaded Shadow Maps
+	// ********************************************************************************************
+
+	// Prepare shadow map rendering
+	_renderDevice->setDepthTest( true );
+	//_renderDevice->setCullMode( RS_CULL_FRONT );	// Front face culling reduces artefacts but produces more "peter-panning"
+	
+	const uint32 numMaps = _curLight->_shadowMapCount;
+	ShadowParameters &params = _shadowParams[ _curLight->_shadowRenderParamsID ];
+
+	// Split viewing frustum into slices and render shadow maps
+	for ( uint32 i = 0; i < numMaps; ++i )
+	{
+		// Create texture atlas if several splits are enabled
+		if ( numMaps > 1 )
+		{
+			const int hsm = Modules::config().shadowMapSize / 2;
+			const int scissorXY[ 8 ] = { 0, 0,  hsm, 0,  hsm, hsm,  0, hsm };
+			const float transXY[ 8 ] = { -0.5f, -0.5f,  0.5f, -0.5f,  0.5f, 0.5f,  -0.5f, 0.5f };
+
+			_renderDevice->setScissorTest( true );
+
+			// Select quadrant of shadow map
+			params.lightProjMatrix[ i ].scale( 0.5f, 0.5f, 1.0f );
+			params.lightProjMatrix[ i ].translate( transXY[ i * 2 ], transXY[ i * 2 + 1 ], 0.0f );
+			_renderDevice->setScissorRect( scissorXY[ i * 2 ], scissorXY[ i * 2 + 1 ], hsm, hsm );
+		}
+
+		_lightMats[ i ] = params.lightProjMatrix[ i ] * _curLight->getViewMat();
+		setupViewMatrices( _curLight->getViewMat(), params.lightProjMatrix[ i ] );
+
+		// Render
+		Modules::sceneMan().setCurrentView( params.viewID[ i ] );
+		Frustum &f = Modules::sceneMan().getRenderViews()[ params.viewID[ i ] ].frustum;
+		drawRenderables( _curLight->_shadowContext, 0, false, &f, 0x0, RenderingOrder::None, -1 );
+	}
+
+	// Map from post-projective space [-1,1] to texture space [0,1]
+	for ( uint32 i = 0; i < numMaps; ++i )
+	{
+		_lightMats[ i ].scale( 0.5f, 0.5f, 1.0f );
+		_lightMats[ i ].translate( 0.5f, 0.5f, 0.0f );
+	}
+
+	// ********************************************************************************************
+
+	_renderDevice->setCullMode( RS_CULL_BACK );
+	_renderDevice->setScissorTest( false );
+
+	_renderDevice->setViewport( prevVPX, prevVPY, prevVPWidth, prevVPHeight );
+	_renderDevice->setRenderBuffer( prevRendBuf );
+	_renderDevice->setColorWriteMask( true );
+}
+
+#ifdef H3D_OLD_SHADOWMAPPING
+Matrix4f Renderer::calcCropMatrixOld( const Frustum &frustSlice, const Vec3f lightPos, const Matrix4f &lightViewProjMat )
+{
+	float frustMinX = Math::MaxFloat, bbMinX = Math::MaxFloat;
+	float frustMinY = Math::MaxFloat, bbMinY = Math::MaxFloat;
+	float frustMinZ = Math::MaxFloat, bbMinZ = Math::MaxFloat;
+	float frustMaxX = -Math::MaxFloat, bbMaxX = -Math::MaxFloat;
+	float frustMaxY = -Math::MaxFloat, bbMaxY = -Math::MaxFloat;
+	float frustMaxZ = -Math::MaxFloat, bbMaxZ = -Math::MaxFloat;
+
+	// Find post-projective space AABB of all objects in frustum
+	Modules::sceneMan().updateQueues( frustSlice, 0x0, RenderingOrder::None,
+		SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
+	RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
+
+	for ( size_t i = 0, s = renderQueue.size(); i < s; ++i )
+	{
+		const BoundingBox &aabb = renderQueue[ i ].node->getBBox();
+
+		// Check if light is inside AABB
+		if ( lightPos.x >= aabb.min.x && lightPos.y >= aabb.min.y && lightPos.z >= aabb.min.z &&
+			lightPos.x <= aabb.max.x && lightPos.y <= aabb.max.y && lightPos.z <= aabb.max.z )
+		{
+			bbMinX = bbMinY = bbMinZ = -1;
+			bbMaxX = bbMaxY = bbMaxZ = 1;
+			break;
+		}
+
+		for ( uint32 j = 0; j < 8; ++j )
+		{
+			Vec4f v1 = lightViewProjMat * Vec4f( aabb.getCorner( j ) );
+			v1.w = 1.f / fabsf( v1.w );
+			v1.x *= v1.w; v1.y *= v1.w; v1.z *= v1.w;
+
+			if ( v1.x < bbMinX ) bbMinX = v1.x;
+			if ( v1.y < bbMinY ) bbMinY = v1.y;
+			if ( v1.z < bbMinZ ) bbMinZ = v1.z;
+			if ( v1.x > bbMaxX ) bbMaxX = v1.x;
+			if ( v1.y > bbMaxY ) bbMaxY = v1.y;
+			if ( v1.z > bbMaxZ ) bbMaxZ = v1.z;
+		}
+	}
+
+	// Find post-projective space AABB of frustum slice if light is not inside
+	if ( frustSlice.cullSphere( _curLight->_absPos, 0 ) )
+	{
+		// Get frustum in post-projective space
+		for ( uint32 i = 0; i < 8; ++i )
+		{
+			// Frustum slice
+			Vec4f v1 = lightViewProjMat * Vec4f( frustSlice.getCorner( i ) );
+			v1.w = 1.f / fabsf( v1.w );  // Use absolute value to reduce problems with back projection when v1.w < 0
+			v1.x *= v1.w; v1.y *= v1.w; v1.z *= v1.w;
+
+			if ( v1.x < frustMinX ) frustMinX = v1.x;
+			if ( v1.y < frustMinY ) frustMinY = v1.y;
+			if ( v1.z < frustMinZ ) frustMinZ = v1.z;
+			if ( v1.x > frustMaxX ) frustMaxX = v1.x;
+			if ( v1.y > frustMaxY ) frustMaxY = v1.y;
+			if ( v1.z > frustMaxZ ) frustMaxZ = v1.z;
+		}
+	}
+	else
+	{
+		frustMinX = frustMinY = frustMinZ = -1;
+		frustMaxX = frustMaxY = frustMaxZ = 1;
+	}
+
+	// Merge frustum and AABB bounds and clamp to post-projective range [-1, 1]
+	float minX = clamp( maxf( frustMinX, bbMinX ), -1, 1 );
+	float minY = clamp( maxf( frustMinY, bbMinY ), -1, 1 );
+	float minZ = clamp( minf( frustMinZ, bbMinZ ), -1, 1 );
+	float maxX = clamp( minf( frustMaxX, bbMaxX ), -1, 1 );
+	float maxY = clamp( minf( frustMaxY, bbMaxY ), -1, 1 );
+	float maxZ = clamp( minf( frustMaxZ, bbMaxZ ), -1, 1 );
+
+	// Zoom-in slice to make better use of available shadow map space
+	float scaleX = 2.0f / ( maxX - minX );
+	float scaleY = 2.0f / ( maxY - minY );
+	float scaleZ = 2.0f / ( maxZ - minZ );
+
+	float offsetX = -0.5f * ( maxX + minX ) * scaleX;
+	float offsetY = -0.5f * ( maxY + minY ) * scaleY;
+	float offsetZ = -0.5f * ( maxZ + minZ ) * scaleZ;
+
+	// Build final matrix
+	float cropMat[ 16 ] = { scaleX, 0, 0, 0,
+		0, scaleY, 0, 0,
+		0, 0, scaleZ, 0,
+		offsetX, offsetY, offsetZ, 1 };
+
+	return std::move( Matrix4f( cropMat ) );
+}
+
+
+void Renderer::updateShadowMapOld()
 {
 	if( _curLight == 0x0 ) return;
 	
@@ -1145,7 +1449,7 @@ void Renderer::updateShadowMap()
 		
 		// Build optimized light projection matrix
 		Matrix4f lightViewProjMat = lightProjMat * _curLight->getViewMat();
-		lightProjMat = calcCropMatrix( frustum, _curLight->_absPos, lightViewProjMat ) * lightProjMat;
+		lightProjMat = calcCropMatrixOld( frustum, _curLight->_absPos, lightViewProjMat ) * lightProjMat;
 		
 		// Generate render queue with shadow casters for current slice
 		frustum.buildViewFrustum( _curLight->getViewMat(), lightProjMat );
@@ -1191,6 +1495,7 @@ void Renderer::updateShadowMap()
 	_renderDevice->setColorWriteMask( true );
 }
 
+#endif
 
 // =================================================================================================
 // Occlusion Culling
@@ -1350,8 +1655,8 @@ void Renderer::drawFSQuad( Resource *matRes, const string &shaderContext )
 void Renderer::drawGeometry( const string &shaderContext, int theClass,
                              RenderingOrder::List order, int occSet )
 {
-	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, order,
-	                                  SceneNodeFlags::NoDraw , false, true );
+	Modules::sceneMan().setCurrentView( defaultCameraView );
+	Modules::sceneMan().sortViewObjects( order );
 	
 	setupViewMatrices( _curCamera->getViewMat(), _curCamera->getProjMat() );
 	drawRenderables( shaderContext, theClass, false, &_curCamera->getFrustum(), 0x0, order, occSet );
@@ -1361,8 +1666,8 @@ void Renderer::drawGeometry( const string &shaderContext, int theClass,
 void Renderer::drawLightGeometry( const string &shaderContext, int theClass,
                                   bool noShadows, RenderingOrder::List order, int occSet )
 {
-	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
-	                                  SceneNodeFlags::NoDraw, true, false );
+// 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
+// 	                                  SceneNodeFlags::NoDraw, true, false );
 	
 	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::FwdLightsGPUTime );
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( _frameID );
@@ -1370,9 +1675,6 @@ void Renderer::drawLightGeometry( const string &shaderContext, int theClass,
 	for( size_t i = 0, s = Modules::sceneMan().getLightQueue().size(); i < s; ++i )
 	{
 		_curLight = (LightNode *)Modules::sceneMan().getLightQueue()[i];
-
-		// Check if light is not visible
-		if( _curCamera->getFrustum().cullFrustum( _curLight->getFrustum() ) ) continue;
 
 		// Check if light is occluded
 		if( occSet >= 0 )
@@ -1418,7 +1720,11 @@ void Renderer::drawLightGeometry( const string &shaderContext, int theClass,
 			GPUTimer *timerShadows = Modules::stats().getGPUTimer( EngineStats::ShadowsGPUTime );
 			if( Modules::config().gatherTimeStats ) timerShadows->beginQuery( _frameID );
 
+#ifdef H3D_OLD_SHADOWMAPPING
+			updateShadowMapOld();
+#else
 			updateShadowMap();
+#endif
 			setupShadowMap( false );
 
 			timerShadows->endQuery();
@@ -1443,8 +1749,10 @@ void Renderer::drawLightGeometry( const string &shaderContext, int theClass,
 		}
 		
 		// Render
-		Modules::sceneMan().updateQueues( _curCamera->getFrustum(), &_curLight->getFrustum(),
-		                                  order, SceneNodeFlags::NoDraw, false, true );
+		Modules::sceneMan().setCurrentView( _curLight->_renderViewID );
+		Modules::sceneMan().sortViewObjects( order );
+// 		Modules::sceneMan().updateQueues( _curCamera->getFrustum(), &_curLight->getFrustum(),
+// 		                                  order, SceneNodeFlags::NoDraw, false, true );
 		setupViewMatrices( _curCamera->getViewMat(), _curCamera->getProjMat() );
 		drawRenderables( shaderContext.empty() ? _curLight->_lightingContext : shaderContext,
 		                 theClass, false, &_curCamera->getFrustum(),
@@ -1472,19 +1780,19 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 {
 	MaterialResource *curMatRes = 0x0;
 	
-	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
-	                                  SceneNodeFlags::NoDraw, true, false );
+// 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
+// 	                                  SceneNodeFlags::NoDraw, true, false );
 	
 	GPUTimer *timer = Modules::stats().getGPUTimer( EngineStats::DefLightsGPUTime );
 	if( Modules::config().gatherTimeStats ) timer->beginQuery( _frameID );
 	
-	for( size_t i = 0, s = Modules::sceneMan().getLightQueue().size(); i < s; ++i )
+	auto &views = Modules::sceneMan().getRenderViews();
+	for ( size_t i = 0, s = views.size(); i < s; ++i )
 	{
-		_curLight = (LightNode *)Modules::sceneMan().getLightQueue()[i];
-		
-		// Check if light is not visible
-		if( _curCamera->getFrustum().cullFrustum( _curLight->getFrustum() ) ) continue;
-		
+		if ( views[ i ].type != RenderViewType::Light ) continue;
+
+		_curLight = ( LightNode * ) views[ i ].node;
+
 		// Check if light is occluded
 		if( occSet >= 0 )
 		{
@@ -1529,7 +1837,12 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 			GPUTimer *timerShadows = Modules::stats().getGPUTimer( EngineStats::ShadowsGPUTime );
 			if( Modules::config().gatherTimeStats ) timerShadows->beginQuery( _frameID );
 			
+#ifdef H3D_OLD_SHADOWMAPPING
+			updateShadowMapOld();
+#else
 			updateShadowMap();
+#endif
+
 			setupShadowMap( false );
 			curMatRes = 0x0;
 			
@@ -2104,6 +2417,10 @@ void Renderer::render( CameraNode *camNode )
 	else _maxAnisoMask = SS_ANISO16;
 	_renderDevice->beginRendering();
 	_renderDevice->setViewport( _curCamera->_vpX, _curCamera->_vpY, _curCamera->_vpWidth, _curCamera->_vpHeight );
+
+	// Perform culling
+	prepareRenderViews();
+
 	if( Modules::config().debugViewMode || _curCamera->_pipelineRes == 0x0 )
 	{
 		renderDebugView();
@@ -2176,10 +2493,6 @@ void Renderer::render( CameraNode *camNode )
 				              (RenderingOrder::List)pc.params[2].getInt(), _curCamera->_occSet );
 				break;
 
-// 			case DefaultPipelineCommands::DrawOverlays:
-// 				drawOverlays( pc.params[0].getString() );
-// 				break;
-
 			case DefaultPipelineCommands::DrawQuad:
 				drawFSQuad( pc.params[0].getResource(), pc.params[1].getString() );
 			break;
@@ -2245,8 +2558,8 @@ void Renderer::renderDebugView()
 
 	_renderDevice->clear( CLR_DEPTH | CLR_COLOR_RT0 );
 
-	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
-	                                  SceneNodeFlags::NoDraw, true, true );
+// 	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), 0x0, RenderingOrder::None,
+// 	                                  SceneNodeFlags::NoDraw, true, true );
 
 	// Draw renderable nodes as wireframe
 	setupViewMatrices( _curCamera->getViewMat(), _curCamera->getProjMat() );
@@ -2276,6 +2589,7 @@ void Renderer::renderDebugView()
 	_renderDevice->setCullMode( RS_CULL_FRONT );
 	color[0] = 1; color[1] = 1; color[2] = 0; color[3] = 0.25f;
 	_renderDevice->setShaderConst( Modules::renderer()._defColShader_color, CONST_FLOAT4, color );
+	
 	for( size_t i = 0, s = Modules::sceneMan().getLightQueue().size(); i < s; ++i )
 	{
 		LightNode *lightNode = (LightNode *)Modules::sceneMan().getLightQueue()[i];
@@ -2290,6 +2604,7 @@ void Renderer::renderDebugView()
 			drawSphere( lightNode->_absPos, lightNode->_radius );
 		}
 	}
+
 	_renderDevice->setCullMode( RS_CULL_BACK );
 	_renderDevice->setBlendMode( false );
 }

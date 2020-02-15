@@ -268,17 +268,20 @@ public:
 	virtual void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
 	                   RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderQueue );
 
-	virtual void updateQueues( uint32 filterIgnore );
+	virtual void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false );
 
 	// Render view handling
 	void clearViews();
 	int addView( RenderViewType type, SceneNode *node, const Frustum &f );
+	void setCurrentView( int viewID );
+
+	void sortViewObjects( RenderingOrder::List order );
 	void sortViewObjects( int viewID, RenderingOrder::List order );
 
 	std::vector< RenderView > &getRenderViews() { return _views; }
 
 	std::vector< SceneNode * > &getLightQueue() { return _lightQueue; }
-	RenderQueue &getRenderQueue() { return _renderQueue; }
+	RenderQueue &getRenderQueue();
 
 protected:
 	std::vector< SceneNode * >     _nodes;		// Renderable nodes and lights
@@ -290,6 +293,8 @@ protected:
 	RenderQueue                    _renderQueue;
 
 	uint32						   _lastFilter;
+	int							   _currentView;
+	int							   _totalViews;
 };
 
 
@@ -354,16 +359,19 @@ public:
 	// Spatial graph related functions
 	void updateSpatialNode( uint32 sgHandle ) { _spatialGraph->updateNode( sgHandle ); }
 
-	void updateQueues( uint32 filterIgnore );
+	void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false );
 	void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
 		RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderableQueue );
 
+	void sortViewObjects( RenderingOrder::List order );
 	void sortViewObjects( int viewID, RenderingOrder::List order );
 
 	int addRenderView( RenderViewType type, SceneNode *node, const Frustum &f );
 	std::vector< RenderView > &getRenderViews() const { return _spatialGraph->getRenderViews(); }
 	void clearRenderViews();
 
+	// Compatibility functions
+	void setCurrentView( int viewID );
 	std::vector< SceneNode * > &getLightQueue() const { return _spatialGraph->getLightQueue(); }
 	RenderQueue &getRenderQueue() const { return _spatialGraph->getRenderQueue(); }
 

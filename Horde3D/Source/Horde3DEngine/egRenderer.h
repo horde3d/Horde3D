@@ -139,6 +139,15 @@ struct DefaultVertexLayouts
 	};
 };
 
+struct ShadowParameters
+{
+	Matrix4f                           lightMats[ 4 ];
+	Matrix4f						   lightProjMatrix[ 4 ];
+	float                              splitPlanes[ 5 ] = { 0 };
+
+	int								   viewID[ 4 ] = { 0 };
+};
+
 class Renderer
 {
 public:
@@ -164,6 +173,8 @@ public:
 	void drawSphere( const Vec3f &pos, float radius );
 	void drawCone( float height, float fov, const Matrix4f &transMat );
 	
+	void prepareRenderViews();
+
 	bool createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
 						   const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader );
 	void releaseShaderComb( ShaderCombination &sc );
@@ -209,8 +220,14 @@ protected:
 	bool setMaterialRec( MaterialResource *materialRes, const std::string &shaderContext, ShaderResource *shaderRes );
 	
 	void setupShadowMap( bool noShadows );
-	Matrix4f calcCropMatrix( const Frustum &frustSlice, const Vec3f lightPos, const Matrix4f &lightViewProjMat );
+
+	Matrix4f calcCropMatrixOld( const Frustum &frustSlice, const Vec3f lightPos, const Matrix4f &lightViewProjMat );
+	Matrix4f calcCropMatrix( const Frustum &frustSlice, const LightNode *light, const Matrix4f &lightViewProjMat );
+
+	
+	int prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB );
 	void updateShadowMap();
+	void updateShadowMapOld();
 
 	void bindPipeBuffer( uint32 rbObj, const std::string &sampler, uint32 bufIndex );
 	void clear( bool depth, bool buf0, bool buf1, bool buf2, bool buf3, float r, float g, float b, float a );
@@ -243,6 +260,7 @@ protected:
 	std::vector< OccProxy >            _occProxies[2];  // 0: renderables, 1: lights
 
 	std::vector< EngineUniform >	   _engineUniforms; // uniforms, that are used internally by the engine and extensions
+	std::vector< ShadowParameters >	   _shadowParams; // shadow lightmaps and project matrices
 
 	Matrix4f                           _viewMat, _viewMatInv, _projMat, _viewProjMat, _viewProjMatInv;
 
@@ -271,6 +289,7 @@ protected:
 	
 	uint32                             _maxAnisoMask;
 	float                              _smSize;
+
 	float                              _splitPlanes[5];
 	Matrix4f                           _lightMats[4];
 
