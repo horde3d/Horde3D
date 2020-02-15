@@ -204,7 +204,7 @@ bool Frustum::cullFrustum( const Frustum &frust, Vec3f &min, Vec3f &max ) const
 	float bbMaxY = -Math::MaxFloat;
 	float bbMaxZ = -Math::MaxFloat;
 	Vec3f lineStart, lineEnd, intersection;
-	Vec3f planeMin, planeMax;
+	Vec3f planeMin, planeMax, planeStart, planeEnd;
 
 	// Prepare lines from frustum corners
 	std::array< Vec2f, 8 > lines;
@@ -233,16 +233,18 @@ bool Frustum::cullFrustum( const Frustum &frust, Vec3f &min, Vec3f &max ) const
 		
 		for ( size_t j = 0; j < 8; ++j )
 		{
-			lineStart = frust.getCorner( lines[ j ].x );
-			lineEnd = frust.getCorner( lines[ j ].y );
+			lineStart = frust.getCorner( (uint32) lines[ j ].x );
+			lineEnd = frust.getCorner( (uint32) lines[ j ].y );
 
 			// Plane can be represented with point and normal, use first index of lines
 			// as index for frustum corner
 			if ( linePlaneIntersection( lineStart, lineEnd, _corners[ (int)lines[ j ].x ], p->normal, intersection ) )
 			{
 				// Check that the intersection point is in bounds of the checked plane
-				planeMin = _corners[ ( int ) planeAABB[ i ].x ];
-				planeMax = _corners[ ( int ) planeAABB[ i ].y ];
+				planeStart = _corners[ ( int ) planeAABB[ i ].x ];
+				planeEnd = _corners[ ( int ) planeAABB[ i ].y ];
+				planeMin = Vec3f( std::min( planeStart.x, planeEnd.x ), std::min( planeStart.y, planeEnd.y ), std::min( planeStart.z, planeEnd.z ) );
+				planeMax = Vec3f( std::max( planeStart.x, planeEnd.x ), std::max( planeStart.y, planeEnd.y ), std::max( planeStart.z, planeEnd.z ) );
 
 				if ( intersection.x >= planeMin.x && intersection.y >= planeMin.y && intersection.z >= planeMin.z &&
 					 intersection.x <= planeMax.x && intersection.y <= planeMax.y && intersection.z <= planeMax.z )
