@@ -37,6 +37,7 @@ LightNode::LightNode( const LightNodeTpl &lightTpl ) :
 	_shadowMapBias = lightTpl.shadowMapBias;
 
 	_shadowRenderParamsID = -1;
+	_renderViewID = -1;
 	_occlusionCullingSupported = true;
 }
 
