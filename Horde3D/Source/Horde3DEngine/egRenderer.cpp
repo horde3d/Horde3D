@@ -2615,6 +2615,8 @@ void Renderer::renderDebugView()
 
 void Renderer::finishRendering()
 {
+	_shadowParams.resize( 0 );
+
 	_renderDevice->setRenderBuffer( 0 );
 	setMaterial( 0x0, "" );
 	_renderDevice->resetStates();
