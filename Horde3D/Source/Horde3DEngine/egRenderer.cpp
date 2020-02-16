@@ -1216,6 +1216,9 @@ void Renderer::updateShadowMap()
 	const uint32 numMaps = _curLight->_shadowMapCount;
 	ShadowParameters &params = _shadowParams[ _curLight->_shadowRenderParamsID ];
 
+	// Copy split planes so that it is passed to shader on material setting
+	for ( uint32 i = 0; i < 5; ++i ) _splitPlanes[ i ] = params.splitPlanes[ i ];
+
 	// Split viewing frustum into slices and render shadow maps
 	for ( uint32 i = 0; i < numMaps; ++i )
 	{
