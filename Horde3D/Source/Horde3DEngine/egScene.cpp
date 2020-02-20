@@ -479,6 +479,7 @@ void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /
 	}
 
 	RenderView *v = nullptr;
+	RenderView *cameraView = &_views[ 0 ];
 
 	// Culling
 	for ( size_t i = 0, s = _nodes.size(); i < s; ++i )
@@ -493,10 +494,19 @@ void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /
 			// Skip views that are already updated
 			if ( !v->updated && !v->frustum.cullBox( node->_bBox ) )
 			{
-				if ( view == 0 && node->_lodSupported ) // Check lod only for first view (camera)
+				if ( v != cameraView ) 
 				{
-					uint32 curLod = node->calcLodLevel( camPos );
-					if ( !node->checkLodCorrectness( curLod ) ) break;
+					// Objects should also be in camera frustum for lights
+					if ( v->type == RenderViewType::Light && cameraView->frustum.cullBox( node->_bBox ) ) continue;
+				}
+				else
+				{
+					// Check lod only for first view (camera)
+					if ( node->_lodSupported )
+					{
+						uint32 curLod = node->calcLodLevel( camPos );
+						if ( !node->checkLodCorrectness( curLod ) ) break;
+					}
 				}
 
 				// Calculate bounding box for all objects in the view
