@@ -243,14 +243,15 @@ struct RenderView
 	RenderQueue		objects;
 
 	RenderViewType	type;
+	int				linkedView; 
 	bool			updated;
 
-	RenderView() : node( nullptr ), type( RenderViewType::Unknown ), updated( false )
+	RenderView() : node( nullptr ), type( RenderViewType::Unknown ), updated( false ), linkedView( -1 )
 	{
 
 	}
 
-	RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f );
+	RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link );
 };
 
 
@@ -272,7 +273,7 @@ public:
 
 	// Render view handling
 	void clearViews();
-	int addView( RenderViewType type, SceneNode *node, const Frustum &f );
+	int addView( RenderViewType type, SceneNode *node, const Frustum &f, int link );
 	void setCurrentView( int viewID );
 
 	void sortViewObjects( RenderingOrder::List order );
@@ -366,7 +367,7 @@ public:
 	void sortViewObjects( RenderingOrder::List order );
 	void sortViewObjects( int viewID, RenderingOrder::List order );
 
-	int addRenderView( RenderViewType type, SceneNode *node, const Frustum &f );
+	int addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link = -1 );
 	std::vector< RenderView > &getRenderViews() const { return _spatialGraph->getRenderViews(); }
 	void clearRenderViews();
 

@@ -565,7 +565,8 @@ void Renderer::prepareRenderViews()
 		if ( _curCamera->getFrustum().cullFrustum( light->getFrustum() ) ) continue;
 
 		// Light is in current camera view, so add it as a render view 
-		light->_renderViewID = scm.addRenderView( RenderViewType::Light, light, light->getFrustum() );
+		// Light's view should be culled with the camera frustum, so link the camera view (always zero for now)
+		light->_renderViewID = scm.addRenderView( RenderViewType::Light, light, light->getFrustum(), 0 );
 	}
 
 	// Generate render queue for camera and lights
@@ -582,7 +583,7 @@ void Renderer::prepareRenderViews()
 		LightNode *light = ( LightNode * ) view->node;
 		if ( light->_shadowMapCount == 0 ) continue; 
 
-		light->_shadowRenderParamsID = prepareShadowMapFrustum( light, view->objectsAABB );
+		light->_shadowRenderParamsID = prepareShadowMapFrustum( light, view->objectsAABB, i );
 	}
 
 	// Shadow frustums are ready, prepare render queues for them
@@ -1027,6 +1028,11 @@ Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const LightNode *l
 		bb.min = min;
 		bb.max = max;
 
+		// Avoid zero box dimensions for planes
+		if ( bb.max.x - bb.min.x == 0 ) bb.max.x += Math::Epsilon;
+		if ( bb.max.y - bb.min.y == 0 ) bb.max.y += Math::Epsilon;
+		if ( bb.max.z - bb.min.z == 0 ) bb.max.z += Math::Epsilon;
+
 		for ( uint32 j = 0; j < 8; ++j )
 		{
 			Vec4f v1 = lightViewProjMat * Vec4f( bb.getCorner( j ) );
@@ -1099,7 +1105,7 @@ Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const LightNode *l
 }
 
 
-int Renderer::prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB )
+int Renderer::prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB, int linkedLightView )
 {
 	if ( !light )
 	{
@@ -1176,7 +1182,7 @@ int Renderer::prepareShadowMapFrustum( const LightNode *light, const BoundingBox
 		params.lightMats[ i ] = lightProjMat * light->getViewMat();
 
 		// Create and store view and other shadow parameters
-		int view = Modules::sceneMan().addRenderView( RenderViewType::Shadow, (SceneNode *) light, frustum );
+		int view = Modules::sceneMan().addRenderView( RenderViewType::Shadow, (SceneNode *) light, frustum, linkedLightView );
 		params.viewID[ i ] = view;
 		params.lightProjMatrix[ i ] = lightProjMat;
 	}

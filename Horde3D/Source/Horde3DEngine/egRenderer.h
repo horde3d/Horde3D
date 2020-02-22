@@ -225,7 +225,7 @@ protected:
 	Matrix4f calcCropMatrix( const Frustum &frustSlice, const LightNode *light, const Matrix4f &lightViewProjMat );
 
 	
-	int prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB );
+	int prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB, int linkedLightView );
 	void updateShadowMap();
 	void updateShadowMapOld();
 
