@@ -565,8 +565,10 @@ void Renderer::prepareRenderViews()
 		if ( _curCamera->getFrustum().cullFrustum( light->getFrustum() ) ) continue;
 
 		// Light is in current camera view, so add it as a render view 
-		// Light's view should be culled with the camera frustum, so link the camera view (always zero for now)
-		light->_renderViewID = scm.addRenderView( RenderViewType::Light, light, light->getFrustum(), 0 );
+		// Light's view should be culled with the camera frustum, so link the camera view
+		// Also, for shadows we have to cull additional objects that do not cast shadows
+		light->_renderViewID = scm.addRenderView( RenderViewType::Light, light, light->getFrustum(), 
+												  defaultCameraView, SceneNodeFlags::NoCastShadow );
 	}
 
 	// Generate render queue for camera and lights
@@ -583,7 +585,8 @@ void Renderer::prepareRenderViews()
 		LightNode *light = ( LightNode * ) view->node;
 		if ( light->_shadowMapCount == 0 ) continue; 
 
-		light->_shadowRenderParamsID = prepareShadowMapFrustum( light, view->objectsAABB, i );
+		// We need to send AABB with only shadow casting objects
+		light->_shadowRenderParamsID = prepareShadowMapFrustum( light, view->auxObjectsAABB, i );
 	}
 
 	// Shadow frustums are ready, prepare render queues for them
@@ -1182,7 +1185,7 @@ int Renderer::prepareShadowMapFrustum( const LightNode *light, const BoundingBox
 		params.lightMats[ i ] = lightProjMat * light->getViewMat();
 
 		// Create and store view and other shadow parameters
-		int view = Modules::sceneMan().addRenderView( RenderViewType::Shadow, (SceneNode *) light, frustum, linkedLightView );
+		int view = Modules::sceneMan().addRenderView( RenderViewType::Shadow, (SceneNode *) light, frustum, /*linkedLightView*/ -1 );
 		params.viewID[ i ] = view;
 		params.lightProjMatrix[ i ] = lightProjMat;
 	}

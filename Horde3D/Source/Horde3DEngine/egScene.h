@@ -240,18 +240,23 @@ struct RenderView
 	SceneNode		*node;
 
 	BoundingBox		objectsAABB;
+	BoundingBox		auxObjectsAABB; // auxiliary aabb, for objects that passed additional filtering.
+									// Currently used for light types, ignores objects with NoCastShadow flag
 	RenderQueue		objects;
 
 	RenderViewType	type;
-	int				linkedView; 
+	int				linkedView;
+
+	uint32			auxFilter; // additional filter information
+
 	bool			updated;
 
-	RenderView() : node( nullptr ), type( RenderViewType::Unknown ), updated( false ), linkedView( -1 )
+	RenderView() : node( nullptr ), type( RenderViewType::Unknown ), updated( false ), linkedView( -1 ), auxFilter( 0 )
 	{
 
 	}
 
-	RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link );
+	RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link, uint32 additionalFilter );
 };
 
 
@@ -273,7 +278,7 @@ public:
 
 	// Render view handling
 	void clearViews();
-	int addView( RenderViewType type, SceneNode *node, const Frustum &f, int link );
+	int addView( RenderViewType type, SceneNode *node, const Frustum &f, int link, uint32 additionalFilter );
 	void setCurrentView( int viewID );
 
 	void sortViewObjects( RenderingOrder::List order );
@@ -357,7 +362,9 @@ public:
 	SceneNode *resolveNodeHandle( NodeHandle handle ) const
 		{ return (handle != 0 && (unsigned)(handle - 1) < _nodes.size()) ? _nodes[handle - 1] : 0x0; }
 
+	//
 	// Spatial graph related functions
+	//
 	void updateSpatialNode( uint32 sgHandle ) { _spatialGraph->updateNode( sgHandle ); }
 
 	void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false );
@@ -367,11 +374,10 @@ public:
 	void sortViewObjects( RenderingOrder::List order );
 	void sortViewObjects( int viewID, RenderingOrder::List order );
 
-	int addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link = -1 );
+	int addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link = -1, uint32 additionalFilter = 0 );
 	std::vector< RenderView > &getRenderViews() const { return _spatialGraph->getRenderViews(); }
 	void clearRenderViews();
 
-	// Compatibility functions
 	void setCurrentView( int viewID );
 	std::vector< SceneNode * > &getLightQueue() const { return _spatialGraph->getLightQueue(); }
 	RenderQueue &getRenderQueue() const { return _spatialGraph->getRenderQueue(); }

@@ -297,8 +297,8 @@ constexpr int ReservedObjectsForShadowView = 128;
 
 constexpr int ReservedViews = 64;
 
-RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link /* = -1*/ ) : 
-						type( viewType ), node( viewNode ), frustum( f ), updated( false ), linkedView( link )
+RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link, uint32 additionalFilter ) : 
+						type( viewType ), node( viewNode ), frustum( f ), updated( false ), linkedView( link ), auxFilter( additionalFilter )
 {
 	// Reserve memory beforehand based on view type
 	switch ( viewType )
@@ -512,6 +512,7 @@ void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /
 
 				// Calculate bounding box for all objects in the view
 				v->objectsAABB.makeUnion( node->_bBox );
+				if ( v->auxFilter && !( node->_flags & v->auxFilter ) ) v->auxObjectsAABB.makeUnion( node->_bBox );
 
 				// sortKey will be computed in the sorting function basing on requested sorting algorithm
 				v->objects.emplace_back( RenderQueueItem( node->_type, 0, node ) );
@@ -538,6 +539,8 @@ void SpatialGraph::clearViews()
 		view.frustum = Frustum();
 		view.objects.resize( 0 );
 		view.objectsAABB.clear();
+		view.auxObjectsAABB.clear();
+		view.auxFilter = 0;
 		view.type = RenderViewType::Unknown;
 		view.updated = false;
 		view.linkedView = -1;
@@ -546,7 +549,7 @@ void SpatialGraph::clearViews()
 	_totalViews = 0;
 }
 
-int SpatialGraph::addView( RenderViewType type, SceneNode *node, const Frustum &f, int link )
+int SpatialGraph::addView( RenderViewType type, SceneNode *node, const Frustum &f, int link, uint32 additionalFilter )
 {
 	if ( _totalViews < _views.size() )
 	{
@@ -556,6 +559,7 @@ int SpatialGraph::addView( RenderViewType type, SceneNode *node, const Frustum &
 		view.node = node;
 		view.type = type;
 		view.linkedView = link;
+		view.auxFilter = additionalFilter;
 
 		_totalViews++;
 	} 
@@ -566,7 +570,7 @@ int SpatialGraph::addView( RenderViewType type, SceneNode *node, const Frustum &
 		// Performance warning: in case of the scene with lots of views it is recommended to 
 		// change the constant in config.h that handles reserved space for views
 		_views.resize( _totalViews + ( _totalViews / 4 ) ); // increase queue by 25 percent
-		addView( type, node, f, link );
+		addView( type, node, f, link, additionalFilter );
 	}
 
 	return _totalViews - 1;
@@ -1018,9 +1022,9 @@ int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool ch
 		return 0;
 }
 
-int SceneManager::addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link /*= -1*/ )
+int SceneManager::addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link /*= -1*/, uint32 additionalFilter /* = 0 */ )
 {
-	return _spatialGraph->addView( type, node, f, link );
+	return _spatialGraph->addView( type, node, f, link, additionalFilter );
 }
 
 void SceneManager::clearRenderViews()
