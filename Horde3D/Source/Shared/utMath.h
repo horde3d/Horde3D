@@ -391,6 +391,11 @@ public:
 		return sqrtf( x * x + y * y + z * z );
 	}
 
+	float length_squared() const
+	{
+		return x * x + y * y + z * z;
+	}
+
 	Vec3f normalized() const
 	{
 		float invLen = 1.0f / length();
@@ -1183,28 +1188,6 @@ inline float nearestDistToAABB( const Vec3f &pos, const Vec3f &mins, const Vec3f
 	nearestVec.z = maxf( 0, fabsf( pos.z - center.z ) - extent.z );
 	
 	return nearestVec.length();
-}
-
-inline bool linePlaneIntersection( const Vec3f &lineStart, const Vec3f &lineEnd, const Vec3f &planePoint, const Vec3f &planeNormal, Vec3f &intersectionPoint )
-{
-	Vec3f u, h;
-	float dot;
-
-	u = lineEnd - lineStart;
-	h = lineStart - planePoint;
-	dot = planeNormal.dot( u );
-
-	if ( fabsf( dot ) > FLT_EPSILON )
-	{
-		float lambda = -planeNormal.dot( h ) / dot;
-		intersectionPoint = lineStart + u * lambda;
-		return true;
-	}
-	else
-	{
-		/* The segment is parallel to plane */
-		return false;
-	}
 }
 
 }
