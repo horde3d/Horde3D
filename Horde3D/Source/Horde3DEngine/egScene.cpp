@@ -517,7 +517,7 @@ void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /
 				if ( node->_lodSupported )
 				{
 					uint32 curLod = node->calcLodLevel( camPos );
-					if ( !node->checkLodCorrectness( curLod ) ) break;
+					if ( !node->checkLodCorrectness( curLod ) ) continue;
 				}
 
 				// Calculate bounding box for all objects in the view
