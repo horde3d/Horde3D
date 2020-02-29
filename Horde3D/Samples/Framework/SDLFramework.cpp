@@ -529,6 +529,8 @@ void SDLBackend::processEvents()
 	static int touchLocationY = 0;
 	static int prevTouchLocationX = 0;
 	static int prevTouchLocationY = 0;
+	static int posX = _prevMouseX;
+	static int posY = _prevMouseY;
 
 	// Generic touch handling 
 	auto touch = [&]( int touchType )
@@ -549,12 +551,16 @@ void SDLBackend::processEvents()
 		switch ( e.type )
 		{
 			case SDL_MOUSEMOTION:
-				if ( _mouseMoveEventHandler.isInitialized() ) 
-					_mouseMoveEventHandler.invoke( ( float ) e.motion.x, ( float ) e.motion.y, _prevMouseX, _prevMouseY );
+			{
+				posX += + e.motion.xrel;
+				posY += e.motion.yrel;
+				if ( _mouseMoveEventHandler.isInitialized() )
+					_mouseMoveEventHandler.invoke( ( float ) posX, ( float ) posY, _prevMouseX, _prevMouseY );
 
-				_prevMouseX = ( float ) e.motion.x;
-				_prevMouseY = ( float ) e.motion.y;
+				_prevMouseX = ( float ) posX;
+				_prevMouseY = ( float ) posY;
 				break;
+			}
 			case SDL_MOUSEBUTTONDOWN:
 				if ( _mouseButtonEventHandler.isInitialized() )
 					_mouseButtonEventHandler.invoke( e.button.button, MOUSE_PRESS, e.button.clicks );
