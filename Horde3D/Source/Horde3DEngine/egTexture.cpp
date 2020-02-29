@@ -223,7 +223,7 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		_flags |= ResourceFlags::NoTexCompression;
 		_texType = TextureTypes::Tex2D;
 		_sRGB = false;
-		_rbObj = rdi->createRenderBuffer( width, height, fmt, flags & ResourceFlags::TexDepthBuffer, 1, 0, _maxMipLevel );
+		_rbObj = rdi->createRenderBuffer( width, height, fmt, flags & ResourceFlags::TexDepthBuffer ? true : false, 1, 0, _maxMipLevel );
 		_texObject = rdi->getRenderBufferTex( _rbObj, 0 );
 	}
 	else
