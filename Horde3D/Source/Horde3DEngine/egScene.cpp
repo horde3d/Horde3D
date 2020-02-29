@@ -301,20 +301,21 @@ RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, const Frus
 						type( viewType ), node( viewNode ), frustum( f ), updated( false ), linkedView( link ), auxFilter( additionalFilter )
 {
 	// Reserve memory beforehand based on view type
-	switch ( viewType )
-	{
-		case RenderViewType::Camera:
-			objects.reserve( ReservedObjectsForCameraView );
-			break;
-		case RenderViewType::Light:
-			objects.reserve( ReservedObjectsForLightView );
-			break;
-		case RenderViewType::Shadow:
-			objects.reserve( ReservedObjectsForShadowView );
-			break;
-		default:
-			break;
-	}
+	objects.reserve( ReservedObjectsForCameraView );
+// 	switch ( viewType )
+// 	{
+// 		case RenderViewType::Camera:
+// 			objects.reserve( ReservedObjectsForCameraView );
+// 			break;
+// 		case RenderViewType::Light:
+// 			objects.reserve( ReservedObjectsForLightView );
+// 			break;
+// 		case RenderViewType::Shadow:
+// 			objects.reserve( ReservedObjectsForShadowView );
+// 			break;
+// 		default:
+// 			break;
+// 	}
 }
 
 // =================================================================================================
@@ -449,6 +450,26 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 
 void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /*= false*/ )
 {
+	// Check that some views are still not updated
+	if ( !forceUpdateAllViews )
+	{
+		bool allUpdated = true;
+		for ( size_t i = 0; i < _totalViews; ++i )
+		{
+			allUpdated &= _views[ i ].updated;
+		}
+
+		if ( allUpdated ) return;
+	}
+	else
+	{
+		// Full update required
+		for ( size_t i = 0; i < _totalViews; ++i )
+		{
+			_views[ i ].updated = false;
+		}
+	}
+
 	Modules::sceneMan().updateNodes();
 
 	Vec3f camPos;
@@ -466,18 +487,6 @@ void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /
 	
 	// Clear without affecting capacity
 	_lightQueue.resize( 0 );
-
-	// Check that update filter is not changed
-	// If changed, force update for all views
-	if ( forceUpdateAllViews )
-	{
-		for ( size_t i = 0; i < _totalViews; ++i )
-		{
-			_views[ i ].updated = false;
-		}
-
-		_lastFilter = filterIgnore;
-	}
 
 	RenderView *v = nullptr;
 	RenderView *cameraView = &_views[ 0 ];
@@ -500,14 +509,15 @@ void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /
 					// View can have a linked view. If it does, perform additional culling with the frustum of that view
 					if ( v->linkedView != -1 && _views[ v->linkedView ].frustum.cullBox( node->_bBox ) ) continue;
 				}
-				else
+// 				else
+// 				{
+// 					// Check lod only for first view (camera)
+// 				}
+
+				if ( node->_lodSupported )
 				{
-					// Check lod only for first view (camera)
-					if ( node->_lodSupported )
-					{
-						uint32 curLod = node->calcLodLevel( camPos );
-						if ( !node->checkLodCorrectness( curLod ) ) break;
-					}
+					uint32 curLod = node->calcLodLevel( camPos );
+					if ( !node->checkLodCorrectness( curLod ) ) break;
 				}
 
 				// Calculate bounding box for all objects in the view

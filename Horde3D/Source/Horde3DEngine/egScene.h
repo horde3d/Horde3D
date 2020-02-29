@@ -280,6 +280,7 @@ public:
 	void clearViews();
 	int addView( RenderViewType type, SceneNode *node, const Frustum &f, int link, uint32 additionalFilter );
 	void setCurrentView( int viewID );
+	int getRenderViewCount() { return _totalViews; }
 
 	void sortViewObjects( RenderingOrder::List order );
 	void sortViewObjects( int viewID, RenderingOrder::List order );
@@ -288,7 +289,6 @@ public:
 
 	std::vector< SceneNode * > &getLightQueue() { return _lightQueue; }
 	RenderQueue &getRenderQueue();
-
 protected:
 	std::vector< SceneNode * >     _nodes;		// Renderable nodes and lights
 	std::vector< uint32 >          _freeList;
@@ -377,6 +377,7 @@ public:
 	int addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link = -1, uint32 additionalFilter = 0 );
 	std::vector< RenderView > &getRenderViews() const { return _spatialGraph->getRenderViews(); }
 	void clearRenderViews();
+	int getActiveRenderViewCount() { return _spatialGraph->getRenderViewCount(); }
 
 	void setCurrentView( int viewID );
 	std::vector< SceneNode * > &getLightQueue() const { return _spatialGraph->getLightQueue(); }

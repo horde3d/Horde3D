@@ -154,27 +154,22 @@ public:
 	Renderer();
 	~Renderer();
 
+	// Misc functions
+	bool init( RenderBackendType::List type );
+	void initStates();
+
 	void registerRenderFunc( int nodeType, RenderFunc rf );
 
+	unsigned char *useScratchBuf( uint32 minSize, uint32 alignment );
+	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
+
+	// Uniform handling
 	int registerEngineUniform( const char *uniName );
 	int getEngineUniform( const char *uniName );
 	uint32 totalEngineUniforms() { return ( uint32 )_engineUniforms.size(); }
 	DefaultShaderUniforms &getDefShaderUniIndices() { return _uni; }
 
-	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
-
-	unsigned char *useScratchBuf( uint32 minSize, uint32 alignment );
-	void setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projMat );
-
-	bool init( RenderBackendType::List type );
-	void initStates();
-
-	void drawAABB( const Vec3f &bbMin, const Vec3f &bbMax );
-	void drawSphere( const Vec3f &pos, float radius );
-	void drawCone( float height, float fov, const Matrix4f &transMat );
-	
-	void prepareRenderViews();
-
+	// Shader & material handling
 	bool createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
 						   const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader );
 	void releaseShaderComb( ShaderCombination &sc );
@@ -185,12 +180,18 @@ public:
 	bool createShadowRB( uint32 width, uint32 height );
 	void releaseShadowRB();
 
+	// Occlusion culling
 	int registerOccSet();
 	void unregisterOccSet( int occSet );
 	void drawOccProxies( uint32 list );
 	void pushOccProxy( uint32 list, const Vec3f &bbMin, const Vec3f &bbMax, uint32 queryObj )
 		{ _occProxies[list].push_back( OccProxy( bbMin, bbMax, queryObj ) ); }
 	
+	// Drawing
+	void drawAABB( const Vec3f &bbMin, const Vec3f &bbMax );
+	void drawSphere( const Vec3f &pos, float radius );
+	void drawCone( float height, float fov, const Matrix4f &transMat );
+
 	static void drawMeshes( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
@@ -203,6 +204,7 @@ public:
 
 	void dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z );
 
+	// Getters
 	uint32 getFrameID() const { return _frameID; }
 	ShaderCombination *getCurShader() const { return _curShader; }
 	CameraNode *getCurCamera() const { return _curCamera; }
@@ -211,6 +213,7 @@ public:
 	uint32 getParticleGeometry() const { return _particleGeo; }
 	uint32 getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const;
 
+	inline RenderDeviceInterface *getRenderDevice() const { return _renderDevice; }
 	int getRenderDeviceType() { return _renderDeviceType; }
 
 protected:
@@ -219,16 +222,20 @@ protected:
 	
 	bool setMaterialRec( MaterialResource *materialRes, const std::string &shaderContext, ShaderResource *shaderRes );
 	
+	void prepareRenderViews();
+
+	// Shadows
 	void setupShadowMap( bool noShadows );
 
 	Matrix4f calcCropMatrixOld( const Frustum &frustSlice, const Vec3f lightPos, const Matrix4f &lightViewProjMat );
-	Matrix4f calcCropMatrix( const Frustum &frustSlice, const LightNode *light, const Matrix4f &lightViewProjMat );
-
+	Matrix4f calcCropMatrix( int renderView, const LightNode *light, const Matrix4f &lightViewProjMat );
 	
-	int prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB, int linkedLightView );
+	int prepareCropFrustum( const LightNode *light, const BoundingBox &viewBB );
+	bool prepareShadowMapFrustum( const LightNode *light, int shadowView );
 	void updateShadowMap();
 	void updateShadowMapOld();
 
+	// Drawing functions
 	void bindPipeBuffer( uint32 rbObj, const std::string &sampler, uint32 bufIndex );
 	void clear( bool depth, bool buf0, bool buf1, bool buf2, bool buf3, float r, float g, float b, float a );
 	void drawFSQuad( Resource *matRes, const std::string &shaderContext );

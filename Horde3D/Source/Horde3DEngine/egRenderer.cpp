@@ -554,7 +554,9 @@ void Renderer::prepareRenderViews()
 	// Clear old views 
 	scm.clearRenderViews();
 
-	// Add views for camera and lights based on their frustums
+	//
+	// Step 1. Add views for camera and lights based on their frustums
+	//
 	scm.addRenderView( RenderViewType::Camera, _curCamera, _curCamera->getFrustum() );
 
 	for ( size_t i = 0; i < scm._nodes.size(); ++i )
@@ -574,19 +576,45 @@ void Renderer::prepareRenderViews()
 	// Generate render queue for camera and lights
 	scm.updateQueues( SceneNodeFlags::NoDraw );
 
-	// Generate shadow frustums and their render queues
-	auto &views = scm.getRenderViews();
-	for ( size_t i = 0; i < views.size(); ++i )
+	//
+	// Step 2. Create temporary crop shadow frustums that are used for creating tighter shadow frustums to increase shadow quality
+	//
+	auto &views = scm.getRenderViews(); auto count = scm.getActiveRenderViewCount();
+	int shadowViewStartID = count;
+	int processedLightsCount = 0;
+	for ( size_t i = 0; i < count; ++i )
 	{
 		RenderView *view = &views[ i ];
 		if ( view->type != RenderViewType::Light ) continue;
 
 		// Skip lights that do not produce shadows
 		LightNode *light = ( LightNode * ) view->node;
-		if ( light->_shadowMapCount == 0 ) continue; 
+		if ( light->_shadowMapCount == 0 ) continue;
 
+		// Calculate temporary crop shadow frustums
 		// We need to send AABB with only shadow casting objects
-		light->_shadowRenderParamsID = prepareShadowMapFrustum( light, view->auxObjectsAABB, i );
+		light->_shadowRenderParamsID = prepareCropFrustum( light, view->auxObjectsAABB );
+		processedLightsCount++;
+	}
+
+	// Prepare render queues for crop frustums
+	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow );
+
+	//
+	// Step 3. Calculate final shadow frustums
+	//
+
+	// Generate shadow frustums and their render queues
+	int start = shadowViewStartID;
+	for ( int i = 0; i < processedLightsCount; ++i )
+	{
+		RenderView *view = &views[ start + i ];
+		if ( view->type != RenderViewType::Shadow ) continue;
+
+		LightNode *light = ( LightNode * ) view->node;
+
+		prepareShadowMapFrustum( light, start + i );
+		start += light->_shadowMapCount;
 	}
 
 	// Shadow frustums are ready, prepare render queues for them
@@ -1014,7 +1042,7 @@ void Renderer::setupShadowMap( bool noShadows )
 }
 
 
-Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const LightNode *light, const Matrix4f &lightViewProjMat )
+Matrix4f Renderer::calcCropMatrix( int renderView, const LightNode *light, const Matrix4f &lightViewProjMat )
 {
 	float frustMinX = Math::MaxFloat, bbMinX = Math::MaxFloat;
 	float frustMinY = Math::MaxFloat, bbMinY = Math::MaxFloat;
@@ -1023,22 +1051,27 @@ Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const LightNode *l
 	float frustMaxY = -Math::MaxFloat, bbMaxY = -Math::MaxFloat;
 	float frustMaxZ = -Math::MaxFloat, bbMaxZ = -Math::MaxFloat;
 
-	// Find frustum intersection and create aabb from it
-	Vec3f min, max;
-	if ( frustSlice.cullFrustum( light->getFrustum(), min, max ) ) 
-	{
-		BoundingBox bb;
-		bb.min = min;
-		bb.max = max;
+	auto &views = Modules::sceneMan().getRenderViews();
+	RenderQueue &renderQueue = views[ renderView ].objects;
+	Frustum &frustSlice = views[ renderView ].frustum;
+	Vec3f lightPos = light->_absPos;
 
-		// Avoid zero box dimensions for planes
-		if ( bb.max.x - bb.min.x == 0 ) bb.max.x += Math::Epsilon;
-		if ( bb.max.y - bb.min.y == 0 ) bb.max.y += Math::Epsilon;
-		if ( bb.max.z - bb.min.z == 0 ) bb.max.z += Math::Epsilon;
+	for ( size_t i = 0, s = renderQueue.size(); i < s; ++i )
+	{
+		const BoundingBox &aabb = renderQueue[ i ].node->getBBox();
+
+		// Check if light is inside AABB
+		if ( lightPos.x >= aabb.min.x && lightPos.y >= aabb.min.y && lightPos.z >= aabb.min.z &&
+			lightPos.x <= aabb.max.x && lightPos.y <= aabb.max.y && lightPos.z <= aabb.max.z )
+		{
+			bbMinX = bbMinY = bbMinZ = -1;
+			bbMaxX = bbMaxY = bbMaxZ = 1;
+			break;
+		}
 
 		for ( uint32 j = 0; j < 8; ++j )
 		{
-			Vec4f v1 = lightViewProjMat * Vec4f( bb.getCorner( j ) );
+			Vec4f v1 = lightViewProjMat * Vec4f( aabb.getCorner( j ) );
 			v1.w = 1.f / fabsf( v1.w );
 			v1.x *= v1.w; v1.y *= v1.w; v1.z *= v1.w;
 
@@ -1049,11 +1082,6 @@ Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const LightNode *l
 			if ( v1.y > bbMaxY ) bbMaxY = v1.y;
 			if ( v1.z > bbMaxZ ) bbMaxZ = v1.z;
 		}
-	}
-	else
-	{
-		bbMinX = bbMinY = bbMinZ = -1;
-		bbMaxX = bbMaxY = bbMaxZ = 1;
 	}
 
 	// Find post-projective space AABB of frustum slice if light is not inside
@@ -1108,7 +1136,7 @@ Matrix4f Renderer::calcCropMatrix( const Frustum &frustSlice, const LightNode *l
 }
 
 
-int Renderer::prepareShadowMapFrustum( const LightNode *light, const BoundingBox &viewBB, int linkedLightView )
+int Renderer::prepareCropFrustum( const LightNode *light, const BoundingBox &viewBB )
 {
 	if ( !light )
 	{
@@ -1172,28 +1200,54 @@ int Renderer::prepareShadowMapFrustum( const LightNode *light, const BoundingBox
 		// Get light projection matrix
 		float ymax = _curCamera->_frustNear * tanf( degToRad( light->_fov / 2 ) );
 		float xmax = ymax * 1.0f;  // ymax * aspect
-		Matrix4f lightProjMat = Matrix4f::PerspectiveMat(
+		params.lightProjMatrix[ i ] = Matrix4f::PerspectiveMat(
 			-xmax, xmax, -ymax, ymax, _curCamera->_frustNear, light->_radius );
 
-		// Build optimized light projection matrix
-		Matrix4f lightViewProjMat = lightProjMat * light->getViewMat();
-		lightProjMat = calcCropMatrix( frustum, light, lightViewProjMat ) * lightProjMat;
-
-		// Generate final frustum with shadow casters for current slice
-		frustum.buildViewFrustum( light->getViewMat(), lightProjMat );
-		
-		params.lightMats[ i ] = lightProjMat * light->getViewMat();
-
 		// Create and store view and other shadow parameters
-		int view = Modules::sceneMan().addRenderView( RenderViewType::Shadow, (SceneNode *) light, frustum, /*linkedLightView*/ -1 );
-		params.viewID[ i ] = view;
-		params.lightProjMatrix[ i ] = lightProjMat;
+		Modules::sceneMan().addRenderView( RenderViewType::Shadow, ( SceneNode * ) light, frustum, /*linkedLightView*/ -1 );
 	}
 
 	// Store complete shadow parameters for one light
 	_shadowParams.emplace_back( params );
 
 	return ( int ) _shadowParams.size() - 1;
+}
+
+
+bool Renderer::prepareShadowMapFrustum( const LightNode *light, int shadowView )
+{
+	if ( !light )
+	{
+		Modules::log().writeDebugInfo( "Renderer::prepareShadowMapFrustum. Incorrect light sent to function!" );
+		return false;
+	}
+
+	ShadowParameters &params = _shadowParams[ light->_shadowRenderParamsID ];
+
+	// Split viewing frustum into slices and render shadow maps
+	Frustum frustum;
+	for ( uint32 i = 0; i < light->_shadowMapCount; ++i )
+	{
+		// Build optimized light projection matrix
+		Matrix4f lightProjMat = params.lightProjMatrix[ i ];
+		Matrix4f lightViewProjMat = lightProjMat * light->getViewMat();
+
+		// We have to send corresponding shadow view id in order to calculate crop matrix, 
+		// and only id of the first one is sent to this function, therefore shadow map iterator is needed   
+		lightProjMat = calcCropMatrix( shadowView + i, light, lightViewProjMat ) * lightProjMat;
+
+		// Generate final frustum with shadow casters for current slice
+		frustum.buildViewFrustum( light->getViewMat(), lightProjMat );
+		
+		params.lightMats[ i ] = lightProjMat * light->getViewMat();
+		params.lightProjMatrix[ i ] = lightProjMat;
+
+		// Create and store view and other shadow parameters
+		int view = Modules::sceneMan().addRenderView( RenderViewType::Shadow, (SceneNode *) light, frustum, /*linkedLightView*/ -1 );
+		params.viewID[ i ] = view;
+	}
+
+	return true;
 }
 
 
