@@ -289,44 +289,24 @@ SceneNode *GroupNode::factoryFunc( const SceneNodeTpl &nodeTpl )
 // Class SpatialGraph
 // =================================================================================================
 
-// TODO: move to config.h
-// Memory reserve options for different render queue types
-constexpr int ReservedObjectsForCameraView = 256;
-constexpr int ReservedObjectsForLightView = 128;
-constexpr int ReservedObjectsForShadowView = 128;
-
-constexpr int ReservedViews = 64;
-
 RenderView::RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link, uint32 additionalFilter ) : 
 						type( viewType ), node( viewNode ), frustum( f ), updated( false ), linkedView( link ), auxFilter( additionalFilter )
 {
-	// Reserve memory beforehand based on view type
-	objects.reserve( ReservedObjectsForCameraView );
-// 	switch ( viewType )
-// 	{
-// 		case RenderViewType::Camera:
-// 			objects.reserve( ReservedObjectsForCameraView );
-// 			break;
-// 		case RenderViewType::Light:
-// 			objects.reserve( ReservedObjectsForLightView );
-// 			break;
-// 		case RenderViewType::Shadow:
-// 			objects.reserve( ReservedObjectsForShadowView );
-// 			break;
-// 		default:
-// 			break;
-// 	}
+	objects.reserve( H3D_RESERVED_VIEW_OBJECTS );
+}
+
+RenderView::RenderView() : node( nullptr ), type( RenderViewType::Unknown ), updated( false ), linkedView( -1 ), auxFilter( 0 )
+{
+	objects.reserve( H3D_RESERVED_VIEW_OBJECTS );
 }
 
 // =================================================================================================
 
 SpatialGraph::SpatialGraph() : _currentView( -1 ), _totalViews( 0 )
 {
-// 	_lightQueue.reserve( 20 );
-// 	_renderQueue.reserve( 500 );
-	_views.resize( ReservedViews );
-
-	_lastFilter = RenderingOrder::None;
+	_lightQueue.reserve( 20 );
+	_renderQueue.reserve( 256 );
+	_views.resize( H3D_RESERVED_VIEWS );
 }
 
 
@@ -649,6 +629,11 @@ SceneManager::SceneManager() : _rayNum( 0 ), _spatialGraph( nullptr )
 {
 	SceneNode *rootNode = GroupNode::factoryFunc( GroupNodeTpl( "RootNode" ) );
 	rootNode->_handle = RootNode;
+
+	// reserve space for scene nodes in scene manager in root node for fewer allocations
+	rootNode->_children.reserve( H3D_RESERVED_SCENE_NODES );
+	_nodes.reserve( H3D_RESERVED_SCENE_NODES );
+
 	_nodes.push_back( rootNode );
 
 	// setup default spatial graph

@@ -38,4 +38,13 @@
 // Use OpenGL 4 renderer. Can work with GL2 renderer.
 #cmakedefine H3D_USE_GL4
 
+// Number of render views created on startup
+#define H3D_RESERVED_VIEWS 64
+
+// Number of render queue items reserved on view creation
+#define H3D_RESERVED_VIEW_OBJECTS 256
+
+// Number of nodes reserved in scene manager on startup
+#define H3D_RESERVED_SCENE_NODES 4096
+
 #endif // _h3d_config_H_

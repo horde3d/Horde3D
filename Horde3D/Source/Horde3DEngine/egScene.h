@@ -251,10 +251,7 @@ struct RenderView
 
 	bool			updated;
 
-	RenderView() : node( nullptr ), type( RenderViewType::Unknown ), updated( false ), linkedView( -1 ), auxFilter( 0 )
-	{
-
-	}
+	RenderView();
 
 	RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link, uint32 additionalFilter );
 };
@@ -298,7 +295,6 @@ protected:
 	std::vector< SceneNode * >     _lightQueue;
 	RenderQueue                    _renderQueue;
 
-	uint32						   _lastFilter;
 	int							   _currentView;
 	int							   _totalViews;
 };
