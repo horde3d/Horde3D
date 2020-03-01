@@ -1017,15 +1017,18 @@ int SceneManager::checkNodeVisibility( SceneNode &node, CameraNode &cam, bool ch
 		return 0;
 }
 
+
 int SceneManager::addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link /*= -1*/, uint32 additionalFilter /* = 0 */ )
 {
 	return _spatialGraph->addView( type, node, f, link, additionalFilter );
 }
 
+
 void SceneManager::clearRenderViews()
 {
 	_spatialGraph->clearViews();
 }
+
 
 void SceneManager::setCurrentView( int viewID )
 {

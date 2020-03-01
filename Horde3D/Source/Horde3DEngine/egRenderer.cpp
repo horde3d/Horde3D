@@ -1326,243 +1326,6 @@ void Renderer::updateShadowMap()
 	_renderDevice->setColorWriteMask( true );
 }
 
-#ifdef H3D_OLD_SHADOWMAPPING
-Matrix4f Renderer::calcCropMatrixOld( const Frustum &frustSlice, const Vec3f lightPos, const Matrix4f &lightViewProjMat )
-{
-	float frustMinX = Math::MaxFloat, bbMinX = Math::MaxFloat;
-	float frustMinY = Math::MaxFloat, bbMinY = Math::MaxFloat;
-	float frustMinZ = Math::MaxFloat, bbMinZ = Math::MaxFloat;
-	float frustMaxX = -Math::MaxFloat, bbMaxX = -Math::MaxFloat;
-	float frustMaxY = -Math::MaxFloat, bbMaxY = -Math::MaxFloat;
-	float frustMaxZ = -Math::MaxFloat, bbMaxZ = -Math::MaxFloat;
-
-	// Find post-projective space AABB of all objects in frustum
-	Modules::sceneMan().updateQueues( frustSlice, 0x0, RenderingOrder::None,
-		SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
-	RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
-
-	for ( size_t i = 0, s = renderQueue.size(); i < s; ++i )
-	{
-		const BoundingBox &aabb = renderQueue[ i ].node->getBBox();
-
-		// Check if light is inside AABB
-		if ( lightPos.x >= aabb.min.x && lightPos.y >= aabb.min.y && lightPos.z >= aabb.min.z &&
-			lightPos.x <= aabb.max.x && lightPos.y <= aabb.max.y && lightPos.z <= aabb.max.z )
-		{
-			bbMinX = bbMinY = bbMinZ = -1;
-			bbMaxX = bbMaxY = bbMaxZ = 1;
-			break;
-		}
-
-		for ( uint32 j = 0; j < 8; ++j )
-		{
-			Vec4f v1 = lightViewProjMat * Vec4f( aabb.getCorner( j ) );
-			v1.w = 1.f / fabsf( v1.w );
-			v1.x *= v1.w; v1.y *= v1.w; v1.z *= v1.w;
-
-			if ( v1.x < bbMinX ) bbMinX = v1.x;
-			if ( v1.y < bbMinY ) bbMinY = v1.y;
-			if ( v1.z < bbMinZ ) bbMinZ = v1.z;
-			if ( v1.x > bbMaxX ) bbMaxX = v1.x;
-			if ( v1.y > bbMaxY ) bbMaxY = v1.y;
-			if ( v1.z > bbMaxZ ) bbMaxZ = v1.z;
-		}
-	}
-
-	// Find post-projective space AABB of frustum slice if light is not inside
-	if ( frustSlice.cullSphere( _curLight->_absPos, 0 ) )
-	{
-		// Get frustum in post-projective space
-		for ( uint32 i = 0; i < 8; ++i )
-		{
-			// Frustum slice
-			Vec4f v1 = lightViewProjMat * Vec4f( frustSlice.getCorner( i ) );
-			v1.w = 1.f / fabsf( v1.w );  // Use absolute value to reduce problems with back projection when v1.w < 0
-			v1.x *= v1.w; v1.y *= v1.w; v1.z *= v1.w;
-
-			if ( v1.x < frustMinX ) frustMinX = v1.x;
-			if ( v1.y < frustMinY ) frustMinY = v1.y;
-			if ( v1.z < frustMinZ ) frustMinZ = v1.z;
-			if ( v1.x > frustMaxX ) frustMaxX = v1.x;
-			if ( v1.y > frustMaxY ) frustMaxY = v1.y;
-			if ( v1.z > frustMaxZ ) frustMaxZ = v1.z;
-		}
-	}
-	else
-	{
-		frustMinX = frustMinY = frustMinZ = -1;
-		frustMaxX = frustMaxY = frustMaxZ = 1;
-	}
-
-	// Merge frustum and AABB bounds and clamp to post-projective range [-1, 1]
-	float minX = clamp( maxf( frustMinX, bbMinX ), -1, 1 );
-	float minY = clamp( maxf( frustMinY, bbMinY ), -1, 1 );
-	float minZ = clamp( minf( frustMinZ, bbMinZ ), -1, 1 );
-	float maxX = clamp( minf( frustMaxX, bbMaxX ), -1, 1 );
-	float maxY = clamp( minf( frustMaxY, bbMaxY ), -1, 1 );
-	float maxZ = clamp( minf( frustMaxZ, bbMaxZ ), -1, 1 );
-
-	// Zoom-in slice to make better use of available shadow map space
-	float scaleX = 2.0f / ( maxX - minX );
-	float scaleY = 2.0f / ( maxY - minY );
-	float scaleZ = 2.0f / ( maxZ - minZ );
-
-	float offsetX = -0.5f * ( maxX + minX ) * scaleX;
-	float offsetY = -0.5f * ( maxY + minY ) * scaleY;
-	float offsetZ = -0.5f * ( maxZ + minZ ) * scaleZ;
-
-	// Build final matrix
-	float cropMat[ 16 ] = { scaleX, 0, 0, 0,
-		0, scaleY, 0, 0,
-		0, 0, scaleZ, 0,
-		offsetX, offsetY, offsetZ, 1 };
-
-	return std::move( Matrix4f( cropMat ) );
-}
-
-
-void Renderer::updateShadowMapOld()
-{
-	if( _curLight == 0x0 ) return;
-	
-	uint32 prevRendBuf = _renderDevice->_curRendBuf;
-	int prevVPX = _renderDevice->_vpX, prevVPY = _renderDevice->_vpY, prevVPWidth = _renderDevice->_vpWidth, prevVPHeight = _renderDevice->_vpHeight;
-	
-	int shadowRTWidth, shadowRTHeight;
-	_renderDevice->getRenderBufferDimensions( _shadowRB, &shadowRTWidth, &shadowRTHeight );
-
-	_renderDevice->setViewport( 0, 0, shadowRTWidth, shadowRTHeight );
-	_renderDevice->setRenderBuffer( _shadowRB );
-	
-	_renderDevice->setColorWriteMask( false );
-	_renderDevice->setDepthMask( true );
-	_renderDevice->clear( CLR_DEPTH, 0x0, 1.f );
-
-	// ********************************************************************************************
-	// Cascaded Shadow Maps
-	// ********************************************************************************************
-	
-	// Find AABB of lit geometry
-	BoundingBox aabb;
-	Modules::sceneMan().updateQueues( _curCamera->getFrustum(), &_curLight->getFrustum(),
-		RenderingOrder::None, SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
-	for( size_t j = 0, s = Modules::sceneMan().getRenderQueue().size(); j < s; ++j )
-	{
-		aabb.makeUnion( Modules::sceneMan().getRenderQueue()[j].node->getBBox() );
-	}
-
-	// Find depth range of lit geometry
-	float minDist = Math::MaxFloat, maxDist = 0.0f;
-	for( uint32 i = 0; i < 8; ++i )
-	{
-		float dist = -(_curCamera->getViewMat() * aabb.getCorner( i )).z;
-		if( dist < minDist ) minDist = dist;
-		if( dist > maxDist ) maxDist = dist;
-	}
-
-	// Don't adjust near plane; this means less precision if scene is far away from viewer but that
-	// shouldn't be too noticeable and brings better performance since the nearer split volumes are empty
-	minDist = _curCamera->_frustNear;
-	
-	// Calculate split distances using PSSM scheme
-	const float nearDist = maxf( minDist, _curCamera->_frustNear );
-	const float farDist = maxf( maxDist, minDist + 0.01f );
-	const uint32 numMaps = _curLight->_shadowMapCount;
-	const float lambda = _curLight->_shadowSplitLambda;
-	
-	_splitPlanes[0] = nearDist;
-	_splitPlanes[numMaps] = farDist;
-	
-	for( uint32 i = 1; i < numMaps; ++i )
-	{
-		float f = (float)i / numMaps;
-		float logDist = nearDist * powf( farDist / nearDist, f );
-		float uniformDist = nearDist + (farDist - nearDist) * f;
-		
-		_splitPlanes[i] = (1 - lambda) * uniformDist + lambda * logDist;  // Lerp
-	}
-	
-	// Prepare shadow map rendering
-	_renderDevice->setDepthTest( true );
-	//_renderDevice->setCullMode( RS_CULL_FRONT );	// Front face culling reduces artefacts but produces more "peter-panning"
-	
-	// Split viewing frustum into slices and render shadow maps
-	Frustum frustum;
-	for( uint32 i = 0; i < numMaps; ++i )
-	{
-		// Create frustum slice
-		if( !_curCamera->_orthographic )
-		{
-			float newLeft = _curCamera->_frustLeft * _splitPlanes[i] / _curCamera->_frustNear;
-			float newRight = _curCamera->_frustRight * _splitPlanes[i] / _curCamera->_frustNear;
-			float newBottom = _curCamera->_frustBottom * _splitPlanes[i] / _curCamera->_frustNear;
-			float newTop = _curCamera->_frustTop * _splitPlanes[i] / _curCamera->_frustNear;
-			frustum.buildViewFrustum( _curCamera->_absTrans, newLeft, newRight, newBottom, newTop,
-			                          _splitPlanes[i], _splitPlanes[i + 1] );
-		}
-		else
-		{
-			frustum.buildBoxFrustum( _curCamera->_absTrans, _curCamera->_frustLeft, _curCamera->_frustRight,
-			                         _curCamera->_frustBottom, _curCamera->_frustTop,
-			                         -_splitPlanes[i], -_splitPlanes[i + 1] );
-		}
-		
-		// Get light projection matrix
-		float ymax = _curCamera->_frustNear * tanf( degToRad( _curLight->_fov / 2 ) );
-		float xmax = ymax * 1.0f;  // ymax * aspect
-		Matrix4f lightProjMat = Matrix4f::PerspectiveMat(
-			-xmax, xmax, -ymax, ymax, _curCamera->_frustNear, _curLight->_radius );
-		
-		// Build optimized light projection matrix
-		Matrix4f lightViewProjMat = lightProjMat * _curLight->getViewMat();
-		lightProjMat = calcCropMatrixOld( frustum, _curLight->_absPos, lightViewProjMat ) * lightProjMat;
-		
-		// Generate render queue with shadow casters for current slice
-		frustum.buildViewFrustum( _curLight->getViewMat(), lightProjMat );
-		Modules::sceneMan().updateQueues( frustum, 0x0, RenderingOrder::None,
-			SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
-		
-		// Create texture atlas if several splits are enabled
-		if( numMaps > 1 )
-		{
-			const int hsm = Modules::config().shadowMapSize / 2;
-			const int scissorXY[8] = { 0, 0,  hsm, 0,  hsm, hsm,  0, hsm };
-			const float transXY[8] = { -0.5f, -0.5f,  0.5f, -0.5f,  0.5f, 0.5f,  -0.5f, 0.5f };
-			
-			_renderDevice->setScissorTest( true );
-
-			// Select quadrant of shadow map
-			lightProjMat.scale( 0.5f, 0.5f, 1.0f );
-			lightProjMat.translate( transXY[i * 2], transXY[i * 2 + 1], 0.0f );
-			_renderDevice->setScissorRect( scissorXY[i * 2], scissorXY[i * 2 + 1], hsm, hsm );
-		}
-	
-		_lightMats[i] = lightProjMat * _curLight->getViewMat();
-		setupViewMatrices( _curLight->getViewMat(), lightProjMat );
-		
-		// Render
-		drawRenderables( _curLight->_shadowContext, 0, false, &frustum, 0x0, RenderingOrder::None, -1 );
-	}
-
-	// Map from post-projective space [-1,1] to texture space [0,1]
-	for( uint32 i = 0; i < numMaps; ++i )
-	{
-		_lightMats[i].scale( 0.5f, 0.5f, 1.0f );
-		_lightMats[i].translate( 0.5f, 0.5f, 0.0f );
-	}
-
-	// ********************************************************************************************
-
-	_renderDevice->setCullMode( RS_CULL_BACK );
-	_renderDevice->setScissorTest( false );
-		
-	_renderDevice->setViewport( prevVPX, prevVPY, prevVPWidth, prevVPHeight );
-	_renderDevice->setRenderBuffer( prevRendBuf );
-	_renderDevice->setColorWriteMask( true );
-}
-
-#endif
-
 // =================================================================================================
 // Occlusion Culling
 // =================================================================================================
@@ -1665,12 +1428,6 @@ void Renderer::bindPipeBuffer( uint32 rbObj, const string &sampler, uint32 bufIn
 		binding.bufIndex = bufIndex;
 
 		_pipeSamplerBindings.push_back( binding );
-
-// 		size_t len = std::min( sampler.length(), (size_t)63 );
-// 		strncpy_s( _pipeSamplerBindings.back().sampler, 63, sampler.c_str(), len );
-// 		_pipeSamplerBindings.back().sampler[len] = '\0';
-// 		_pipeSamplerBindings.back().rbObj = rbObj;
-// 		_pipeSamplerBindings.back().bufIndex = bufIndex;
 	}
 }
 
@@ -1709,11 +1466,7 @@ void Renderer::drawFSQuad( Resource *matRes, const string &shaderContext )
 	
 	if( !setMaterial( (MaterialResource *)matRes, shaderContext ) ) return;
 
-// 	_renderDevice->setVertexBuffer( 0, _vbFSPoly, 0, 12 );
-// 	_renderDevice->setIndexBuffer( 0, IDXFMT_16 );
-// 	_renderDevice->setVertexLayout( _vlPosOnly );
 	_renderDevice->setGeometry( _FSPolyGeo );
-
 	_renderDevice->draw( PRIM_TRILIST, 0, 3 );
 }
 
@@ -1786,11 +1539,7 @@ void Renderer::drawLightGeometry( const string &shaderContext, int theClass,
 			GPUTimer *timerShadows = Modules::stats().getGPUTimer( EngineStats::ShadowsGPUTime );
 			if( Modules::config().gatherTimeStats ) timerShadows->beginQuery( _frameID );
 
-#ifdef H3D_OLD_SHADOWMAPPING
-			updateShadowMapOld();
-#else
 			updateShadowMap();
-#endif
 			setupShadowMap( false );
 
 			timerShadows->endQuery();
@@ -1903,12 +1652,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 			GPUTimer *timerShadows = Modules::stats().getGPUTimer( EngineStats::ShadowsGPUTime );
 			if( Modules::config().gatherTimeStats ) timerShadows->beginQuery( _frameID );
 			
-#ifdef H3D_OLD_SHADOWMAPPING
-			updateShadowMapOld();
-#else
 			updateShadowMap();
-#endif
-
 			setupShadowMap( false );
 			curMatRes = 0x0;
 			
@@ -2201,8 +1945,6 @@ void Renderer::drawMeshes( uint32 firstItem, uint32 lastItem, const std::string 
 	// Draw occlusion proxies
 	if( occSet >= 0 )
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
-
-// 	rdi->setVertexLayout( 0 );
 }
 
 
@@ -2363,8 +2105,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 
 	// Draw occlusion proxies
 	if( occSet >= 0 )
-		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );
-	
+		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );	
 }
 
 
