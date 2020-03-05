@@ -554,16 +554,22 @@ void Renderer::prepareRenderViews()
 	// Clear old views 
 	scm.clearRenderViews();
 
+	// WARNING! Currently lighting will not be present in the first frame, because scene update will happen
+	// after lights addition to render views. If that behavior is not desirable uncomment the following statement (may reduce performance a bit)
+//	scm.updateNodes();
+
 	//
 	// Step 1. Add views for camera and lights based on their frustums
 	//
 	scm.addRenderView( RenderViewType::Camera, _curCamera, _curCamera->getFrustum() );
 
+	SceneNode *node = nullptr;
 	for ( size_t i = 0; i < scm._nodes.size(); ++i )
 	{
-		if ( scm._nodes[ i ]->_type != SceneNodeTypes::Light ) continue;
+		node = scm._nodes[ i ];
+		if ( !node || node->_type != SceneNodeTypes::Light ) continue;
 
-		LightNode *light = ( LightNode * ) scm._nodes[ i ];
+		LightNode *light = ( LightNode * ) node;
 		if ( _curCamera->getFrustum().cullFrustum( light->getFrustum() ) ) continue;
 
 		// Light is in current camera view, so add it as a render view 
