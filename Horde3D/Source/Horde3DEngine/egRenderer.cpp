@@ -569,8 +569,9 @@ void Renderer::prepareRenderViews()
 		node = scm._nodes[ i ];
 		if ( !node || node->_type != SceneNodeTypes::Light ) continue;
 
+		// Ignore lights that do not cross the camera frustum and are disabled
 		LightNode *light = ( LightNode * ) node;
-		if ( _curCamera->getFrustum().cullFrustum( light->getFrustum() ) ) continue;
+		if ( _curCamera->getFrustum().cullFrustum( light->getFrustum() ) || light->_flags & SceneNodeFlags::NoDraw ) continue;
 
 		// Light is in current camera view, so add it as a render view 
 		// Light's view should be culled with the camera frustum, so link the camera view
