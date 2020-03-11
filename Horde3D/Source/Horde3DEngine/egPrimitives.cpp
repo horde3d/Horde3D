@@ -13,6 +13,7 @@
 #include "egPrimitives.h"
 
 #include "utDebug.h"
+#include <array>
 
 
 namespace Horde3D {
@@ -191,7 +192,6 @@ bool Frustum::cullFrustum( const Frustum &frust ) const
 
 	return false;
 }
-
 
 void Frustum::calcAABB( Vec3f &mins, Vec3f &maxs ) const
 {

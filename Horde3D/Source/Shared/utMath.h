@@ -391,6 +391,11 @@ public:
 		return sqrtf( x * x + y * y + z * z );
 	}
 
+	float length_squared() const
+	{
+		return x * x + y * y + z * z;
+	}
+
 	Vec3f normalized() const
 	{
 		float invLen = 1.0f / length();

@@ -880,8 +880,8 @@ void SampleApplication::touchEventHandler( int evType, int touchPosX, int touchP
         
         if ( !data ) break;
 
-        float dx = touchPosX - data->lastPosX;
-        float dy = data->lastPosY - touchPosY;
+		float dx = ( float ) ( touchPosX - data->lastPosX );
+		float dy = ( float ) ( data->lastPosY - touchPosY );
 
         // Store touch position for later use
         data->lastPosX = touchPosX;

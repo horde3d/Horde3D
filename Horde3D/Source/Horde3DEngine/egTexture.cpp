@@ -223,7 +223,7 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		_flags |= ResourceFlags::NoTexCompression;
 		_texType = TextureTypes::Tex2D;
 		_sRGB = false;
-		_rbObj = rdi->createRenderBuffer( width, height, fmt, flags & ResourceFlags::TexDepthBuffer, 1, 0, _maxMipLevel );
+		_rbObj = rdi->createRenderBuffer( width, height, fmt, flags & ResourceFlags::TexDepthBuffer ? true : false, 1, 0, _maxMipLevel );
 		_texObject = rdi->getRenderBufferTex( _rbObj, 0 );
 	}
 	else
@@ -239,9 +239,10 @@ TextureResource::TextureResource( const string &name, uint32 width, uint32 heigh
 		                                 _maxMipLevel, _maxMipLevel > 0, false, _sRGB );
 
 		int nSlices = _texType != TextureTypes::TexCube ? 6 : 1;
-		for ( int mipLevel = 0; mipLevel <= _maxMipLevel; ++mipLevel ) {
+		for ( uint32 mipLevel = 0; mipLevel <= _maxMipLevel; ++mipLevel )
+		{
 			for (int slice = 0; slice < nSlices; ++slice ) {
-				rdi->uploadTextureData( _texObject, slice, mipLevel, pixels );
+				rdi->uploadTextureData( _texObject, slice, (int) mipLevel, pixels );
 			}
 		}
 

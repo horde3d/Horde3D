@@ -365,6 +365,10 @@ float StatManager::getStat( int param, bool reset )
 		value = _computeGPUTimer->getTimeMS();
 		if ( reset ) _computeGPUTimer->reset();
 		return value;
+	case EngineStats::CullingTime:
+		value = _cullingTimer.getElapsedTimeMS();
+		if ( reset ) _cullingTimer.reset();
+		return value;
 	default:
 		Modules::setError( "Invalid param for h3dGetStat" );
 		return Math::NaN;
@@ -404,6 +408,8 @@ Timer *StatManager::getTimer( int param )
 		return &_geoUpdateTimer;
 	case EngineStats::ParticleSimTime:
 		return &_particleSimTimer;
+	case EngineStats::CullingTime:
+		return &_cullingTimer;
 	default:
 		return 0x0;
 	}

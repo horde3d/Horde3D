@@ -34,10 +34,11 @@ MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 	_materialRes( meshTpl.matRes ), _primType( rdiPrimitiveTypes[ meshTpl.primType ] ),
 	_batchStart( meshTpl.batchStart ), _batchCount( meshTpl.batchCount ),
 	_vertRStart( meshTpl.vertRStart ), _vertREnd( meshTpl.vertREnd ),
-	_lodLevel(meshTpl.lodLevel), _parentModel(0x0)
+	_lodLevel(meshTpl.lodLevel), _parentModel(0x0) 
 {
 	_renderable = true;
 	_lodSupported = true;
+	_occlusionCullingSupported = true;
 
 	if( _materialRes != 0x0 )
 		_sortKey = (float)_materialRes->getHandle();
