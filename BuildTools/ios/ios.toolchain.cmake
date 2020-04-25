@@ -202,6 +202,8 @@ if(NOT DEFINED PLATFORM)
   endif()
 endif()
 
+set(CMAKE_SYSTEM_NAME "iOS")
+
 set(PLATFORM_INT "${PLATFORM}" CACHE STRING "Type of platform for which the build targets.")
 
 # Handle the case where we are targeting iOS and a version above 10.3.4 (32-bit support dropped officially)
@@ -387,8 +389,8 @@ execute_process(COMMAND xcodebuild -sdk ${CMAKE_OSX_SYSROOT} -version SDKVersion
 # CMAKE_OSX_SYSROOT. There does not appear to be a direct way to obtain
 # this information from xcrun or xcodebuild.
 if (NOT DEFINED CMAKE_DEVELOPER_ROOT AND NOT USED_CMAKE_GENERATOR MATCHES "Xcode")
-  get_filename_component(PLATFORM_SDK_DIR ${CMAKE_OSX_SYSROOT} PATH)
-  get_filename_component(CMAKE_DEVELOPER_ROOT ${PLATFORM_SDK_DIR} PATH)
+  get_filename_component(PLATFORM_SDK_DIR ${CMAKE_OSX_SYSROOT} DIRECTORY)
+  get_filename_component(CMAKE_DEVELOPER_ROOT ${PLATFORM_SDK_DIR} DIRECTORY)
 
   if (NOT DEFINED CMAKE_DEVELOPER_ROOT)
     message(FATAL_ERROR "Invalid CMAKE_DEVELOPER_ROOT: "

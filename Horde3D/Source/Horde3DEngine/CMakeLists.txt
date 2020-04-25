@@ -96,9 +96,15 @@ endif (USE_GLES3)
 # Add renderers, specified during build, in the config.h file
 configure_file( config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
-add_library(Horde3D SHARED
-	${HORDE3D_SOURCES}
-	)
+# For all platforms except iOS, engine is built as shared library
+if (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+	add_library(Horde3D STATIC ${HORDE3D_SOURCES} )
+else(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+# Other platforms
+	add_library(Horde3D SHARED
+		${HORDE3D_SOURCES}
+		)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
 
 option(RAPIDXML_NO_EXCEPTIONS "Disabling rapidxml exceptions will terminating application on xml parsing error" ON)
 if (RAPIDXML_NO_EXCEPTIONS)
@@ -171,4 +177,17 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
 	string( REPLACE "libGLESv2.so" "libGLESv3.so"  OPENGLES2_LIBRARIES ${OPENGLES2_LIBRARIES} )
 
 	target_link_libraries(Horde3D ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES} ${log-lib} ${HORDE3D_EXTENSION_LIBS})
+endif()
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+	FIND_PACKAGE(OpenGLESv2 REQUIRED) # searches for GLES3 library actually
+			  
+	# add additional include paths for egl and gles
+	include_directories(${EGL_INCLUDE_DIR} ${OPENGLES2_INCLUDE_DIR})
+
+	# For ES3, Android requires non-standard library libGLESv3, which CMAKE does not correctly find. Hack it here instead.
+#	string( REPLACE "libGLESv2.so" "libGLESv3.so"  OPENGLES2_LIBRARIES ${OPENGLES2_LIBRARIES} )
+
+	target_link_libraries(Horde3D ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
+	target_link_libraries(Horde3D "-framework OpenGLES")
 endif()

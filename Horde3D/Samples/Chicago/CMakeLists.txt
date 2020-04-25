@@ -23,6 +23,20 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
 	# Create apk
 	android_create_apk( Chicago "com.horde3d.chicago" "${PROJECT_BINARY_DIR}/Android/Chicago" "" 
 		${HORDE3D_ANDROID_PROJECT_PATH} "${PROJECT_BINARY_DIR}/Binaries/Content" )
+elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+	add_executable(Chicago 
+		app.cpp
+		crowd.cpp
+		main.cpp
+	)
+
+	# Attach required frameworks
+	target_link_libraries( Chicago "-framework AudioToolbox" "-framework AVFoundation" "-framework CoreAudio"
+									"-framework CoreAudioKit" "-framework CoreFoundation" "-framework CoreGraphics"
+									"-framework CoreMotion" "-framework CoreVideo" "-framework Foundation"
+									"-framework GameController" "-framework QuartzCore" "-framework UiKit"
+									"-framework Metal" "-framework OpenGLES")
+
 else()
 	add_executable(Chicago WIN32 MACOSX_BUNDLE
 		app.cpp
