@@ -47,13 +47,13 @@ std::string extractResourcePath( char *fullPath )
 {
 	std::string s( fullPath );
 
-#ifdef WIN32
+#ifdef PLATFORM_WIN
     const char delim = '\\';
 #else
     const char delim = '/';
 #endif
 
-#ifdef __APPLE__
+#ifdef PLATFORM_MAC
     // On MacOSX the application is in a 'bundle' and the path has the form:
     //     "SampleApplication.app/Contents/MacOS/SampleApplication"
     const unsigned int nbRfind = 4;
@@ -61,8 +61,9 @@ std::string extractResourcePath( char *fullPath )
     const unsigned int nbRfind = 1;
 #endif
    
-#ifdef __ANDROID__
-    // Currently all assets are inside the apk in assets/Content folder. SDL searches in assets folder automatically. 
+#if defined( PLATFORM_ANDROID ) || defined( PLATFORM_IOS )
+    // Android: Currently all assets are inside the apk in assets/Content folder. SDL searches in assets folder automatically.
+    // IOS: Content folder should be at the top of the bundle
     return "Content";
 #endif
 
@@ -307,7 +308,7 @@ WindowCreateParameters SampleApplication::setupWindowParameters()
 
 	// Override fullscreen option for Android and IOS, because apps are pretty much always fullscreen there
 	Platform p = _backend->getPlatform();
-	if ( p == Platform::Android || p == Platform::IOS ) winParams.fullScreen = true;
+	if ( p == Platform::Android ) winParams.fullScreen = true;
 
 	return std::move( winParams );
 }
