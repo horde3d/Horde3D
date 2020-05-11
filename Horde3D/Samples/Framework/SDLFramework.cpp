@@ -392,6 +392,8 @@ bool SDLBackend::init( const BackendInitParameters &params )
 			SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, params.majorVersion );
 			SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, params.minorVersion );
 
+            SDL_GL_SetAttribute( SDL_GL_RETAINED_BACKING, 0 );
+            SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
 			break;
 		default:
 			return false;
@@ -414,8 +416,9 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	if ( _curPlatform == Platform::Android || _curPlatform == Platform::IOS )
 	{
 		// Currently force to landscape mode
-		SDL_SetHint( SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight" );
+//		SDL_SetHint( SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight" );
 		SDL_SetHint( SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH, "1" );
+        SDL_SetHint( SDL_HINT_TOUCH_MOUSE_EVENTS, "0" );
 	}
 
 	if ( params.fullScreen )
@@ -428,7 +431,7 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	else
 	{
 		_wnd = SDL_CreateWindow( params.windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, params.width, 
-								 params.height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
+								 params.height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_BORDERLESS /*| SDL_WINDOW_ALLOW_HIGHDPI*/);
 	}
 
 	if ( !_wnd )
@@ -468,7 +471,13 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 
 	// Store window size
 	_currentWidth = params.width; _currentHeight = params.height;
-
+    
+    /* The window size and drawable size may be different when highdpi is enabled,
+     * due to the increased pixel density of the drawable. */
+    SDL_GL_GetDrawableSize(_wnd, &_currentWidth, &_currentHeight);
+    
+    SDL_GL_MakeCurrent(_wnd, _ctx);
+    
 	// Get correct mouse position
 	int tempX, tempY;
 	SDL_PumpEvents();
@@ -498,7 +507,9 @@ void SDLBackend::setWindowTitle( void *handle, const char *title )
 void SDLBackend::setCursorVisible( void *handle, bool visible )
 {
 //	SDL_ShowCursor( visible );
-	SDL_SetRelativeMouseMode( visible ? SDL_FALSE : SDL_TRUE );
+#if !defined ( PLATFORM_IOS )
+    SDL_SetRelativeMouseMode( visible ? SDL_FALSE : SDL_TRUE );
+#endif
 }
 
 void SDLBackend::getSize( void *handle, int *width, int *height )
@@ -522,6 +533,11 @@ void SDLBackend::swapBuffers( void *handle )
 {
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
+#ifdef PLATFORM_IOS
+    // Make sure that
+    SDL_GL_MakeCurrent( wnd, _ctx );
+#endif
+    
 	SDL_GL_SwapWindow( wnd );
 }
 

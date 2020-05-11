@@ -23,12 +23,38 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
 	# Create apk
 	android_create_apk( Chicago "com.horde3d.chicago" "${PROJECT_BINARY_DIR}/Android/Chicago" "" 
 		${HORDE3D_ANDROID_PROJECT_PATH} "${PROJECT_BINARY_DIR}/Binaries/Content" )
+
 elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
-	add_executable(Chicago 
+	set(RESOURCES
+		"${PROJECT_BINARY_DIR}/Binaries/Content"
+		${HORDE3D_IOS_TOOLS_PATH}/LaunchScreen.storyboard
+		${HORDE3D_IOS_TOOLS_PATH}/Default.png
+	)
+
+	add_executable(Chicago MACOSX_BUNDLE
 		app.cpp
 		crowd.cpp
 		main.cpp
+		${RESOURCES}
 	)
+
+	# Add plist
+	set_target_properties(Chicago PROPERTIES
+        MACOSX_BUNDLE ON
+		MACOSX_BUNDLE_INFO_PLIST ${HORDE3D_IOS_TOOLS_PATH}/BundleInfo.plist.in)
+		
+	# Include ios macro
+	include( "ios" )
+
+    # Set development team
+    SET_XCODE_PROPERTY(Chicago CODE_SIGN_IDENTITY ${IOS_CODE_SIGN_IDENTITY} )
+	SET_XCODE_PROPERTY(Chicago DEVELOPMENT_TEAM ${IOS_DEVELOPMENT_TEAM})
+
+	SET_XCODE_PROPERTY(Chicago ENABLE_BITCODE FALSE)
+
+	SET_XCODE_PROPERTY(Chicago RESOURCE ${RESOURCES})
+	SET(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${IOS_DEVELOPMENT_TEAM})
+	set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 	# Attach required frameworks
 	target_link_libraries( Chicago "-framework AudioToolbox" "-framework AVFoundation" "-framework CoreAudio"
@@ -38,6 +64,7 @@ elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 									"-framework Metal" "-framework OpenGLES")
 
 else()
+	# Desktop platforms
 	add_executable(Chicago WIN32 MACOSX_BUNDLE
 		app.cpp
 		crowd.cpp
