@@ -21,7 +21,47 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
     # Create apk
     android_create_apk( Knight "com.horde3d.knight" "${PROJECT_BINARY_DIR}/Android/Knight" "" 
                         ${HORDE3D_ANDROID_PROJECT_PATH} "${PROJECT_BINARY_DIR}/Binaries/Content" )
+                        
+elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+    set(RESOURCES
+        "${PROJECT_BINARY_DIR}/Binaries/Content"
+        ${HORDE3D_IOS_TOOLS_PATH}/LaunchScreen.storyboard
+        ${HORDE3D_IOS_TOOLS_PATH}/Default.png
+    )
+
+    add_executable(Knight MACOSX_BUNDLE
+        app.cpp
+        main.cpp
+        ${RESOURCES}
+    )
+
+    # Add plist
+    set_target_properties(Knight PROPERTIES
+        MACOSX_BUNDLE ON
+        MACOSX_BUNDLE_INFO_PLIST ${HORDE3D_IOS_TOOLS_PATH}/BundleInfo.plist.in)
+        
+    # Include ios macro
+    include( "ios" )
+
+    # Set development team
+    SET_XCODE_PROPERTY(Knight CODE_SIGN_IDENTITY ${IOS_CODE_SIGN_IDENTITY} )
+    SET_XCODE_PROPERTY(Knight DEVELOPMENT_TEAM ${IOS_DEVELOPMENT_TEAM})
+
+    SET_XCODE_PROPERTY(Knight ENABLE_BITCODE FALSE)
+
+    SET_XCODE_PROPERTY(Knight RESOURCE ${RESOURCES})
+    SET(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${IOS_DEVELOPMENT_TEAM})
+    set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+
+    # Attach required frameworks
+    target_link_libraries( Knight "-framework AudioToolbox" "-framework AVFoundation" "-framework CoreAudio"
+                                    "-framework CoreAudioKit" "-framework CoreFoundation" "-framework CoreGraphics"
+                                    "-framework CoreMotion" "-framework CoreVideo" "-framework Foundation"
+                                    "-framework GameController" "-framework QuartzCore" "-framework UiKit"
+                                    "-framework Metal" "-framework OpenGLES")
+
 else()
+    # Desktop platforms
     add_executable(Knight WIN32 MACOSX_BUNDLE
         app.cpp
         main.cpp
