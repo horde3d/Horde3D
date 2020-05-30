@@ -1298,7 +1298,11 @@ void main( void )
 #else
 	vec3 normal = tsbNormal;
 #endif
-	
+
+	// to make ios shader compiler happy
+	vec3 newPos = pos.xyz;
+	vec3 newVsPos = vsPos.xyz;
+
 	fragColor.rgb = albedo.rgb * texture( ambientMap, normal ).rgb;
 	
 #ifdef _F04_EnvMapping
