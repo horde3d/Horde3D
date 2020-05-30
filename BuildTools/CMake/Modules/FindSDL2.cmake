@@ -190,6 +190,20 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 		)
 
 		MESSAGE(STATUS "External SDL project done")
+	elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+		# Create external project for sdl with parameters specific for android
+		ExternalProject_Add(project_sdl
+		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_OSX_ARCHITEXTURES=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH} -DCMAKE_FRAMEWORK_PATH=${CMAKE_FRAMEWORK_PATH}
+		LOG_DOWNLOAD 1
+		LOG_UPDATE 1
+		LOG_CONFIGURE 1
+		LOG_BUILD 1
+		LOG_TEST 1
+		LOG_INSTALL 1
+		)
+
+		MESSAGE(STATUS "External SDL project done")
 	else() # other platforms
 		ExternalProject_Add(project_sdl
 			URL https://www.libsdl.org/release/SDL2-2.0.9.zip
