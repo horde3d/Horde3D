@@ -32,6 +32,8 @@ ChicagoSample::ChicagoSample( int argc, char** argv ) :
 {
     _x = 15; _y = 3; _z = 20;
     _rx = -10; _ry = 60;
+
+	_curPipeline = 1;
 }
 
 
