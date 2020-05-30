@@ -308,7 +308,7 @@ WindowCreateParameters SampleApplication::setupWindowParameters()
 
 	// Override fullscreen option for Android and IOS, because apps are pretty much always fullscreen there
 	Platform p = _backend->getPlatform();
-	if ( p == Platform::Android ) winParams.fullScreen = true;
+	if ( p == Platform::Android || p == Platform::IOS ) winParams.fullScreen = true;
 
 	return std::move( winParams );
 }

@@ -426,12 +426,12 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 		SDL_DisplayMode display;
 		SDL_GetDesktopDisplayMode( 0, &display );
 
-		_wnd = SDL_CreateWindow( params.windowTitle.c_str(), 0, 0, display.w, display.h, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN );
+		_wnd = SDL_CreateWindow( params.windowTitle.c_str(), 0, 0, display.w, display.h, SDL_WINDOW_OPENGL | SDL_WINDOW_FULLSCREEN | SDL_WINDOW_ALLOW_HIGHDPI);
 	}
 	else
 	{
 		_wnd = SDL_CreateWindow( params.windowTitle.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, params.width, 
-								 params.height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_BORDERLESS /*| SDL_WINDOW_ALLOW_HIGHDPI*/);
+								 params.height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE /*| SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALLOW_HIGHDPI*/);
 	}
 
 	if ( !_wnd )
@@ -476,7 +476,7 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
      * due to the increased pixel density of the drawable. */
     SDL_GL_GetDrawableSize(_wnd, &_currentWidth, &_currentHeight);
     
-    SDL_GL_MakeCurrent(_wnd, _ctx);
+ //   SDL_GL_MakeCurrent(_wnd, _ctx);
     
 	// Get correct mouse position
 	int tempX, tempY;
@@ -516,8 +516,14 @@ void SDLBackend::getSize( void *handle, int *width, int *height )
 {
 	SDL_Window *wnd = ( SDL_Window * ) handle;
 
+#ifdef PLATFORM_IOS
+    /* The window size and drawable size may be different when highdpi is enabled,
+     * due to the increased pixel density of the drawable. */
+    SDL_GL_GetDrawableSize( wnd, width, height);
+#else
 	SDL_GetWindowSize( wnd, width, height );
-
+#endif
+    
 	_currentWidth = *width; _currentHeight = *height;
 }
 
