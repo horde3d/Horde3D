@@ -43,6 +43,11 @@ if(HORDE3D_BUILD_EXAMPLES)
     if(HORDE3D_USE_SDL)
         # Look for required SDL library.
         option(HORDE3D_FORCE_DOWNLOAD_SDL "Force linking Horde3D to a downloaded version of SDL" OFF)
+
+        IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+            set( HORDE3D_FORCE_DOWNLOAD_SDL OFF )
+        endif()
+
         find_package(SDL2)
         IF(SDL2_FOUND)
             include_directories(${SDL2_INCLUDE_DIR})
