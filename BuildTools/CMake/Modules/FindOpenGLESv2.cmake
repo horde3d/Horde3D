@@ -34,8 +34,45 @@ ELSE (WIN32)
 
   IF (APPLE)
 
-	create_search_paths(/Developer/Platforms)
-	findpkg_framework(OpenGLES2)
+  # Construct search paths for includes and libraries from a PREFIX_PATH
+  macro(create_search_paths PREFIX)
+  foreach(dir ${${PREFIX}_PREFIX_PATH})
+    set(${PREFIX}_INC_SEARCH_PATH ${${PREFIX}_INC_SEARCH_PATH}
+      ${dir}/include ${dir}/include/${PREFIX} ${dir}/Headers)
+    set(${PREFIX}_LIB_SEARCH_PATH ${${PREFIX}_LIB_SEARCH_PATH}
+      ${dir}/lib ${dir}/lib/${PREFIX} ${dir}/Libs)
+  endforeach(dir)
+  set(${PREFIX}_FRAMEWORK_SEARCH_PATH ${${PREFIX}_PREFIX_PATH})
+  endmacro(create_search_paths)
+
+  # Slightly customised framework finder
+MACRO(findpkg_framework fwk)
+IF(APPLE)
+  SET(${fwk}_FRAMEWORK_PATH
+    ${${fwk}_FRAMEWORK_SEARCH_PATH}
+    ${CMAKE_FRAMEWORK_PATH}
+    ~/Library/Frameworks
+    /Library/Frameworks
+    /System/Library/Frameworks
+    /Network/Library/Frameworks
+    /Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS3.0.sdk/System/Library/Frameworks/
+    /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks;
+  )
+  FOREACH(dir ${${fwk}_FRAMEWORK_PATH})
+    SET(fwkpath ${dir}/${fwk}.framework)
+    IF(EXISTS ${fwkpath})
+      SET(${fwk}_FRAMEWORK_INCLUDES ${${fwk}_FRAMEWORK_INCLUDES}
+        ${fwkpath}/Headers ${fwkpath}/PrivateHeaders)
+      if (NOT ${fwk}_LIBRARY_FWK)
+        SET(${fwk}_LIBRARY_FWK "-framework ${fwk}")
+      endif ()
+    ENDIF(EXISTS ${fwkpath})
+  ENDFOREACH(dir)
+ENDIF(APPLE)
+ENDMACRO(findpkg_framework)
+
+	create_search_paths(/Applications/Xcode.app/Contents/Developer/Platforms)
+	findpkg_framework(OpenGLES)
     set(OPENGLES2_gl_LIBRARY "-framework OpenGLES")
 
   ELSE(APPLE)

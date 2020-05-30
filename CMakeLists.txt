@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.7) # Native support for Android in CMAKE requires at least version 3.7.
+cmake_minimum_required(VERSION 3.15) # Native support for Android in CMAKE requires at least version 3.7.
 
 # Project details.
 project(Horde3D)
@@ -43,6 +43,11 @@ if(HORDE3D_BUILD_EXAMPLES)
     if(HORDE3D_USE_SDL)
         # Look for required SDL library.
         option(HORDE3D_FORCE_DOWNLOAD_SDL "Force linking Horde3D to a downloaded version of SDL" OFF)
+
+        IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+            set( HORDE3D_FORCE_DOWNLOAD_SDL OFF )
+        endif()
+
         find_package(SDL2)
         IF(SDL2_FOUND)
             include_directories(${SDL2_INCLUDE_DIR})
@@ -116,6 +121,21 @@ IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
     endif()
 #     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}) 
 #     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/android/app/src/main/jniLibs/${ANDROID_ABI} )
+ENDIF()
+
+IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+    include( "ios" )
+
+    SET(HORDE3D_IOS_TOOLS_PATH "${PROJECT_SOURCE_DIR}/BuildTools/ios")
+
+    set(IOS_CODE_SIGN_IDENTITY "Apple Development" CACHE STRING "Code sign (used for application signing)")
+    set(IOS_DEVELOPMENT_TEAM "" CACHE STRING "Development team id (used for application signing)")
+
+    # Set rendering interface to GLES3
+    set(USE_GLES3 TRUE)
+	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GLES3 ON CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
 ENDIF()
 
 IF(MSVC)

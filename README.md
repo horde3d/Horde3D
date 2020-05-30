@@ -109,6 +109,40 @@ CMake GUI usage is recommended. Following instruction depends on using GUI for b
 - On Windows, Open the cmd.exe, go to the created folder and use the full path to make.exe to launch build process. Example: **Android NDK/prebuilt/windows-x86_64/bin/make.exe -j4**. 
 - On Linux, open the terminal, go to the created folder and type **make**. Please note that using **j<number of cores>** parameter for multithreaded compilation **requires** you to input ANDROID_APK_SIGNER_KEYSTORE_PASS and ANDROID_APK_SIGNER_KEY_PASS in CMake, otherwise you will get a compilation error on apk signing process.
 
+### Building for iOS
+
+Currently, building is supported only on macOS. Only iPhone target is supported for now, iPad and tvOS are not tested,
+
+A new version of CMAKE is recommended, Cmake 3.16 was tested and was working correctly.
+
+Requirements:
+
+- [XCode](https://developer.apple.com/xcode/resources/) 
+- [SDL (for samples)](https://www.libsdl.org/download-2.0.php)
+
+CMake GUI usage is recommended. Following instruction depends on using GUI for building.
+
+SDL is required for samples. Automatic download and build is disabled for iOS as SDL fails to build with CMAKE (**HORDE3D_FORCE_DOWNLOAD_SDL** will have no effect ). Please download SDL manually and build it with XCode project, located in <SDL folder>/XCode-iOS/SDL. In **Build Settings** set **Enable Bitcode** option to **No**, 
+
+- Select Horde3D source folder and folder where cmake intermediates and binaries would be stored
+- Select the toolchain file that is located in the **<Horde3D folder>/BuildTools/ios/ios.toolchain.cmake**
+- Hit **Configure** button
+- Check HORDE3D_USE_GLES3 flag and uncheck HORDE3D_USE_GL2 and HORDE3D_USE_GL4 flags.
+- Set SDL2 include path to <SDL folder>/include and SDL library to the generated libSDL2.a file (it is usually located in /Users/<User>/Library/Developer/Xcode/DerivedData/SDL-<arbitrary letters>/Build/Products/Debug-iphoneos/libSDL2.a)
+- In IOS category set **IOS_CODE_SIGN_IDENTITY** and **IOS_DEVELOPMENT_TEAM** properties. Details on checking the values of these parameters are provided below.
+- Hit **Generate** button. 
+- Now XCode project is generated and can be launched.
+
+To get your development team id go to Applications -> Utilities -> Keychain Access.
+Under the 'login' Keychain, go into the 'Certificates' category.
+
+Scroll to find your development or distribution certificate. It should be something like that:
+Apple Development: <email>(<some letters and numbers>)
+
+Double click on this certificate. "Organizational Unit" is the Team ID.
+
+Please note that **ParticleVortex** and **Tessellator** sample will not run on iOS as OpenGL ES 3.2 is not available. 
+
 ### Build Horde3D scene editor
 
 There is also a scene editor available for Horde3D. To enabling build of the editor, first make sure you have the Qt 4.8 or any newer Qt 5.x SDK installed. To enable creating makefiles
@@ -117,7 +151,7 @@ for the editor via cmake set the HORDE3D_BUILD_EDITOR flag to ON (default is OFF
     cmake -DHORDE3D_BUILD_EDITOR=ON
 
 As the editor needs Lua as a dependency you can either make sure the Lua development files can be found by cmake, or Lua will be automatically downloaded by CMake.
-  
+
 ## What's next
 
 Here are some quick links to help you get started:

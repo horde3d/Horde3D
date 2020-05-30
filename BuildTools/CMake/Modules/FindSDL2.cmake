@@ -144,9 +144,9 @@ IF(SDL2_LIBRARY_TEMP)
 	# I think it has something to do with the CACHE STRING.
 	# So I use a temporary variable until the end so I can set the
 	# "real" variable in one-shot.
-	IF(APPLE)
+	IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} "-framework Cocoa")
-	ENDIF(APPLE)
+	ENDIF()
 
 	# For threads, as mentioned Apple doesn't need this.
 	# In fact, there seems to be a problem if I used the Threads package
@@ -181,6 +181,20 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 		ExternalProject_Add(project_sdl
 		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
 		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DANDROID_ABI=${ANDROID_ABI} -DANDROID_DL_LIBRARY=${ANDROID_DL_LIBRARY}
+		LOG_DOWNLOAD 1
+		LOG_UPDATE 1
+		LOG_CONFIGURE 1
+		LOG_BUILD 1
+		LOG_TEST 1
+		LOG_INSTALL 1
+		)
+
+		MESSAGE(STATUS "External SDL project done")
+	elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+		# Create external project for sdl with parameters specific for android
+		ExternalProject_Add(project_sdl
+		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_OSX_ARCHITEXTURES=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH} -DCMAKE_FRAMEWORK_PATH=${CMAKE_FRAMEWORK_PATH}
 		LOG_DOWNLOAD 1
 		LOG_UPDATE 1
 		LOG_CONFIGURE 1
@@ -248,9 +262,11 @@ ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 
 	FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
 
+	get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+
 	# Copy sdl lib to output folder, where other binaries reside
 	IF(MSVC)
-		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+		
 		MESSAGE("${SDL_LIB_PATH}")
 
 		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
@@ -259,12 +275,20 @@ ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 
 	# For android make sdl library path available for other projects (used for samples in android build)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
-		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+#		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
 		MESSAGE("${SDL_LIB_PATH}")
 
 	#	file(COPY ${SDL_LIB_PATH}/libSDL2.so DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}) 
 	ENDIF()
 
+	# IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+	# 	# Attach required frameworks
+	# 	target_link_libraries( SDL2_LIBRARY "-framework AudioToolbox" "-framework AVFoundation" "-framework CoreAudio"
+	# 										"-framework CoreAudioKit" "-framework CoreFoundation" "-framework CoreGraphics"
+	# 										"-framework CoreMotion" "-framework CoreVideo" "-framework Foundation"
+	# 										"-framework GameController" "-framework QuartzCore" "-framework UiKit"
+	# 										"-framework Metal" "-framework OpenGLES")
+	# ENDIF()
 ENDIF(HORDE3D_FORCE_DOWNLOAD_SDL)
 
 

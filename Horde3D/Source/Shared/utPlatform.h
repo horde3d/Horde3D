@@ -182,7 +182,7 @@ namespace StaticAssert
 #endif
 
 // Locale independent version of atof (taking always dot as decimal separator)
-#ifdef PLATFORM_MAC
+#if defined( PLATFORM_MAC ) || defined ( PLATFORM_IOS )
 	#include <xlocale.h>
 #endif
 inline float toFloat(const char* str)

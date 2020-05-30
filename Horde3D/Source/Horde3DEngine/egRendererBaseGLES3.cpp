@@ -406,6 +406,9 @@ bool RenderDeviceGLES3::init()
 	_caps.texBPTC = glESExt::EXT_texture_compression_bptc;
 	_caps.texASTC = glESExt::KHR_texture_compression_astc;
 
+    // Get the currently bound frame buffer object.
+    glGetIntegerv( GL_FRAMEBUFFER_BINDING, &_defaultFBO );
+    
 	// Find supported depth format
 	_depthFormat = GL_DEPTH_COMPONENT32F;
 	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0, false ); 
