@@ -306,6 +306,7 @@ void OverlayRenderer::showFrameStats( MaterialResource *fontMatRes, MaterialReso
 	static float shadowsGPUTime = 0;
 	static float particleGPUTime = 0;
 	static float computeGPUTime = 0;
+	static float cullingTime = 0;
 
 	// Calculate FPS
 	float curFrameTime = Modules::stats().getStat( EngineStats::FrameTime, true );
@@ -324,6 +325,7 @@ void OverlayRenderer::showFrameStats( MaterialResource *fontMatRes, MaterialReso
 		shadowsGPUTime = Modules::stats().getStat( EngineStats::ShadowsGPUTime, true );
 		particleGPUTime = Modules::stats().getStat( EngineStats::ParticleGPUTime, true );
 		computeGPUTime = Modules::stats().getStat( EngineStats::ComputeGPUTime, true );
+		cullingTime = Modules::stats().getStat( EngineStats::CullingTime, true );;
 		timer = 0;
 	}
 	else
@@ -332,6 +334,7 @@ void OverlayRenderer::showFrameStats( MaterialResource *fontMatRes, MaterialReso
 		Modules::stats().getStat( EngineStats::AnimationTime, true );
 		Modules::stats().getStat( EngineStats::GeoUpdateTime, true );
 		Modules::stats().getStat( EngineStats::ParticleSimTime, true );
+		Modules::stats().getStat( EngineStats::CullingTime, true );
 	}
 
 	if ( mode > 0 )
@@ -376,7 +379,7 @@ void OverlayRenderer::showFrameStats( MaterialResource *fontMatRes, MaterialReso
 		addInfoBoxRow( "Geometry", text.str().c_str() );
 
 		// CPU time
-		beginInfoBox( 0.03f, 0.44f, 0.32f, 4, "CPU Time", fontMatRes, panelMatRes );
+		beginInfoBox( 0.03f, 0.44f, 0.32f, 5, "CPU Time", fontMatRes, panelMatRes );
 
 		// Frame time
 		text.str( "" );
@@ -398,8 +401,13 @@ void OverlayRenderer::showFrameStats( MaterialResource *fontMatRes, MaterialReso
 		text << particleSimTime << "ms";
 		addInfoBoxRow( "Particles", text.str().c_str() );
 
+		// Culling time
+		text.str( "" );
+		text << cullingTime << "ms";
+		addInfoBoxRow( "Culling", text.str().c_str() );
+
 		// GPU time
-		beginInfoBox( 0.03f, 0.65f, 0.32f, 4, "GPU Time", fontMatRes, panelMatRes );
+		beginInfoBox( 0.03f, 0.68f, 0.32f, 4, "GPU Time", fontMatRes, panelMatRes );
 
 		// Forward and deferred lights
 		text.str( "" );

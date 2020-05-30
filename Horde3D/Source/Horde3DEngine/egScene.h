@@ -117,6 +117,9 @@ public:
 	virtual uint32 calcLodLevel( const Vec3f &viewPoint ) const;
 	virtual bool checkLodCorrectness( uint32 lodLevel ) const;
 
+	bool checkOcclusionSupported() { return _occlusionCullingSupported; }
+	uint32 getOcclusionResult( uint32 occlusionSet );
+
 	bool checkLodSupport() { return _lodSupported; }
 
 	virtual bool canAttach( SceneNode &parent ) const;
@@ -150,6 +153,10 @@ protected:
 protected:
 	Matrix4f                    _relTrans, _absTrans;  // Transformation matrices
 	std::vector< SceneNode * >  _children;  // Child nodes
+
+	std::vector< uint32 >		_occQueries;
+	std::vector< uint32 >		_occQueriesLastVisited;
+
 	std::string                 _name;
 	std::string                 _attachment;  // User defined data
 	BoundingBox                 _bBox;  // AABB in world space
@@ -164,7 +171,7 @@ protected:
 	bool                        _transformed;
 	bool                        _renderable;
 	bool						_lodSupported;
-
+	bool						_occlusionCullingSupported;
 
 	friend class SceneManager;
 	friend class SpatialGraph;
@@ -204,6 +211,14 @@ protected:
 // Spatial Graph
 // =================================================================================================
 
+enum class RenderViewType
+{
+	Unknown,
+	Camera,
+	Light,
+	Shadow
+};
+
 struct RenderQueueItem
 {
 	SceneNode  *node;
@@ -212,10 +227,34 @@ struct RenderQueueItem
 
 	RenderQueueItem() {}
 	RenderQueueItem( int type, float sortKey, SceneNode *node )
-		: node( node ), type( type ), sortKey( sortKey ) {}
+		: node( node ), type( type ), sortKey( sortKey )
+	{
+	}
 };
 
 typedef std::vector< RenderQueueItem > RenderQueue;
+
+struct RenderView
+{
+	Frustum			frustum;
+	SceneNode		*node;
+
+	BoundingBox		objectsAABB;
+	BoundingBox		auxObjectsAABB; // auxiliary aabb, for objects that passed additional filtering.
+									// Currently used for light types, ignores objects with NoCastShadow flag
+	RenderQueue		objects;
+
+	RenderViewType	type;
+	int				linkedView;
+
+	uint32			auxFilter; // additional filter information
+
+	bool			updated;
+
+	RenderView();
+
+	RenderView( RenderViewType viewType, SceneNode *viewNode, const Frustum &f, int link, uint32 additionalFilter );
+};
 
 
 class SpatialGraph
@@ -223,21 +262,41 @@ class SpatialGraph
 public:
 	SpatialGraph();
 	
-	void addNode( SceneNode &sceneNode );
-	void removeNode( uint32 sgHandle );
-	void updateNode( uint32 sgHandle );
+	virtual ~SpatialGraph();
 
-	void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
+	virtual void addNode( SceneNode &sceneNode );
+	virtual void removeNode( uint32 sgHandle );
+	virtual void updateNode( uint32 sgHandle );
+
+	virtual void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
 	                   RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderQueue );
 
-	std::vector< SceneNode * > &getLightQueue() { return _lightQueue; }
-	RenderQueue &getRenderQueue() { return _renderQueue; }
+	virtual void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false );
 
+	// Render view handling
+	void clearViews();
+	int addView( RenderViewType type, SceneNode *node, const Frustum &f, int link, uint32 additionalFilter );
+	void setCurrentView( int viewID );
+	int getRenderViewCount() { return _totalViews; }
+
+	void sortViewObjects( RenderingOrder::List order );
+	void sortViewObjects( int viewID, RenderingOrder::List order );
+
+	std::vector< RenderView > &getRenderViews() { return _views; }
+
+	std::vector< SceneNode * > &getLightQueue() { return _lightQueue; }
+	RenderQueue &getRenderQueue();
 protected:
 	std::vector< SceneNode * >     _nodes;		// Renderable nodes and lights
 	std::vector< uint32 >          _freeList;
+
+	std::vector< RenderView >	   _views;
+
 	std::vector< SceneNode * >     _lightQueue;
 	RenderQueue                    _renderQueue;
+
+	int							   _currentView;
+	int							   _totalViews;
 };
 
 
@@ -270,15 +329,14 @@ public:
 	SceneManager();
 	~SceneManager();
 
+	void registerSpatialGraph( SpatialGraph *graph );
+
 	void registerNodeType( int nodeType, const std::string &typeString, NodeTypeParsingFunc pf,
 	                       NodeTypeFactoryFunc ff );
 	NodeRegEntry *findType( int type );
 	NodeRegEntry *findType( const std::string &typeString );
 	
 	void updateNodes();
-	void updateSpatialNode( uint32 sgHandle ) { _spatialGraph->updateNode( sgHandle ); }
-	void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
-	                   RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderableQueue );
 	
 	NodeHandle addNode( SceneNode *node, SceneNode &parent );
 	NodeHandle addNodes( SceneNode &parent, SceneGraphResource &sgRes );
@@ -296,11 +354,30 @@ public:
 
 	SceneNode &getRootNode() const { return *_nodes[0]; }
 	SceneNode &getDefCamNode() const { return *_nodes[1]; }
-	std::vector< SceneNode * > &getLightQueue() const { return _spatialGraph->getLightQueue(); }
-	RenderQueue &getRenderQueue() const { return _spatialGraph->getRenderQueue(); }
 	
 	SceneNode *resolveNodeHandle( NodeHandle handle ) const
 		{ return (handle != 0 && (unsigned)(handle - 1) < _nodes.size()) ? _nodes[handle - 1] : 0x0; }
+
+	//
+	// Spatial graph related functions
+	//
+	void updateSpatialNode( uint32 sgHandle ) { _spatialGraph->updateNode( sgHandle ); }
+
+	void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false );
+	void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
+		RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderableQueue );
+
+	void sortViewObjects( RenderingOrder::List order );
+	void sortViewObjects( int viewID, RenderingOrder::List order );
+
+	int addRenderView( RenderViewType type, SceneNode *node, const Frustum &f, int link = -1, uint32 additionalFilter = 0 );
+	std::vector< RenderView > &getRenderViews() const { return _spatialGraph->getRenderViews(); }
+	void clearRenderViews();
+	int getActiveRenderViewCount() { return _spatialGraph->getRenderViewCount(); }
+
+	void setCurrentView( int viewID );
+	std::vector< SceneNode * > &getLightQueue() const { return _spatialGraph->getLightQueue(); }
+	RenderQueue &getRenderQueue() const { return _spatialGraph->getRenderQueue(); }
 
 protected:
 	NodeHandle parseNode( SceneNodeTpl &tpl, SceneNode *parent );

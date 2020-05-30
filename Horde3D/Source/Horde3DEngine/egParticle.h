@@ -190,9 +190,6 @@ protected:
 	float                    *_parSizesANDRotations;
 	float                    *_parColors;
 
-	std::vector< uint32 >    _occQueries;
-	std::vector< uint32 >    _lastVisited;
-
 	friend class SceneManager;
 	friend class Renderer;
 };

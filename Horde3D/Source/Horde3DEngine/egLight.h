@@ -102,8 +102,8 @@ private:
 	uint32                 _shadowMapCount;
 	float                  _shadowSplitLambda, _shadowMapBias;
 
-	std::vector< uint32 >  _occQueries;
-	std::vector< uint32 >  _lastVisited;
+	int					   _shadowRenderParamsID; // id for shadow parameters (frustums, matrices) queue in renderer
+	int					   _renderViewID; 
 
 	friend class SceneManager;
 	friend class Renderer;
