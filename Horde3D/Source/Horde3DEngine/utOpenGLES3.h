@@ -89,10 +89,10 @@ bool initOpenGLExtensions();
 #import <OpenGLES/ES3/glext.h>
 #define GL_GLEXT_PROTOTYPES
 #elif defined(PLATFORM_ANDROID) || defined(PLATFORM_NACL) || defined(PLATFORM_QNX)
-#include <GLES3/gl32.h>
+#include <GLES3/gl31.h>
 // #define GL_GLEXT_PROTOTYPES
 // #include <GLES3/gl3platform.h>
-// #include <GLES2/gl2ext.h>
+//#include <GLES2/gl2ext.h>
 #endif
 
 // =================================================================================================

@@ -19,7 +19,6 @@
 
 #include "utDebug.h"
 
-
 namespace Horde3DTerrain {
 
 using namespace Horde3D;
@@ -52,7 +51,8 @@ const char *vsTerrainDebugViewGL4 =
 	"}";
 
 const char *vsTerrainDebugViewGLES3 =
-	"#version 310 es\n"
+	"#version 300 es\n"
+	"precision highp float;"
 	"uniform mat4 viewProjMat;\n"
 	"uniform mat4 worldMat;\n"
 	"uniform vec4 terBlockParams;\n"
@@ -79,7 +79,7 @@ const char *fsTerrainDebugViewGL4 =
 	"}\n";
 
 const char *fsTerrainDebugViewGLES3 =
-	"#version 310 es\n"
+	"#version 300 es\n"
 	"precision highp float;\n"
 	"uniform vec4 color;\n"
 	"out vec4 fragColor;\n"
@@ -368,6 +368,13 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 {
 	delete[] _heightData; _heightData = 0x0;
 
+	// Depending on render backend we decide on pixel processing of the texture
+	// OpenGL2 and OpenGL4 use BGRA as standard texture format (use swizzling in egTexture.cpp), 
+	// while OpenGLES uses RGBA (no swizzling). Therefore, we have to take different color channels from heightmap.
+	bool isBGRA = true;
+	if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGLES3 )
+		isBGRA = false;
+
 	if( hmap.getTexFormat() == TextureFormats::BGRA8 &&
 	    hmap.getWidth() == hmap.getHeight() &&
 	    (hmap.getWidth() == 32 || hmap.getWidth() == 64 || hmap.getWidth() == 128 ||
@@ -375,19 +382,33 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 	    hmap.getWidth() == 2048 || hmap.getWidth() == 4096 || hmap.getWidth() == 8192) )
 	{
 		_hmapSize = hmap.getWidth();
-		_heightData = new uint16[(_hmapSize+1) * (_hmapSize+1)];
+		_heightData = new uint16[ ( _hmapSize + 1 ) * ( _hmapSize + 1 ) ];
 		
 		unsigned char *pixels = (unsigned char *)hmap.mapStream(
 			TextureResData::ImageElem, 0, TextureResData::ImgPixelStream, true, false );
 		ASSERT( pixels != 0x0 );
 		
+		size_t height_data_index = 0;
+		size_t first_pixel_index = 0, second_pixel_index = 0;
 		for( uint32 i = 0; i < _hmapSize; ++i )
 		{
 			for( uint32 j = 0; j < _hmapSize; ++j )
 			{
 				// Decode 16 bit data from red and green channels
-				_heightData[i*(_hmapSize+1)+j] =
-					pixels[(i*_hmapSize+j)*4+2] * 256 + pixels[(i*_hmapSize+j)*4+1];
+				height_data_index = static_cast< size_t >( i * ( _hmapSize + 1 ) + j );
+
+				if ( isBGRA )
+				{
+					first_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 2 );
+					second_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 1 );
+				}
+				else
+				{
+					first_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 0 );
+					second_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 1 );
+				}
+
+				_heightData[ height_data_index ] = pixels[ first_pixel_index ] * 256 + pixels[ second_pixel_index ];
 			}
 		}
 		
@@ -395,8 +416,20 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 		for( uint32 i = 0; i < _hmapSize; ++i )
 		{
 			// Decode 16 bit data from red and green channels
-			_heightData[i*(_hmapSize+1)+_hmapSize] =
-				pixels[(i*_hmapSize+_hmapSize-1)*4+2] * 256 + pixels[(i*_hmapSize+_hmapSize-1)*4+1];
+			height_data_index = static_cast< size_t >( i * ( _hmapSize + 1 ) + _hmapSize );
+
+			if ( isBGRA )
+			{
+				first_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 2 );
+				second_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 1 );
+			}
+			else
+			{
+				first_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 0 );
+				second_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 1 );
+			}
+
+			_heightData[ height_data_index ] = pixels[ first_pixel_index ] * 256 + pixels[ second_pixel_index ];
 		}
 
 		for( uint32 i = 0; i < _hmapSize + 1; ++i )
@@ -473,19 +506,21 @@ uint16 *TerrainNode::createIndices()
 {
 	uint16 *indices = new uint16[getIndexCount()];
 	uint16 *indexItr = indices;
-	const uint32 size = _blockSize + 2;
+	const uint16 size = (uint16) _blockSize + 2;
 	bool forward = true;
 
 	// Create indices for triangle strip
-	for( uint32 v = 0; v < size - 1; ++v, ++indexItr )
+	for( uint16 v = 0; v < size - 1; ++v, ++indexItr )
 	{
-		for( uint32 u = 0; u < size; ++u )
+		for( uint16 u = 0; u < size; ++u )
 		{
 			// Rows go from left to right and after that right to left for best vertex cache efficieny
-			uint32 indU = forward ? u : (size - 1) - u;
+			uint16 indU = forward ? u : (size - 1) - u;
 			
-			*indexItr++ = v * size + indU;			// vert[u, v]
-			*indexItr++ = (v + 1) * size + indU;	// vert[u, v+1]
+			*indexItr = v * size + indU;			// vert[u, v]
+			indexItr++;
+			*indexItr = (v + 1) * size + indU;	// vert[u, v+1]
+			indexItr++;
 		}
 
 		// Add degenerated triangle
@@ -549,20 +584,26 @@ void TerrainNode::buildBlockInfo( BlockInfo &block, float minU, float minV, floa
 			Plane tri0( corner0, corner1, corner2 );
 			Plane tri1( corner1, corner2, corner3 );
 
-			for( float vv = 0; vv <= stepV; vv += pixelStep )
+			float vv = 0;
+			float uu = 0;
+			while ( vv <= stepV )
 			{
-				for( float uu = 0; uu <= stepU; uu += pixelStep )
+				while ( uu <= stepU )
 				{
 					Plane &curTri = uu <= vv ? tri0 : tri1;
-					
+
 					Vec3f point( minU + u * stepU + uu, 0, minV + v * stepV + vv );
 					point.y = getHeight( point.x, point.z );
-					
+
 					block.minHeight = minf( point.y, block.minHeight );
 					block.maxHeight = maxf( point.y, block.maxHeight );
-					block.geoError = maxf( block.geoError, fabsf( curTri.distToPoint( point ) ));
+					block.geoError = maxf( block.geoError, fabsf( curTri.distToPoint( point ) ) );
+
+					uu += pixelStep;
 				}
-			}			
+
+				vv += pixelStep;
+			}
 		}
 	}
 }
