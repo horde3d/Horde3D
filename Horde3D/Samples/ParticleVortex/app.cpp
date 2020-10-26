@@ -68,6 +68,19 @@ bool ParticleVortexSample::initResources()
 	     !h3dGetDeviceCapabilities( H3DDeviceCapabilities::ComputeShaders ) )
 		return false;
 
+	// Set shader preambles for opengl es
+	if ( getBackend()->getRenderAPI() == RenderAPI::OpenGLES3 )
+	{
+		std::string vertPreamble = "#version 320 es\n precision highp float;\n";
+		std::string fragPreamble = "#version 320 es\n precision highp float;\n precision highp sampler2D;\n precision highp sampler2DShadow;\n";
+		std::string geomPreamble = "#version 320 es\n precision highp float;\n";
+		std::string tessCtlPreamble = "#version 320 es\n precision highp float;\n";
+		std::string tessEvalPreamble = "#version 320 es\n precision highp float;\n";
+		std::string computePreamble = "#version 310 es\n";
+		h3dSetShaderPreambles( vertPreamble.c_str(), fragPreamble.c_str(), geomPreamble.c_str(), 
+							   tessCtlPreamble.c_str(), tessEvalPreamble.c_str(), computePreamble.c_str() );
+	}
+
     // 1. Add resources
 
 	// Shader for deferred shading
@@ -87,8 +100,11 @@ bool ParticleVortexSample::initResources()
 	H3DRes compBuf = h3dAddResource( H3DResTypes::ComputeBuffer, "CompBuf", H3DResFlags::NoQuery );
 
 	// Generate random position data for particles
-	size_t particlesCount = 1000000;
-    ParticleData* compData = static_cast<ParticleData*>( malloc(sizeof(ParticleData) * particlesCount) );
+	size_t particlesCount;
+	if ( getBackend()->getRenderAPI() == RenderAPI::OpenGLES3 ) particlesCount = 100000; // 1 million particles is too heavy for mobiles
+	else particlesCount = 1000000;
+    
+	ParticleData* compData = static_cast<ParticleData*>( malloc(sizeof(ParticleData) * particlesCount) );
     if( !compData )
     {
         std::cout << "Out of memory when allocating particle data" << std::endl;
@@ -185,6 +201,8 @@ bool ParticleVortexSample::initResources()
 		size_t numGroups = ( particlesCount % 128 != 0 ) ? ( ( particlesCount / 128 ) + 1 ) : ( particlesCount / 128 );
 		double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
 		root = ceil( root );
+
+		// Mali only supports 128 for workgroup size on not so old devices
 		_computeGroupX = _computeGroupY = ( unsigned int ) root;
 	}
 	else
