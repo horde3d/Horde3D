@@ -329,6 +329,7 @@ public:
 	virtual bool loadResources( const char *contentDir ) = 0;
 	
 	Platform getPlatform() { return _curPlatform; }
+	RenderAPI getRenderAPI() { return _curRenderAPI; }
 
 	// Callbacks
 	void registerKeyboardEventHandler( KeyboardEventCallBack f ) { _keyEventHandler = f; }
@@ -364,4 +365,7 @@ protected:
 
 	// Platform we are running on
 	Platform					_curPlatform;
+
+	// Used render interface
+	RenderAPI					_curRenderAPI;
 };
