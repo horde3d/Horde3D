@@ -40,6 +40,7 @@ namespace glESExt
 	bool  EXT_color_buffer_float = false;
 
 	bool EXT_geometry_shader = false;
+	bool EXT_tessellation_shader = false;
 
 	bool EXT_texture_compression_s3tc = false;
 	bool EXT_texture_compression_dxt1 = false;
@@ -140,17 +141,12 @@ bool initOpenGLExtensions()
 
 	// Extensions
 	glESExt::EXT_texture_filter_anisotropic = checkExtensionSupported( "GL_EXT_texture_filter_anisotropic" );
-	
-	glESExt::EXT_color_buffer_float = checkExtensionSupported( "GL_EXT_color_buffer_float" ) || checkExtensionSupported( "GL_EXT_color_buffer_half_float" );
-
 	glESExt::EXT_texture_compression_s3tc = checkExtensionSupported( "GL_EXT_texture_compression_s3tc" );
 	glESExt::EXT_texture_compression_dxt1 = checkExtensionSupported( "GL_EXT_texture_compression_dxt1" );
 	glESExt::EXT_texture_compression_bptc = checkExtensionSupported( "GL_EXT_texture_compression_bptc" );
 	glESExt::KHR_texture_compression_astc = checkExtensionSupported( "GL_KHR_texture_compression_astc_ldr" );
 
-	glESExt::OES_compressed_ETC1_RGB8_texture = checkExtensionSupported( "GL_OES_compressed_ETC1_RGB8_texture" );
-
-	glESExt::EXT_disjoint_timer_query = checkExtensionSupported("GL_EXT_disjoint_timer_query");
+	glESExt::EXT_disjoint_timer_query = checkExtensionSupported( "GL_EXT_disjoint_timer_query" );
 	if ( glESExt::EXT_disjoint_timer_query )
 	{
 		r &= ( glQueryCounterEXT = ( PFNGLQUERYCOUNTEREXTPROC ) platformGetProcAddress( "glQueryCounterEXT" ) ) != 0x0;
@@ -158,28 +154,37 @@ bool initOpenGLExtensions()
 		r &= ( glGetQueryObjectui64vEXT = ( PFNGLGETQUERYOBJECTUI64VEXTPROC ) platformGetProcAddress( "glGetQueryObjectui64vEXT" ) ) != 0x0;
 	}
 
+	glESExt::EXT_tessellation_shader = checkExtensionSupported( "GL_EXT_tessellation_shader" );
+	if ( glESExt::EXT_tessellation_shader )
+	{
+		r &= ( glPatchParameteri = ( PFNGLPATCHPARAMETERIOESPROC ) platformGetProcAddress( "glPatchParameteri" ) ) != 0x0;
+	}
+
+	glESExt::EXT_color_buffer_float = checkExtensionSupported( "GL_EXT_color_buffer_float" ) || checkExtensionSupported( "GL_EXT_color_buffer_half_float" );
+	glESExt::OES_compressed_ETC1_RGB8_texture = checkExtensionSupported( "GL_OES_compressed_ETC1_RGB8_texture" );
 	glESExt::EXT_texture_border_clamp = checkExtensionSupported( "GL_EXT_texture_border_clamp" ) || checkExtensionSupported( "GL_OES_texture_border_clamp" );
-// 	if ( glESExt::EXT_texture_border_clamp )
-// 	{
-// 		r &= ( glTexParameterIivEXT = ( PFNGLTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glTexParameterIivEXT" ) ) != 0x0;
-// 		r &= ( glTexParameterIuivEXT = ( PFNGLTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glTexParameterIuivEXT" ) ) != 0x0;
-// 		r &= ( glGetTexParameterIivEXT = ( PFNGLGETTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIivEXT" ) ) != 0x0;
-// 		r &= ( glGetTexParameterIuivEXT = ( PFNGLGETTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIuivEXT" ) ) != 0x0;
-// 		r &= ( glSamplerParameterIivEXT = ( PFNGLSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIivEXT" ) ) != 0x0;
-// 		r &= ( glSamplerParameterIuivEXT = ( PFNGLSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIuivEXT" ) ) != 0x0;
-// 		r &= ( glGetSamplerParameterIivEXT = ( PFNGLGETSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIivEXT" ) ) != 0x0;
-// 		r &= ( glGetSamplerParameterIuivEXT = ( PFNGLGETSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIuivEXT" ) ) != 0x0;
-// 	}
+	// 	if ( glESExt::EXT_texture_border_clamp )
+	// 	{
+	// 		r &= ( glTexParameterIivEXT = ( PFNGLTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glTexParameterIivEXT" ) ) != 0x0;
+	// 		r &= ( glTexParameterIuivEXT = ( PFNGLTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glTexParameterIuivEXT" ) ) != 0x0;
+	// 		r &= ( glGetTexParameterIivEXT = ( PFNGLGETTEXPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIivEXT" ) ) != 0x0;
+	// 		r &= ( glGetTexParameterIuivEXT = ( PFNGLGETTEXPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetTexParameterIuivEXT" ) ) != 0x0;
+	// 		r &= ( glSamplerParameterIivEXT = ( PFNGLSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIivEXT" ) ) != 0x0;
+	// 		r &= ( glSamplerParameterIuivEXT = ( PFNGLSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glSamplerParameterIuivEXT" ) ) != 0x0;
+	// 		r &= ( glGetSamplerParameterIivEXT = ( PFNGLGETSAMPLERPARAMETERIIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIivEXT" ) ) != 0x0;
+	// 		r &= ( glGetSamplerParameterIuivEXT = ( PFNGLGETSAMPLERPARAMETERIUIVEXTPROC ) platformGetProcAddress( "glGetSamplerParameterIuivEXT" ) ) != 0x0;
+	// 	}
 
 	glESExt::EXT_geometry_shader = checkExtensionSupported( "GL_EXT_geometry_shader" ) || checkExtensionSupported( "GL_OES_geometry_shader" );
-
 	glESExt::OES_texture_3D = checkExtensionSupported( "GL_OES_texture_3D" );
+	glESExt::OES_EGL_image_external = checkExtensionSupported( "GL_OES_EGL_image_external" );
+	
+
 	// if ( glESExt::OES_texture_3D )
 	// {
 	// 	r &= ( glFramebufferTexture3DOES = ( PFNGLFRAMEBUFFERTEXTURE3DOESPROC) platformGetProcAddress( "glFramebufferTexture3DOES" ) ) != 0x0;
 	// }
 
-	glESExt::OES_EGL_image_external = checkExtensionSupported( "GL_OES_EGL_image_external" );
 	// if( glESExt::OES_EGL_image_external )
 	// {
 	// 	r &= ( glEGLImageTargetTexture2DOES = ( PFNGLEGLIMAGETARGETTEXTURE2DOESPROC ) platformGetProcAddress( "glEGLImageTargetTexture2DOES" ) ) != 0x0;

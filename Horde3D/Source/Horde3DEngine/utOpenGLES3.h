@@ -64,6 +64,7 @@ namespace glESExt
 	extern bool EXT_disjoint_timer_query;
 	extern bool EXT_texture_border_clamp;
 	extern bool EXT_geometry_shader;
+	extern bool EXT_tessellation_shader;
 	extern bool EXT_texture_border_clamp;
 	extern bool OES_texture_3D;
 	extern bool OES_EGL_image_external;
