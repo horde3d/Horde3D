@@ -641,7 +641,8 @@ struct H3DMeshPrimType
 	{
 		TriangleList = 0,
 		LineList = 1,
-		Patches = 2
+		Patches = 2,
+		Points = 3
 	};
 };
 
@@ -2396,10 +2397,10 @@ H3D_API bool h3dHasEmitterFinished( H3DNode emitterNode );
 		name               - name of the node
 		materialRes        - handle to Material resource used for rendering
 		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
-		drawType		   - specifies how to treat data in the compute buffer. 0 - Triangles, 1 - Lines, 2 - Points
+		primType		   - specifies how to treat data in the compute buffer (see H3DMeshPrimType). 
 		elementsCount	   - number of elements that need to be drawn
 		
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-H3D_API H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int drawType, int elementsCount );
+H3D_API H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int primType, int elementsCount );

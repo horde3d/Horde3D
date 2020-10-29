@@ -176,7 +176,7 @@ bool ParticleVortexSample::initResources()
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 
 	// In order to draw the results of compute buffer we need a compute node
-	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", computeDrawMatRes, compBuf, 2, ( int ) particlesCount );
+	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", computeDrawMatRes, compBuf, H3DMeshPrimType::Points, ( int ) particlesCount );
 
 	// Set node AABB size because currently there is no way to do it otherwise
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 0, -100.0f ); // x
@@ -187,7 +187,7 @@ bool ParticleVortexSample::initResources()
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 2, 100.0f ); // z
 
 	// If you wish, you can change the number of drawn elements and drawing type on the fly
-//	h3dSetNodeParamI( _compNode, H3DComputeNode::DrawTypeI, 2 ); 	// Set preferred draw type (for this example we draw with points - 2)
+//	h3dSetNodeParamI( _compNode, H3DComputeNode::DrawTypeI, H3DMeshPrimType::TriangleList ); 	// Set preferred draw type (for this example we draw with points)
 //	h3dSetNodeParamI( _compNode, H3DComputeNode::ElementsCountI, ( int ) particlesCount ); 	// Set number of elements to draw (for this example we draw 1000000 points)
 
 	// Set material uniforms that will not be changed during runtime

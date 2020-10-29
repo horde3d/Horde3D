@@ -173,7 +173,7 @@ void ComputeNode::setParamI( int param, int value )
 				Modules::setError( "Invalid handle in h3dSetNodeParamI for H3DComputeNode::MatResI" );
 			return;
 		case ComputeNodeParams::DrawTypeI:
-			if ( value < 0 || value > 2 ) // Triangles - 0, Lines - 1, Points - 2
+			if ( value < 0 || value > 3 ) // Triangles - 0, Lines - 1, Patches - 2, Points - 3
 			{
 				Modules::log().writeError( "Invalid value specified in h3dSetNodeParamI for H3DComputeNode::DrawTypeI" );
 				return;

@@ -979,7 +979,7 @@ H3D_IMPL bool h3dHasEmitterFinished( NodeHandle emitterNode )
 
 
 H3D_IMPL NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResHandle materialRes, ResHandle compBufferRes,
-                                       int drawType, int elementsCount )
+                                       int primType, int elementsCount )
 {
 	SceneNode *parentNode = Modules::sceneMan().resolveNodeHandle( parent );
 	APIFUNC_VALIDATE_NODE( parentNode, "h3dAddComputeNode", 0 );
@@ -989,7 +989,7 @@ H3D_IMPL NodeHandle h3dAddComputeNode( NodeHandle parent, const char *name, ResH
 	APIFUNC_VALIDATE_RES_TYPE( cbRes, ResourceTypes::ComputeBuffer, "h3dAddComputeNode", 0 );
 
 	ComputeNodeTpl tpl( safeStr( name, 0 ), ( ComputeBufferResource * ) cbRes, ( MaterialResource * ) matRes, 
-						drawType, elementsCount );
+						primType, elementsCount );
 
 	SceneNode *sn = Modules::sceneMan().findType( SceneNodeTypes::Compute )->factoryFunc( tpl );
 	return Modules::sceneMan().addNode( sn, *parentNode );

@@ -2169,7 +2169,10 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 			case 1: // Lines
 				drawType = PRIM_LINELIST;
 				break;
-			case 2: // Points
+			case 2: // Patches
+				drawType = PRIM_PATCHES;
+				break;
+			case 3: // Points
 				drawType = PRIM_POINTS;
 				break;
 			default:
