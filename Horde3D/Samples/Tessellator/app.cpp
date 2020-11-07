@@ -154,7 +154,7 @@ bool createIcosahedron()
 	}
 		
 
-	int geo = h3dutCreateGeometryRes( "icosa", 12, indices.size(), reinterpret_cast< float * > ( vertPos.data() ), indices.data(), normalsShort.data(), 0, 0, texCoords.data(), 0 );
+	int geo = h3dutCreateGeometryRes( "icosa", 12, (int) indices.size(), reinterpret_cast< float * > ( vertPos.data() ), indices.data(), normalsShort.data(), 0, 0, texCoords.data(), 0 );
 	if ( geo == 0 ) return false;
 
 	// Create material 
@@ -166,13 +166,13 @@ bool createIcosahedron()
 							"<Uniform name=\"matDiffuseCol\" a=\"0\" b=\"0.75\" c=\"0.75\" />\n"
 							"</Material>";
 	
-	std::string testMatData =	"<Material>\n"
-								"<Shader source=\"shaders/model.shader\" />"
-								"<Uniform name=\"matDiffuseCol\" a=\"0\" b=\"0.75\" c=\"0.75\" />\n"
-								"</Material>";
+// 	std::string testMatData =	"<Material>\n"
+// 								"<Shader source=\"shaders/model.shader\" />"
+// 								"<Uniform name=\"matDiffuseCol\" a=\"0\" b=\"0.75\" c=\"0.75\" />\n"
+// 								"</Material>";
 
 	int mat = h3dAddResource( H3DResTypes::Material, "material", 0 );
-	bool res = h3dLoadResource( mat, matData.c_str(), matData.size() );
+	bool res = h3dLoadResource( mat, matData.c_str(), (int) matData.size() );
 	if ( !res ) return false;
 
 	return true;
@@ -189,6 +189,9 @@ TessellatorSample::TessellatorSample( int argc, char** argv ) :
 	_tessInner = _tessOuter = 1;
 	_rotation = 0;
 	_helpRows += 2;
+	_model = 0;
+
+	_androidPlatform = false; // will be determined during initialization
 
 	setRequiredCapabilities( RenderCapabilities::TessellationShader );
 }
@@ -201,6 +204,8 @@ bool TessellatorSample::initResources()
 
 	if ( !h3dGetDeviceCapabilities( H3DDeviceCapabilities::TessellationShaders ) )
 		return false;
+
+	h3dSetOption( H3DOptions::DebugRenderBackend, 1.0f );
 
     // 1. Add resources
 
@@ -218,8 +223,11 @@ bool TessellatorSample::initResources()
 	if ( platform == Platform::Android )
 	{
 		// force #version 320 es to all shader types to eliminate compile error on mali
-		h3dSetShaderPreambles( "#version 320 es\n precision highp float;\n", 
-		"#version 320 es\n precision highp float;\n precision highp sampler2D;\n precision highp sampler2DShadow;\n", "#version 320 es", "#version 320 es", "#version 320 es", "#version 320 es" );
+		h3dSetShaderPreambles( "#version 320 es\n precision highp float;\n", "#version 320 es\n precision highp float;\n precision highp sampler2D;\n precision highp sampler2DShadow;\n", 
+								"#version 320 es\n precision highp float;\n", "#version 320 es\nprecision highp float;", 
+								"#version 320 es\n precision highp float;\n", "#version 320 es\n precision highp float;\n" );
+
+		_androidPlatform = true;
 	}
 
     // 2. Load resources
@@ -267,6 +275,25 @@ void TessellatorSample::releaseResources()
     SampleApplication::releaseResources();
 }
 
+static void increaseTessellationLevel( unsigned int &innerLevel, unsigned int &outerLevel )
+{
+	innerLevel == 32 ? 32: innerLevel++;
+	outerLevel == 32 ? 32: outerLevel++;
+
+	int mat = h3dFindResource( H3DResTypes::Material, "material" );
+	h3dSetMaterialUniform( mat, "tessLevelInner", ( float ) innerLevel, 0, 0, 0 );
+	h3dSetMaterialUniform( mat, "tessLevelOuter", ( float ) outerLevel, 0, 0, 0 );
+}
+
+static void decreaseTessellationLevel( unsigned int &innerLevel, unsigned int &outerLevel )
+{
+	innerLevel == 1 ? 1 : innerLevel--;
+	outerLevel == 1 ? 1 : outerLevel--;
+
+	int mat = h3dFindResource( H3DResTypes::Material, "material" );
+	h3dSetMaterialUniform( mat, "tessLevelInner", ( float ) innerLevel, 0, 0, 0 );
+	h3dSetMaterialUniform( mat, "tessLevelOuter", ( float ) outerLevel, 0, 0, 0 );
+}
 
 void TessellatorSample::keyEventHandler( int key, int keyState, int mods )
 {
@@ -277,22 +304,12 @@ void TessellatorSample::keyEventHandler( int key, int keyState, int mods )
 
 	if ( key == KEY_UP )
 	{
-		_tessInner++;
-		_tessOuter++;
-
-		int mat = h3dFindResource( H3DResTypes::Material, "material" );
-		h3dSetMaterialUniform( mat, "tessLevelInner", ( float ) _tessInner, 0, 0, 0 );
-		h3dSetMaterialUniform( mat, "tessLevelOuter", ( float ) _tessOuter, 0, 0, 0 );
+		increaseTessellationLevel( _tessInner, _tessOuter );
 	}
 
 	if ( key == KEY_DOWN )
 	{
-		_tessInner == 1 ? 1 : _tessInner--;
-		_tessOuter == 1 ? 1 : _tessOuter--;
-
-		int mat = h3dFindResource( H3DResTypes::Material, "material" );
-		h3dSetMaterialUniform( mat, "tessLevelInner", ( float ) _tessInner, 0, 0, 0 );
-		h3dSetMaterialUniform( mat, "tessLevelOuter", ( float ) _tessOuter, 0, 0, 0 );
+		decreaseTessellationLevel( _tessInner, _tessOuter );
 	}
 }
 
@@ -308,5 +325,30 @@ void TessellatorSample::update()
 
 		_rotation += 0.05f;
 		h3dSetNodeTransform( _model, 0, 0, 0, _rotation, _rotation, 0, 1, 1, 1 );
+
+		if ( _androidPlatform )
+		{
+			// as there is currently no way for user to increase/decrease the level of tessellation on mobile, make it auto
+			static float lastAnimTime = 0;
+			static bool increasingLevels = true;
+
+			if ( _animTime - lastAnimTime > 2 ) // switch tessellation level every two seconds
+			{
+				if ( increasingLevels )
+				{
+					increaseTessellationLevel( _tessInner, _tessOuter );
+
+					if ( _tessInner >= 32 ) increasingLevels = false;
+				}
+				else
+				{
+					decreaseTessellationLevel( _tessInner, _tessOuter );
+
+					if ( _tessInner == 1 ) increasingLevels = true;
+				}
+
+				lastAnimTime = _animTime;
+			}
+		}
 	}
 }
