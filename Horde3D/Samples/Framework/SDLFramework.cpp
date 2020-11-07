@@ -401,6 +401,7 @@ bool SDLBackend::init( const BackendInitParameters &params )
 
 	// Save parameters for resetting/debug info
 	_usedInitParams = params;
+	_curRenderAPI = params.requestedAPI;
 
 	return true;
 }

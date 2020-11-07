@@ -17,6 +17,7 @@
 
 #include "utDebug.h"
 #include <array>
+#include <map>
 
 
 namespace Horde3D {
@@ -50,7 +51,7 @@ static const char *defaultShaderFS =
 
 static const uint32 indexFormats[ 2 ] = { GL_UNSIGNED_SHORT, GL_UNSIGNED_INT };
 
-static const uint32 primitiveTypes[ 5 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_LINES, GL_POINTS, 0 };
+static const uint32 primitiveTypes[ 5 ] = { GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_LINES, GL_POINTS, GL_PATCHES };
 
 static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTURE_CUBE_MAP };
 
@@ -106,6 +107,35 @@ static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > tex
 	{ GL_COMPRESSED_RGBA_ASTC_12x12_KHR, 0, GL_COMPRESSED_SRGB8_ALPHA8_ASTC_12x12_KHR, 0 },					// TextureFormats::ASTC_12x12
 	{ GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT }								// TextureFormats::DEPTH
 } };
+
+// Callback that is used for driver debug messages
+static void driver_log_callback( uint32 source, uint32 type, uint32 id, uint32 severity, int length, const char *message, const void *userParam )
+{
+	static const std::map< int, const char * > sources = { { GL_DEBUG_SOURCE_API_KHR, "API" },
+														  { GL_DEBUG_SOURCE_WINDOW_SYSTEM_KHR, "WinSys" },
+														  { GL_DEBUG_SOURCE_SHADER_COMPILER_KHR, "SC" },
+													      { GL_DEBUG_SOURCE_THIRD_PARTY_KHR, "TP" },
+														  { GL_DEBUG_SOURCE_APPLICATION_KHR, "App" },
+														  { GL_DEBUG_SOURCE_OTHER_KHR, "Other" },
+														 };
+
+	static const std::map< int, const char * > types = {  { GL_DEBUG_TYPE_ERROR_KHR, "Err" },
+														  { GL_DEBUG_TYPE_PERFORMANCE_KHR, "Perf" },
+														  { GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_KHR, "UndefB" },
+														  { GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_KHR, "DeprB" },
+														  { GL_DEBUG_TYPE_PORTABILITY_KHR, "Port" },
+														  { GL_DEBUG_TYPE_OTHER_KHR, "Other" },
+														  { GL_DEBUG_TYPE_MARKER_KHR, "Marker" },
+													   };
+
+	static const std::map< int, const char * > severityStr = { { GL_DEBUG_SEVERITY_HIGH_KHR, "High" },
+															   { GL_DEBUG_SEVERITY_MEDIUM_KHR, "Medium" },
+															   { GL_DEBUG_SEVERITY_LOW_KHR, "Low" },
+															   { GL_DEBUG_SEVERITY_NOTIFICATION_KHR, "Notif" },
+															 };
+
+	Modules::log().writeInfo( "%s: %s, %s, %s", sources.at( source ), types.at(  type ), severityStr.at( severity ), message );
+}
 
 // =================================================================================================
 // GPUTimer
@@ -252,6 +282,8 @@ void RenderDeviceGLES3::initRDIFuncs()
 {
 	_delegate_init.bind< RenderDeviceGLES3, &RenderDeviceGLES3::init >( this );
 	_delegate_initStates.bind< RenderDeviceGLES3, &RenderDeviceGLES3::initStates >( this );
+	_delegate_enableDebugOutput.bind< RenderDeviceGLES3, &RenderDeviceGLES3::enableDebugOutput >( this );
+	_delegate_disableDebugOutput.bind< RenderDeviceGLES3, &RenderDeviceGLES3::disableDebugOutput >( this );
 	_delegate_registerVertexLayout.bind< RenderDeviceGLES3, &RenderDeviceGLES3::registerVertexLayout >( this );
 	_delegate_beginRendering.bind< RenderDeviceGLES3, &RenderDeviceGLES3::beginRendering >( this );
 
@@ -426,6 +458,29 @@ bool RenderDeviceGLES3::init()
 	return true;
 }
 
+
+bool RenderDeviceGLES3::enableDebugOutput()
+{
+	if ( !glESExt::KHR_debug ) return false; 
+
+	// set debug callback
+	glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS_KHR );
+//	glDebugMessageControlKHR( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true );
+	glDebugMessageCallbackKHR( driver_log_callback, nullptr );
+
+	return true;
+}
+
+
+bool RenderDeviceGLES3::disableDebugOutput()
+{
+	if ( !glESExt::KHR_debug ) return false;
+
+	glDisable( GL_DEBUG_OUTPUT_SYNCHRONOUS_KHR );
+	glDebugMessageControlKHR( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, false );
+
+	return true;
+}
 
 // =================================================================================================
 // Vertex layouts

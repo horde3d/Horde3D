@@ -247,6 +247,8 @@ void RenderDeviceGL2::initRDIFuncs()
 {
 	_delegate_init.bind< RenderDeviceGL2, &RenderDeviceGL2::init >( this );
 	_delegate_initStates.bind< RenderDeviceGL2, &RenderDeviceGL2::initStates >( this );
+	_delegate_enableDebugOutput.bind< RenderDeviceGL2, &RenderDeviceGL2::enableDebugOutput >( this );
+	_delegate_disableDebugOutput.bind< RenderDeviceGL2, &RenderDeviceGL2::disableDebugOutput >( this );
 	_delegate_registerVertexLayout.bind< RenderDeviceGL2, &RenderDeviceGL2::registerVertexLayout >( this );
 	_delegate_beginRendering.bind< RenderDeviceGL2, &RenderDeviceGL2::beginRendering >( this );
 
@@ -425,6 +427,17 @@ bool RenderDeviceGL2::init()
 	return true;
 }
 
+
+bool RenderDeviceGL2::enableDebugOutput()
+{
+	return true;
+}
+
+
+bool RenderDeviceGL2::disableDebugOutput()
+{
+	return true;
+}
 
 // =================================================================================================
 // Vertex layouts

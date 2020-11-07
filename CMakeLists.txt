@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15) # Native support for Android in CMAKE requires at least version 3.7.
+cmake_minimum_required(VERSION 3.13) # Native support for Android in CMAKE requires at least version 3.7.
 
 # Project details.
 project(Horde3D)

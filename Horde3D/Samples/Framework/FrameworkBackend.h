@@ -300,6 +300,9 @@ public:
 #elif defined( PLATFORM_EMSCRIPTEN )
 		_curPlatform = Platform::Emscripten;
 #endif
+
+		// default is opengl 4, sample can override in during initialization
+		_curRenderAPI = RenderAPI::OpenGL4;
 	}
 
 	virtual ~FrameworkBackend() {};
@@ -329,6 +332,7 @@ public:
 	virtual bool loadResources( const char *contentDir ) = 0;
 	
 	Platform getPlatform() { return _curPlatform; }
+	RenderAPI getRenderAPI() { return _curRenderAPI; }
 
 	// Callbacks
 	void registerKeyboardEventHandler( KeyboardEventCallBack f ) { _keyEventHandler = f; }
@@ -364,4 +368,7 @@ protected:
 
 	// Platform we are running on
 	Platform					_curPlatform;
+
+	// Used render interface
+	RenderAPI					_curRenderAPI;
 };

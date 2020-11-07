@@ -104,6 +104,8 @@ struct H3DOptions
 		DumpFailedShaders   - Enables or disables storing of shader code that failed to compile in a text file; this can be
 		                      useful in combination with the line numbers given back by the shader compiler. (Values: 0, 1; Default: 0)
 		GatherTimeStats     - Enables or disables gathering of time stats that are useful for profiling (Values: 0, 1; Default: 1)
+		DebugRenderBackend  - Enables or disables logging of render backend diagnostic messages. May require additional actions on 
+							  application side, like creating a debug opengl context. (Values: 0, 1; Default: 0)
 	*/
 	enum List
 	{
@@ -120,7 +122,8 @@ struct H3DOptions
 		WireframeMode,
 		DebugViewMode,
 		DumpFailedShaders,
-		GatherTimeStats
+		GatherTimeStats,
+		DebugRenderBackend
 	};
 };
 
@@ -641,7 +644,8 @@ struct H3DMeshPrimType
 	{
 		TriangleList = 0,
 		LineList = 1,
-		Patches = 2
+		Patches = 2,
+		Points = 3
 	};
 };
 
@@ -2396,10 +2400,10 @@ H3D_API bool h3dHasEmitterFinished( H3DNode emitterNode );
 		name               - name of the node
 		materialRes        - handle to Material resource used for rendering
 		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
-		drawType		   - specifies how to treat data in the compute buffer. 0 - Triangles, 1 - Lines, 2 - Points
+		primType		   - specifies how to treat data in the compute buffer (see H3DMeshPrimType). 
 		elementsCount	   - number of elements that need to be drawn
 		
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-H3D_API H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int drawType, int elementsCount );
+H3D_API H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int primType, int elementsCount );

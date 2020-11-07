@@ -496,6 +496,8 @@ protected:
 	
 	RDIDelegate< bool () >												_delegate_init;
 	RDIDelegate< void () >												_delegate_initStates;
+	RDIDelegate< bool() >												_delegate_enableDebugOutput;
+	RDIDelegate< bool() >												_delegate_disableDebugOutput;
 	RDIDelegate< uint32( uint32, VertexLayoutAttrib *) >				_delegate_registerVertexLayout;
 	RDIDelegate< void () >												_delegate_beginRendering;
 
@@ -582,7 +584,15 @@ public:
 		return _delegate_init.invoke();
 	}
 
-	
+	bool enableDebugOutput()
+	{
+		return _delegate_enableDebugOutput.invoke();
+	}
+	bool disableDebugOutput()
+	{
+		return _delegate_disableDebugOutput.invoke();
+	}
+
 // -----------------------------------------------------------------------------
 // Resources
 // -----------------------------------------------------------------------------

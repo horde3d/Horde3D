@@ -40,6 +40,8 @@ private:
 	float _rotation;
 
 	H3DNode _model;
+
+	bool _androidPlatform;
 };
 
 #endif // _app_H_
