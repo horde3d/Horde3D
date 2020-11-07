@@ -465,7 +465,7 @@ bool RenderDeviceGLES3::enableDebugOutput()
 
 	// set debug callback
 	glEnable( GL_DEBUG_OUTPUT_SYNCHRONOUS_KHR );
-//	glDebugMessageControlKHR( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true );
+	glDebugMessageControlKHR( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true );
 	glDebugMessageCallbackKHR( driver_log_callback, nullptr );
 
 	return true;

@@ -205,8 +205,6 @@ bool TessellatorSample::initResources()
 	if ( !h3dGetDeviceCapabilities( H3DDeviceCapabilities::TessellationShaders ) )
 		return false;
 
-	h3dSetOption( H3DOptions::DebugRenderBackend, 1.0f );
-
     // 1. Add resources
 
 	// Shader for deferred shading
