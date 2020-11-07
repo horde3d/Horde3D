@@ -3,7 +3,7 @@
 // h3d .NET wrapper
 // ----------------------------------
 // Copyright (C) 2007 Martin Burkhard
-// Copyright (C) 2009-2016 Volker Wiendl and Horde3D team
+// Copyright (C) 2009-2020 Volker Wiendl and Horde3D team
 //
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.

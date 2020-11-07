@@ -3,7 +3,7 @@
 // --------------------------------------
 //		- Lighting functions -
 //
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // You may use the following code in projects based on the Horde3D graphics engine.
 //
@@ -21,7 +21,7 @@ uniform 	float shadowMapSize;
 
 float PCF( const vec4 projShadow )
 {
-	// 5-tap PCF with a 30° rotated grid
+	// 5-tap PCF with a 30ï¿½ rotated grid
 	
 	float offset = 1.0 / shadowMapSize;
 	
