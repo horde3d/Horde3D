@@ -43,6 +43,8 @@ bool GLFWBackend::init( const BackendInitParameters &params )
 			glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, params.majorVersion );
 			glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, params.minorVersion );
 
+			if ( params.debugContext ) glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_DEBUG_CONTEXT );
+
 			break;
 		default:
 			break;

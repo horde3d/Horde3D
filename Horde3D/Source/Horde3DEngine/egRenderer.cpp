@@ -393,6 +393,7 @@ void Renderer::setupViewMatrices( const Matrix4f &viewMat, const Matrix4f &projM
 	++_curShaderUpdateStamp;
 }
 
+
 uint32 Renderer::getDefaultVertexLayout( DefaultVertexLayouts::List vl ) const
 {
 	switch ( vl )

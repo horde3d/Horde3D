@@ -10,7 +10,7 @@
 //
 // *************************************************************************************************
 
-#define _CRT_SECURE_NO_WARNINGS
+//#define _CRT_SECURE_NO_WARNINGS
 #include "utOpenGLES3.h"
 #include <cstdlib>
 #include <cstring>
@@ -53,6 +53,7 @@ namespace glESExt
 	bool OES_texture_3D = false;
 
 	bool OES_EGL_image_external = false;
+	bool KHR_debug = false;
 	
 	int	majorVersion = 1, minorVersion = 0;
 }
@@ -82,6 +83,12 @@ namespace h3dGLES
     PFNGLGETPROGRAMRESOURCEIVPROC glGetProgramResourceiv = 0x0;
     PFNGLMEMORYBARRIERPROC glMemoryBarrier = 0x0;
     PFNGLGETPROGRAMRESOURCEINDEXPROC glGetProgramResourceIndex = 0x0;
+
+	PFNGLDEBUGMESSAGECONTROLKHRPROC glDebugMessageControlKHR = 0x0;
+	PFNGLDEBUGMESSAGEINSERTKHRPROC glDebugMessageInsertKHR = 0x0;
+	PFNGLDEBUGMESSAGECALLBACKKHRPROC glDebugMessageCallbackKHR = 0x0;
+	PFNGLGETDEBUGMESSAGELOGKHRPROC glGetDebugMessageLogKHR = 0x0;
+
 }  // namespace h3dGLES
 
 
@@ -145,6 +152,15 @@ bool initOpenGLExtensions()
 	glESExt::EXT_texture_compression_dxt1 = checkExtensionSupported( "GL_EXT_texture_compression_dxt1" );
 	glESExt::EXT_texture_compression_bptc = checkExtensionSupported( "GL_EXT_texture_compression_bptc" );
 	glESExt::KHR_texture_compression_astc = checkExtensionSupported( "GL_KHR_texture_compression_astc_ldr" );
+
+	glESExt::KHR_debug = checkExtensionSupported( "GL_KHR_debug" );
+	if ( glESExt::KHR_debug )
+	{
+		r &= ( glDebugMessageCallbackKHR = ( PFNGLDEBUGMESSAGECALLBACKKHRPROC ) platformGetProcAddress( "glDebugMessageCallbackKHR" ) ) != 0x0;
+		r &= ( glDebugMessageControlKHR = ( PFNGLDEBUGMESSAGECONTROLKHRPROC ) platformGetProcAddress( "glDebugMessageControlKHR" ) ) != 0x0;
+		r &= ( glDebugMessageInsertKHR = ( PFNGLDEBUGMESSAGEINSERTKHRPROC ) platformGetProcAddress( "glDebugMessageInsertKHR" ) ) != 0x0;
+		r &= ( glGetDebugMessageLogKHR = ( PFNGLGETDEBUGMESSAGELOGKHRPROC ) platformGetProcAddress( "glGetDebugMessageLogKHR" ) ) != 0x0;
+	}
 
 	glESExt::EXT_disjoint_timer_query = checkExtensionSupported( "GL_EXT_disjoint_timer_query" );
 	if ( glESExt::EXT_disjoint_timer_query )

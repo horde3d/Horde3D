@@ -257,6 +257,8 @@ void RenderDeviceGL4::initRDIFuncs()
 {
 	_delegate_init.bind< RenderDeviceGL4, &RenderDeviceGL4::init >( this );
 	_delegate_initStates.bind< RenderDeviceGL4, &RenderDeviceGL4::initStates >( this );
+	_delegate_enableDebugOutput.bind< RenderDeviceGL4, &RenderDeviceGL4::enableDebugOutput >( this );
+	_delegate_disableDebugOutput.bind< RenderDeviceGL4, &RenderDeviceGL4::disableDebugOutput >( this );
 	_delegate_registerVertexLayout.bind< RenderDeviceGL4, &RenderDeviceGL4::registerVertexLayout >( this );
 	_delegate_beginRendering.bind< RenderDeviceGL4, &RenderDeviceGL4::beginRendering >( this );
 
@@ -428,6 +430,17 @@ bool RenderDeviceGL4::init()
 	return true;
 }
 
+
+bool RenderDeviceGL4::enableDebugOutput()
+{
+	return true;
+}
+
+
+bool RenderDeviceGL4::disableDebugOutput()
+{
+	return true;
+}
 
 // =================================================================================================
 // Vertex layouts

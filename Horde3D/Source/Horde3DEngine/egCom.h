@@ -45,7 +45,8 @@ struct EngineOptions
 		WireframeMode,
 		DebugViewMode,
 		DumpFailedShaders,
-		GatherTimeStats
+		GatherTimeStats,
+		DebugRenderBackend
 	};
 };
 
@@ -73,6 +74,7 @@ public:
 	bool  debugViewMode;
 	bool  dumpFailedShaders;
 	bool  gatherTimeStats;
+	bool  debugRenderBackend;
 };
 
 

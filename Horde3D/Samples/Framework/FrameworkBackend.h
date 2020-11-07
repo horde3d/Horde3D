@@ -300,6 +300,9 @@ public:
 #elif defined( PLATFORM_EMSCRIPTEN )
 		_curPlatform = Platform::Emscripten;
 #endif
+
+		// default is opengl 4, sample can override in during initialization
+		_curRenderAPI = RenderAPI::OpenGL4;
 	}
 
 	virtual ~FrameworkBackend() {};
