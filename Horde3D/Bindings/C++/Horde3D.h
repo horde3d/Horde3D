@@ -639,6 +639,11 @@ struct H3DMeshPrimType
 {
 	/*	Enum: H3DMeshParams
 			The available Mesh node primitive types.
+
+		TriangleList - Mesh is drawn with triangles.
+		LineList     - Mesh is drawn with lines.
+		Patches      - Mesh is drawn with patches. Only used for tessellated meshes.
+		Points       - Mesh is represented as points.
 	 */
 	enum List
 	{
