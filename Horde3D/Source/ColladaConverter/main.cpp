@@ -136,7 +136,7 @@ void printHelp()
 
 int main( int argc, char **argv )
 {
-	log( "Horde3D ColladaConv - 1.0.0" );
+	log( "Horde3D ColladaConv - 2.0.0" );
 	log( "" );
 	
 	if( argc < 2 )
