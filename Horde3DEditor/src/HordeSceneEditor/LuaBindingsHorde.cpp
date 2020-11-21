@@ -1592,7 +1592,7 @@ namespace Horde3D
 			unsigned int batchCount = luaL_checkint(L, 5);	
 			unsigned int vertRStart = luaL_checkint(L, 6);	
 			unsigned int vertREnd = luaL_checkint(L, 7);	
-			lua_pushinteger(L,h3dAddMeshNode(parent, name, matRes, batchStart, batchCount, vertRStart, vertREnd)); 
+			lua_pushinteger(L,h3dAddMeshNode(parent, name, matRes, H3DMeshPrimType::TriangleList, batchStart, batchCount, vertRStart, vertREnd)); 
 			return 1;
 		}
 
