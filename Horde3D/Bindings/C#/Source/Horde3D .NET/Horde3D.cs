@@ -33,11 +33,13 @@ namespace Horde3DNET
         /// The available engine Renderer backends.
         /// OpenGL2	- use OpenGL 2 as renderer backend (can be used to force OpenGL 2 when higher version is undesirable)
         /// OpenGL4	- use OpenGL 4 as renderer backend (falls back to OpenGL 2 in case of error)
+        /// OpenGLES3 - use OpenGL ES 3 as renderer backend
         /// </summary>
         public enum H3DRenderDevice
         {
             OpenGL2 = 2,
-            OpenGL4 = 4
+            OpenGL4 = 4,
+            OpenGLES3 = 8
         };
 
         /// <summary>
@@ -63,6 +65,8 @@ namespace Horde3DNET
         ///   DumpFailedShaders   - Enables or disables storing of shader code that failed to compile in a text file; this can be
         ///                         useful in combination with the line numbers given back by the shader compiler. (Values: 0, 1; Default: 0)
         ///   GatherTimeStats     - Enables or disables gathering of time stats that are useful for profiling (Values: 0, 1; Default: 1)
+        ///   DebugRenderBackend  - Enables or disables logging of render backend diagnostic messages. May require additional actions on 
+		///					        application side, like creating a debug opengl context. (Values: 0, 1; Default: 0)
         /// </summary>
         public enum H3DOptions
         {
@@ -79,7 +83,8 @@ namespace Horde3DNET
             WireframeMode,
             DebugViewMode,
             DumpFailedShaders,
-            GatherTimeStats
+            GatherTimeStats,
+            DebugRenderBackend
         }
 
        /// <summary>
@@ -127,12 +132,22 @@ namespace Horde3DNET
         ///   GeometryShaders			- GPU supports runtime geometry generation via geometry shaders
         ///   TessellationShaders       - GPU supports tessellation
         ///   ComputeShaders		    - GPU supports general-purpose computing via compute shaders
+        ///	  TextureFloatRenderable	- GPU supports rendering to floating-point textures (RGBA16F, RGBA32F)
+	    ///   TextureCompressionDXT	    - GPU supports DXT compressed textures (DXT1, DXT3, DXT5)
+	    ///   TextureCompressionETC2	- GPU supports ETC2 compressed textures (RGB, RGBA)
+	    ///   TextureCompressionBPTC	- GPU supports BC6 and BC7 compressed textures
+	    ///   TextureCompressionASTC	- GPU supports ASTC compressed textures (RGBA)
         /// </summary>
         public enum H3DDeviceCapabilities
         {
             GeometryShaders = 200,
             TessellationShaders,
-            ComputeShaders
+            ComputeShaders,
+            TextureFloatRenderable,
+            TextureCompressionDXT,
+            TextureCompressionETC2,
+            TextureCompressionBPTC,
+            TextureCompressionASTC
         };
 
         /// <summary>
@@ -174,9 +189,10 @@ namespace Horde3DNET
         /// NoTexMipmaps      - Disables generation of mipmaps for Texture resource.
         /// TexCubemap        - Sets Texture resource to be a cubemap.
         /// TexDynamic        - Enables more efficient updates of Texture resource streams.
-        /// TexRenderable     - Makes Texture resource usable as render target.
         /// TexSRGB           - Indicates that Texture resource is in sRGB color space and should be converted
-        ///                    to linear space when being sampled.
+        ///                     to linear space when being sampled.
+        /// TexRenderable     - Makes Texture resource usable as render target.
+        /// TexDepthBuffer    - When Textures is renderable, creates a depth buffer along with the color buffer.
         /// </summary>
         public enum H3DResFlags
         {
@@ -185,31 +201,73 @@ namespace Horde3DNET
             NoTexMipmaps = 4,
             TexCubemap = 8,
             TexDynamic = 16,
-            TexRenderable = 32,
-            TexSRGB = 64
+            TexSRGB = 32,
+            TexRenderable = 64,
+    		TexDepthBuffer = 128
         }
 
         /// <summary>
         /// Enum: H3DFormats
 		///     The available resource stream formats.
-			
-		/// Unknown      - Unknown format
-        /// TEX_BGRA8    - 8-bit BGRA texture
-        /// TEX_DXT1     - DXT1 compressed texture
-        /// TEX_DXT3     - DXT3 compressed texture
-        /// TEX_DXT5     - DXT5 compressed texture
-        /// TEX_RGBA16F  - Half float RGBA texture
-        /// TEX_RGBA32F  - Float RGBA texture
+		
+		/// Unknown         - Unknown format
+		/// TEX_R8			- 8-bit texture with one color channel.
+		/// TEX_R16F		- Half float texture with one color channel.
+		/// TEX_R32F		- Float texture with one color channel.
+		/// TEX_RG8			- 8-bit texture with two color channels.
+		/// TEX_RG16F		- Half float texture with two color channels.
+		/// TEX_RG32F		- Float texture with two color channels.
+		/// TEX_BGRA8		- 8-bit BGRA texture. For OpenGL ES it is actually RGBA texture.
+		/// TEX_RGBA16F		- Half float RGBA texture
+		/// TEX_RGBA32F		- Float RGBA texture
+		/// TEX_RGBA32F		- Unsigned integer RGBA texture
+		/// TEX_DXT1		- DXT1 compressed texture
+		/// TEX_DXT3		- DXT3 compressed texture
+		/// TEX_DXT5		- DXT5 compressed texture
+		/// TEX_ETC1		- ETC1 compressed texture
+		/// TEX_RGB8_ETC2	- RGB8 texture compressed in ETC2 format
+		/// TEX_RGBA8_ETC2	- RGBA8 texture compressed in ETC2 format
+		/// TEX_BC6_UF16	- BC6 compressed unsigned half float texture
+		/// TEX_BC6_SF16	- BC6 compressed signed half float texture
+		/// TEX_BC7			- BC7 compressed RGBA texture
+		/// TEX_ASTC_xxx	- ASTC compressed RGBA texture
         /// </summary>
         public enum H3DFormats
         {
             Unknown = 0,
+            TEX_R8,
+            TEX_R16F,
+            TEX_R32F,
+            TEX_RG8,
+            TEX_RG16F,
+            TEX_RG32F,
             TEX_BGRA8,
+            TEX_RGBA16F,
+            TEX_RGBA32F,
+            TEX_RGBA32UI,
             TEX_DXT1,
             TEX_DXT3,
             TEX_DXT5,
-            TEX_RGBA16F,
-            TEX_RGBA32F
+            TEX_ETC1,
+            TEX_RGB8_ETC2,
+            TEX_RGBA8_ETC2,
+            TEX_BC6_UF16,
+            TEX_BC6_SF16,
+            TEX_BC7,
+            TEX_ASTC_4x4,
+            TEX_ASTC_5x4,
+            TEX_ASTC_5x5,
+            TEX_ASTC_6x5,
+            TEX_ASTC_6x6,
+            TEX_ASTC_8x5,
+            TEX_ASTC_8x6,
+            TEX_ASTC_8x8,
+            TEX_ASTC_10x5,
+            TEX_ASTC_10x6,
+            TEX_ASTC_10x8,
+            TEX_ASTC_10x10,
+            TEX_ASTC_12x10,
+            TEX_ASTC_12x12
         }
 
         /// <summary>
@@ -497,6 +555,23 @@ namespace Horde3DNET
         }
 
         /// <summary>
+        /// Enum: H3DMeshPrimType
+        ///     The available Mesh node primitive types.
+
+        /// TriangleList - Mesh is drawn with triangles.
+        /// LineList     - Mesh is drawn with lines.
+        /// Patches      - Mesh is drawn with patches.Only used for tessellated meshes.
+        /// Points       - Mesh is represented as points.
+        /// </summary>
+        public enum H3DMeshPrimType
+        {
+            TriangleList = 0,
+            LineList = 1,
+            Patches = 2,
+            Points = 3
+        }
+
+        /// <summary>
         /// Enum: H3DMesh
         ///    The available Mesh node parameters.
 
@@ -507,7 +582,6 @@ namespace Horde3DNET
         /// VertREndI       - Last vertex in Geometry resource of parent Model node [read-only]
         /// LodLevelI       - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
         ///                   the model's current LOD level which is calculated based on the LOD distances (default: 0)
-        /// TessellatableI  - specify if mesh can be tessellated (default: 0)
         /// </summary>
         public enum H3DMesh
         {
@@ -516,8 +590,7 @@ namespace Horde3DNET
             BatchCountI,
             VertRStartI,
             VertREndI,
-            LodLevelI,
-            TessellatableI
+            LodLevelI
         }
 
         /// <summary>
@@ -650,11 +723,13 @@ namespace Horde3DNET
         ///       
         /// Animation  - Apply animation
         /// Geometry   - Apply morphers and software skinning
+        /// ChildNodes - Manually update child nodes and calculate their AABB. Useful when meshes are added procedurally to model
         /// </summary>
         public enum H3DModelUpdateFlags
         {
-                Animation = 1,
-                Geometry = 2
+            Animation = 1,
+            Geometry = 2,
+            ChildNodes = 3
         };
 
 
@@ -774,10 +849,20 @@ namespace Horde3DNET
         // --- General functions ---
 
         /// <summary>
+        /// Registers a callback to be called each time the engine issues a message.
+        /// If 0 is provided as function pointer, the callback is deleted.
+        /// </summary>
+        /// <param name="log_cb">function pointer to call</param>
+        public static void setMessageCallback( log_callBack log_cb ) 
+        {
+            NativeMethodsEngine.h3dSetMessageCallback( log_cb );
+        }
+
+        /// <summary>
         /// This function returns the next message string from the message queue and writes additional information to the specified variables. If no message is left over in the queue an empty string is returned.
         /// </summary>
         /// <param name="level">pointer to variable for storing message level indicating importance (can be NULL)</param>
-        /// <param name="time">pointer to variable for stroing time when message was added (can be NULL)</param>
+        /// <param name="time">pointer to variable for storing time when message was added (can be NULL)</param>
         /// <returns>message string or empty string if no message is in queue</returns>
         public static string getMessage(out int level, out float time)
         {
@@ -871,6 +956,66 @@ namespace Horde3DNET
             NativeMethodsEngine.h3dClearOverlays();
         }
 
+        /// <summary>
+        /// This utility function uses overlays to display a text string at a specified position on the screen. 
+        /// </summary>
+        /// <remarks>
+        /// The font texture of the specified font material has to be a regular 16x16 grid containing all ASCII characters in row-major order. 
+        /// The layer corresponds to the layer parameter of overlays.
+        /// Part of overlays extension.
+        /// </remarks>
+        /// <param name="text">text string to be displayed</param>
+        /// <param name="x">x position of the lower left corner of the first character; for more details on coordinate system see overlay documentation</param>
+        /// <param name="y">y position of the lower left corner of the first character; for more details on coordinate system see overlay documentation</param>
+        /// <param name="size">size factor of the font</param>
+        /// <param name="colR">red part of font color</param>
+        /// <param name="colG">green part of font color</param>
+        /// <param name="colB">blue part of font color</param>
+        /// <param name="fontMatRes">font material resource used for rendering</param>
+        /// <param name="layer">layer index of the font overlays (values: 0-7)</param>        
+        public static void showText(string text, float x, float y, float size,
+                                    float colR, float colG, float colB,
+                                    int fontMatRes)
+        {
+            if (text == null) throw new ArgumentNullException("text", Resources.StringNullExceptionString);
+            if (fontMatRes < 0) throw new ArgumentOutOfRangeException("fontMatRes", Resources.UIntOutOfRangeExceptionString);
+
+            NativeMethodsEngine.h3dShowText(text, x, y, size, colR, colG, colB, fontMatRes);
+        }
+
+        /// <summary>
+        /// This utility function displays an info box with customizable text for the current frame on the screen.
+        /// Part of overlay extension.
+        /// </summary>
+        /// <param name="x">position of the top left corner of the box; for more details on coordinate system see overlay documentation</param>
+        /// <param name="y">position of the top left corner of the box; for more details on coordinate system see overlay documentation</param>
+        /// <param name="width">maximum width of info box</param>
+        /// <param name="title">title string of info box</param>
+        /// <param name="numRows">Number of info rows</param>
+        /// <param name="column1">list of strings to print in first column (=numRows)</param>
+        /// <param name="column2">list of strings to print in second column (=numRows)</param>
+        /// <param name="fontMaterialRes">font material resource used for drawing text</param>
+        /// <param name="panelMaterialRes">material resource used for drawing info box</param>
+        public static void showInfoBox(float x, float y, float width, string title,
+                                       int numRows, string[] column1, string[] column2,
+                                       int fontMaterialRes, int panelMaterialRes)
+        {
+            NativeMethodsEngine.h3dShowInfoBox(x, y, width, title, numRows, column1, column2, fontMaterialRes, panelMaterialRes);
+        }
+
+        /// <summary>
+        /// This utility function displays an info box with statistics for the current frame on the screen.
+        /// Since the statistic counters are reset after the call, the function should be called exactly once
+        /// per frame to obtain correct values.
+        /// Part of overlays extension.
+        /// </summary>
+        /// <param name="fontMaterialRes">font material resource used for drawing text</param>
+        /// <param name="panelMaterialRes">material resource used for drawing info box</param>
+        /// <param name="mode">display mode, specifying which data is shown (<= MaxStatMode)</param>
+        public static void showFrameStats(int fontMaterialRes, int panelMaterialRes, int mode)
+        {
+            NativeMethodsEngine.h3dShowFrameStats(fontMaterialRes, panelMaterialRes, mode);
+        }
 
         // --- Resource functions ---
         /// <summary>
@@ -1858,15 +2003,16 @@ namespace Horde3DNET
         /// <param name="parent">handle to parent node to which the new node will be attached</param>
         /// <param name="name">name of the node</param>
         /// <param name="matRes">Material resource used by Mesh node</param>
+        /// <param name="primType">type of primitives that is used to draw this mesh</param>
         /// <param name="batchStart">first vertex index in Geometry resource of parent Model node</param>
         /// <param name="batchCount">number of vertex indices in Geometry resource of parent Model node</param>
         /// <param name="vertRStart">minimum vertex array index contained in Geometry resource indices of parent Model node</param>
         /// <param name="vertREnd">maximum vertex array index contained in Geometry resource indices of parent Model node</param>
         /// <returns>handle to the created node or 0 in case of failure</returns>
-        public static int addMeshNode(int parent, string name, int matRes, int batchStart, int batchCount, int vertRStart, int vertREnd)
+        public static int addMeshNode(int parent, string name, int matRes, int primType, int batchStart, int batchCount, int vertRStart, int vertREnd)
         {
             if (name == null) throw new ArgumentNullException("name", Resources.StringNullExceptionString);
-            return (int)NativeMethodsEngine.h3dAddMeshNode(parent, name, matRes, batchStart, batchCount, vertRStart, vertREnd);
+            return (int)NativeMethodsEngine.h3dAddMeshNode(parent, name, matRes, primType, batchStart, batchCount, vertRStart, vertREnd);
         }
 
    

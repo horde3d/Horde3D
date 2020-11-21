@@ -65,7 +65,7 @@ namespace Horde3DNET.Samples.KnightNET
             this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.MaximizeBox = false;
             this.Name = "RenderForm";
-            this.Text = "Knight - Horde3D .NET Sample (beta)";
+            this.Text = "Knight - Horde3D .NET Sample";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.RenderForm_FormClosed);
             this.Load += new System.EventHandler(this.RenderForm_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.RenderForm_KeyDown);

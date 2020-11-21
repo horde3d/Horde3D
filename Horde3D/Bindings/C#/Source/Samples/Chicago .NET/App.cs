@@ -71,8 +71,14 @@ namespace Horde3DNET.Samples.ChicagoNET
 	        h3d.setOption( h3d.H3DOptions.ShadowMapSize, 2048 );
             h3d.setOption( h3d.H3DOptions.FastAnimation, 1 );
 
+            // Samples require overlays extension in order to display information
+            if ( !h3d.checkExtension( "Overlays" ) )
+            {
+                throw new System.ArgumentException( "Unable to find overlays extension", "checkExtension" ); 
+            }
+
             // Add resources
- 	        // Pipelines
+            // Pipelines
             _forwardPipeRes = h3d.addResource((int)h3d.H3DResTypes.Pipeline, "pipelines/forward.pipeline.xml", 0);
             _deferredPipeRes = h3d.addResource((int)h3d.H3DResTypes.Pipeline, "pipelines/deferred.pipeline.xml", 0);
             // Overlays
@@ -139,7 +145,7 @@ namespace Horde3DNET.Samples.ChicagoNET
 
             if (_statMode > 0 )
             {
-                Horde3DUtils.showFrameStats(_fontMatRes, _panelMatRes, _statMode);
+                h3d.showFrameStats(_fontMatRes, _panelMatRes, _statMode);
             }
             
             // Show logo                        
@@ -190,7 +196,7 @@ namespace Horde3DNET.Samples.ChicagoNET
                     break;
 
                 case Keys.F3:
-                    if(  h3d.getNodeParamI( _cam, (int) h3d.H3DCamera.PipeResI ) == _forwardPipeRes )
+                    if( h3d.getNodeParamI( _cam, (int) h3d.H3DCamera.PipeResI ) == _forwardPipeRes )
                         h3d.setNodeParamI(_cam, (int) h3d.H3DCamera.PipeResI, _deferredPipeRes);
                     else
                         h3d.setNodeParamI(_cam, (int) h3d.H3DCamera.PipeResI, _forwardPipeRes);
