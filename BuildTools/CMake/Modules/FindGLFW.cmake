@@ -47,8 +47,8 @@ IF(NOT GLFW_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_GLFW)
     MESSAGE(STATUS "Preparing external GLFW project")
     INCLUDE(ExternalProject)
     ExternalProject_Add(project_glfw 
-        URL https://github.com/glfw/glfw/releases/download/3.2.1/glfw-3.2.1.zip
-        URL_MD5 824c99eea073bdd6d2fec76b538f79af
+        URL https://github.com/glfw/glfw/releases/download/3.3.2/glfw-3.3.2.zip
+        URL_MD5 f794d9ad899a64894782884be79d644b
         CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DGLFW_BUILD_DOCS:BOOL=OFF -DGLFW_BUILD_EXAMPLES:BOOL=OFF -DGLFW_BUILD_TESTS:BOOL=OFF
         LOG_DOWNLOAD 1
         LOG_UPDATE 1
