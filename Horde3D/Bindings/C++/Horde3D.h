@@ -793,15 +793,14 @@ struct H3DEmitter
 struct H3DComputeNode
 {
 	/*	Enum: H3DComputeNode
-	The available compute node parameters.
+			The available compute node parameters.
 
-	MatResI        - Material resource used for rendering
-	CompBufResI    - Compute buffer resource that is used as data storage
-	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
-	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
-	DrawTypeI	   - Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
-	ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
-
+		MatResI        - Material resource used for rendering
+		CompBufResI    - Compute buffer resource that is used as data storage
+		AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
+		AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+		DrawTypeI	   - Specifies how to draw data in the buffer (see H3DMeshPrimType)
+		ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
 	*/
 	enum List
 	{
@@ -995,7 +994,7 @@ H3D_API void h3dClear();
 		callaback  - function pointer to call
 
 	Returns:
-		true in case of success, otherwise false
+		nothing
 */
 H3D_API void h3dSetMessageCallback(void (*callback)(int, const char*));
 
