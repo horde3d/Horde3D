@@ -36,6 +36,8 @@ bool GLFWBackend::init( const BackendInitParameters &params )
 			else if ( params.forceGLCompatibilityProfile ) glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE );
 			else glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
+			if ( getPlatform() == Platform::MacOS ) glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
+			
 			break;
 		case RenderAPI::OpenGLES3:
 			glfwWindowHint( GLFW_CLIENT_API, GLFW_OPENGL_ES_API );
