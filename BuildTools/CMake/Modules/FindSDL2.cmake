@@ -255,6 +255,11 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
 	ENDIF()
 
+	# Set path to sdl library in sample binary, so that linker could find it
+	IF( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
+		set_target_properties( project_sdl PROPERTIES MACOSX_RPATH TRUE )
+	ENDIF()
+
 ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 	# SDL is built somewhere else, use the prebuilt library
 
