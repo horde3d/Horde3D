@@ -142,7 +142,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             add_definitions( -DHAVE_EGL ${EGL_DEFINITIONS} )
         endif( EGL_FOUND )
 
-        target_link_libraries(Horde3D ${OPENGL_gl_LIBRARY} ${EGL_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
+		# cmake now prefers GLVND libraries instead of raw libGL. So search for OPENGL_opengl_LIBRARY.
+		# currently we are still targeting X, so we should include glx library
+        target_link_libraries(Horde3D ${OPENGL_opengl_LIBRARY} ${OPENGL_glx_LIBRARY} ${EGL_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
 	endif (USE_GLES3)        	
 
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fpic")
