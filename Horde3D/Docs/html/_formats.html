@@ -43,7 +43,7 @@ are some limitations concerning exotic formats like 1 bpp textures.</p>
 <p>Materials are used to bind data to shaders. They can reference a shader and setup texture samplers
 with images. They can also define shader uniforms which are four-dimensional float vectors with arbitrary
 user defined data. Materials are also responsible for setting shader flags which are used to select a shader
-combination from an übershader.
+combination from an ubershader.
 <br/>
 A material can for example be used to define the appearance of a surface. Every material can have a class string which
 is useful for accessing geometry with specific properties, e.g. translucency. Since the material class system is
@@ -53,6 +53,7 @@ texture samplers and uniforms. This is useful to define global data (e.g. ambien
 location.
 <br />
 In Horde3D materials are specified with an XML syntax.</p>
+
 
 <p>The following XML node elements with the described attributes are supported:</p>
 
@@ -149,7 +150,7 @@ In Horde3D materials are specified with an XML syntax.</p>
                     </td>
                 </tr>
             </table>
-            
+
         </td>
     </tr>
     <tr>
@@ -161,7 +162,7 @@ In Horde3D materials are specified with an XML syntax.</p>
                     <td><b>name</b></td>
                     <td>name of the uniform {required}</td>
                 </tr>
-				<tr>
+    			<tr>
                     <td><b>a</b></td>
                     <td>value of first component (Default: 0.0) {optional}</td>
                 </tr>
@@ -321,10 +322,6 @@ In Horde3D materials are specified with an XML syntax.</p>
                     <td><b>lodLevel</b></td>
                     <td>see <a href="_api.html#H3DMesh">MeshNodeParams</a> {optional}</td>
                 </tr>
-				<tr>
-                    <td><b>tessellatable</b></td>
-                    <td>see <a href="_api.html#H3DMesh">MeshNodeParams</a> {optional}</td>
-                </tr>
             </table>
         </td>
     </tr>
@@ -396,7 +393,7 @@ In Horde3D materials are specified with an XML syntax.</p>
            </table>
        </td>
     </tr>
-    
+
     <tr>
         <td><b>Camera</b></td>
         <td>
@@ -414,7 +411,7 @@ In Horde3D materials are specified with an XML syntax.</p>
                     <td><b>outputBufferIndex</b></td>
                     <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
                 </tr>
-				<tr>
+    			<tr>
                     <td><b>leftPlane</b></td>
                     <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
                 </tr>
@@ -422,19 +419,19 @@ In Horde3D materials are specified with an XML syntax.</p>
                     <td><b>rightPlane</b></td>
                     <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
                 </tr>
-				<tr>
+    			<tr>
                     <td><b>bottomPlane</b></td>
                     <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
                 </tr>
-				<tr>
+    			<tr>
                     <td><b>topPlane</b></td>
                     <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
                 </tr>
-				<tr>
+    			<tr>
                     <td><b>nearPlane</b></td>
                     <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
                 </tr>
-				<tr>
+    			<tr>
                     <td><b>farPlane</b></td>
                     <td>see <a href="_api.html#H3DCamera">CameraNodeParams</a> {optional}</td>
                 </tr>
@@ -499,7 +496,7 @@ In Horde3D materials are specified with an XML syntax.</p>
            </table>
        </td>
     </tr>
-	<tr>
+    <tr>
         <td><b>Compute</b></td>
         <td>
             Compute scene node. Used for visualization of compute buffer data {*}
@@ -742,314 +739,314 @@ it contains the triangle data as well as information about the skeleton of a mod
 				</tr>
 
             </table>
-		</td>
-	</tr>
-
-	<tr>
+    	</td>
+    </tr>
+    
+    <tr>
         <td><b>Joints</b></td>
         <td>Joint stream, just after the header
-			<table>
-				<tr>
-					<td><b>numJoints</b></td>
-					<td><b>int</b></td>
-					<td>
-						<b>#J</b>: Number of joints. It can make sense to have an additional default joint as first joint
-						that is used if a vertex has no explicit joint assignment (joint index 0 at vertex). This joint usually
-						has the identity matrix as inverse bind matrix.
-					</td>
-				</tr>
-				<tr>
-					<td>jointInverseBindMatrices</td>
-					<td><b>#J</b> * 16 <b>float</b>s</td>
-					<td>inverse bind matrices for every joint, if <b>#J</b> is zero nothing is written here</td>
-				</tr>
+    		<table>
+    			<tr>
+    				<td><b>numJoints</b></td>
+    				<td><b>int</b></td>
+    				<td>
+    					<b>#J</b>: Number of joints. It can make sense to have an additional default joint as first joint
+    					that is used if a vertex has no explicit joint assignment (joint index 0 at vertex). This joint usually
+    					has the identity matrix as inverse bind matrix.
+    				</td>
+    			</tr>
+    			<tr>
+    				<td>jointInverseBindMatrices</td>
+    				<td><b>#J</b> * 16 <b>float</b>s</td>
+    				<td>inverse bind matrices for every joint, if <b>#J</b> is zero nothing is written here</td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices</b></td>
         <td>Vertex stream, just after the joint stream
-			<table>
+    		<table>
                 <tr>
-					<tr>
-						<td><b>numVertexStreams</b></td>
-						<td><b>int</b></td>
-						<td>
-							number of parts of your vertex data. If you want to write only position and normals write 2 here.<br />
-							The default implementation uses 6 (no joints) or 8 (with joints) to write:
-							<ul>
-								<li>position</li>
-								<li>normals</li>
-								<li>tangents</li>
-								<li>bitangents</li>
-								<li>joint indices (only with joints)</li>
-								<li>joint weights (only with joints)</li>
-								<li>texture coordinates, set 0</li>
-								<li>texture coordinates, set 1</li>
-							</ul>
-						</td>
-					</tr>
-					<tr>
-						<td><b>numVertices</b></td>
-						<td><b>int</b></td>
-						<td>Number of vertices <b>#V</b></td>
-					</tr>
+    				<tr>
+    					<td><b>numVertexStreams</b></td>
+    					<td><b>int</b></td>
+    					<td>
+    						number of parts of your vertex data. If you want to write only position and normals write 2 here.<br />
+    						The default implementation uses 6 (no joints) or 8 (with joints) to write:
+    						<ul>
+    							<li>position</li>
+    							<li>normals</li>
+    							<li>tangents</li>
+    							<li>bitangents</li>
+    							<li>joint indices (only with joints)</li>
+    							<li>joint weights (only with joints)</li>
+    							<li>texture coordinates, set 0</li>
+    							<li>texture coordinates, set 1</li>
+    						</ul>
+    					</td>
+    				</tr>
+    				<tr>
+    					<td><b>numVertices</b></td>
+    					<td><b>int</b></td>
+    					<td>Number of vertices <b>#V</b></td>
+    				</tr>
             </table>
-		</td>
+    	</td>
     </tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - positions</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>position identifier, write 0</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 12</td>
-				</tr>
-				<tr>
-					<td><b>positions</b></td>
-					<td><b>#V</b> * 3 <b>float</b>s</td>
-					<td>Write position data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...</td>
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 12</td>
+    			</tr>
+    			<tr>
+    				<td><b>positions</b></td>
+    				<td><b>#V</b> * 3 <b>float</b>s</td>
+    				<td>Write position data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...</td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - normals</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>normal identifier, write 1</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 6</td>
-				</tr>
-				<tr>
-					<td><b>normals</b></td>
-					<td><b>#V</b> * 3 <b>short</b>s</td>
-					<td>
-						Write normal data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
-						To save space normals are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
-					</td>
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 6</td>
+    			</tr>
+    			<tr>
+    				<td><b>normals</b></td>
+    				<td><b>#V</b> * 3 <b>short</b>s</td>
+    				<td>
+    					Write normal data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
+    					To save space normals are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
+    				</td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - tangents</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>tangent identifier, write 2</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 6</td>
-				</tr>
-				<tr>
-					<td><b>tangents</b></td>
-					<td><b>#V</b> * 3 <b>short</b>s</td>
-					<td>
-						Write tangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
-						To save space tangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
-					</td>
-
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 6</td>
+    			</tr>
+    			<tr>
+    				<td><b>tangents</b></td>
+    				<td><b>#V</b> * 3 <b>short</b>s</td>
+    				<td>
+    					Write tangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
+    					To save space tangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
+    				</td>
+    
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - bitangents</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>bitangents identifier, write 3</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 6</td>
-				</tr>
-				<tr>
-					<td><b>bitangents</b></td>
-					<td><b>#V</b> * 3 <b>short</b>s</td>
-					<td>
-						Write bitangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
-						To save space bitangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
-					</td>
-
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 6</td>
+    			</tr>
+    			<tr>
+    				<td><b>bitangents</b></td>
+    				<td><b>#V</b> * 3 <b>short</b>s</td>
+    				<td>
+    					Write bitangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
+    					To save space bitangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
+    				</td>
+    
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - joint indices</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>joint indices identifier, write 4</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 4</td>
-				</tr>
-				<tr>
-					<td><b>jointIndices</b></td>
-					<td>4 <b>unsigned char</b>s</td>
-					<td>joint indices of current vertex (up to 4); a 0 means unused</td>
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 4</td>
+    			</tr>
+    			<tr>
+    				<td><b>jointIndices</b></td>
+    				<td>4 <b>unsigned char</b>s</td>
+    				<td>joint indices of current vertex (up to 4); a 0 means unused</td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - joint weights</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>joint weights identifier, write 5</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 4</td>
-				</tr>
-				<tr>
-					<td><b>jointWeights</b></td>
-					<td>4 <b>unsigned char</b>s</td>
-					<td>To save space joint weights are stored as <b>unsigned char</b>s. Before writing multiply your <b>float</b> with 255 and convert it then to <b>unsigned char</b></td>
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 4</td>
+    			</tr>
+    			<tr>
+    				<td><b>jointWeights</b></td>
+    				<td>4 <b>unsigned char</b>s</td>
+    				<td>To save space joint weights are stored as <b>unsigned char</b>s. Before writing multiply your <b>float</b> with 255 and convert it then to <b>unsigned char</b></td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - texture coordinates set 0</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>texture coordinates set 0 identifier, write 6</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 8</td>
-				</tr>
-				<tr>
-					<td><b>textureCoordinates</b></td>
-					<td><b>#V</b> * 2 <b>float</b>s</td>
-					<td>Write texture coordinate data as contiguous array of U0,V0,U1,V1,,...</td>
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 8</td>
+    			</tr>
+    			<tr>
+    				<td><b>textureCoordinates</b></td>
+    				<td><b>#V</b> * 2 <b>float</b>s</td>
+    				<td>Write texture coordinate data as contiguous array of U0,V0,U1,V1,,...</td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Vertices - texture coordinates set 1</b></td>
-		<td>May be written at any position <i>inside</i> the vertex stream
-			<table>
+    	<td>May be written at any position <i>inside</i> the vertex stream
+    		<table>
                 <tr>
                     <td><b>magic</b></td>
-					<td><b>int</b></td>
+    				<td><b>int</b></td>
                     <td>texture coordinates set 1 identifier, write 7</td>
                 </tr>
-				<tr>
-					<td><b>streamElementSize</b></td>
-					<td><b>int</b></td>
-					<td>size of <i>one</i> element of the stream. Here 8</td>
-				</tr>
-				<tr>
-					<td><b>textureCoordinates</b></td>
-					<td><b>#V</b> * 2 <b>float</b>s</td>
-					<td>Write texture coordinate data as contiguous array of U0,V0,U1,V1,,...</td>
-				</tr>
+    			<tr>
+    				<td><b>streamElementSize</b></td>
+    				<td><b>int</b></td>
+    				<td>size of <i>one</i> element of the stream. Here 8</td>
+    			</tr>
+    			<tr>
+    				<td><b>textureCoordinates</b></td>
+    				<td><b>#V</b> * 2 <b>float</b>s</td>
+    				<td>Write texture coordinate data as contiguous array of U0,V0,U1,V1,,...</td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Triangle indices</b></td>
-		<td>Triangle index stream, just after the vertex stream
-			<table>
+    	<td>Triangle index stream, just after the vertex stream
+    		<table>
                 <tr>
                     <td><b>numTriangleIndices</b></td>
-					<td><b>int</b></td>
-					<td>number of triangle indices</td>
+    				<td><b>int</b></td>
+    				<td>number of triangle indices</td>
                 </tr>
-				<tr>
-					<td><b>triangleIndices</b></td>
-					<td><b>#TI</b> <b>int</b>s</td>
-					<td></td>
-				</tr>
+    			<tr>
+    				<td><b>triangleIndices</b></td>
+    				<td><b>#TI</b> <b>int</b>s</td>
+    				<td></td>
+    			</tr>
             </table>
-		</td>
+    	</td>
     </tr>
     <tr>
-
-	<tr>
+    
+    <tr>
         <td><b>Morph targets</b></td>
-		<td>Morph target stream, just after the triangle index stream
-			<table>
+    	<td>Morph target stream, just after the triangle index stream
+    		<table>
                 <tr>
                     <td><b>numMorphTargets</b></td>
-					<td><b>int</b></td>
-					<td>number of morph targets. <i>If numMorphTargets == 0 then this is the only entry of the morph target stream.</i></td>
+    				<td><b>int</b></td>
+    				<td>number of morph targets. <i>If numMorphTargets == 0 then this is the only entry of the morph target stream.</i></td>
                 </tr>
-			</table>
-			<table>
-				<tr><td><i>For each morph target:</i></td></tr>
-			</table>
-			<table>
-				<tr>
-					<td><b>morphTargetName</b></td>
-					<td>256 <b>char</b>s</td>
-					<td>morph target name, must be null terminated</td>
-				</tr>
-				<tr>
-					<td><b>numMorphVertices</b></td>
-					<td><b>int</b></td>
-					<td>number of vertices which differ between base vertices and morph target</td>
-				</tr>
-				<tr>
-					<td><b>morphVertexIndices</b></td>
-					<td>numMorphVertices <b>int</b>s</td>
-					<td>indices of the vertices which should be morphed</td>
-				</tr>
+    		</table>
+    		<table>
+    			<tr><td><i>For each morph target:</i></td></tr>
+    		</table>
+    		<table>
+    			<tr>
+    				<td><b>morphTargetName</b></td>
+    				<td>256 <b>char</b>s</td>
+    				<td>morph target name, must be null terminated</td>
+    			</tr>
+    			<tr>
+    				<td><b>numMorphVertices</b></td>
+    				<td><b>int</b></td>
+    				<td>number of vertices which differ between base vertices and morph target</td>
+    			</tr>
+    			<tr>
+    				<td><b>morphVertexIndices</b></td>
+    				<td>numMorphVertices <b>int</b>s</td>
+    				<td>indices of the vertices which should be morphed</td>
+    			</tr>
  				<tr>
 					<td><b>numMorphStreams</b></td>
 					<td><b>int</b></td>
@@ -1112,7 +1109,7 @@ it contains the triangle data as well as information about the skeleton of a mod
 	</tr>
 
 	<tr>
-        <td><b>Animation data</b></td>
+	    <td><b>Animation data</b></td>
 		<td>Animation data, just after header repeated <b>numAnimations</b> times for all animated nodes. Nodes
 		that have no animation don't need to be stored in the animation file. Animation data is sampled,
 		meaning that all nodes must have the same number of frames, namely <b>numFrames</b>. The format supports a
@@ -1144,9 +1141,9 @@ it contains the triangle data as well as information about the skeleton of a mod
 					<td>3 <b>float</b>s</td>
 					<td>scale vector: x, y, z</td>
 				</tr>
-            </table>
+	        </table>
 		</td>
-    </tr>
+	</tr>
 </table>
 </div>
 <br /><br />
