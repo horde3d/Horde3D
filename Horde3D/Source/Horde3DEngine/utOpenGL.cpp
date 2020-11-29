@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -30,6 +30,7 @@ namespace glExt
 	bool ARB_texture_compression_bptc = false;
 	bool ARB_texture_rg = false;
 	bool KHR_texture_compression_astc = false;
+	bool KHR_debug = false;
 
 	int	majorVersion = 1, minorVersion = 0;
 }
@@ -556,6 +557,11 @@ PFNGLTEXBUFFERPROC glTexBufferARB = 0x0;
 // GL_OES_EGL_image
 PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = 0x0;
 
+// GL_KHR_debug
+PFNGLDEBUGMESSAGECONTROLKHRPROC glDebugMessageControlKHR = 0x0;
+PFNGLDEBUGMESSAGEINSERTKHRPROC glDebugMessageInsertKHR = 0x0;
+PFNGLDEBUGMESSAGECALLBACKKHRPROC glDebugMessageCallbackKHR = 0x0;
+PFNGLGETDEBUGMESSAGELOGKHRPROC glGetDebugMessageLogKHR = 0x0;
 }  // namespace h3dGL
 
 
@@ -751,6 +757,15 @@ void initModernExtensions( bool &r )
 	glExt::ARB_ES3_compatibility = isExtensionSupported( "GL_ARB_ES3_compatibility" );
 	glExt::ARB_texture_compression_bptc = isExtensionSupported( "GL_ARB_texture_compression_bptc" );
 	glExt::KHR_texture_compression_astc = isExtensionSupported( "GL_KHR_texture_compression_astc_ldr" );
+
+	glExt::KHR_debug = isExtensionSupported( "GL_KHR_debug" );
+	if ( glExt::KHR_debug )
+	{
+		r &= ( glDebugMessageCallbackKHR = ( PFNGLDEBUGMESSAGECALLBACKKHRPROC ) platGetProcAddress( "glDebugMessageCallbackKHR" ) ) != 0x0;
+		r &= ( glDebugMessageControlKHR = ( PFNGLDEBUGMESSAGECONTROLKHRPROC ) platGetProcAddress( "glDebugMessageControlKHR" ) ) != 0x0;
+		r &= ( glDebugMessageInsertKHR = ( PFNGLDEBUGMESSAGEINSERTKHRPROC ) platGetProcAddress( "glDebugMessageInsertKHR" ) ) != 0x0;
+		r &= ( glGetDebugMessageLogKHR = ( PFNGLGETDEBUGMESSAGELOGKHRPROC ) platGetProcAddress( "glGetDebugMessageLogKHR" ) ) != 0x0;
+	}
 }
 
 bool initOpenGLExtensions( bool forceLegacyFuncs )

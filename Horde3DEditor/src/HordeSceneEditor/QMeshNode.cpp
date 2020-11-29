@@ -73,11 +73,13 @@ void QMeshNode::addRepresentation()
 		rootID, 
 		qPrintable(m_xmlNode.attribute("name")), 
         m_materialResID,
+		H3DMeshPrimType::TriangleList,
 		m_xmlNode.attribute("batchStart").toUInt(),
 		m_xmlNode.attribute("batchCount").toUInt(),
 		m_xmlNode.attribute("vertRStart").toUInt(),
 		m_xmlNode.attribute("vertREnd").toUInt()
 	);	
+
 	// load transformation from file...
 	float x, y, z, rx, ry, rz, sx, sy, sz;
 	getTransformation(x,y,z,rx,ry,rz,sx,sy,sz);

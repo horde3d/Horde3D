@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -204,8 +204,6 @@ bool TessellatorSample::initResources()
 
 	if ( !h3dGetDeviceCapabilities( H3DDeviceCapabilities::TessellationShaders ) )
 		return false;
-
-	h3dSetOption( H3DOptions::DebugRenderBackend, 1.0f );
 
     // 1. Add resources
 

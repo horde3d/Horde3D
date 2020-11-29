@@ -394,6 +394,9 @@ bool SDLBackend::init( const BackendInitParameters &params )
 
             SDL_GL_SetAttribute( SDL_GL_RETAINED_BACKING, 0 );
             SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
+
+			if ( params.debugContext ) SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
+
 			break;
 		default:
 			return false;

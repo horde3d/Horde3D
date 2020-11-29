@@ -78,9 +78,15 @@ namespace Horde3DNET.Samples.KnightNET
 	        h3d.setOption( h3d.H3DOptions.MaxAnisotropy, 4 );
 	        h3d.setOption( h3d.H3DOptions.ShadowMapSize, 2048 );
 
+            // Samples require overlays extension in order to display information
+            if (!h3d.checkExtension("Overlays"))
+            {
+                throw new System.ArgumentException("Unable to find overlays extension", "checkExtension");
+            }
+
             // Add resources
             // added horde3d 1.0            
-	        // Pipelines
+            // Pipelines
             _hdrPipeRes = h3d.addResource( (int) h3d.H3DResTypes.Pipeline, "pipelines/hdr.pipeline.xml", 0);
             _forwardPipeRes = h3d.addResource((int) h3d.H3DResTypes.Pipeline, "pipelines/forward.pipeline.xml", 0);
             // Overlays
@@ -177,10 +183,10 @@ namespace Horde3DNET.Samples.KnightNET
 
             if (_statMode > 0)
             {
-                Horde3DUtils.showFrameStats( _fontMatRes, _panelMatRes, _statMode );		        
+                h3d.showFrameStats( _fontMatRes, _panelMatRes, _statMode );		        
 
                 string text = string.Format("Weight: {0:F2}", _weight);
-                Horde3DUtils.showText(text, 0.03f, 0.24f, 0.026f, 1, 1, 1, _fontMatRes );
+                h3d.showText(text, 0.03f, 0.24f, 0.026f, 1, 1, 1, _fontMatRes );
             }
 
             // Show logo                        

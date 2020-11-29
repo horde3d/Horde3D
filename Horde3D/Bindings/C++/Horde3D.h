@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -639,6 +639,11 @@ struct H3DMeshPrimType
 {
 	/*	Enum: H3DMeshParams
 			The available Mesh node primitive types.
+
+		TriangleList - Mesh is drawn with triangles.
+		LineList     - Mesh is drawn with lines.
+		Patches      - Mesh is drawn with patches. Only used for tessellated meshes.
+		Points       - Mesh is represented as points.
 	 */
 	enum List
 	{
@@ -788,15 +793,14 @@ struct H3DEmitter
 struct H3DComputeNode
 {
 	/*	Enum: H3DComputeNode
-	The available compute node parameters.
+			The available compute node parameters.
 
-	MatResI        - Material resource used for rendering
-	CompBufResI    - Compute buffer resource that is used as data storage
-	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
-	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
-	DrawTypeI	   - Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
-	ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
-
+		MatResI        - Material resource used for rendering
+		CompBufResI    - Compute buffer resource that is used as data storage
+		AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
+		AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+		DrawTypeI	   - Specifies how to draw data in the buffer (see H3DMeshPrimType)
+		ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
 	*/
 	enum List
 	{
@@ -990,7 +994,7 @@ H3D_API void h3dClear();
 		callaback  - function pointer to call
 
 	Returns:
-		true in case of success, otherwise false
+		nothing
 */
 H3D_API void h3dSetMessageCallback(void (*callback)(int, const char*));
 

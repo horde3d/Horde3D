@@ -5,7 +5,7 @@
 //
 // Sample Framework
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -169,6 +169,7 @@ bool SampleApplication::init()
 	h3dSetOption( H3DOptions::SampleCount, ( float ) _sampleCount );
 	h3dSetOption( H3DOptions::DumpFailedShaders, 1 );
 	h3dSetOption( H3DOptions::GatherTimeStats, 1 ); // Set to 0 to improve performance on low-end machines
+	if ( params.debugContext ) h3dSetOption( H3DOptions::DebugRenderBackend, 1 );
 
 	// Init resources
 	if ( !initResources() )
@@ -275,6 +276,7 @@ BackendInitParameters SampleApplication::setupInitParameters()
 
 			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 1;
 			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 3;
+            if ( _renderCaps & RenderCapabilities::DebugBackend ) params.debugContext = true;
 			
 			break;
 		case ( int ) RenderAPI::OpenGLES3:
@@ -285,6 +287,7 @@ BackendInitParameters SampleApplication::setupInitParameters()
 			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 1;
 			if ( _renderCaps & RenderCapabilities::GeometryShader ) params.minorVersion = 2;
 			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 2;
+			if ( _renderCaps & RenderCapabilities::DebugBackend ) params.debugContext = true;
 
 			break;
 		default:

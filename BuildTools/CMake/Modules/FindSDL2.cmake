@@ -144,16 +144,16 @@ IF(SDL2_LIBRARY_TEMP)
 	# I think it has something to do with the CACHE STRING.
 	# So I use a temporary variable until the end so I can set the
 	# "real" variable in one-shot.
-	IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} "-framework Cocoa")
-	ENDIF()
+	# IF(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	# 	SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} "-framework Cocoa")
+	# ENDIF()
 
 	# For threads, as mentioned Apple doesn't need this.
 	# In fact, there seems to be a problem if I used the Threads package
 	# and try using this line, so I'm just skipping it entirely for OS X.
-	IF(NOT APPLE)
-		SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} ${CMAKE_THREAD_LIBS_INIT})
-	ENDIF(NOT APPLE)
+	# IF(NOT APPLE)
+	# 	SET(SDL2_LIBRARY_TEMP ${SDL2_LIBRARY_TEMP} ${CMAKE_THREAD_LIBS_INIT})
+	# ENDIF(NOT APPLE)
 
 	# For MinGW library
 	IF(MINGW)
@@ -253,6 +253,11 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	# For android make sdl library path available for other projects (used for samples in android build)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
 		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+	ENDIF()
+
+	# Set path to sdl library in sample binary, so that linker could find it
+	IF( ${CMAKE_SYSTEM_NAME} MATCHES "Darwin" )
+		set_target_properties( project_sdl PROPERTIES MACOSX_RPATH TRUE )
 	ENDIF()
 
 ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
