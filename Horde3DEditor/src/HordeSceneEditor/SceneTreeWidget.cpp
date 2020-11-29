@@ -24,6 +24,7 @@
 #include "QReferenceNode.h"
 
 #include <QMessageBox>
+#include <QAction>
 
 #include "SceneFile.h"
 
