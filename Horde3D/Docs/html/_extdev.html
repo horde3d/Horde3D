@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Horde3D Documentation</title>
+    <link rel="stylesheet" type="text/css" href="css/manual.css" title="ALL" media="screen,projection" />
+</head>
+
+<body>
+<div id="content">
+
+<h1>Extension development for Horde3D</h1>
+
+<a id="Introduction"></a>
+<h2>Introduction</h2>
+<p>
+Horde3D has an extension mechanism that can help you to add new functionality to engine without modification of the engine source.
+There are a number of extensions already available, some of them are in the engine's repository.
+</p>
+
+<a id="ExtInterface"></a>
+<h2>Extension interface</h2>
+<p>
+Usually extension has the following structure: <br>
+- a folder in Extensions directory with the name of the extension; <br>
+- Bindings directory that (at least) contains one or several header files in C++ subdirectory; <br> 
+- Source directory that contains source files for the extension; <br>
+- Sample folder that contains sample's source code, if present. <br> <br>
+
+Extension interface consists of two parts: an internal one, that is used by the engine, and the external one, used by application.
+Internal interface is a class that defines extension initialization and destruction procedures.
+It is usually defined in header file and its implementation is in source file:  
+</p>
+
+<div class="codebox">
+    <pre>
+    #include &lt;egPrerequisites.h&gt;
+    #include &lt;egExtensions.h&gt;
+    
+    <b>namespace</b> ExtensionNamespace {
+    using namespace <b>Horde3D</b>;
+    
+    <b>class</b> SampleExtension : public IExtension
+	{
+	<b>public</b>:
+		<b>virtual const char </b> *getName() const { return "ExtensionName"; }
+		<b>virtual bool</b> init();
+		<b>virtual void</b> release();
+	};
+
+    } // namespace
+    </pre>
+</div>
+
+<p>
+    As Horde3D uses a procedural API interface, extension should provide a similar procedural interface to control its behavior.
+    External interface is usually defined and implemented in source file.
+</p>
+
+<div class="codebox">
+    <pre>
+    <b>namespace</b> ExtensionNamespace {
+
+        H3D_IMPL void h3dextFunc1()
+        {
+            // code
+        }
+
+    }
+    </pre>
+</div>
+
+<a id="RenderInterface"></a>
+<h2>How to select render interface</h2>
+
+<p>
+Sometimes it is necessary to do different things for different render interfaces, for example, different shaders are used.
+The following code can help you getting current render interface:
+</p>
+
+<div class="codebox">
+    <pre>
+    <b>switch</b> ( <b>Modules</b>::renderer().getRenderDeviceType() )
+    {
+        case <b>RenderBackendType</b>::OpenGL2:
+        {
+            // code
+        }
+        case <b>RenderBackendType</b>::OpenGL4:
+        {
+            // code
+        }
+        case <b>RenderBackendType</b>::OpenGLES3:
+        {
+            // code
+        }
+        <b>default</b>:
+            <b>return</b> false;
+        }
+    }
+    </pre>
+</div>
+
+<a id="PipelineActions"></a>
+<h2>Adding new pipeline actions</h2>
+
+<p>
+It is possible to add new pipeline actions through extensions. Currently Overlays extensions uses this mechanism.
+New pipeline action can be added through the following function:
+</p>
+
+<div class="codebox">
+    <pre>
+    // Register new pipeline commands
+    <b>Modules</b>::pipeMan().registerPipelineCommand( "CommandName", parseFunction, drawFunction );
+    </pre>
+</div>
+
+<p>
+Extension has to provide name of the command, that can be used in the pipeline xml file;
+parsing function that parses the parameters in pipeline file;
+draw function that is called when pipeline command is reached during rendering.
+Pipeline action registration should be done <b>during initialization</b> of the extension.
+</p>
+
+<a id="RegUniforms"></a>
+<h2>Registering new uniforms</h2>
+<p>
+Extension can register uniforms that would be used in shaders.
+
+<div class="codebox">
+    <pre>
+    // Register new engine uniform that will be searched for in all loaded shaders
+    _uni_extensionUniform = <b>Modules</b>::renderer().registerEngineUniform( "uniformName" );
+    </pre>
+</div>
+
+
+
+</p>
+
+</body>
+</html>
