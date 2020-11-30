@@ -69,6 +69,43 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context LIGHTING
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		GeometryShader = compile GLSL GS_WIREFRAME_GL4;
+		TessControlShader = compile GLSL TS_CONTROL_GL4;
+		TessEvalShader = compile GLSL TS_EVAL_GL4;
+		PixelShader = compile GLSL FS_LIGHTING_GL4;
+	
+		ZWriteEnable = false;
+		BlendMode = Add;
+		TessPatchVertices = 3;
+	}
+	
+	context SHADOWMAP
+	{
+		VertexShader = compile GLSL VS_SHADOWMAP_GL4;
+		GeometryShader = compile GLSL GS_WIREFRAME_SHADOW_GL4;
+		TessControlShader = compile GLSL TS_CONTROL_SHADOW_GL4;
+		TessEvalShader = compile GLSL TS_EVAL_SHADOW_GL4;
+		PixelShader = compile GLSL FS_SHADOWMAP_GL4;
+		
+		TessPatchVertices = 3;
+	}
+	
+	context AMBIENT
+	{
+		VertexShader = compile GLSL VS_GENERAL_GL4;
+		GeometryShader = compile GLSL GS_WIREFRAME_GL4;
+		TessControlShader = compile GLSL TS_CONTROL_GL4;
+		TessEvalShader = compile GLSL TS_EVAL_GL4;
+		PixelShader = compile GLSL FS_AMBIENT_GL4;
+		
+		TessPatchVertices = 3;
+	}
+}
 
 [[VS_GENERAL_GL4]]
 // =================================================================================================
@@ -387,8 +424,8 @@ out vec4 fragColor;
 float amplify(float d, float scale, float offset)
 {
     d = scale * d + offset;
-    d = clamp(d, 0, 1);
-    d = 1 - exp2(-2*d*d);
+    d = clamp(d, 0.0, 1.0);
+    d = 1.0 - exp2(-2.0*d*d);
     return d;
 }
 
@@ -402,7 +439,7 @@ void main( void )
 		
 	float d1 = min( min( triDistance.x, triDistance.y ), triDistance.z );
 	float d2 = min( min( patchDistanceGS.x, patchDistanceGS.y ), patchDistanceGS.z );
-	color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
+	color = amplify(d1, 40.0, -0.5) * amplify(d2, 60.0, -0.5) * color;
 		
 	//fragColor.rgb = color;
 
@@ -460,8 +497,8 @@ out vec4 fragColor;
 float amplify(float d, float scale, float offset)
 {
     d = scale * d + offset;
-    d = clamp(d, 0, 1);
-    d = 1 - exp2(-2*d*d);
+    d = clamp(d, 0.0, 1.0);
+    d = 1.0 - exp2(-2.0*d*d);
     return d;
 }
 
@@ -471,7 +508,7 @@ void main()
 
     float d1 = min( min( triDistance.x, triDistance.y ), triDistance.z );
     float d2 = min( min( patchDistanceGS.x, patchDistanceGS.y ), patchDistanceGS.z );
-    color = amplify(d1, 40, -0.5) * amplify(d2, 60, -0.5) * color;
+    color = amplify(d1, 40.0, -0.5) * amplify(d2, 60.0, -0.5) * color;
 
     fragColor = vec4(color, 1.0);
 }

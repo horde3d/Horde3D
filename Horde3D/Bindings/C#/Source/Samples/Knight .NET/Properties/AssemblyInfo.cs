@@ -1,4 +1,4 @@
-﻿// *************************************************************************************************
+// *************************************************************************************************
 //
 // Knight .NET - sample application for h3d .NET wrapper
 // ----------------------------------------------------------
@@ -25,7 +25,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Knight .NET")]
-[assembly: AssemblyCopyright("Copyright ©  2007 Nicolas Schulz and Martin Burkhard")]
+[assembly: AssemblyCopyright("Copyright © 2007-2020 Nicolas Schulz and Martin Burkhard")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

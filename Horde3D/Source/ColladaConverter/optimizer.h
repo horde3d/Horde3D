@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -16,6 +16,9 @@
 #include <vector>
 #include <set>
 #include <map>
+
+namespace Horde3D {
+namespace ColladaConverter {
 
 
 struct TriGroup;
@@ -47,10 +50,14 @@ public:
 	static unsigned int removeDegeneratedTriangles( TriGroup *triGroup, std::vector< Vertex > &vertices,
 	                                                std::vector< unsigned int > &indices );
 	static float calcCacheEfficiency( TriGroup *triGroup, std::vector< unsigned int > &indices,
-                                      const unsigned int cacheSize = maxCacheSize );
+	                                  const unsigned int cacheSize = maxCacheSize );
 	static void optimizeIndexOrder( TriGroup *triGroup, std::vector< Vertex > &vertices,
 	                                std::vector< unsigned int > &indices,
-									std::map< unsigned int, unsigned int > &vertMap );
+	                                std::map< unsigned int, unsigned int > &vertMap );
 };
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D
 
 #endif	// _optimizer_H_

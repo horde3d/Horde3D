@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -13,7 +13,9 @@
 #ifndef _utPlatform_H_
 #define _utPlatform_H_
 
-#if defined( _DEBUG )
+#include <locale.h>
+#include <memory>
+#if !defined( NDEBUG )
 	#include <assert.h>
 #endif
 
@@ -27,9 +29,25 @@
 #		define PLATFORM_WIN
 #	endif
 #elif defined( __APPLE__ ) || defined( __APPLE_CC__ )
-#   if !defined( PLATFORM_MAC )
-#      define PLATFORM_MAC
-#   endif
+#include "AvailabilityMacros.h"
+#include "TargetConditionals.h"
+#if TARGET_OS_IPHONE
+#	if !defined( PLATFORM_IOS )
+#		define PLATFORM_IOS
+#	endif
+#else
+#	if !defined( PLATFORM_MAC )
+#		define PLATFORM_MAC
+#	endif
+#endif
+#elif defined( __ANDROID__ )
+#	if !defined( PLATFORM_ANDROID )
+#		define PLATFORM_ANDROID
+#	endif
+#elif defined( __EMSCRIPTEN__ )
+#	if !defined( PLATFORM_EMSCRIPTEN )
+#		define PLATFORM_EMSCRIPTEN
+#	endif
 #else
 #	if !defined( PLATFORM_LINUX )
 #		define PLATFORM_LINUX
@@ -66,25 +84,33 @@
    || defined(_M_ALPHA) || defined(__amd64) \
    || defined(__amd64__) || defined(_M_AMD64) \
    || defined(__x86_64) || defined(__x86_64__) \
-   || defined(_M_X64) || defined(__bfin__)
+   || defined(_M_X64) || defined(__bfin__) \
+   || defined(__arm__) || defined(__ARM_ARCH_7__) \
+   || defined(__aarch64__)
 #       define PLATFORM_LITTLE_ENDIAN
 #else
 #   error Unknown endianess.
 #endif
 
 
-#ifndef DLLEXP
+// H3D_IMPL is prepended to functions that implement the API (declared with H3D_API)
+#ifndef H3D_STATIC_LIBS
 #	ifdef PLATFORM_WIN
-#		define DLLEXP extern "C" __declspec( dllexport )
+#		define H3D_IMPL extern "C" __declspec( dllexport )
 #	else
 #		if defined( __GNUC__ ) && __GNUC__ >= 4
-#		  define DLLEXP extern "C" __attribute__ ((visibility("default")))
-#   	else
-#		  define DLLEXP extern "C"
-#   	endif
+#			define H3D_IMPL extern "C" __attribute__ ((visibility("default")))
+#		else
+#			define H3D_IMPL extern "C"
+#		endif
 #	endif
+#else
+#	define H3D_IMPL extern "C"
 #endif
 
+#if defined( PLATFORM_WIN ) || defined( PLATFORM_MAC ) || defined ( PLATFORM_LINUX )
+#	define DESKTOP_OPENGL_AVAILABLE
+#endif
 
 // Shortcuts for common types
 typedef signed char int8;
@@ -121,7 +147,7 @@ typedef unsigned long long uint64;
 #endif
 
 // Runtime assertion
-#if defined( _DEBUG )
+#if !defined( NDEBUG )
 #	define ASSERT( exp ) assert( exp );
 #else
 #	define ASSERT( exp )
@@ -146,5 +172,41 @@ namespace StaticAssert
 
 // Misc functions
 #define H3D_UNUSED_VAR( exp ) ( (void) (exp))
+
+#if defined( _MSC_VER )
+#define H3D_INLINE __forceinline
+#elif defined ( __GNUG__ ) || defined ( __clang__ )
+#define H3D_INLINE __attribute__((always_inline))
+#else 
+#define H3D_INLINE 
+#endif
+
+// Locale independent version of atof (taking always dot as decimal separator)
+#if defined( PLATFORM_MAC ) || defined ( PLATFORM_IOS )
+	#include <xlocale.h>
+#endif
+inline float toFloat(const char* str)
+{
+#ifdef PLATFORM_WIN
+	// Make a "C" locale instance in a unique_ptr RAII wrapper
+	static std::unique_ptr<__crt_locale_pointers, void(*)(_locale_t)> locale(
+		_create_locale(LC_ALL, "C"),
+		[](_locale_t locale) {
+			_free_locale(locale);
+		}
+	);
+	return _strtof_l(str, nullptr, locale.get());
+#else
+	// Make a "C" locale instance in a unique_ptr RAII wrapper
+	using locale_struct = std::remove_reference<decltype(*std::declval<locale_t>())>::type;
+	static std::unique_ptr<locale_struct, void(*)(locale_t)> locale(
+		newlocale(LC_ALL, "C", nullptr),
+		[](locale_t locale) {
+			freelocale(locale);
+		}
+	);
+	return strtof_l(str, nullptr, locale.get());
+#endif
+}
 
 #endif // _utPlatform_H_

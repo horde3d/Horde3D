@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -21,15 +21,19 @@
 #include <math.h>
 #include <iomanip>
 
+#include "../Framework/FrameworkBackend.h"
+
 using namespace std;
 
 
 ChicagoSample::ChicagoSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Chicago - Horde3D Sample", H3DRenderDevice::OpenGL2 ),
+    SampleApplication( argc, argv, "Chicago - Horde3D Sample" ),
     _crowdSim(0)
 {
     _x = 15; _y = 3; _z = 20;
     _rx = -10; _ry = 60;
+
+	_curPipeline = 1;
 }
 
 
@@ -47,11 +51,19 @@ bool ChicagoSample::initResources()
 	H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/platform/platform.scene.xml", 0 );
 
     // Skybox
-	H3DRes skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skybox.scene.xml", 0 );
+	H3DRes skyBoxRes = 0;
+	if ( _renderInterface != H3DRenderDevice::OpenGLES3 )
+	{
+		skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skybox.scene.xml", 0 );
+	}
+	else
+	{
+		skyBoxRes = h3dAddResource( H3DResTypes::SceneGraph, "models/skybox/skyboxES.scene.xml", 0 );
+	}
 
     // 2. Load resources
 
-    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
     {
 		h3dutDumpMessages();
         return false;
@@ -85,7 +97,7 @@ bool ChicagoSample::initResources()
 	h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 0.75f );
 
     _crowdSim = new CrowdSim( getResourcePath() );
-	_crowdSim->init();
+	_crowdSim->init( getBackend() );
 
 	return true;
 }

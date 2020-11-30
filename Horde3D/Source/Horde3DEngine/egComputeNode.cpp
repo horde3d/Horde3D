@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -83,27 +83,27 @@ SceneNodeTpl *ComputeNode::parsingFunc( map< string, string > &attribs )
 	
 	// AABB
 	itr = attribs.find( "aabbMinX" );
-	if ( itr != attribs.end() ) computeTpl->aabbMin.x = ( float ) atof( itr->second.c_str() );
+	if ( itr != attribs.end() ) computeTpl->aabbMin.x = toFloat( itr->second.c_str() );
 	else result = false;
 
 	itr = attribs.find( "aabbMinY" );
-	if ( itr != attribs.end() ) computeTpl->aabbMin.y = ( float ) atof( itr->second.c_str() );
+	if ( itr != attribs.end() ) computeTpl->aabbMin.y = toFloat( itr->second.c_str() );
 	else result = false;
 
 	itr = attribs.find( "aabbMinZ" );
-	if ( itr != attribs.end() ) computeTpl->aabbMin.z = ( float ) atof( itr->second.c_str() );
+	if ( itr != attribs.end() ) computeTpl->aabbMin.z = toFloat( itr->second.c_str() );
 	else result = false;
 
 	itr = attribs.find( "aabbMaxX" );
-	if ( itr != attribs.end() ) computeTpl->aabbMax.x = ( float ) atof( itr->second.c_str() );
+	if ( itr != attribs.end() ) computeTpl->aabbMax.x = toFloat( itr->second.c_str() );
 	else result = false;
 
 	itr = attribs.find( "aabbMaxY" );
-	if ( itr != attribs.end() ) computeTpl->aabbMax.y = ( float ) atof( itr->second.c_str() );
+	if ( itr != attribs.end() ) computeTpl->aabbMax.y = toFloat( itr->second.c_str() );
 	else result = false;
 
 	itr = attribs.find( "aabbMaxZ" );
-	if ( itr != attribs.end() ) computeTpl->aabbMax.z = ( float ) atof( itr->second.c_str() );
+	if ( itr != attribs.end() ) computeTpl->aabbMax.z = toFloat( itr->second.c_str() );
 	else result = false;
 
 	if ( !result )
@@ -173,7 +173,7 @@ void ComputeNode::setParamI( int param, int value )
 				Modules::setError( "Invalid handle in h3dSetNodeParamI for H3DComputeNode::MatResI" );
 			return;
 		case ComputeNodeParams::DrawTypeI:
-			if ( value < 0 || value > 2 ) // Triangles - 0, Lines - 1, Points - 2
+			if ( value < 0 || value > 3 ) // Triangles - 0, Lines - 1, Patches - 2, Points - 3
 			{
 				Modules::log().writeError( "Invalid value specified in h3dSetNodeParamI for H3DComputeNode::DrawTypeI" );
 				return;

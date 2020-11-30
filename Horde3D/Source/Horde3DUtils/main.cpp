@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -41,14 +41,6 @@ using namespace std;
 
 
 namespace Horde3DUtils {
-
-struct InfoBox
-{
-	H3DRes  fontMatRes;
-	float   x, y_row0;
-	float   width;
-	int     row;
-} infoBox;
 
 ofstream            outf;
 map< int, string >  resourcePaths;
@@ -88,13 +80,13 @@ string cleanPath( string path )
 using namespace Horde3DUtils;
 
 
-DLLEXP const char *h3dutGetResourcePath( int type )
+H3D_IMPL const char *h3dutGetResourcePath( int type )
 {
 	return resourcePaths[type].c_str();
 }
 
 
-DLLEXP void h3dutSetResourcePath( int type, const char *path )
+H3D_IMPL void h3dutSetResourcePath( int type, const char *path )
 {
 	string s = path != 0x0 ? path : "";
 
@@ -102,7 +94,7 @@ DLLEXP void h3dutSetResourcePath( int type, const char *path )
 }
 
 
-DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
+H3D_IMPL bool h3dutLoadResourcesFromDisk( const char *contentDir )
 {
 	bool result = true;
 	string dir;
@@ -169,7 +161,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 		}
 		else // Resource file not found
 		{
-			// Tell engine to use the dafault resource by using NULL as data pointer
+			// Tell engine to use the default resource by using NULL as data pointer
 			h3dLoadResource( res, 0x0, 0 );
 			result = false;
 		}
@@ -182,7 +174,7 @@ DLLEXP bool h3dutLoadResourcesFromDisk( const char *contentDir )
 }
 
 
-DLLEXP bool h3dutDumpMessages()
+H3D_IMPL bool h3dutDumpMessages()
 {
 	if( !outf.is_open() )
 	{
@@ -295,236 +287,14 @@ DLLEXP bool h3dutDumpMessages()
 }
 
 
-DLLEXP void h3dutShowText( const char *text, float x, float y, float size, float colR,
-                           float colG, float colB, H3DRes fontMaterialRes )
-{
-	if( text == 0x0 || *text == '\0' ) return;
-	
-	float ovFontVerts[64 * 16];
-	float *p = ovFontVerts;
-	float pos = 0;
-	
-	do
-	{
-		unsigned char ch = (unsigned char)*text++;
-
-		float u0 = 0.0625f * (ch % 16);
-		float v0 = 1.0f - 0.0625f * (ch / 16);
-
-		*p++ = x + size * 0.5f * pos;         *p++ = y;         *p++ = u0;            *p++ = v0;
-		*p++ = x + size * 0.5f * pos,         *p++ = y + size;  *p++ = u0;            *p++ = v0 - 0.0625f;
-		*p++ = x + size * 0.5f * pos + size;  *p++ = y + size;  *p++ = u0 + 0.0625f;  *p++ = v0 - 0.0625f;
-		*p++ = x + size * 0.5f * pos + size;  *p++ = y;         *p++ = u0 + 0.0625f;  *p++ = v0;
-		
-		pos += 1.f;
-	} while( *text && pos < 64 );
-
-	h3dShowOverlays( ovFontVerts, (int)pos * 4, colR, colG, colB, 1.f, fontMaterialRes, 0 );
-}
-
-
-void beginInfoBox( float x, float y, float width, int numRows, const char *title,
-                   H3DRes fontMaterialRes, H3DRes boxMaterialRes )
-{
-	float fontSize = 0.03f;
-	float barHeight = fontSize + 0.01f;
-	float bodyHeight = numRows * 0.035f + 0.005f;
-	
-	infoBox.fontMatRes = fontMaterialRes;
-	infoBox.x = x;
-	infoBox.y_row0 = y + barHeight + 0.005f;
-	infoBox.width = width;
-	infoBox.row = 0;
-	
-	// Title bar
-	float ovTitleVerts[] = { x, y, 0, 1, x, y + barHeight, 0, 0,
-	                         x + width, y + barHeight, 1, 0, x + width, y, 1, 1 };
-    h3dShowOverlays( ovTitleVerts, 4,  0.15f, 0.23f, 0.31f, 0.8f, boxMaterialRes, 0 );
-
-	// Title text
-	h3dutShowText( title, x + 0.005f, y + 0.005f, fontSize, 0.7f, 0.85f, 0.95f, fontMaterialRes );
-
-	// Body
-	float yy = y + barHeight;
-	float ovBodyVerts[] = { x, yy, 0, 1, x, yy + bodyHeight, 0, 0,
-	                        x + width, yy + bodyHeight, 1, 0, x + width, yy, 1, 1 };
-	h3dShowOverlays( ovBodyVerts, 4, 0.12f, 0.12f, 0.12f, 0.5f, boxMaterialRes, 0 );
-}
-
-
-void addInfoBoxRow( const char *column1, const char *column2 )
-{
-	float fontSize = 0.028f;
-	float fontWidth = fontSize * 0.5f;
-	float x = infoBox.x;
-	float y = infoBox.y_row0 + infoBox.row++ * 0.035f;
-
-	// First column
-    if( column1 )
-    {
-        h3dutShowText( column1, x + 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
-    }
-
-	// Second column
-    if( column2 )
-    {
-        x = infoBox.x + infoBox.width - ((strlen( column2 ) - 1) * fontWidth + fontSize);
-        h3dutShowText( column2, x - 0.005f, y, fontSize, 1, 1, 1, infoBox.fontMatRes );
-    }
-}
-
-
-DLLEXP void h3dutShowInfoBox( float x, float y, float width, const char *title,
-                              int numRows, const char **column1, const char **column2,
-                              H3DRes fontMaterialRes, H3DRes panelMaterialRes )
-{
-    beginInfoBox( x, y, width, numRows, title, fontMaterialRes, panelMaterialRes );
-    for( int i=0; i<numRows; ++i )
-        addInfoBoxRow( column1 ? column1[i] : 0, column2 ? column2[i] : 0 );
-}
-
-
-DLLEXP void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes, int mode )
-{
-	static stringstream text;
-	static float curFPS = 30;
-	static float timer = 100;
-	static float fps = 30;
-	static float frameTime = 0;
-	static float animTime = 0;
-	static float geoUpdateTime = 0;
-	static float particleSimTime = 0;
-	static float fwdLightsGPUTime = 0;
-	static float defLightsGPUTime = 0;
-	static float shadowsGPUTime = 0;
-	static float particleGPUTime = 0;
-	static float computeGPUTime = 0;
-
-	// Calculate FPS
-	float curFrameTime = h3dGetStat( H3DStats::FrameTime, true );
-	curFPS = 1000.0f / curFrameTime;
-	
-	timer += curFrameTime / 1000.0f;
-	if( timer > 0.7f )
-	{	
-		fps = curFPS;
-		frameTime = curFrameTime;
-		animTime = h3dGetStat( H3DStats::AnimationTime, true );
-		geoUpdateTime = h3dGetStat( H3DStats::GeoUpdateTime, true );
-		particleSimTime = h3dGetStat( H3DStats::ParticleSimTime, true );
-		fwdLightsGPUTime = h3dGetStat( H3DStats::FwdLightsGPUTime, true );
-		defLightsGPUTime = h3dGetStat( H3DStats::DefLightsGPUTime, true );
-		shadowsGPUTime = h3dGetStat( H3DStats::ShadowsGPUTime, true );
-		particleGPUTime = h3dGetStat( H3DStats::ParticleGPUTime, true );
-		computeGPUTime = h3dGetStat( H3DStats::ComputeGPUTime, true );
-		timer = 0;
-	}
-	else
-	{
-		// Reset accumulative counters
-		h3dGetStat( H3DStats::AnimationTime, true );
-		h3dGetStat( H3DStats::GeoUpdateTime, true );
-		h3dGetStat( H3DStats::ParticleSimTime, true );
-	}
-	
-	if( mode > 0 )
-	{
-		// InfoBox
-		beginInfoBox( 0.03f, 0.03f, 0.32f, 4, "Frame Stats", fontMaterialRes, panelMaterialRes );
-		
-		// FPS
-		text.str( "" );
-		text << fixed << setprecision( 2 ) << fps;
-		addInfoBoxRow( "FPS", text.str().c_str() );
-		
-		// Triangle count
-		text.str( "" );
-		text << (int)h3dGetStat( H3DStats::TriCount, true );
-		addInfoBoxRow( "Tris", text.str().c_str() );
-		
-		// Number of batches
-		text.str( "" );
-		text << (int)h3dGetStat( H3DStats::BatchCount, true );
-		addInfoBoxRow( "Batches", text.str().c_str() );
-		
-		// Number of lighting passes
-		text.str( "" );
-		text << (int)h3dGetStat( H3DStats::LightPassCount, true );
-		addInfoBoxRow( "Lights", text.str().c_str() );
-	}
-
-	if( mode > 1 )
-	{
-		// Video memory
-		beginInfoBox( 0.03f, 0.30f, 0.32f, 2, "VMem", fontMaterialRes, panelMaterialRes );
-		
-		// Textures
-		text.str( "" );
-		text << h3dGetStat( H3DStats::TextureVMem, false ) << "mb";
-		addInfoBoxRow( "Textures", text.str().c_str() );
-		
-		// Geometry
-		text.str( "" );
-		text << h3dGetStat( H3DStats::GeometryVMem, false ) << "mb";
-		addInfoBoxRow( "Geometry", text.str().c_str() );
-		
-		// CPU time
-		beginInfoBox( 0.03f, 0.44f, 0.32f, 4, "CPU Time", fontMaterialRes, panelMaterialRes );
-		
-		// Frame time
-		text.str( "" );
-		text << frameTime << "ms";
-		addInfoBoxRow( "Frame Total", text.str().c_str() );
-		
-		// Animation
-		text.str( "" );
-		text << animTime << "ms";
-		addInfoBoxRow( "Animation", text.str().c_str() );
-
-		// Geometry updates
-		text.str( "" );
-		text << geoUpdateTime << "ms";
-		addInfoBoxRow( "Geo Updates", text.str().c_str() );
-
-		// Particle simulation
-		text.str( "" );
-		text << particleSimTime << "ms";
-		addInfoBoxRow( "Particles", text.str().c_str() );
-
-		// GPU time
-        beginInfoBox( 0.03f, 0.65f, 0.32f, 4, "GPU Time", fontMaterialRes, panelMaterialRes );
-
-		// Forward and deferred lights
-		text.str( "" );
-		text << (fwdLightsGPUTime + defLightsGPUTime) << "ms";
-		addInfoBoxRow( "Lights", text.str().c_str() );
-		
-		// Shadows
-		text.str( "" );
-		text << shadowsGPUTime << "ms";
-		addInfoBoxRow( "Shadows", text.str().c_str() );
-
-		// Particles
-		text.str( "" );
-		text << particleGPUTime << "ms";
-		addInfoBoxRow( "Particles", text.str().c_str() );
-
-		// Compute
-		text.str( "" );
-		text << computeGPUTime << "ms";
-		addInfoBoxRow( "Compute", text.str().c_str() );
-	}
-}
-
-
-DLLEXP void h3dutFreeMem( char **ptr )
+H3D_IMPL void h3dutFreeMem( char **ptr )
 {
 	if( ptr == 0x0 ) return;
 	
 	delete[] *ptr; *ptr = 0x0;
 }
 
-DLLEXP H3DRes h3dutCreateGeometryRes( 
+H3D_IMPL H3DRes h3dutCreateGeometryRes( 
 	const char *name, 
 	int numVertices, int numTriangleIndices,
 	float *posData, 
@@ -674,8 +444,8 @@ DLLEXP H3DRes h3dutCreateGeometryRes(
 	return res;
 }
 
-DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height, int bpp,
-                                 char **outData, int *outSize )
+H3D_IMPL bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height, int bpp,
+                                   char **outData, int *outSize )
 {
 	if( outData == 0x0 || outSize == 0x0 ) return false;
 	
@@ -710,9 +480,9 @@ DLLEXP bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int hei
 }
 
 
-DLLEXP void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, float *oy, float *oz,
+H3D_IMPL void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, float *oy, float *oz,
                           float *dx, float *dy, float *dz )
-{				
+{
 	// Transform from normalized window [0, 1] to normalized device coordinates [-1, 1]
 	float cx( 2.0f * nwx - 1.0f );
 	float cy( 2.0f * nwy - 1.0f );   
@@ -765,8 +535,8 @@ DLLEXP void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, f
 	*dz = p1.z - p0.z;
 }
 
-DLLEXP H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy )
-{	
+H3D_IMPL H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy )
+{
 	float ox, oy, oz, dx, dy, dz;
 	h3dutPickRay( cameraNode, nwx, nwy, &ox, &oy, &oz, &dx, &dy, &dz );
 	
@@ -782,76 +552,88 @@ DLLEXP H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy )
 		else
 			return 0;
 	}
-
 }
 
 
-DLLEXP void h3dutGetScreenshotParam( int *width,  int *height ) {
-  h3dGetRenderTargetData( 0, "", 0, width, height, 0x0, 0x0, 0 );
+H3D_IMPL void h3dutGetScreenshotParam( int *width,  int *height )
+{
+	h3dGetRenderTargetData( 0, "", 0, width, height, 0x0, 0x0, 0 );
 }
 
-DLLEXP bool h3dutScreenshotRaw( unsigned char *rgb, int len_rgb )
-  {
-    // Ask Horde for the width and height of the screenshot.
-    int width, height;
-    h3dGetRenderTargetData( 0, "", 0, &width, &height, 0x0, 0x0, 0 );
 
-    // Sanity check: User must have provided a buffer that can hold the entire
-    // RGB image (each of the RGB components is an unsigned char).
-    if (len_rgb < width * height * 3) {
-      return false;
-    }
+H3D_IMPL bool h3dutScreenshotRaw( unsigned char *rgb, int len_rgb )
+{
+	// Ask Horde for the width and height of the screenshot.
+	int width, height;
+	h3dGetRenderTargetData( 0, "", 0, &width, &height, 0x0, 0x0, 0 );
 
-    // Ensure we have enough space in the auxiliary buffer. This buffer must be
-    // large enough to store each RGBA component as a *float* - *not* an
-    // unsinged char.
-    static vector<float> f32buf;
-    f32buf.reserve(width * height * 4);
+	// Sanity check: User must have provided a buffer that can hold the entire
+	// RGB image (each of the RGB components is an unsigned char).
+	if (len_rgb < width * height * 3) {
+		return false;
+	}
 
-    // Determine the size of the pixel buffer in *bytes*. This is somewhat
-    // unintuitive because Horde returns each of the RGBA components as a
-    // float32, not an unsigned integer.
-    const int num_bytes = width * height * 4 * sizeof(float);
+	// Ensure we have enough space in the auxiliary buffer. This buffer must be
+	// large enough to store each RGBA component as a *float* - *not* an
+	// unsinged char.
+	static vector<float> f32buf;
+	f32buf.reserve(width * height * 4);
 
-  // Copy the pixels (RGBA, float32) into the auxiliary buffer.
-  h3dGetRenderTargetData( 0, "", 0, 0x0, 0x0, 0x0, &f32buf[0], num_bytes);
+	// Determine the size of the pixel buffer in *bytes*. This is somewhat
+	// unintuitive because Horde returns each of the RGBA components as a
+	// float32, not an unsigned integer.
+	const int num_bytes = width * height * 4 * sizeof(float);
 
-  // Unpack the image from the auxiliary RGBA (float32) buffer into the user
-  // provide RGB (uint8) array.
+	// Copy the pixels (RGBA, float32) into the auxiliary buffer.
+	h3dGetRenderTargetData( 0, "", 0, 0x0, 0x0, 0x0, &f32buf[0], num_bytes);
+
+	// Unpack the image from the auxiliary RGBA (float32) buffer into the user
+	// provide RGB (uint8) array.
 	for( int y = 0; y < height; ++y ) {
-      for( int x = 0; x < width; ++x ) {
-        int idx = y * width + x;
-        rgb[3 * idx + 0] = ftoi_r( clamp( f32buf[4 * idx + 0], 0.f, 1.f ) * 255.f );
-        rgb[3 * idx + 1] = ftoi_r( clamp( f32buf[4 * idx + 1], 0.f, 1.f ) * 255.f );
-        rgb[3 * idx + 2] = ftoi_r( clamp( f32buf[4 * idx + 2], 0.f, 1.f ) * 255.f );
-      }
-  }
+		for( int x = 0; x < width; ++x ) {
+			int idx = y * width + x;
+			rgb[3 * idx + 0] = ftoi_r( clamp( f32buf[4 * idx + 0], 0.f, 1.f ) * 255.f );
+			rgb[3 * idx + 1] = ftoi_r( clamp( f32buf[4 * idx + 1], 0.f, 1.f ) * 255.f );
+			rgb[3 * idx + 2] = ftoi_r( clamp( f32buf[4 * idx + 2], 0.f, 1.f ) * 255.f );
+		}
+	}
 
-  return true;
+	return true;
 }
 
 
-DLLEXP bool h3dutScreenshot( const char *filename )
+H3D_IMPL bool h3dutScreenshot( const char *filename )
 {
 	if( filename == 0x0 ) return false;
 	
 	int width, height;
 	h3dGetRenderTargetData( 0, "", 0, &width, &height, 0x0, 0x0, 0 );
 
-	float *pixelsF = new float[width * height * 4];
+	uint8 *pixelsF = new uint8[width * height * 4];
+	memset( pixelsF, 0, width * height * 4 );
 	h3dGetRenderTargetData( 0, "", 0, 0x0, 0x0, 0x0, pixelsF, width * height * 16 );
 	
 	// Convert to BGR8
 	unsigned char *pixels = new unsigned char[width * height * 3];
+// 	for( int y = 0; y < height; ++y )
+// 	{
+// 		for( int x = 0; x < width; ++x )
+// 		{
+// 			pixels[(y * width + x) * 3 + 0] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 2], 0.f, 1.f ) * 255.f );
+// 			pixels[(y * width + x) * 3 + 1] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 1], 0.f, 1.f ) * 255.f );
+// 			pixels[(y * width + x) * 3 + 2] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 0], 0.f, 1.f ) * 255.f );
+// 		}
+// 	}
 	for( int y = 0; y < height; ++y )
 	{
 		for( int x = 0; x < width; ++x )
 		{
-			pixels[(y * width + x) * 3 + 0] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 2], 0.f, 1.f ) * 255.f );
-			pixels[(y * width + x) * 3 + 1] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 1], 0.f, 1.f ) * 255.f );
-			pixels[(y * width + x) * 3 + 2] = ftoi_r( clamp( pixelsF[(y * width + x) * 4 + 0], 0.f, 1.f ) * 255.f );
+			pixels[(y * width + x) * 3 + 0] = pixelsF[(y * width + x) * 4 + 2];
+			pixels[(y * width + x) * 3 + 1] = pixelsF[(y * width + x) * 4 + 1];
+			pixels[(y * width + x) * 3 + 2] = pixelsF[(y * width + x) * 4 + 0];
 		}
 	}
+//	memcpy( pixels, pixelsF, width * height * 3 );
 	delete[] pixelsF;
 	
 	char *image;
@@ -877,7 +659,7 @@ DLLEXP bool h3dutScreenshot( const char *filename )
 // DLL entry point
 // =================================================================================================
 
-#ifdef PLATFORM_WIN
+#if !defined H3D_STATIC_LIBS && defined PLATFORM_WIN
 BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved )
 {
    switch( ul_reason_for_call )

@@ -2,7 +2,7 @@
 //
 // Horde3D Terrain Extension
 // --------------------------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz, Volker Wiendl and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz, Volker Wiendl and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -18,7 +18,6 @@
 #include "egCamera.h"
 
 #include "utDebug.h"
-
 
 namespace Horde3DTerrain {
 
@@ -51,6 +50,20 @@ const char *vsTerrainDebugViewGL4 =
 	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
 	"}";
 
+const char *vsTerrainDebugViewGLES3 =
+	"#version 300 es\n"
+	"precision highp float;"
+	"uniform mat4 viewProjMat;\n"
+	"uniform mat4 worldMat;\n"
+	"uniform vec4 terBlockParams;\n"
+	"layout(location = 0) in vec3 vertPos;\n"
+	"layout(location = 1) in float terHeight;\n"
+	"void main() {\n"
+	"	gl_Position = viewProjMat * worldMat *"
+	"		vec4( vertPos.x * terBlockParams.z + terBlockParams.x, terHeight, "
+	"			  vertPos.z * terBlockParams.z + terBlockParams.y, 1.0 );\n"
+	"}";
+
 const char *fsTerrainDebugView =
 	"uniform vec4 color;\n"
 	"void main() {\n"
@@ -65,8 +78,18 @@ const char *fsTerrainDebugViewGL4 =
 	"	fragColor = color;\n"
 	"}\n";
 
+const char *fsTerrainDebugViewGLES3 =
+	"#version 300 es\n"
+	"precision highp float;\n"
+	"uniform vec4 color;\n"
+	"out vec4 fragColor;\n"
+	"void main() {\n"
+	"	fragColor = color;\n"
+	"}\n";
+
 uint32 TerrainNode::vlTerrain;
 ShaderCombination TerrainNode::debugViewShader;
+int TerrainNode::uni_terBlockParams = -1;
 
 
 TerrainNode::TerrainNode( const TerrainNodeTpl &terrainTpl ) :
@@ -121,12 +144,12 @@ SceneNodeTpl *TerrainNode::parsingFunc( map< string, string > &attribs )
 	itr = attribs.find( "meshQuality" );
 	if ( itr != attribs.end() )
 	{
-		terrainTpl->meshQuality = (float)atof( itr->second.c_str() );
+		terrainTpl->meshQuality = toFloat( itr->second.c_str() );
 	}
 	itr = attribs.find( "skirtHeight" );
 	if ( itr != attribs.end() )
 	{
-		terrainTpl->skirtHeight = (float)atof( itr->second.c_str() );
+		terrainTpl->skirtHeight = toFloat( itr->second.c_str() );
 	}
 	itr = attribs.find( "blockSize" );
 	if ( itr != attribs.end() )
@@ -155,7 +178,7 @@ void TerrainNode::onPostUpdate()
 
 void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV, float maxU, float maxV,
                                     int level, float scale, const Vec3f &localCamPos, const Frustum *frust1,
-                                    const Frustum *frust2, int uni_terBlockParams )
+                                    const Frustum *frust2, int terBlockParamsUni )
 {
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
@@ -185,10 +208,10 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 	if( p < terrain->_lodThreshold || level == terrain->_maxLevel )
 	{
 		// Render terrain block
-		if( uni_terBlockParams >= 0 )
+		if( terBlockParamsUni >= 0 )
 		{
 			float values[4] = { minU, minV, scale, scale };
-			rdi->setShaderConst( uni_terBlockParams, CONST_FLOAT4, values );  // Bias and scale
+			rdi->setShaderConst( terBlockParamsUni, CONST_FLOAT4, values );  // Bias and scale
 		}
 	
 		const uint32 size = terrain->_blockSize + 2;
@@ -256,13 +279,13 @@ void TerrainNode::drawTerrainBlock( TerrainNode *terrain, float minU, float minV
 		for( uint32 i = 0; i < 4; ++i )
 		{
 			drawTerrainBlock( terrain, blocks[i].x, blocks[i].y, blocks[i].z, blocks[i].w,
-			                  level + 1, scale, localCamPos, frust1, frust2, uni_terBlockParams );
+			                  level + 1, scale, localCamPos, frust1, frust2, terBlockParamsUni );
 		}
 	}
 }
 
 
-void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &shaderContext, const string &theClass,
+void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &shaderContext, int theClass,
                               bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
                               int occSet )
 {
@@ -272,6 +295,7 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
 	const RenderQueue &renderQueue = Modules::sceneMan().getRenderQueue();
+	DefaultShaderUniforms &uni = Modules::renderer().getDefShaderUniIndices();
 
 	// Loop through terrain queue
 	for( uint32 i = firstItem; i <= lastItem; ++i )
@@ -292,9 +316,10 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 			rdi->setShaderConst( loc, CONST_FLOAT4, color );
 		}
 		
-		int uni_terBlockParams = rdi->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
+//		int uni_terBlockParams = rdi->getShaderConstLoc( Modules::renderer().getCurShader()->shaderObj, "terBlockParams" );
 
-		Vec3f localCamPos( curCam->getAbsTrans().x[12], curCam->getAbsTrans().x[13], curCam->getAbsTrans().x[14] );
+		Matrix4f &camTransformation = curCam->getAbsTrans();
+		Vec3f localCamPos( camTransformation.x[12], camTransformation.x[13], camTransformation.x[14] );
 		localCamPos = terrain->_absTrans.inverted() * localCamPos;
 		
 		// Bind geometry and apply vertex layout
@@ -306,32 +331,34 @@ void TerrainNode::renderFunc( uint32 firstItem, uint32 lastItem, const string &s
 
 		// Set uniforms
 		ShaderCombination *curShader = Modules::renderer().getCurShader();
-		if( curShader->uni_worldMat >= 0 )
+		int terBlockUni = curShader->uniLocs[ uni_terBlockParams ];
+
+		if( curShader->uniLocs[ uni.worldMat ] >= 0 )
 		{
-			rdi->setShaderConst( curShader->uni_worldMat, CONST_FLOAT44, &terrain->_absTrans.x[0] );
+			rdi->setShaderConst( curShader->uniLocs[ uni.worldMat ], CONST_FLOAT44, &terrain->_absTrans.x[0] );
 		}
-		if( curShader->uni_worldNormalMat >= 0 )
+		if( curShader->uniLocs[ uni.worldNormalMat ] >= 0 )
 		{
 			Matrix4f normalMat4 = terrain->_absTrans.inverted().transposed();
 			float normalMat[9] = { normalMat4.x[0], normalMat4.x[1], normalMat4.x[2],
 			                       normalMat4.x[4], normalMat4.x[5], normalMat4.x[6],
 			                       normalMat4.x[8], normalMat4.x[9], normalMat4.x[10] };
-			rdi->setShaderConst( curShader->uni_worldNormalMat, CONST_FLOAT33, normalMat );
+			rdi->setShaderConst( curShader->uniLocs[ uni.worldNormalMat ], CONST_FLOAT33, normalMat );
 		}
-		if( curShader->uni_nodeId >= 0 )
+		if( curShader->uniLocs[ uni.nodeId ]>= 0 )
 		{
 			float id = (float)terrain->getHandle();
-			rdi->setShaderConst( curShader->uni_nodeId, CONST_FLOAT, &id );
+			rdi->setShaderConst( curShader->uniLocs[ uni.nodeId ], CONST_FLOAT, &id );
 		}
 
-		drawTerrainBlock( terrain, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, localCamPos, frust1, frust2, uni_terBlockParams );
+		drawTerrainBlock( terrain, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, localCamPos, frust1, frust2, terBlockUni );
 
 // 		rdi->setVertexLayout( 0 );
 	}
 }
 
 
-bool TerrainNode::canAttach( SceneNode &parent )
+bool TerrainNode::canAttach( SceneNode &parent ) const
 {
 	return true;
 }
@@ -341,6 +368,13 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 {
 	delete[] _heightData; _heightData = 0x0;
 
+	// Depending on render backend we decide on pixel processing of the texture
+	// OpenGL2 and OpenGL4 use BGRA as standard texture format (use swizzling in egTexture.cpp), 
+	// while OpenGLES uses RGBA (no swizzling). Therefore, we have to take different color channels from heightmap.
+	bool isBGRA = true;
+	if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGLES3 )
+		isBGRA = false;
+
 	if( hmap.getTexFormat() == TextureFormats::BGRA8 &&
 	    hmap.getWidth() == hmap.getHeight() &&
 	    (hmap.getWidth() == 32 || hmap.getWidth() == 64 || hmap.getWidth() == 128 ||
@@ -348,19 +382,33 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 	    hmap.getWidth() == 2048 || hmap.getWidth() == 4096 || hmap.getWidth() == 8192) )
 	{
 		_hmapSize = hmap.getWidth();
-		_heightData = new uint16[(_hmapSize+1) * (_hmapSize+1)];
+		_heightData = new uint16[ ( _hmapSize + 1 ) * ( _hmapSize + 1 ) ];
 		
 		unsigned char *pixels = (unsigned char *)hmap.mapStream(
 			TextureResData::ImageElem, 0, TextureResData::ImgPixelStream, true, false );
 		ASSERT( pixels != 0x0 );
 		
+		size_t height_data_index = 0;
+		size_t first_pixel_index = 0, second_pixel_index = 0;
 		for( uint32 i = 0; i < _hmapSize; ++i )
 		{
 			for( uint32 j = 0; j < _hmapSize; ++j )
 			{
 				// Decode 16 bit data from red and green channels
-				_heightData[i*(_hmapSize+1)+j] =
-					pixels[(i*_hmapSize+j)*4+2] * 256 + pixels[(i*_hmapSize+j)*4+1];
+				height_data_index = static_cast< size_t >( i * ( _hmapSize + 1 ) + j );
+
+				if ( isBGRA )
+				{
+					first_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 2 );
+					second_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 1 );
+				}
+				else
+				{
+					first_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 0 );
+					second_pixel_index = static_cast< size_t >( ( i * _hmapSize + j ) * 4 + 1 );
+				}
+
+				_heightData[ height_data_index ] = pixels[ first_pixel_index ] * 256 + pixels[ second_pixel_index ];
 			}
 		}
 		
@@ -368,8 +416,20 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 		for( uint32 i = 0; i < _hmapSize; ++i )
 		{
 			// Decode 16 bit data from red and green channels
-			_heightData[i*(_hmapSize+1)+_hmapSize] =
-				pixels[(i*_hmapSize+_hmapSize-1)*4+2] * 256 + pixels[(i*_hmapSize+_hmapSize-1)*4+1];
+			height_data_index = static_cast< size_t >( i * ( _hmapSize + 1 ) + _hmapSize );
+
+			if ( isBGRA )
+			{
+				first_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 2 );
+				second_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 1 );
+			}
+			else
+			{
+				first_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 0 );
+				second_pixel_index = static_cast< size_t >( ( i * _hmapSize + _hmapSize - 1 ) * 4 + 1 );
+			}
+
+			_heightData[ height_data_index ] = pixels[ first_pixel_index ] * 256 + pixels[ second_pixel_index ];
 		}
 
 		for( uint32 i = 0; i < _hmapSize + 1; ++i )
@@ -385,7 +445,7 @@ bool TerrainNode::updateHeightData( TextureResource &hmap )
 		// Init default data
 		_hmapSize = 32;
 		_heightData = new uint16[ (_hmapSize + 1) * (_hmapSize + 1)];
-		memset( _heightData, 0, (_hmapSize + 1) * (_hmapSize + 1) );
+		memset( _heightData, 0, (_hmapSize + 1) * (_hmapSize + 1) * sizeof( uint16 ) );
 		return false;
 	}
 }
@@ -446,19 +506,21 @@ uint16 *TerrainNode::createIndices()
 {
 	uint16 *indices = new uint16[getIndexCount()];
 	uint16 *indexItr = indices;
-	const uint32 size = _blockSize + 2;
+	const uint16 size = (uint16) _blockSize + 2;
 	bool forward = true;
 
 	// Create indices for triangle strip
-	for( uint32 v = 0; v < size - 1; ++v, ++indexItr )
+	for( uint16 v = 0; v < size - 1; ++v, ++indexItr )
 	{
-		for( uint32 u = 0; u < size; ++u )
+		for( uint16 u = 0; u < size; ++u )
 		{
 			// Rows go from left to right and after that right to left for best vertex cache efficieny
-			uint32 indU = forward ? u : (size - 1) - u;
+			uint16 indU = forward ? u : (size - 1) - u;
 			
-			*indexItr++ = v * size + indU;			// vert[u, v]
-			*indexItr++ = (v + 1) * size + indU;	// vert[u, v+1]
+			*indexItr = v * size + indU;			// vert[u, v]
+			indexItr++;
+			*indexItr = (v + 1) * size + indU;	// vert[u, v+1]
+			indexItr++;
 		}
 
 		// Add degenerated triangle
@@ -522,20 +584,26 @@ void TerrainNode::buildBlockInfo( BlockInfo &block, float minU, float minV, floa
 			Plane tri0( corner0, corner1, corner2 );
 			Plane tri1( corner1, corner2, corner3 );
 
-			for( float vv = 0; vv <= stepV; vv += pixelStep )
+			float vv = 0;
+			float uu = 0;
+			while ( vv <= stepV )
 			{
-				for( float uu = 0; uu <= stepU; uu += pixelStep )
+				while ( uu <= stepU )
 				{
 					Plane &curTri = uu <= vv ? tri0 : tri1;
-					
+
 					Vec3f point( minU + u * stepU + uu, 0, minV + v * stepV + vv );
 					point.y = getHeight( point.x, point.z );
-					
+
 					block.minHeight = minf( point.y, block.minHeight );
 					block.maxHeight = maxf( point.y, block.maxHeight );
-					block.geoError = maxf( block.geoError, fabsf( curTri.distToPoint( point ) ));
+					block.geoError = maxf( block.geoError, fabsf( curTri.distToPoint( point ) ) );
+
+					uu += pixelStep;
 				}
-			}			
+
+				vv += pixelStep;
+			}
 		}
 	}
 }
@@ -596,7 +664,7 @@ void TerrainNode::setParamI( int param, int value )
 			createBlockTree();
 			if( result ) return;
 		}
-		Modules::setError( "Invalid texture in h3dSetNodeParamI for H3DLight::HeightTexResI" );
+		Modules::setError( "Invalid texture in h3dSetNodeParamI for H3DEXTTerrain::HeightTexResI" );
 		return;
 	case TerrainNodeParams::MatResI:
 		res = Modules::resMan().resolveResHandle( value );
@@ -869,14 +937,14 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 				const float newV = (t * scale + minV) * _hmapSize + 0.5f;
 				uint32 index = ftoi_t( newV ) * (_hmapSize + 1) + ftoi_t( newU );
 
-                vertData = (float*) elemset_le(vertData, (s * scale + minU));
+				vertData = (float*) elemset_le(vertData, (s * scale + minU));
 
 				if( v == 0 || v == size - 1 || u == 0 || u == size - 1 )
 					vertData = (float*) elemset_le(vertData, (maxf( _heightData[index] / 65535.0f - _skirtHeight, 0 )));
 				else
 					vertData = (float*) elemset_le(vertData, (_heightData[index] / 65535.0f));
 
-                vertData = (float*) elemset_le(vertData, (t * scale + minV));
+				vertData = (float*) elemset_le(vertData, (t * scale + minV));
 			}
 		}
 
@@ -884,13 +952,13 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 		{
 			for( uint32 u = 0; u < size - 1; ++u )
 			{
-                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
 
-                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
-                indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u + 1);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + (v + 1) * size + u + 1);
+				indexData = (uint32*) elemset_le(indexData, indexOffset + v * size + u + 1);
 			}
 		}
 		indexOffset += size * size;
@@ -918,7 +986,7 @@ void TerrainNode::createGeometryVertices( float lodThreshold, float minU, float 
 
 ResHandle TerrainNode::createGeometryResource( const string &name, float lodThreshold )
 {
-	if( name == "" ) return 0;
+	if( name.empty() ) return 0;
 
 	Resource *resObj = Modules::resMan().findResource( ResourceTypes::Geometry, name );
 	if (resObj != 0x0)

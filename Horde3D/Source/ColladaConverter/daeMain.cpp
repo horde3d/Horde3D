@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -15,6 +15,8 @@
 #include "utils.h"
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConverter {
 
 
 ColladaDocument::ColladaDocument()
@@ -130,3 +132,7 @@ bool ColladaDocument::parseFile( const string &fileName )
 	
 	return true;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

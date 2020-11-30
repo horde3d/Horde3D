@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -14,16 +14,18 @@
 
 #pragma once
 
-#ifndef DLL
+#ifndef H3D_STATIC_LIBS
 #	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
+#		define H3D_API extern "C" __declspec( dllimport )
 #	else
-#  if defined( __GNUC__ ) && __GNUC__ >= 4
-#   define DLL extern "C" __attribute__ ((visibility("default")))
-#  else
-#		define DLL extern "C"
-#  endif
+#		if defined( __GNUC__ ) && __GNUC__ >= 4
+#			define H3D_API extern "C" __attribute__ ((visibility("default")))
+#		else
+#			define H3D_API extern "C"
+#		endif
 #	endif
+#else
+#	define H3D_API extern "C"
 #endif
 
 
@@ -66,11 +68,13 @@ struct H3DRenderDevice
 
 	OpenGL2				- use OpenGL 2 as renderer backend (can be used to force OpenGL 2 when higher version is undesirable)
 	OpenGL4				- use OpenGL 4 as renderer backend (falls back to OpenGL 2 in case of error)
+	OpenGLES3			- use OpenGL ES 3 as renderer backend
 	*/
 	enum List
 	{
 		OpenGL2 = 2,
-		OpenGL4 = 4
+		OpenGL4 = 4,
+		OpenGLES3 = 8
 	};
 };
 
@@ -100,6 +104,8 @@ struct H3DOptions
 		DumpFailedShaders   - Enables or disables storing of shader code that failed to compile in a text file; this can be
 		                      useful in combination with the line numbers given back by the shader compiler. (Values: 0, 1; Default: 0)
 		GatherTimeStats     - Enables or disables gathering of time stats that are useful for profiling (Values: 0, 1; Default: 1)
+		DebugRenderBackend  - Enables or disables logging of render backend diagnostic messages. May require additional actions on 
+							  application side, like creating a debug opengl context. (Values: 0, 1; Default: 0)
 	*/
 	enum List
 	{
@@ -116,7 +122,8 @@ struct H3DOptions
 		WireframeMode,
 		DebugViewMode,
 		DumpFailedShaders,
-		GatherTimeStats
+		GatherTimeStats,
+		DebugRenderBackend
 	};
 };
 
@@ -167,12 +174,22 @@ struct H3DDeviceCapabilities
 	GeometryShaders			- GPU supports runtime geometry generation via geometry shaders
 	TessellationShaders     - GPU supports tessellation
 	ComputeShaders		    - GPU supports general-purpose computing via compute shaders
+	TextureFloatRenderable	- GPU supports rendering to floating-point textures (RGBA16F, RGBA32F)
+	TextureCompressionDXT	- GPU supports DXT compressed textures (DXT1, DXT3, DXT5)
+	TextureCompressionETC2	- GPU supports ETC2 compressed textures (RGB, RGBA)
+	TextureCompressionBPTC	- GPU supports BC6 and BC7 compressed textures
+	TextureCompressionASTC	- GPU supports ASTC compressed textures (RGBA)
 	*/
 	enum List
 	{
 		GeometryShaders = 200,
 		TessellationShaders,
-		ComputeShaders
+		ComputeShaders,
+		TextureFloatRenderable,
+		TextureCompressionDXT,
+		TextureCompressionETC2,
+		TextureCompressionBPTC,
+		TextureCompressionASTC
 	};
 };
 
@@ -219,9 +236,10 @@ struct H3DResFlags
 		NoTexMipmaps      - Disables generation of mipmaps for Texture resource.
 		TexCubemap        - Sets Texture resource to be a cubemap.
 		TexDynamic        - Enables more efficient updates of Texture resource streams.
-		TexRenderable     - Makes Texture resource usable as render target.
 		TexSRGB           - Indicates that Texture resource is in sRGB color space and should be converted
 		                    to linear space when being sampled.
+		TexRenderable     - Makes Texture resource usable as render target.
+		TexDepthBuffer    - When Textures is renderable, creates a depth buffer along with the color buffer.
 	*/
 	enum Flags
 	{
@@ -230,8 +248,9 @@ struct H3DResFlags
 		NoTexMipmaps = 4,
 		TexCubemap = 8,
 		TexDynamic = 16,
-		TexRenderable = 32,
-		TexSRGB = 64
+		TexSRGB = 32,
+		TexRenderable = 64,
+		TexDepthBuffer = 128,
 	};
 };
 
@@ -241,23 +260,64 @@ struct H3DFormats
 	/* Enum: H3DFormats
 			The available resource stream formats.
 			
-		Unknown      - Unknown format
-		TEX_BGRA8    - 8-bit BGRA texture
-		TEX_DXT1     - DXT1 compressed texture
-		TEX_DXT3     - DXT3 compressed texture
-		TEX_DXT5     - DXT5 compressed texture
-		TEX_RGBA16F  - Half float RGBA texture
-		TEX_RGBA32F  - Float RGBA texture
+		Unknown			- Unknown format
+		TEX_R8			- 8-bit texture with one color channel.
+		TEX_R16F		- Half float texture with one color channel.
+		TEX_R32F		- Float texture with one color channel.
+		TEX_RG8			- 8-bit texture with two color channels.
+		TEX_RG16F		- Half float texture with two color channels.
+		TEX_RG32F		- Float texture with two color channels.
+		TEX_BGRA8		- 8-bit BGRA texture. For OpenGL ES it is actually RGBA texture.
+		TEX_RGBA16F		- Half float RGBA texture
+		TEX_RGBA32F		- Float RGBA texture
+		TEX_RGBA32F		- Unsigned integer RGBA texture
+		TEX_DXT1		- DXT1 compressed texture
+		TEX_DXT3		- DXT3 compressed texture
+		TEX_DXT5		- DXT5 compressed texture
+		TEX_ETC1		- ETC1 compressed texture
+		TEX_RGB8_ETC2	- RGB8 texture compressed in ETC2 format
+		TEX_RGBA8_ETC2	- RGBA8 texture compressed in ETC2 format
+		TEX_BC6_UF16	- BC6 compressed unsigned half float texture
+		TEX_BC6_SF16	- BC6 compressed signed half float texture
+		TEX_BC7			- BC7 compressed RGBA texture
+		TEX_ASTC_xxx	- ASTC compressed RGBA texture
 	*/
 	enum List
 	{
 		Unknown = 0,
+		TEX_R8,
+		TEX_R16F,
+		TEX_R32F,
+		TEX_RG8,
+		TEX_RG16F,
+		TEX_RG32F,
 		TEX_BGRA8,
+		TEX_RGBA16F,
+		TEX_RGBA32F,
+		TEX_RGBA32UI,
 		TEX_DXT1,
 		TEX_DXT3,
 		TEX_DXT5,
-		TEX_RGBA16F,
-		TEX_RGBA32F
+		TEX_ETC1,
+		TEX_RGB8_ETC2,
+		TEX_RGBA8_ETC2,
+		TEX_BC6_UF16,
+		TEX_BC6_SF16,
+		TEX_BC7,
+		TEX_ASTC_4x4,
+		TEX_ASTC_5x4,
+		TEX_ASTC_5x5,
+		TEX_ASTC_6x5,
+		TEX_ASTC_6x6,
+		TEX_ASTC_8x5,
+		TEX_ASTC_8x6,
+		TEX_ASTC_8x8,
+		TEX_ASTC_10x5,
+		TEX_ASTC_10x6,
+		TEX_ASTC_10x8,
+		TEX_ASTC_10x10,
+		TEX_ASTC_12x10,
+		TEX_ASTC_12x12
 	};
 };
 
@@ -575,6 +635,25 @@ struct H3DModel
 	};
 };
 
+struct H3DMeshPrimType
+{
+	/*	Enum: H3DMeshParams
+			The available Mesh node primitive types.
+
+		TriangleList - Mesh is drawn with triangles.
+		LineList     - Mesh is drawn with lines.
+		Patches      - Mesh is drawn with patches. Only used for tessellated meshes.
+		Points       - Mesh is represented as points.
+	 */
+	enum List
+	{
+		TriangleList = 0,
+		LineList = 1,
+		Patches = 2,
+		Points = 3
+	};
+};
+
 struct H3DMesh
 {
 	/*	Enum: H3DMesh
@@ -587,7 +666,6 @@ struct H3DMesh
 		VertREndI    - Last vertex in Geometry resource of parent Model node [read-only]
 		LodLevelI    - LOD level of Mesh; the mesh is only rendered if its LOD level corresponds to
 		               the model's current LOD level which is calculated based on the LOD distances (default: 0)
-		TessellatableI - specify if mesh can be tessellated (default: 0)
 	*/
 	enum List
 	{
@@ -596,8 +674,7 @@ struct H3DMesh
 		BatchCountI,
 		VertRStartI,
 		VertREndI,
-		LodLevelI,
-		TessellatableI
+		LodLevelI
 	};
 };
 
@@ -716,15 +793,14 @@ struct H3DEmitter
 struct H3DComputeNode
 {
 	/*	Enum: H3DComputeNode
-	The available compute node parameters.
+			The available compute node parameters.
 
-	MatResI        - Material resource used for rendering
-	CompBufResI    - Compute buffer resource that is used as data storage
-	AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
-	AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
-	DrawTypeI	   - Specifies how to draw data in the buffer. 0 - Triangles, 1 - Lines, 2 - Points
-	ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
-
+		MatResI        - Material resource used for rendering
+		CompBufResI    - Compute buffer resource that is used as data storage
+		AABBMinF       - Minimum of the node's AABB (should be set separately for x, y, z components)
+		AABBMaxF       - Maximum of the node's AABB (should be set separately for x, y, z components)
+		DrawTypeI	   - Specifies how to draw data in the buffer (see H3DMeshPrimType)
+		ElementsCountI - Specifies number of elements to draw (Example: for 1000 points - 1000, for 10 triangles - 10)
 	*/
 	enum List
 	{
@@ -744,11 +820,13 @@ struct H3DModelUpdateFlags
 		
 		Animation  - Apply animation
 		Geometry   - Apply morphers and software skinning
+		ChildNodes - Manually update child nodes and calculate their AABB. Useful when meshes are added procedurally to model
 	*/
 	enum Flags
 	{
 		Animation = 1,
-		Geometry = 2
+		Geometry = 2,
+		ChildNodes = 3
 	};
 };
 
@@ -766,13 +844,13 @@ struct H3DModelUpdateFlags
 	Returns:
 		pointer to the version string
 */
-DLL const char *h3dGetVersionString();
+H3D_API const char *h3dGetVersionString();
 
 /* Function: h3dCheckExtension
 		Checks if an extension is part of the engine library.
 	
 	Details:
-		This function checks if a specified extension is contained in the DLL/shared object of the engine.
+		This function checks if a specified extension is contained in the H3D_API/shared object of the engine.
 	
 	Parameters:
 		extensionName  - name of the extension
@@ -780,7 +858,7 @@ DLL const char *h3dGetVersionString();
 	Returns:
 		true if extension is implemented, otherwise false
 */
-DLL bool h3dCheckExtension( const char *extensionName );
+H3D_API bool h3dCheckExtension( const char *extensionName );
 
 /* Function: h3dGetError
 		Checks if an error occured.
@@ -801,16 +879,17 @@ DLL bool h3dCheckExtension( const char *extensionName );
 	Returns:
 		true in there was an error, otherwise false
 */
-DLL bool h3dGetError();
+H3D_API bool h3dGetError();
 
 /* Function: h3dInit
 		Initializes the engine.
 	
 	Details:
 		This function initializes the graphics engine and makes it ready for use. It has to be the
-		first call to the engine except for getVersionString. In order to successfully initialize
-		the engine the calling application must provide a valid OpenGL context. The function can be
-		called several times on different rendering contexts in order to initialize them.
+		first call to the engine except for h3dGetVersionString and h3dSetMessageCallback. In order
+		to successfully initialize the engine the calling application must provide a valid OpenGL
+		context. The function can be called several times on different rendering contexts in order
+		to initialize them.
 	
 	Parameters:
 		deviceType - type of the render device
@@ -818,7 +897,7 @@ DLL bool h3dGetError();
 	Returns:
 		true in case of success, otherwise false
 */
-DLL bool h3dInit( H3DRenderDevice::List deviceType );
+H3D_API bool h3dInit( H3DRenderDevice::List deviceType );
 
 /* Function: h3dRelease
 		Releases the engine.
@@ -833,7 +912,7 @@ DLL bool h3dInit( H3DRenderDevice::List deviceType );
 	Returns:
 		nothing
 */
-DLL void h3dRelease();
+H3D_API void h3dRelease();
 
 /* Function: h3dCompute
 		Asynchronous processing of arbitrary data on GPU.
@@ -854,7 +933,7 @@ DLL void h3dRelease();
 	Returns:
 		nothing
 */
-DLL void h3dCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
+H3D_API void h3dCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
 
 /* Function: h3dRender
 		Main rendering function.
@@ -870,7 +949,7 @@ DLL void h3dCompute( H3DRes materialRes, const char *context, int groupX, int gr
 	Returns:
 		nothing
 */
-DLL void h3dRender( H3DNode cameraNode );
+H3D_API void h3dRender( H3DNode cameraNode );
 
 /* Function: h3dFinalizeFrame
 		Marker for end of frame.
@@ -885,7 +964,7 @@ DLL void h3dRender( H3DNode cameraNode );
 	Returns:
 		nothing
 */
-DLL void h3dFinalizeFrame();
+H3D_API void h3dFinalizeFrame();
 
 /* Function: h3dClear
 		Removes all resources and scene nodes.
@@ -901,10 +980,24 @@ DLL void h3dFinalizeFrame();
 	Returns:
 		nothing
 */
-DLL void h3dClear();
+H3D_API void h3dClear();
 
 
 // --- General functions ---
+/*	Function: h3dSetMessageCallback
+		Registers a callback to be called each time the engine issues a message.
+
+	Details:
+		If 0 is provided as function pointer, the callback is deleted.
+
+	Parameters:
+		callaback  - function pointer to call
+
+	Returns:
+		nothing
+*/
+H3D_API void h3dSetMessageCallback(void (*callback)(int, const char*));
+
 /* Function: h3dGetMessage
 		Gets the next message from the message queue.
 	
@@ -919,7 +1012,7 @@ DLL void h3dClear();
 	Returns:
 		message string or empty string if no message is in queue
 */
-DLL const char *h3dGetMessage( int *level, float *time );
+H3D_API const char *h3dGetMessage( int *level, float *time );
 
 /* Function: h3dGetOption
 		Gets an option parameter of the engine.
@@ -933,7 +1026,7 @@ DLL const char *h3dGetMessage( int *level, float *time );
 	Returns:
 		current value of the specified option parameter
 */
-DLL float h3dGetOption( H3DOptions::List param );
+H3D_API float h3dGetOption( H3DOptions::List param );
 
 /* Function: h3dSetOption
 		Sets an option parameter for the engine.
@@ -948,7 +1041,7 @@ DLL float h3dGetOption( H3DOptions::List param );
 	Returns:
 		true if the option could be set to the specified value, otherwise false
 */
-DLL bool h3dSetOption( H3DOptions::List param, float value );
+H3D_API bool h3dSetOption( H3DOptions::List param, float value );
 
 /* Function: h3dGetStat
 		Gets a statistic value of the engine.
@@ -964,7 +1057,7 @@ DLL bool h3dSetOption( H3DOptions::List param, float value );
 	Returns:
 		current value of the specified statistic parameter
 */
-DLL float h3dGetStat( H3DStats::List param, bool reset );
+H3D_API float h3dGetStat( H3DStats::List param, bool reset );
 
 /* Function: h3dGetDeviceCapabilities
 		Checks whether GPU supports a certain feature.
@@ -978,51 +1071,7 @@ DLL float h3dGetStat( H3DStats::List param, bool reset );
 	Returns:
 		1, if feature is supported, 0 otherwise
 */
-DLL float h3dGetDeviceCapabilities( H3DDeviceCapabilities::List param );
-
-/* Function: h3dShowOverlays
-		Displays overlays on the screen.
-	
-	Details:
-		This function displays one or more overlays with a specified material and color.
-		An overlay is a screen-space quad that can be used to render 2D GUI elements. The overlay coordinate
-		system has its origin (0, 0) at the top-left corner of the screen and its maximum (aspect, 1)
-		at the bottom-right corner. As the x coordinate of the maximum corresponds to the aspect ratio
-		of the viewport, the size of overlays can always be the same, even when different screen formats
-		(standard 4:3, widescreen 16:9, etc.) are used. Texture coordinates are using a system where the
-		coordinates (0, 0) correspond to the lower left corner of the image.
-		Overlays are drawn in the order in which they are pushed using this function. Overlays with
-		the same state will be batched together, so it can make sense to group overlays that have the
-		same material, color and flags in order to achieve best performance.
-		Note that the overlays have to be removed manually using the function h3dClearOverlays.
-	
-	Parameters:
-		verts                   - vertex data (x, y, u, v), interpreted as quads
-		vertCount               - number of vertices (must be multiple of 4)
-		colR, colG, colB, colA  - color (and transparency) of overlays
-		materialRes             - material resource used for rendering
-		flags                   - overlay flags (reserved for future use)
-		
-	Returns:
-		nothing
-*/
-DLL void h3dShowOverlays( const float *verts, int vertCount, float colR, float colG, float colB,
-                          float colA, H3DRes materialRes, int flags );
-
-/* Function: h3dClearOverlays
-		Removes all overlays.
-	
-	Details:
-		This function removes all overlays that were added with h3dShowOverlays.
-	
-	Parameters:
-		none
-		
-	Returns:
-		nothing
-*/
-DLL void h3dClearOverlays();
-
+H3D_API float h3dGetDeviceCapabilities( H3DDeviceCapabilities::List param );
 
 /* Group: General resource management functions */
 /* Function: h3dGetResType
@@ -1038,7 +1087,7 @@ DLL void h3dClearOverlays();
 	Returns:
 		type of the resource
 */
-DLL int h3dGetResType( H3DRes res );
+H3D_API int h3dGetResType( H3DRes res );
 
 /* Function: h3dGetResName
 		Returns the name of a resource.
@@ -1056,7 +1105,7 @@ DLL int h3dGetResType( H3DRes res );
 	Returns:
 		name of the resource or empty string in case of failure
 */
-DLL const char *h3dGetResName( H3DRes res );
+H3D_API const char *h3dGetResName( H3DRes res );
 
 /* Function: h3dGetNextResource
 		Returns the next resource of the specified type.
@@ -1075,7 +1124,7 @@ DLL const char *h3dGetResName( H3DRes res );
 	Returns:
 		handle to the found resource or 0 if it does not exist
 */
-DLL H3DRes h3dGetNextResource( int type, H3DRes start );
+H3D_API H3DRes h3dGetNextResource( int type, H3DRes start );
 
 /* Function: h3dFindResource
 		Finds a resource and returns its handle.
@@ -1091,7 +1140,7 @@ DLL H3DRes h3dGetNextResource( int type, H3DRes start );
 	Returns:
 		handle to the resource or 0 if not found
 */
-DLL H3DRes h3dFindResource( int type, const char *name );
+H3D_API H3DRes h3dFindResource( int type, const char *name );
 
 /* Function: h3dAddResource
 		Adds a resource.
@@ -1109,7 +1158,7 @@ DLL H3DRes h3dFindResource( int type, const char *name );
 	Returns:
 		handle to the resource to be added or 0 in case of failure
 */
-DLL H3DRes h3dAddResource( int type, const char *name, int flags );
+H3D_API H3DRes h3dAddResource( int type, const char *name, int flags );
 
 /* Function: h3dCloneResource
 		Duplicates a resource.
@@ -1127,7 +1176,7 @@ DLL H3DRes h3dAddResource( int type, const char *name, int flags );
 	Returns:
 		handle to the cloned resource or 0 in case of failure
 */
-DLL H3DRes h3dCloneResource( H3DRes sourceRes, const char *name );
+H3D_API H3DRes h3dCloneResource( H3DRes sourceRes, const char *name );
 
 /* Function: h3dRemoveResource
 		Removes a resource.
@@ -1143,7 +1192,7 @@ DLL H3DRes h3dCloneResource( H3DRes sourceRes, const char *name );
 	Returns:
 		the number of references that the application is still holding after removal or -1 in case of an error
 */
-DLL int h3dRemoveResource( H3DRes res );
+H3D_API int h3dRemoveResource( H3DRes res );
 
 /* Function: h3dIsResLoaded
 		Checks if a resource is loaded.
@@ -1157,7 +1206,7 @@ DLL int h3dRemoveResource( H3DRes res );
 	Returns:
 		true if resource is loaded, otherwise or in case of failure false
 */
-DLL bool h3dIsResLoaded( H3DRes res );
+H3D_API bool h3dIsResLoaded( H3DRes res );
 
 /* Function: h3dLoadResource
 		Loads a resource.
@@ -1177,7 +1226,7 @@ DLL bool h3dIsResLoaded( H3DRes res );
 	Returns:
 		true in case of success, otherwise false
 */
-DLL bool h3dLoadResource( H3DRes res, const char *data, int size );
+H3D_API bool h3dLoadResource( H3DRes res, const char *data, int size );
 
 /* Function: h3dUnloadResource
 		Unloads a resource.
@@ -1193,7 +1242,7 @@ DLL bool h3dLoadResource( H3DRes res, const char *data, int size );
 	Returns:
 		nothing
 */
-DLL void h3dUnloadResource( H3DRes res );
+H3D_API void h3dUnloadResource( H3DRes res );
 
 
 /* Function: h3dGetResElemCount
@@ -1210,7 +1259,7 @@ DLL void h3dUnloadResource( H3DRes res );
 	Returns:
 		number of elements
 */
-DLL int h3dGetResElemCount( H3DRes res, int elem );
+H3D_API int h3dGetResElemCount( H3DRes res, int elem );
 
 /* Function: h3dFindResElem
 		Finds a resource element with the specified property value.
@@ -1230,7 +1279,7 @@ DLL int h3dGetResElemCount( H3DRes res, int elem );
 	Returns:
 		index of element or -1 if element not found
 */
-DLL int h3dFindResElem( H3DRes res, int elem, int param, const char *value );
+H3D_API int h3dFindResElem( H3DRes res, int elem, int param, const char *value );
 
 /* Function: h3dGetResParamI
 		Gets an integer property of a resource element.
@@ -1248,7 +1297,7 @@ DLL int h3dFindResElem( H3DRes res, int elem, int param, const char *value );
 	Returns:
 		value of the parameter
 */
-DLL int h3dGetResParamI( H3DRes res, int elem, int elemIdx, int param );
+H3D_API int h3dGetResParamI( H3DRes res, int elem, int elemIdx, int param );
 
 /* Function: h3dSetResParamI
 		Sets an integer property of a resource element.
@@ -1267,7 +1316,7 @@ DLL int h3dGetResParamI( H3DRes res, int elem, int elemIdx, int param );
 	Returns:
 		 nothing
 */
-DLL void h3dSetResParamI( H3DRes res, int elem, int elemIdx, int param, int value );
+H3D_API void h3dSetResParamI( H3DRes res, int elem, int elemIdx, int param, int value );
 
 /* Function: h3dGetResParamF
 		Gets a float property of a resource element.
@@ -1287,7 +1336,7 @@ DLL void h3dSetResParamI( H3DRes res, int elem, int elemIdx, int param, int valu
 	Returns:
 		value of the parameter
 */
-DLL float h3dGetResParamF( H3DRes res, int elem, int elemIdx, int param, int compIdx );
+H3D_API float h3dGetResParamF( H3DRes res, int elem, int elemIdx, int param, int compIdx );
 
 /* Function: h3dSetResParamF
 		Sets a float property of a resource element.
@@ -1307,7 +1356,7 @@ DLL float h3dGetResParamF( H3DRes res, int elem, int elemIdx, int param, int com
 	Returns:
 		nothing
 */
-DLL void h3dSetResParamF( H3DRes res, int elem, int elemIdx, int param, int compIdx, float value );
+H3D_API void h3dSetResParamF( H3DRes res, int elem, int elemIdx, int param, int compIdx, float value );
 
 /* Function: h3dGetResParamStr
 		Gets a string property of a resource element.
@@ -1328,7 +1377,7 @@ DLL void h3dSetResParamF( H3DRes res, int elem, int elemIdx, int param, int comp
 	Returns:
 		value of the property or empty string if no such property exists
 */
-DLL const char *h3dGetResParamStr( H3DRes res, int elem, int elemIdx, int param );
+H3D_API const char *h3dGetResParamStr( H3DRes res, int elem, int elemIdx, int param );
 
 /* Function: h3dSetResParamStr
 		Sets a string property of a resource element.
@@ -1347,7 +1396,7 @@ DLL const char *h3dGetResParamStr( H3DRes res, int elem, int elemIdx, int param 
 	Returns:
 		nothing
 */
-DLL void h3dSetResParamStr( H3DRes res, int elem, int elemIdx, int param, const char *value );
+H3D_API void h3dSetResParamStr( H3DRes res, int elem, int elemIdx, int param, const char *value );
 
 /* Function: h3dMapResStream
 		Maps the stream of a resource element.
@@ -1372,7 +1421,7 @@ DLL void h3dSetResParamStr( H3DRes res, int elem, int elemIdx, int param, const 
 	Returns:
 		pointer to stream data or NULL if stream cannot be mapped
 */
-DLL void *h3dMapResStream( H3DRes res, int elem, int elemIdx, int stream, bool read, bool write );
+H3D_API void *h3dMapResStream( H3DRes res, int elem, int elemIdx, int stream, bool read, bool write );
 
 /* Function: h3dUnmapResStream
 		Unmaps a previously mapped resource stream.
@@ -1386,7 +1435,7 @@ DLL void *h3dMapResStream( H3DRes res, int elem, int elemIdx, int stream, bool r
 	Returns:
 		nothing
 */
-DLL void h3dUnmapResStream( H3DRes res );
+H3D_API void h3dUnmapResStream( H3DRes res );
 
 /* Function: h3dQueryUnloadedResource
 		Returns handle to an unloaded resource.
@@ -1402,7 +1451,7 @@ DLL void h3dUnmapResStream( H3DRes res );
 	Returns:
 		handle to an unloaded resource or 0
 */
-DLL H3DRes h3dQueryUnloadedResource( int index );
+H3D_API H3DRes h3dQueryUnloadedResource( int index );
 
 /* Function: h3dReleaseUnusedResources
 		Frees resources that are no longer used.
@@ -1418,7 +1467,7 @@ DLL H3DRes h3dQueryUnloadedResource( int index );
 	Returns:
 		nothing
 */
-DLL void h3dReleaseUnusedResources();
+H3D_API void h3dReleaseUnusedResources();
 
 
 /* Group: Specific resource management functions */
@@ -1442,7 +1491,7 @@ DLL void h3dReleaseUnusedResources();
 	Returns:
 		handle to the created resource or 0 in case of failure
 */
-DLL H3DRes h3dCreateTexture( const char *name, int width, int height, int fmt, int flags );
+H3D_API H3DRes h3dCreateTexture( const char *name, int width, int height, int fmt, int flags );
 
 /* Function: h3dSetShaderPreambles
 		Sets preambles of all Shader resources.
@@ -1466,8 +1515,8 @@ DLL H3DRes h3dCreateTexture( const char *name, int width, int height, int fmt, i
 	Returns:
 		nothing
 */
-DLL void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble,
-								const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble );
+H3D_API void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamble, const char *geomPreamble,
+									const char *tessControlPreamble, const char *tessEvalPreamble, const char *computePreamble );
 
 /* Function: h3dSetMaterialUniform
 		Sets a shader uniform of a Material resource.
@@ -1483,7 +1532,7 @@ DLL void h3dSetShaderPreambles( const char *vertPreamble, const char *fragPreamb
 	Returns:
 		true if uniform was found, otherwise false
 */
-DLL bool h3dSetMaterialUniform( H3DRes materialRes, const char *name, float a, float b, float c, float d );
+H3D_API bool h3dSetMaterialUniform( H3DRes materialRes, const char *name, float a, float b, float c, float d );
 
 /* Function: h3dResizePipelineBuffers
 		Changes the size of the render targets of a pipeline.
@@ -1502,7 +1551,7 @@ DLL bool h3dSetMaterialUniform( H3DRes materialRes, const char *name, float a, f
 	Returns:
 		nothing
 */
-DLL void h3dResizePipelineBuffers( H3DRes pipeRes, int width, int height );
+H3D_API void h3dResizePipelineBuffers( H3DRes pipeRes, int width, int height );
 
 /* Function: h3dGetRenderTargetData
 		Reads back the pixel data of a render target buffer.
@@ -1530,8 +1579,8 @@ DLL void h3dResizePipelineBuffers( H3DRes pipeRes, int width, int height );
 	Returns:
 		true if specified render target could be found, otherwise false
 */
-DLL bool h3dGetRenderTargetData( H3DRes pipelineRes, const char *targetName, int bufIndex,
-                                 int *width, int *height, int *compCount, void *dataBuffer, int bufferSize );
+H3D_API bool h3dGetRenderTargetData( H3DRes pipelineRes, const char *targetName, int bufIndex,
+                                     int *width, int *height, int *compCount, void *dataBuffer, int bufferSize );
 
 
 /* Group: General scene graph functions */
@@ -1548,7 +1597,7 @@ DLL bool h3dGetRenderTargetData( H3DRes pipelineRes, const char *targetName, int
 	Returns:
 		type of the scene node
 */
-DLL int h3dGetNodeType( H3DNode node );
+H3D_API int h3dGetNodeType( H3DNode node );
 	
 /* Function: h3dGetNodeParent
 		Returns the parent of a scene node.
@@ -1563,7 +1612,7 @@ DLL int h3dGetNodeType( H3DNode node );
 	Returns:
 		handle to parent node or 0 in case of failure
 */
-DLL H3DNode h3dGetNodeParent( H3DNode node );
+H3D_API H3DNode h3dGetNodeParent( H3DNode node );
 
 
 /* Function: h3dSetNodeParent
@@ -1581,7 +1630,7 @@ DLL H3DNode h3dGetNodeParent( H3DNode node );
 	Returns:
 		true if node could be relocated, otherwise false
 */
-DLL bool h3dSetNodeParent( H3DNode node, H3DNode parent );
+H3D_API bool h3dSetNodeParent( H3DNode node, H3DNode parent );
 
 /* Function: h3dGetNodeChild
 		Returns the handle to a child node.
@@ -1597,7 +1646,7 @@ DLL bool h3dSetNodeParent( H3DNode node, H3DNode parent );
 	Returns:
 		handle to the child node or 0 if child doesn't exist
 */
-DLL H3DNode h3dGetNodeChild( H3DNode node, int index );
+H3D_API H3DNode h3dGetNodeChild( H3DNode node, int index );
 
 
 
@@ -1616,7 +1665,7 @@ DLL H3DNode h3dGetNodeChild( H3DNode node, int index );
 	Returns:
 		handle to the root of the created nodes or 0 in case of failure
 */
-DLL H3DNode h3dAddNodes( H3DNode parent, H3DRes sceneGraphRes );
+H3D_API H3DNode h3dAddNodes( H3DNode parent, H3DRes sceneGraphRes );
 
 /* Function: h3dRemoveNode
 		Removes a node from the scene.
@@ -1630,7 +1679,7 @@ DLL H3DNode h3dAddNodes( H3DNode parent, H3DRes sceneGraphRes );
 	Returns:
 		nothing
 */
-DLL void h3dRemoveNode( H3DNode node );
+H3D_API void h3dRemoveNode( H3DNode node );
 
 /* Function: h3dCheckNodeTransFlag
 		Checks if a scene node has been transformed by the engine.
@@ -1649,7 +1698,7 @@ DLL void h3dRemoveNode( H3DNode node );
 	Returns:
 		true if node has been transformed, otherwise false
 */
-DLL bool h3dCheckNodeTransFlag( H3DNode node, bool reset );
+H3D_API bool h3dCheckNodeTransFlag( H3DNode node, bool reset );
 
 /* Function: h3dGetNodeTransform
 		Gets the relative transformation of a node.
@@ -1668,8 +1717,8 @@ DLL bool h3dCheckNodeTransFlag( H3DNode node, bool reset );
 	Returns:
 		nothing
 */
-DLL void h3dGetNodeTransform( H3DNode node, float *tx, float *ty, float *tz,
-                              float *rx, float *ry, float *rz, float *sx, float *sy, float *sz );
+H3D_API void h3dGetNodeTransform( H3DNode node, float *tx, float *ty, float *tz,
+                                  float *rx, float *ry, float *rz, float *sx, float *sy, float *sz );
 
 /* Function: h3dSetNodeTransform
 		Sets the relative transformation of a node.
@@ -1687,8 +1736,8 @@ DLL void h3dGetNodeTransform( H3DNode node, float *tx, float *ty, float *tz,
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeTransform( H3DNode node, float tx, float ty, float tz,
-                              float rx, float ry, float rz, float sx, float sy, float sz );
+H3D_API void h3dSetNodeTransform( H3DNode node, float tx, float ty, float tz,
+                                  float rx, float ry, float rz, float sx, float sy, float sz );
 
 /* Function: h3dGetNodeTransMats
 		Returns the transformation matrices of a node.
@@ -1708,7 +1757,7 @@ DLL void h3dSetNodeTransform( H3DNode node, float tx, float ty, float tz,
 	Returns:
 		nothing
 */
-DLL void h3dGetNodeTransMats( H3DNode node, const float **relMat, const float **absMat );
+H3D_API void h3dGetNodeTransMats( H3DNode node, const float **relMat, const float **absMat );
 
 /* Function: h3dSetNodeTransMat
 		Sets the relative transformation matrix of a node.
@@ -1724,7 +1773,7 @@ DLL void h3dGetNodeTransMats( H3DNode node, const float **relMat, const float **
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeTransMat( H3DNode node, const float *mat4x4 );
+H3D_API void h3dSetNodeTransMat( H3DNode node, const float *mat4x4 );
 
 /* Function: h3dGetNodeParamI
 		Gets a property of a scene node.
@@ -1740,7 +1789,7 @@ DLL void h3dSetNodeTransMat( H3DNode node, const float *mat4x4 );
 	Returns:
 		value of the parameter
 */
-DLL int h3dGetNodeParamI( H3DNode node, int param );
+H3D_API int h3dGetNodeParamI( H3DNode node, int param );
 
 /* Function: h3dSetNodeParamI
 		Sets a property of a scene node.
@@ -1757,7 +1806,7 @@ DLL int h3dGetNodeParamI( H3DNode node, int param );
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeParamI( H3DNode node, int param, int value );
+H3D_API void h3dSetNodeParamI( H3DNode node, int param, int value );
 
 /* Function: h3dGetNodeParamF
 		Gets a property of a scene node.
@@ -1775,7 +1824,7 @@ DLL void h3dSetNodeParamI( H3DNode node, int param, int value );
 	Returns:
 		value of the parameter
 */
-DLL float h3dGetNodeParamF( H3DNode node, int param, int compIdx );
+H3D_API float h3dGetNodeParamF( H3DNode node, int param, int compIdx );
 
 /* Function: h3dSetNodeParamF
 		Sets a property of a scene node.
@@ -1793,7 +1842,7 @@ DLL float h3dGetNodeParamF( H3DNode node, int param, int compIdx );
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeParamF( H3DNode node, int param, int compIdx, float value );
+H3D_API void h3dSetNodeParamF( H3DNode node, int param, int compIdx, float value );
 
 /* Function: h3dGetNodeParamStr
 		Gets a property of a scene node.
@@ -1812,7 +1861,7 @@ DLL void h3dSetNodeParamF( H3DNode node, int param, int compIdx, float value );
 	Returns:
 		value of the property or empty string if no such property exists
 */
-DLL const char *h3dGetNodeParamStr( H3DNode node, int param );
+H3D_API const char *h3dGetNodeParamStr( H3DNode node, int param );
 
 /* Function: h3dSetNodeParamStr
 		Sets a property of a scene node.
@@ -1829,7 +1878,7 @@ DLL const char *h3dGetNodeParamStr( H3DNode node, int param );
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeParamStr( H3DNode node, int param, const char *value );
+H3D_API void h3dSetNodeParamStr( H3DNode node, int param, const char *value );
 
 /* Function: h3dGetNodeFlags
 		Gets the scene node flags.
@@ -1843,7 +1892,7 @@ DLL void h3dSetNodeParamStr( H3DNode node, int param, const char *value );
 	Returns:
 		flag bitmask
 */
-DLL int h3dGetNodeFlags( H3DNode node );
+H3D_API int h3dGetNodeFlags( H3DNode node );
 
 /* Function: h3dSetNodeFlags
 		Sets the scene node flags.
@@ -1859,7 +1908,7 @@ DLL int h3dGetNodeFlags( H3DNode node );
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeFlags( H3DNode node, int flags, bool recursive );
+H3D_API void h3dSetNodeFlags( H3DNode node, int flags, bool recursive );
 
 /* Function: h3dGetNodeAABB
 		Gets the bounding box of a scene node.
@@ -1877,8 +1926,8 @@ DLL void h3dSetNodeFlags( H3DNode node, int flags, bool recursive );
 	Returns:
 		nothing
 */
-DLL void h3dGetNodeAABB( H3DNode node, float *minX, float *minY, float *minZ,
-                         float *maxX, float *maxY, float *maxZ );
+H3D_API void h3dGetNodeAABB( H3DNode node, float *minX, float *minY, float *minZ,
+                             float *maxX, float *maxY, float *maxZ );
 
 /* Function: h3dFindNodes
 		Finds scene nodes with the specified properties.
@@ -1896,7 +1945,7 @@ DLL void h3dGetNodeAABB( H3DNode node, float *minX, float *minY, float *minZ,
 	Returns:
 		number of search results
 */
-DLL int h3dFindNodes( H3DNode startNode, const char *name, int type );
+H3D_API int h3dFindNodes( H3DNode startNode, const char *name, int type );
 
 /* Function: h3dGetNodeFindResult
 		Gets a result from the findNodes query.
@@ -1912,7 +1961,7 @@ DLL int h3dFindNodes( H3DNode startNode, const char *name, int type );
 	Returns:
 		handle to scene node from findNodes query or 0 if result doesn't exist
 */
-DLL H3DNode h3dGetNodeFindResult( int index );
+H3D_API H3DNode h3dGetNodeFindResult( int index );
 
 /* Function: h3dSetNodeUniforms
 		Sets per-instance uniform data for a node.
@@ -1930,7 +1979,7 @@ DLL H3DNode h3dGetNodeFindResult( int index );
 	Returns:
 		nothing
 */
-DLL void h3dSetNodeUniforms( H3DNode node, float *uniformData, int count );
+H3D_API void h3dSetNodeUniforms( H3DNode node, const float *uniformData, int count );
 
 /* Function: h3dCastRay
 		Performs a recursive ray collision query.
@@ -1951,7 +2000,7 @@ DLL void h3dSetNodeUniforms( H3DNode node, float *uniformData, int count );
 	Returns:
 		number of intersections
 	*/
-DLL int h3dCastRay( H3DNode node, float ox, float oy, float oz, float dx, float dy, float dz, int numNearest );
+H3D_API int h3dCastRay( H3DNode node, float ox, float oy, float oz, float dx, float dy, float dz, int numNearest );
 
 /*	Function: h3dGetCastRayResult
 		Returns a result of a previous castRay query.
@@ -1969,7 +2018,7 @@ DLL int h3dCastRay( H3DNode node, float ox, float oy, float oz, float dx, float 
 	Returns:
 		true if index was valid and data could be copied, otherwise false
 */
-DLL bool h3dGetCastRayResult( int index, H3DNode *node, float *distance, float *intersection );
+H3D_API bool h3dGetCastRayResult( int index, H3DNode *node, float *distance, float *intersection );
 
 /*	Function: h3dCheckNodeVisibility
 		Checks if a node is visible.
@@ -1991,7 +2040,7 @@ DLL bool h3dGetCastRayResult( int index, H3DNode *node, float *distance, float *
 	Returns:
 		computed LOD level or -1 if node is not visible
 */
-DLL int h3dCheckNodeVisibility( H3DNode node, H3DNode cameraNode, bool checkOcclusion, bool calcLod );
+H3D_API int h3dCheckNodeVisibility( H3DNode node, H3DNode cameraNode, bool checkOcclusion, bool calcLod );
 
 
 /* Group: Group-specific scene graph functions */
@@ -2008,7 +2057,7 @@ DLL int h3dCheckNodeVisibility( H3DNode node, H3DNode cameraNode, bool checkOccl
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddGroupNode( H3DNode parent, const char *name );
+H3D_API H3DNode h3dAddGroupNode( H3DNode parent, const char *name );
 
 
 /* Group: Model-specific scene graph functions */
@@ -2026,7 +2075,7 @@ DLL H3DNode h3dAddGroupNode( H3DNode parent, const char *name );
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddModelNode( H3DNode parent, const char *name, H3DRes geometryRes );
+H3D_API H3DNode h3dAddModelNode( H3DNode parent, const char *name, H3DRes geometryRes );
 
 /* Function: h3dSetupModelAnimStage
 		Configures an animation stage of a Model node.
@@ -2060,8 +2109,8 @@ DLL H3DNode h3dAddModelNode( H3DNode parent, const char *name, H3DRes geometryRe
 	Returns:
 		nothing
 */
-DLL void h3dSetupModelAnimStage( H3DNode modelNode, int stage, H3DRes animationRes, int layer,
-                                 const char *startNode, bool additive );
+H3D_API void h3dSetupModelAnimStage( H3DNode modelNode, int stage, H3DRes animationRes, int layer,
+                                     const char *startNode, bool additive );
 
 /* Function: h3dGetModelAnimParams
 		Gets the animation stage parameters of a Model node.
@@ -2077,14 +2126,14 @@ DLL void h3dSetupModelAnimStage( H3DNode modelNode, int stage, H3DRes animationR
 		modelNode  - handle to the Model node to be accessed
 		stage      - index of the animation stage to be accessed
 		time       - pointer to variable where the time of the animation stage will be stored
-                 (can be NULL if not required)
+		             (can be NULL if not required)
 		weight     - pointer to variable where the blend weight of the animation stage will be stored
-                 (can be NULL if not required)
+		             (can be NULL if not required)
 		
 	Returns:
 		nothing
 */
-DLL void h3dGetModelAnimParams( H3DNode modelNode, int stage, float *time, float *weight );
+H3D_API void h3dGetModelAnimParams( H3DNode modelNode, int stage, float *time, float *weight );
 
 /* Function: h3dSetModelAnimParams
 		Sets the animation stage parameters of a Model node.
@@ -2109,7 +2158,7 @@ DLL void h3dGetModelAnimParams( H3DNode modelNode, int stage, float *time, float
 	Returns:
 		nothing
 */
-DLL void h3dSetModelAnimParams( H3DNode modelNode, int stage, float time, float weight );
+H3D_API void h3dSetModelAnimParams( H3DNode modelNode, int stage, float time, float weight );
 
 /* Function: h3dSetModelMorpher
 		Sets the weight of a morph target.
@@ -2127,7 +2176,7 @@ DLL void h3dSetModelAnimParams( H3DNode modelNode, int stage, float time, float 
 	Returns:
 		true if morph target was found, otherwise false
 */
-DLL bool h3dSetModelMorpher( H3DNode modelNode, const char *target, float weight );
+H3D_API bool h3dSetModelMorpher( H3DNode modelNode, const char *target, float weight );
 
 
 /* Function: h3dUpdateModel
@@ -2146,7 +2195,7 @@ DLL bool h3dSetModelMorpher( H3DNode modelNode, const char *target, float weight
 	Returns:
 		nothing
 */
-DLL void h3dUpdateModel( H3DNode modelNode, int flags );
+H3D_API void h3dUpdateModel( H3DNode modelNode, int flags );
 
 
 /* Group: Mesh-specific scene graph functions */
@@ -2160,6 +2209,7 @@ DLL void h3dUpdateModel( H3DNode modelNode, int flags );
 		parent       - handle to parent node to which the new node will be attached
 		name         - name of the node
 		materialRes  - material resource used by Mesh node
+		primType     - primitive type to draw
 		batchStart   - first triangle index of mesh in Geometry resource of parent Model node
 		batchCount   - number of triangle indices used for drawing mesh
 		vertRStart   - first vertex in Geometry resource of parent Model node
@@ -2168,8 +2218,8 @@ DLL void h3dUpdateModel( H3DNode modelNode, int flags );
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddMeshNode( H3DNode parent, const char *name, H3DRes materialRes, 
-                            int batchStart, int batchCount, int vertRStart, int vertREnd );
+H3D_API H3DNode h3dAddMeshNode( H3DNode parent, const char *name, H3DRes materialRes, int primType, 
+                                int batchStart, int batchCount, int vertRStart, int vertREnd );
 
 
 /* Group: Joint-specific scene graph functions */
@@ -2187,7 +2237,7 @@ DLL H3DNode h3dAddMeshNode( H3DNode parent, const char *name, H3DRes materialRes
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddJointNode( H3DNode parent, const char *name, int jointIndex );
+H3D_API H3DNode h3dAddJointNode( H3DNode parent, const char *name, int jointIndex );
 
 
 /* Group: Light-specific scene graph functions */
@@ -2213,9 +2263,8 @@ DLL H3DNode h3dAddJointNode( H3DNode parent, const char *name, int jointIndex );
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddLightNode( H3DNode parent, const char *name, H3DRes materialRes,
-                             const char *lightingContext, const char *shadowContext );
-
+H3D_API H3DNode h3dAddLightNode( H3DNode parent, const char *name, H3DRes materialRes,
+                                 const char *lightingContext, const char *shadowContext );
 
 /* Group: Camera-specific scene graph functions */
 /* Function: h3dAddCameraNode
@@ -2232,7 +2281,7 @@ DLL H3DNode h3dAddLightNode( H3DNode parent, const char *name, H3DRes materialRe
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddCameraNode( H3DNode parent, const char *name, H3DRes pipelineRes );
+H3D_API H3DNode h3dAddCameraNode( H3DNode parent, const char *name, H3DRes pipelineRes );
 
 /* Function: h3dSetupCameraView
 		Sets the planes of a camera viewing frustum.
@@ -2251,7 +2300,7 @@ DLL H3DNode h3dAddCameraNode( H3DNode parent, const char *name, H3DRes pipelineR
 	Returns:
 		nothing
 */
-DLL void h3dSetupCameraView( H3DNode cameraNode, float fov, float aspect, float nearDist, float farDist );
+H3D_API void h3dSetupCameraView( H3DNode cameraNode, float fov, float aspect, float nearDist, float farDist );
 
 /* Function: h3dGetCameraProjMat
 		Gets the camera projection matrix.
@@ -2267,7 +2316,7 @@ DLL void h3dSetupCameraView( H3DNode cameraNode, float fov, float aspect, float 
 	Returns:
 		nothing
 */
-DLL void h3dGetCameraProjMat( H3DNode cameraNode, float *projMat );
+H3D_API void h3dGetCameraProjMat( H3DNode cameraNode, float *projMat );
 
 /* Function: h3dSetCameraProjMat
 		Sets the camera projection matrix.
@@ -2283,8 +2332,7 @@ DLL void h3dGetCameraProjMat( H3DNode cameraNode, float *projMat );
 	Returns :
 		nothing
 */
-
-DLL void h3dSetCameraProjMat( H3DNode cameraNode, float *projMat );
+H3D_API void h3dSetCameraProjMat( H3DNode cameraNode, float *projMat );
 
 /* Group: Emitter-specific scene graph functions */
 /* Function: h3dAddEmitterNode
@@ -2305,8 +2353,8 @@ DLL void h3dSetCameraProjMat( H3DNode cameraNode, float *projMat );
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddEmitterNode( H3DNode parent, const char *name, H3DRes materialRes,
-                               H3DRes particleEffectRes, int maxParticleCount, int respawnCount );
+H3D_API H3DNode h3dAddEmitterNode( H3DNode parent, const char *name, H3DRes materialRes,
+                                   H3DRes particleEffectRes, int maxParticleCount, int respawnCount );
 
 /* Function: h3dUpdateEmitter
 		Advances emitter time and performs particle simulation.
@@ -2323,7 +2371,7 @@ DLL H3DNode h3dAddEmitterNode( H3DNode parent, const char *name, H3DRes material
 	Returns:
 		nothing
 */
-DLL void h3dUpdateEmitter( H3DNode emitterNode, float timeDelta );
+H3D_API void h3dUpdateEmitter( H3DNode emitterNode, float timeDelta );
 
 /* Function: h3dHasEmitterFinished
 		Checks if an Emitter node is still alive.
@@ -2340,7 +2388,7 @@ DLL void h3dUpdateEmitter( H3DNode emitterNode, float timeDelta );
 	Returns:
 		true if Emitter will no more emit any particles, otherwise or in case of failure false
 */
-DLL bool h3dHasEmitterFinished( H3DNode emitterNode );
+H3D_API bool h3dHasEmitterFinished( H3DNode emitterNode );
 
 
 /* Group: Compute-specific scene graph functions */
@@ -2356,10 +2404,10 @@ DLL bool h3dHasEmitterFinished( H3DNode emitterNode );
 		name               - name of the node
 		materialRes        - handle to Material resource used for rendering
 		compBufferRes	   - handle to ComputeBuffer resource that is used as vertex storage
-		drawType		   - specifies how to treat data in the compute buffer. 0 - Triangles, 1 - Lines, 2 - Points
+		primType		   - specifies how to treat data in the compute buffer (see H3DMeshPrimType). 
 		elementsCount	   - number of elements that need to be drawn
 		
 	Returns:
 		handle to the created node or 0 in case of failure
 */
-DLL H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int drawType, int elementsCount );
+H3D_API H3DNode h3dAddComputeNode( H3DNode parent, const char *name, H3DRes materialRes, H3DRes compBufferRes, int primType, int elementsCount );

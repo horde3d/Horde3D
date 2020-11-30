@@ -1,4 +1,4 @@
-﻿// *************************************************************************************************
+// *************************************************************************************************
 //
 // ParticleVortex .NET - sample application for h3d .NET wrapper
 // ----------------------------------------------------------
@@ -244,6 +244,12 @@ namespace Horde3DNET.Samples.TesselatorNet
             h3d.setOption(h3d.H3DOptions.MaxAnisotropy, 4);
             h3d.setOption(h3d.H3DOptions.ShadowMapSize, 2048);
 
+            // Samples require overlays extension in order to display information
+            if (!h3d.checkExtension("Overlays"))
+            {
+                throw new System.ArgumentException("Unable to find overlays extension", "checkExtension");
+            }
+
             // Add resources
             // added horde3d 1.0            
             // Pipelines
@@ -276,9 +282,8 @@ namespace Horde3DNET.Samples.TesselatorNet
 	        int vertices = h3d.getResParamI( geo, (int) h3d.H3DGeoRes.GeometryElem, 0, (int) h3d.H3DGeoRes.GeoVertexCountI );
 	
 	        _model = h3d.addModelNode( h3d.H3DRootNode, "model", geo );
-	        int mesh = h3d.addMeshNode( _model, "icosahedron", mat, 0, indices, 0, vertices - 1 );
+	        int mesh = h3d.addMeshNode( _model, "icosahedron", mat, (int)h3d.H3DMeshPrimType.Patches, 0, indices, 0, vertices - 1 );
 	        h3d.setNodeTransform( mesh, 0, 0, 0, 0, 0, 0, 20, 20, 20 );
-	        h3d.setNodeParamI( mesh, ( int) h3d.H3DMesh.TessellatableI, 1 ); // Set mesh to use tessellation
 
             // Add light source
 	        int light = h3d.addLightNode( h3d.H3DRootNode, "Light1", lightMatRes, "LIGHTING", "SHADOWMAP" );
@@ -317,9 +322,9 @@ namespace Horde3DNET.Samples.TesselatorNet
             // Set camera parameters
             h3d.setNodeTransform(_cam, _x, _y, _z, _rx, _ry, 0, 1, 1, 1); //horde3d 1.0
 
-            Horde3DUtils.showFrameStats(_fontMatRes, _panelMatRes, _statMode);
+            h3d.showFrameStats(_fontMatRes, _panelMatRes, _statMode);
 
-            Horde3DUtils.showText( "Up/Down arrows to modify tessellation level", 1.0f, 0.01f, 0.032f, 1, 1, 1, _fontMatRes);
+            h3d.showText( "Up/Down arrows to modify tessellation level", 1.0f, 0.01f, 0.032f, 1, 1, 1, _fontMatRes);
 
             // Show logo                        
             float ww = h3d.getNodeParamI(_cam, (int)h3d.H3DCamera.ViewportWidthI) / (float)h3d.getNodeParamI(_cam, (int)h3d.H3DCamera.ViewportHeightI);

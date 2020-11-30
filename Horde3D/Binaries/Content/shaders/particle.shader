@@ -35,6 +35,18 @@ OpenGL4
 	}
 }
 
+OpenGLES3
+{
+	context TRANSLUCENT
+	{
+		VertexShader = compile GLSL VS_TRANSLUCENT_GLES3;
+		PixelShader = compile GLSL FS_TRANSLUCENT_GLES3;
+		
+		ZWriteEnable = false;
+		BlendMode = AddBlended;
+	}
+}
+
 [[VS_SHADOWMAP]]
 // =================================================================================================
 
@@ -117,6 +129,45 @@ void main( void )
 }
 
 [[FS_TRANSLUCENT_GL4]]
+// =================================================================================================
+
+uniform sampler2D albedoMap;
+in vec4 color;
+in vec2 texCoords;
+
+out vec4 fragColor;
+
+void main( void )
+{
+	vec4 albedo = texture( albedoMap, texCoords );
+	
+	fragColor = albedo * color;
+}
+
+// =================================================================================================
+// =======================================GLES3=====================================================
+// =================================================================================================
+
+[[VS_TRANSLUCENT_GLES3]]
+// =================================================================================================
+
+#include "shaders/utilityLib/vertParticleGLES3.glsl"
+
+uniform mat4 viewProjMat;
+
+layout( location = 0 ) in vec2 texCoords0;
+out vec4 color;
+out vec2 texCoords;
+
+void main(void)
+{
+	color = getParticleColor();
+	texCoords = vec2( texCoords0.s, -texCoords0.t );
+	gl_Position = viewProjMat * vec4( calcParticlePos( texCoords0 ), 1 );
+}
+
+
+[[FS_TRANSLUCENT_GLES3]]
 // =================================================================================================
 
 uniform sampler2D albedoMap;

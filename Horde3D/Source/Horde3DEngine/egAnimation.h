@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -132,8 +132,8 @@ public:
 	bool setAnimParams( int stage, float time, float weight );
 	bool animate();
 
-    int  getAnimCount() const;
-    void getAnimParams( int stage, float *time, float *weight ) const;
+	int  getAnimCount() const;
+	void getAnimParams( int stage, float *time, float *weight ) const;
 
 protected:
 	void mapAnimRes( uint32 node, uint32 stage );

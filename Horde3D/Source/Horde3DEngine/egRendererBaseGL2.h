@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -14,14 +14,12 @@
 #define _egRendererBaseGL2_H_
 
 #include "egRendererBase.h"
-#include "utOpenGL.h"
 #include <string.h>
 
 
 namespace Horde3D {
 
 namespace RDI_GL2 {
-
 
 const uint32 MaxNumVertexLayouts = 16;
 
@@ -185,7 +183,7 @@ struct RDIRenderBufferGL2
 	uint32  depthTex, colTexs[MaxColorAttachmentCount];
 	uint32  depthBuf, colBufs[MaxColorAttachmentCount];  // Used for multisampling
 
-	RDIRenderBufferGL2() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 ), samples( 0 )
+	RDIRenderBufferGL2() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), samples( 0 ), depthTex( 0 ), depthBuf( 0 )
 	{
 		for( uint32 i = 0; i < MaxColorAttachmentCount; ++i ) colTexs[i] = colBufs[i] = 0;
 	}
@@ -209,6 +207,9 @@ public:
 	
 	void initStates();
 	bool init();
+	
+	bool enableDebugOutput();
+	bool disableDebugOutput();
 	
 // -----------------------------------------------------------------------------
 // Resources
@@ -238,9 +239,10 @@ public:
 	// 	uint32 getBufferMem() const { return _bufferMem; }
 
 	// Textures
-	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
+// 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
-	                      bool hasMips, bool genMips, bool compress, bool sRGB );
+	                      int maxMipLevel, bool genMips, bool compress, bool sRGB );
+	void generateTextureMipmap( uint32 texObj );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	void destroyTexture( uint32& texObj );
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
@@ -265,7 +267,7 @@ public:
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples );
+	                           bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel );
 	void destroyRenderBuffer(uint32 &rbObj );
 	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex );
 	void setRenderBuffer( uint32 rbObj );
@@ -333,6 +335,9 @@ protected:
 
 	inline void	  decreaseBufferRefCount( uint32 bufObj );
 
+	bool isCompressedTextureFormat( TextureFormats::List fmt );
+
+	void initRDIFuncs();
 protected:
 
 // 	DeviceCaps    _caps;

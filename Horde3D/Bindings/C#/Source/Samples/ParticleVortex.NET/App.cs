@@ -1,4 +1,4 @@
-﻿// *************************************************************************************************
+// *************************************************************************************************
 //
 // ParticleVortex .NET - sample application for h3d .NET wrapper
 // ----------------------------------------------------------
@@ -121,6 +121,12 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             h3d.setOption(h3d.H3DOptions.MaxAnisotropy, 4);
             h3d.setOption(h3d.H3DOptions.ShadowMapSize, 2048);
 
+            // Samples require overlays extension in order to display information
+            if (!h3d.checkExtension("Overlays"))
+            {
+                throw new System.ArgumentException("Unable to find overlays extension", "checkExtension");
+            }
+
             // Add resources
             // added horde3d 1.0            
             // Pipelines
@@ -237,7 +243,8 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             /////////////
             // Add scene nodes
             // In order to draw the results of compute buffer we need a compute node
-	        _compNode = h3d.addComputeNode( h3d.H3DRootNode, "Vortex", computeDrawMatRes, compBuf, 2, particlesCount );
+	        _compNode = h3d.addComputeNode( h3d.H3DRootNode, "Vortex", computeDrawMatRes, compBuf, 
+                                            (int) h3d.H3DMeshPrimType.Points, particlesCount );
 
 	        // Set node AABB size because currently there is no way to do it otherwise
             h3d.setNodeParamF(_compNode, (int)h3d.H3DComputeNode.AABBMinF, 0, -30.0f); // x
@@ -291,7 +298,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             // Set camera parameters
             h3d.setNodeTransform(_cam, _x, _y, _z, _rx, _ry, 0, 1, 1, 1); //horde3d 1.0
 
-            Horde3DUtils.showFrameStats(_fontMatRes, _panelMatRes, _statMode);		        
+            h3d.showFrameStats(_fontMatRes, _panelMatRes, _statMode);		        
 
             // Show logo                        
             float ww = h3d.getNodeParamI(_cam, (int)h3d.H3DCamera.ViewportWidthI) / (float)h3d.getNodeParamI(_cam, (int)h3d.H3DCamera.ViewportHeightI);
@@ -299,7 +306,7 @@ namespace Horde3DNET.Samples.ParticleVortexNet
             h3d.showOverlays(ovLogo, 4, 1, 1, 1, 1, _logoMatRes, 0);
 
             // Render scene
-            h3d.render(_cam);//horde3D 1.0
+            h3d.render(_cam); 
 
             h3d.finalizeFrame();
 

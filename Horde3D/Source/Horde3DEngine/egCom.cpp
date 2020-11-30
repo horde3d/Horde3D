@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -41,6 +41,7 @@ EngineConfig::EngineConfig()
 	debugViewMode = false;
 	dumpFailedShaders = false;
 	gatherTimeStats = true;
+	debugRenderBackend = false;
 }
 
 
@@ -76,6 +77,8 @@ float EngineConfig::getOption( EngineOptions::List param ) const
 		return dumpFailedShaders ? 1.0f : 0.0f;
 	case EngineOptions::GatherTimeStats:
 		return gatherTimeStats ? 1.0f : 0.0f;
+	case EngineOptions::DebugRenderBackend:
+		return debugRenderBackend ? 1.0f : 0.0f;
 	default:
 		Modules::setError( "Invalid param for h3dGetOption" );
 		return Math::NaN;
@@ -149,6 +152,14 @@ bool EngineConfig::setOption( EngineOptions::List param, float value )
 	case EngineOptions::GatherTimeStats:
 		gatherTimeStats = (value != 0);
 		return true;
+	case EngineOptions::DebugRenderBackend:
+	{
+		debugRenderBackend = ( value != 0 );
+
+		bool result = debugRenderBackend ? Modules::renderer().getRenderDevice()->enableDebugOutput() :
+										   Modules::renderer().getRenderDevice()->disableDebugOutput();
+		return result;
+	}
 	default:
 		Modules::setError( "Invalid param for h3dSetOption" );
 		return false;
@@ -159,6 +170,14 @@ bool EngineConfig::setOption( EngineOptions::List param, float value )
 // *************************************************************************************************
 // Class EngineLog
 // *************************************************************************************************
+
+EngineLog::MessageCallback EngineLog::_callback = NULL;
+
+void EngineLog::setMessageCallback(MessageCallback f)
+{
+	_callback = f;
+}
+
 
 EngineLog::EngineLog()
 {
@@ -171,15 +190,8 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 {
 	float time = _timer.getElapsedTimeMS() / 1000.0f;
 
-#if defined( PLATFORM_WIN )
-#pragma warning( push )
-#pragma warning( disable:4996 )
 	vsnprintf( _textBuf, 2048, msg, args );
-#pragma warning( pop )
-#else
-	vsnprintf( _textBuf, 2048, msg, args );
-#endif
-	
+
 	if( _messages.size() < _maxNumMessages - 1 )
 	{
 		_messages.push( LogMessage( _textBuf, level, time ) );
@@ -189,16 +201,21 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 		_messages.push( LogMessage( "Message queue is full", 1, time ) );
 	}
 
+	if (_callback) {
+		_callback(level, _textBuf);
+	}
 #if defined( H3D_DEBUGGER_OUTPUT )
-    const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
+	static const char *headers[6] = { "", "  [h3d-err] ", "  [h3d-warn] ", "[h3d] ", "  [h3d-dbg] ", "[h3d- ] "};
 #if defined( PLATFORM_WIN )
 	OutputDebugStringA( headers[std::min( (uint32)level, (uint32)5 )] );
 	OutputDebugStringA( _textBuf );
 	OutputDebugString( TEXT("\r\n") );
+#elif defined( PLATFORM_ANDROID )
+	__android_log_print( ANDROID_LOG_DEBUG, "h3d", "%s%s\n", headers[std::min( (uint32)level, (uint32)5 )], _textBuf );
 #else
-    fputs( headers[std::min( (uint32)level, (uint32)5 )], stderr );
-    fputs( _textBuf, stderr );
-    fputs( "\n", stderr );
+	fputs( headers[std::min( (uint32)level, (uint32)5 )], stderr );
+	fputs( _textBuf, stderr );
+	fputs( "\n", stderr );
 #endif
 #endif
 }
@@ -359,6 +376,10 @@ float StatManager::getStat( int param, bool reset )
 		value = _computeGPUTimer->getTimeMS();
 		if ( reset ) _computeGPUTimer->reset();
 		return value;
+	case EngineStats::CullingTime:
+		value = _cullingTimer.getElapsedTimeMS();
+		if ( reset ) _cullingTimer.reset();
+		return value;
 	default:
 		Modules::setError( "Invalid param for h3dGetStat" );
 		return Math::NaN;
@@ -398,6 +419,8 @@ Timer *StatManager::getTimer( int param )
 		return &_geoUpdateTimer;
 	case EngineStats::ParticleSimTime:
 		return &_particleSimTimer;
+	case EngineStats::CullingTime:
+		return &_cullingTimer;
 	default:
 		return 0x0;
 	}
@@ -445,6 +468,16 @@ float getRenderDeviceCapabilities( int param )
 			return rdi->getCaps().computeShaders ? 1.0f : 0.0f;
 		case RenderDeviceCapabilities::Tessellation:
 			return rdi->getCaps().tesselation ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureFloatRenderable:
+			return rdi->getCaps().texFloat ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionASTC:
+			return rdi->getCaps().texASTC ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionBPTC:
+			return rdi->getCaps().texBPTC ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionDXT:
+			return rdi->getCaps().texDXT ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::TextureCompressionETC2:
+			return rdi->getCaps().texETC2 ? 1.0f : 0.0f;
 		default:
 			Modules::setError( "Invalid param for h3dGetDeviceCapabilities" );
 			return Math::NaN;

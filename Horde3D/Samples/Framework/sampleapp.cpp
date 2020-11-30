@@ -5,7 +5,7 @@
 //
 // Sample Framework
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -13,8 +13,6 @@
 // warranty and liability shall be in effect for this file.
 //
 // *************************************************************************************************
-
-#define _CRT_SECURE_NO_WARNINGS
 
 #include "sampleapp.h"
 #include "Horde3DUtils.h"
@@ -24,9 +22,23 @@
 #include <cstdio>
 #include <math.h>
 #include <iomanip>
+#include <chrono>
+#include <array>
+
+#include "utPlatform.h"
+#include "config.h"
+
+#include "Horde3DOverlays.h"
+
+#if defined ( GLFW_BACKEND )
+	#include "GLFWFramework.h"
+	typedef GLFWBackend Backend;
+#elif defined( SDL_BACKEND )
+	#include "SDLFramework.h"
+	typedef SDLBackend Backend;
+#endif
 
 using namespace std;
-
 
 // Extracts an absolute path to the resources directory given the executable path.
 // It assumes that the ressources can be found in "[app path]/../../Content".
@@ -35,13 +47,13 @@ std::string extractResourcePath( char *fullPath )
 {
 	std::string s( fullPath );
 
-#ifdef WIN32
+#ifdef PLATFORM_WIN
     const char delim = '\\';
 #else
     const char delim = '/';
 #endif
 
-#ifdef __APPLE__
+#ifdef PLATFORM_MAC
     // On MacOSX the application is in a 'bundle' and the path has the form:
     //     "SampleApplication.app/Contents/MacOS/SampleApplication"
     const unsigned int nbRfind = 4;
@@ -49,6 +61,12 @@ std::string extractResourcePath( char *fullPath )
     const unsigned int nbRfind = 1;
 #endif
    
+#if defined( PLATFORM_ANDROID ) || defined( PLATFORM_IOS )
+    // Android: Currently all assets are inside the apk in assets/Content folder. SDL searches in assets folder automatically.
+    // IOS: Content folder should be at the top of the bundle
+    return "Content";
+#endif
+
     // Remove the token of path until the executable parent folder is reached
 	for( unsigned int i = 0; i < nbRfind; ++i )
 		s = s.substr( 0, s.rfind( delim ) );
@@ -71,7 +89,6 @@ bool checkForBenchmarkOption( int argc, char** argv )
 
 SampleApplication::SampleApplication(int argc, char** argv,
         const char* title,
-        int renderer,
         float fov, float near_plane, float far_plane,
         int width, int height,
         bool fullscreen, bool show_cursor,
@@ -80,7 +97,6 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _rx(-10), _ry(60),
     _velocity(0.1f),
 	_helpRows(12), _helpLabels(0), _helpValues(0),
-	_renderInterface( renderer ),
     _curPipeline(0),
     _cam(0),
     _initialized(false),
@@ -89,44 +105,228 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _benchmark( checkForBenchmarkOption( argc, argv ) ),
     _benchmarkLength(benchmark_length),
     _curFPS(H3D_FPS_REFERENCE),
-    _winHandle(0),
+//    _winHandle(0),
     _winTitle(title),
     _initWinWidth(width), _initWinHeight(height),
     _winSampleCount(0), _sampleCount(0),
-    _winFullScreen(fullscreen),
+    _winFullScreen( fullscreen ),
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
     _fov(fov), _nearPlane(near_plane), _farPlane(far_plane),
-    _statMode(0), _freezeMode(0),
-    _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false)
+    _statMode(0), _freezeMode(0), _renderCaps( 0 ), _renderInterface( 0 ),
+    _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false),
+    _invertMouseX( false ), _invertMouseY( false )
 {
-    // Initialize GLFW
-    glfwInit();
+    // Initialize backend
+	_backend = new Backend();
 }
 
 
 SampleApplication::~SampleApplication()
 {
     release();
+	
+	if ( _backend )
+	{
+		_backend->release();
+		delete _backend; _backend = nullptr;
+	}
+}
 
-    // Terminate GLFW
-    glfwTerminate();
+
+bool SampleApplication::init()
+{
+	// Init params can be changed in derived user applications
+	auto params = setupInitParameters();
+	if ( !_backend->init( params ) ) return false;
+
+	auto winParams = setupWindowParameters();
+	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) return false;
+
+	// Initialize engine
+	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
+	{
+        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize engine" );
+
+		h3dutDumpMessages();
+		return false;
+	}
+
+	// Samples require overlays extension in order to display information
+	if ( !h3dCheckExtension( "Overlays" ) )
+	{
+        _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
+
+		return false;
+	}
+
+	// Set options
+	h3dSetOption( H3DOptions::LoadTextures, 1 );
+	h3dSetOption( H3DOptions::TexCompression, 0 );
+	h3dSetOption( H3DOptions::MaxAnisotropy, 4 );
+	h3dSetOption( H3DOptions::ShadowMapSize, 2048 );
+	h3dSetOption( H3DOptions::FastAnimation, 1 );
+	h3dSetOption( H3DOptions::SampleCount, ( float ) _sampleCount );
+	h3dSetOption( H3DOptions::DumpFailedShaders, 1 );
+	h3dSetOption( H3DOptions::GatherTimeStats, 1 ); // Set to 0 to improve performance on low-end machines
+	if ( params.debugContext ) h3dSetOption( H3DOptions::DebugRenderBackend, 1 );
+
+	// Init resources
+	if ( !initResources() )
+	{
+        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
+
+		h3dutDumpMessages();
+		return false;
+	}
+
+	// Setup camera and resize buffers
+	int width, height;
+	getSize( width, height );
+	setViewportSize( width, height );
+
+	h3dutDumpMessages();
+
+	// Init cursor
+	_backend->setCursorVisible( _winHandle, _winShowCursor );
+
+	// Attach callbacks
+	Delegate< void( int, int, int ) > keyboardDelegate;
+	keyboardDelegate.bind< SampleApplication, &SampleApplication::keyEventHandler >( this );
+ 	_backend->registerKeyboardEventHandler( keyboardDelegate );
+
+	Delegate< void( float, float, float, float ) > mouseMoveDelegate;
+	mouseMoveDelegate.bind< SampleApplication, &SampleApplication::mouseMoveHandler >( this );
+	_backend->registerMouseMoveEventHandler( mouseMoveDelegate );
+
+	Delegate< void( int, int, int ) > mouseButtonDelegate;
+	mouseButtonDelegate.bind< SampleApplication, &SampleApplication::mousePressHandler >( this );
+	_backend->registerMouseButtonEventHandler( mouseButtonDelegate );
+
+	Delegate< void( int ) > mouseEnterDelegate;
+	mouseEnterDelegate.bind< SampleApplication, &SampleApplication::mouseEnterHandler >( this );
+	_backend->registerMouseEnterWindowEventHandler( mouseEnterDelegate );
+
+	Delegate< void( int, int ) > windowResizeDelegate;
+	windowResizeDelegate.bind< SampleApplication, &SampleApplication::setViewportSize >( this );
+	_backend->registerWindowResizeEventHandler( windowResizeDelegate );
+
+	Delegate< void() > windowCloseDelegate;
+	windowCloseDelegate.bind< SampleApplication, &SampleApplication::requestClosing >( this );
+	_backend->registerQuitEventHandler( windowCloseDelegate );
+
+    Delegate< void( int, int, int, int ) > touchDelegate;
+	touchDelegate.bind< SampleApplication, &SampleApplication::touchEventHandler >( this );
+	_backend->registerTouchEventHandler( touchDelegate );
+
+    Delegate< void( int, int, float, float, int, int ) > multiTouchDelegate;
+	multiTouchDelegate.bind< SampleApplication, &SampleApplication::multiTouchHandler >( this );
+	_backend->registerMultiTouchEventHandler( multiTouchDelegate );
+
+	// Indicate that everything is ok
+	_initialized = true;
+
+	return true;
+}
+
+
+void SampleApplication::release()
+{
+	if ( _winHandle )
+	{
+		// Release loaded resources
+		releaseResources();
+
+		// Release engine
+		h3dRelease();
+
+		// Destroy window
+		_backend->destroyWindow( _winHandle );
+		_winHandle = nullptr;
+	}
+}
+
+
+BackendInitParameters SampleApplication::setupInitParameters()
+{
+	// Check available render interfaces
+#if defined( H3D_USE_GL4 ) && defined( H3D_USE_GL2 )
+	// Try gl4 by default, will fallback to gl2 in case of failure
+	_renderInterface = H3DRenderDevice::OpenGL4;
+#elif defined( H3D_USE_GLES3 )
+	_renderInterface = H3DRenderDevice::OpenGLES3;
+#elif defined( H3D_USE_GL4 )
+	_renderInterface = H3DRenderDevice::OpenGL4;
+#elif defined( H3D_USE_GL2 )
+	_renderInterface = H3DRenderDevice::OpenGL2;
+#endif
+
+	BackendInitParameters params;
+	switch ( _renderInterface )
+	{
+		case ( int ) RenderAPI::OpenGL2:
+			params.requestedAPI = RenderAPI::OpenGL2;
+			params.majorVersion = 2;
+			params.minorVersion = 1;
+			break;
+		case ( int ) RenderAPI::OpenGL4:
+			params.requestedAPI = RenderAPI::OpenGL4;
+			params.majorVersion = 4;
+			params.minorVersion = 0;
+
+			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 1;
+			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 3;
+            if ( _renderCaps & RenderCapabilities::DebugBackend ) params.debugContext = true;
+			
+			break;
+		case ( int ) RenderAPI::OpenGLES3:
+			params.requestedAPI = RenderAPI::OpenGLES3;
+			params.majorVersion = 3;
+			params.minorVersion = 0; 
+
+			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 1;
+			if ( _renderCaps & RenderCapabilities::GeometryShader ) params.minorVersion = 2;
+			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 2;
+			if ( _renderCaps & RenderCapabilities::DebugBackend ) params.debugContext = true;
+
+			break;
+		default:
+			break;
+	}
+
+	params.sampleCount = _winSampleCount;
+
+	return std::move( params );
+}
+
+
+WindowCreateParameters SampleApplication::setupWindowParameters()
+{
+	WindowCreateParameters winParams;
+	winParams.width = _initWinWidth;
+	winParams.height = _initWinHeight;
+	winParams.fullScreen = _winFullScreen;
+	winParams.windowTitle = _winTitle;
+	winParams.swapInterval = 0;
+
+	// Override fullscreen option for Android and IOS, because apps are pretty much always fullscreen there
+	Platform p = _backend->getPlatform();
+	if ( p == Platform::Android || p == Platform::IOS ) winParams.fullScreen = true;
+
+	return std::move( winParams );
 }
 
 
 void SampleApplication::getSize( int &width, int &height ) const
 {
-    if ( _winHandle ) {
-        glfwGetWindowSize( _winHandle, &width, &height );
-    } else {
-        width = -1; height = -1;
-    }
+	if ( _winHandle ) _backend->getSize( _winHandle, &width, &height );
+	else { width = -1; height = -1; }
 }
 
 
 void SampleApplication::setTitle( const char* title )
 {
-    glfwSetWindowTitle( _winHandle, title );
+	_backend->setWindowTitle( _winHandle, title );
 
     _winTitle = title;
 }
@@ -200,7 +400,7 @@ void SampleApplication::enableWireframeMode( bool enabled )
 
 void SampleApplication::showCursor( bool visible )
 {
-    glfwSetInputMode( _winHandle, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED );
+	_backend->setCursorVisible( _winHandle, visible );
 
     _winShowCursor = visible;
 }
@@ -224,70 +424,57 @@ void SampleApplication::setFreezeMode( int mode )
 }
 
 
+void SampleApplication::setRequiredCapabilities( int caps )
+{
+	_renderCaps = caps;
+}
+
+
+void SampleApplication::setInvertedMouseMovement( bool invertX, bool invertY )
+{
+    _invertMouseX = invertX; _invertMouseY = invertY;
+}
+
+
 int SampleApplication::run()
 {
-	
-	int frames = 0;
-	float fps = H3D_FPS_REFERENCE;
-	
+//	int frames = 0;
 	_running = true;
 
+	if ( !_initialized ) return -1;
+
 	// Game loop
-	while( _running )
+#ifdef __EMSCRIPTEN__
+	const int simulate_infinite_loop = 1; // call the function repeatedly
+	const int fps = -1; // call the function as fast as the browser wants to render (typically 60fps)
+	emscripten_set_main_loop_arg( mainloop, this, fps, simulate_infinite_loop );
+#else
+	while ( _running )
 	{
-        if ( !_initialized )
-        {
-            if( !init() )
-            {
-                glfwTerminate();
-                return -1;
-            }
-            _initialized = true;
-            _t0 = glfwGetTime();
-        }
-        
-        // 1. Calc FPS
-		++frames;
-        if( !_benchmark && frames >= 3 )
-		{
-			double t = glfwGetTime();
-            fps = frames / (float)(t - _t0);
-            if( fps < 5 ) fps = H3D_FPS_REFERENCE;  // Handle breakpoints
-			frames = 0;
-            _t0 = t;
-        }
+		// Handle fullscreen & sample count change
+		if ( !_initialized ) recreateWindow();
 
-        _curFPS = _benchmark ? H3D_FPS_REFERENCE : fps;
-
-        // 2. Poll window events...
-        glfwPollEvents();
-
-        // 3. ...update logic...
-        update();
-
-        // 4. ...render and finalize frame.
-        render();
-        finalize();
-
-		if( _benchmark && frames == _benchmarkLength ) break;
+		mainLoop( this );
 	}
+#endif
 
 	// Show benchmark results
     if( _benchmark )
     {
-        double avgFPS = _benchmarkLength / (glfwGetTime() - _t0);
+		auto t = std::chrono::steady_clock::now();
+        double avgFPS = _benchmarkLength / ( std::chrono::duration_cast<std::chrono::duration< double > >( t - _t0 ).count() );
         const char* fpsLabel = "Average FPS:";
 		const char* fpsValue = new char[ 16 ];
         sprintf( (char*)fpsValue, "%.2f", avgFPS );
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
 
-        double startTime = glfwGetTime();
-        while( glfwGetTime() - startTime < 5.0 )
+        t = std::chrono::steady_clock::now();
+        while( std::chrono::duration_cast<std::chrono::duration< double > >( std::chrono::steady_clock::now() - t ).count() < 5.0 )
         {
             const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
                              (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportHeightI );
-            h3dutShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, &fpsValue, _fontMatRes, _panelMatRes );
+            h3dShowInfoBox( (ww-0.32f) * 0.5f, 0.03f, 0.32f, "Benchmark", 1, &fpsLabel, &fpsValue, _fontMatRes, _panelMatRes );
 
             render();
             finalize();
@@ -302,11 +489,60 @@ int SampleApplication::run()
 }
 
 
-void SampleApplication::requestClosing()
+void SampleApplication::mainLoop( void *arg )
 {
-	_running = false;
+	SampleApplication *app = static_cast< SampleApplication * > ( arg );
+	static float fps = H3D_FPS_REFERENCE;
+	static int frames = 0;
+	static bool firstCall = true;
+
+	if ( firstCall )
+	{
+		app->_t0 = std::chrono::steady_clock::now();
+		firstCall = false;
+	}
+
+	// 1. Calc FPS
+	++frames;
+	if ( !app->_benchmark && frames >= 3 )
+	{
+		auto t = std::chrono::steady_clock::now();
+		fps = frames / ( float ) ( std::chrono::duration_cast< std::chrono::duration<double> >( t - app->_t0 ).count() );
+		if ( fps < 5 ) fps = H3D_FPS_REFERENCE;  // Handle breakpoints
+		frames = 0;
+		app->_t0 = t;
+	}
+
+	app->_curFPS = app->_benchmark ? H3D_FPS_REFERENCE : fps;
+
+	// 2. Poll window events...
+	app->_backend->processEvents();
+
+	// 3. ...update logic...
+	app->update();
+
+	// 4. ...render and finalize frame.
+	app->render();
+	app->finalize();
+
+	if ( app->_benchmark && frames == app->_benchmarkLength ) app->requestClosing();
 }
 
+void SampleApplication::requestClosing()
+{
+#ifdef __EMSCRIPTEN__
+	emscripten_cancel_main_loop();
+#else
+	_running = false;
+#endif // __EMSCRIPTEN__
+}
+
+
+void SampleApplication::recreateWindow()
+{
+	release();
+	init();
+}
 
 bool SampleApplication::initResources()
 {
@@ -314,8 +550,8 @@ bool SampleApplication::initResources()
 	
 	// Pipelines
 	_pipelineRes[0] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/forward.pipeline.xml", 0 );
-	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.xml", 0 );
-    _pipelineRes[2] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
+	_pipelineRes[1] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/deferred.pipeline.particles.xml", 0 );
+	_pipelineRes[2] = h3dAddResource( H3DResTypes::Pipeline, "pipelines/hdr.pipeline.xml", 0 );
 	
 	// Overlays
 	_fontMatRes = h3dAddResource( H3DResTypes::Material, "overlays/font.material.xml", 0 );
@@ -340,10 +576,9 @@ bool SampleApplication::initResources()
     if ( _helpRows > 11 ) { _helpLabels[11] = "LShift:"; _helpValues[11] = "Turbo"; }
 	
 	// 2. Load resources
-
-    if ( !h3dutLoadResourcesFromDisk( _resourcePath.c_str() ) )
+    if ( !_backend->loadResources( _resourcePath.c_str() ) )
 	{
-        std::cout << "Error in loading resources" << std::endl;
+        _backend->logMessage( LogMessageLevel::Error, "Error in loading resources" );
 
 		h3dutDumpMessages();
         return false;
@@ -369,9 +604,9 @@ void SampleApplication::update()
     {
         float curVel = _velocity / _curFPS * H3D_FPS_REFERENCE;
 
-        if( isKeyDown(GLFW_KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
+        if( _backend->checkKeyDown( _winHandle, KEY_LEFT_SHIFT) ) curVel *= 5;	// LShift
 
-        if( isKeyDown(GLFW_KEY_W) )
+        if( _backend->checkKeyDown( _winHandle, KEY_W ) )
         {
             // Move forward
             _x -= sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
@@ -379,7 +614,7 @@ void SampleApplication::update()
             _z -= cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
         }
 
-        if( isKeyDown(GLFW_KEY_S) )
+        if( _backend->checkKeyDown( _winHandle, KEY_S ) )
         {
             // Move backward
             _x += sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
@@ -387,14 +622,14 @@ void SampleApplication::update()
             _z += cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
         }
 
-        if( isKeyDown(GLFW_KEY_A) )
+        if( _backend->checkKeyDown( _winHandle, KEY_A ) )
         {
             // Strafe left
             _x += sinf( H3D_DEG2RAD * ( _ry - 90) ) * curVel;
             _z += cosf( H3D_DEG2RAD * ( _ry - 90 ) ) * curVel;
         }
 
-        if( isKeyDown(GLFW_KEY_D) )
+        if( _backend->checkKeyDown( _winHandle, KEY_D ) )
         {
             // Strafe right
             _x += sinf( H3D_DEG2RAD * ( _ry + 90 ) ) * curVel;
@@ -413,7 +648,7 @@ void SampleApplication::render()
 	h3dSetNodeTransform( _cam, _x, _y, _z, _rx ,_ry, 0, 1, 1, 1 );
 	
 	// Show stats
-	h3dutShowFrameStats( _fontMatRes, _panelMatRes, _statMode );
+	h3dShowFrameStats( _fontMatRes, _panelMatRes, _statMode );
 	if( _statMode > 0 )
     {
         std::string piperes_name = "Pipeline: forward";
@@ -424,7 +659,7 @@ void SampleApplication::render()
         else if( _curPipeline == 2 )
             piperes_name = "Pipeline: HDR";
 
-        h3dutShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( piperes_name.c_str(), 0.03f, 0.23f, 0.026f, 1, 1, 1, _fontMatRes );
         
         char buf[64];
         if ( _sampleCount == 0 ) {
@@ -432,7 +667,7 @@ void SampleApplication::render()
         } else {
             sprintf( buf, "MSAA: %d", _sampleCount );
         }
-        h3dutShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 
     const float ww = (float)h3dGetNodeParamI( _cam, H3DCamera::ViewportWidthI ) /
@@ -441,7 +676,7 @@ void SampleApplication::render()
     // Show help
     if( _showHelpPanel )
     {
-        h3dutShowInfoBox( ww-0.48f, 0.03f, 0.45f, "Help", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
+        h3dShowInfoBox( ww-0.48f, 0.03f, 0.45f, "Help", _helpRows, _helpLabels, _helpValues, _fontMatRes, _panelMatRes );
     }
 
     // Show logo
@@ -451,8 +686,9 @@ void SampleApplication::render()
         ww-0.03f, 0.97f, 1, 0,
         ww-0.03f, 0.87f, 1, 1
     };
+
     h3dShowOverlays( ovLogo, 4, 1.f, 1.f, 1.f, 1.f, _logoMatRes, 0 );
-	
+
 	// Render scene
     h3dRender( _cam );
 }
@@ -470,72 +706,72 @@ void SampleApplication::finalize()
     h3dutDumpMessages();
 
     // Swap buffers
-    glfwSwapBuffers( _winHandle );
+    _backend->swapBuffers( _winHandle );
 }
 
 
-void SampleApplication::keyEventHandler( int key, int scancode, int action, int mods )
+void SampleApplication::keyEventHandler( int key, int keyState, int mods )
 {
-    if (action != GLFW_PRESS)
+	if ( keyState != KEY_PRESS )
         return;
 
     switch ( key )
     {
-    case GLFW_KEY_ESCAPE:
+    case KEY_ESCAPE:
     {
         requestClosing();
     }
     break;
 
-    case GLFW_KEY_SPACE:
+    case KEY_SPACE:
     {
         setFreezeMode( _freezeMode + 1 );
     }
     break;
 
-    case GLFW_KEY_F1:
+    case KEY_F1:
     {
         showHelpPanel( !_showHelpPanel );
     }
     break;
 
-    case GLFW_KEY_F2:
+    case KEY_F2:
     {
         showStatPanel( _statMode + 1 );
     }
     break;
 
-    case GLFW_KEY_F3:
+    case KEY_F3:
     {
         setPipeline( (_curPipeline + 1) % 3 );
     }
     break;
 
-    case GLFW_KEY_F4:
+    case KEY_F4:
     {
         enableDebugViewMode( !_debugViewMode );
     }
     break;
 
-    case GLFW_KEY_F5:
+    case KEY_F5:
     {
         enableWireframeMode( !_wireframeMode );
     }
     break;
             
-    case GLFW_KEY_F6:
+    case KEY_F6:
     {
         setSampleCount( _sampleCount > 2 ? _sampleCount / 2 : 0 );
     }
     break;
 
-    case GLFW_KEY_F7:
+    case KEY_F7:
     {
         setSampleCount( _sampleCount ? _sampleCount * 2 : 2 );
     }
     break;
 
-    case GLFW_KEY_F11:
+    case KEY_F11:
     {
         toggleFullScreen();
     }
@@ -552,20 +788,166 @@ void SampleApplication::mouseMoveHandler( float x, float y, float prev_x, float 
     float dy = prev_y - y;
 
 	// Look left/right
-    _ry -= dx * 0.3f;
-	
+    if ( !_invertMouseX ) _ry -= dx * 0.3f;
+	else _ry -= dx * -0.3f;
+
 	// Loop up/down but only in a limited range
-    _rx += dy * 0.3f;
+    if ( !_invertMouseY ) _rx += dy * 0.3f;
+    else _rx += dy * -0.3f;
+    
 	if( _rx > 90 ) _rx = 90; 
 	if( _rx < -90 ) _rx = -90;
 }
 
 
-void SampleApplication::resizeViewport()
+void SampleApplication::mousePressHandler( int mouseButton, int mouseButtonState, int actionCount )
 {
-    int width, height;
-    getSize( width, height );
+	if ( _freezeMode == 2 || _benchmark ) return;
+	
+	// Should be done in derived application
+}
 
+
+void SampleApplication::touchEventHandler( int evType, int touchPosX, int touchPosY, int fingerID )
+{
+    if( _freezeMode == 2 || _benchmark ) return;
+
+    // Modern displays support up to 10 fingers, but 5 should be enough for now
+    static std::array< FingerData, 5 > fingers;
+    static bool multiTouchInProgress = false;
+
+    switch ( evType )
+    {
+    case (int) TouchEvents::FingerDown :
+    {
+        int fingersDownCount = 0;
+        bool alreadyAdded = false;
+        for ( size_t i = 0; i < fingers.size(); ++i )
+        {
+            if ( fingers[ i ].active )
+            {
+                fingersDownCount++;
+            }
+            else
+            {
+                if ( fingers[ i ].fingerID == fingerID || alreadyAdded ) continue; // Prevent from adding already added finger data
+
+                FingerData &data = fingers[ i ];
+                data.fingerID = fingerID;
+                data.lastPosX = touchPosX;
+                data.lastPosY = touchPosY;
+                data.active = true;
+
+                alreadyAdded = true; // Signal that finger already added in this event handler
+
+                fingersDownCount++;
+            }
+        }
+
+        // More than one finger down means multitouch, handle it
+        if ( fingersDownCount > 1 ) multiTouchInProgress = true;
+
+        break;
+    }
+    case (int) TouchEvents::FingerUp :
+    {
+        int fingersDownCount = 0;
+        for ( size_t i = 0; i < fingers.size(); ++i )
+        {
+            if ( fingers[ i ].fingerID == fingerID ) // Check for finger that is no longer on the screen
+            {
+                fingers[ i ].active = false; 
+                fingers[ i ].fingerID = -1;
+            }
+            else if ( fingers[ i ].active ) // Count fingers still on the screen
+            {
+                fingersDownCount++;
+            }
+        }
+
+        if ( fingersDownCount <= 1 ) multiTouchInProgress = false;
+
+        break;
+    }
+    case (int) TouchEvents::FingerMove :
+    {
+        // Currently use only one finger
+        FingerData *data = nullptr;
+        for (size_t i = 0; i < fingers.size(); ++i)
+        {
+            if ( fingers[ i ].active && fingers[ i ].fingerID == fingerID )
+            {
+                data = &fingers[ i ];
+                break;
+            }
+        }
+        
+        if ( !data ) break;
+
+		float dx = ( float ) ( touchPosX - data->lastPosX );
+		float dy = ( float ) ( data->lastPosY - touchPosY );
+
+        // Store touch position for later use
+        data->lastPosX = touchPosX;
+        data->lastPosY = touchPosY;
+
+        if ( multiTouchInProgress ) break;
+
+        // Look left/right
+        if ( !_invertMouseX ) _ry -= dx * 0.3f;
+        else _ry -= dx * -0.3f;
+
+        // Loop up/down but only in a limited range
+        if ( !_invertMouseY ) _rx += dy * 0.3f;
+        else _rx += dy * -0.3f;
+        
+        if( _rx > 90 ) _rx = 90; 
+        if( _rx < -90 ) _rx = -90;
+
+        break;
+    }
+    default:
+        break;
+    }
+}
+
+
+void SampleApplication::multiTouchHandler( int touchPosX, int touchPosY, float dist, float angle, int prevTouchPosX, int prevTouchPosY )
+{
+    if( _freezeMode == 2 || _benchmark ) return;
+
+    // Pinch detected
+    if( fabs( dist ) > 0.0002 )
+    {
+        float curVel = _velocity * 5 / _curFPS * H3D_FPS_REFERENCE;
+
+        // Pinch open
+        if( dist > 0 )
+        {
+             // Move forward
+            _x -= sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _y -= sinf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _z -= cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+        }
+        else // Pinch close
+        {
+            // Move backward
+            _x += sinf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _y += sinf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+            _z += cosf( H3D_DEG2RAD * ( _ry ) ) * cosf( -H3D_DEG2RAD * ( _rx ) ) * curVel;
+        }
+    }
+}
+
+
+void SampleApplication::mouseEnterHandler( int entered )
+{
+	_winHasCursor = entered != 0;
+}
+
+
+void SampleApplication::setViewportSize( int width, int height )
+{
     // Resize viewport
     h3dSetNodeParamI( _cam, H3DCamera::ViewportXI, 0 );
     h3dSetNodeParamI( _cam, H3DCamera::ViewportYI, 0 );
@@ -580,165 +962,3 @@ void SampleApplication::resizeViewport()
 }
 
 
-bool SampleApplication::init()
-{
-    release();
-    
-    // Create OpenGL window
-    glfwWindowHint( GLFW_RED_BITS, 8 );
-    glfwWindowHint( GLFW_GREEN_BITS, 8 );
-    glfwWindowHint( GLFW_BLUE_BITS, 8 );
-    glfwWindowHint( GLFW_ALPHA_BITS, 8 );
-    glfwWindowHint( GLFW_DEPTH_BITS, 24 );
-    glfwWindowHint( GLFW_SAMPLES, _winSampleCount );
-
-	if ( _renderInterface == H3DRenderDevice::OpenGL4 )
-	{
-		glfwWindowHint( GLFW_CONTEXT_VERSION_MAJOR, 4 );
-		glfwWindowHint( GLFW_CONTEXT_VERSION_MINOR, 3 );
-		glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
-	}
-
-    if ( _winFullScreen ) {
-        const GLFWvidmode* mode = glfwGetVideoMode( glfwGetPrimaryMonitor() );
-        _winHandle = glfwCreateWindow( mode->width, mode->height, _winTitle.c_str(), glfwGetPrimaryMonitor(), NULL );
-    } else {
-        _winHandle = glfwCreateWindow( _initWinWidth, _initWinHeight, _winTitle.c_str(), NULL, NULL );
-    }
-	
-    if( _winHandle == NULL )
-	{
-		// Fake message box
-        glfwDestroyWindow(_winHandle);
-		
-        _winHandle = glfwCreateWindow( 800, 50, "Unable to initialize engine - Make sure you have an OpenGL 2.0 compatible graphics card", NULL, NULL );
-		double startTime = glfwGetTime();
-        while( glfwGetTime() - startTime < 5.0 ) { /* Sleep */ }
-		
-		std::cout << "Unable to initialize window" << std::endl;
-		std::cout << "Make sure you have an OpenGL " << ((_renderInterface == H3DRenderDevice::OpenGL2) ? "2.0" : "4.3") << " compatible graphics card" << std::endl;
-		
-		return false;
-	}
-	
-    glfwSetWindowUserPointer( _winHandle, this );
-    glfwMakeContextCurrent( _winHandle );
-    glfwSetInputMode( _winHandle, GLFW_STICKY_KEYS, GL_TRUE );
-	
-	// Disable vertical synchronization
-    glfwSwapInterval( 0 );
-
-	// Set listeners
-    glfwSetWindowCloseCallback( _winHandle, windowCloseListener );
-    glfwSetWindowSizeCallback( _winHandle, windowResizeListener );
-	glfwSetKeyCallback( _winHandle, keyPressListener );
-	glfwSetCursorPosCallback( _winHandle, mouseMoveListener );
-    glfwSetCursorEnterCallback( _winHandle, mouseEnterListener );
-
-    // Init cursor
-    showCursor( _winShowCursor );
-    
-	// Initialize engine
-	if( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
-	{
-		std::cout << "Unable to initialize engine" << std::endl;
-		
-		h3dutDumpMessages();
-		return false;
-	}
-
-	// Set options
-	h3dSetOption( H3DOptions::LoadTextures, 1 );
-	h3dSetOption( H3DOptions::TexCompression, 0 );
-	h3dSetOption( H3DOptions::MaxAnisotropy, 4 );
-	h3dSetOption( H3DOptions::ShadowMapSize, 2048 );
-    h3dSetOption( H3DOptions::FastAnimation, 1 );
-    h3dSetOption( H3DOptions::SampleCount, (float) _sampleCount );
-	h3dSetOption( H3DOptions::DumpFailedShaders, 1 );
-
-	// Init resources
-    if( !initResources() )
-	{
-		std::cout << "Unable to initialize resources" << std::endl;
-		
-		h3dutDumpMessages();
-	    return false;
-    }
-
-    // Setup camera and resize buffers
-    resizeViewport();
-
-    h3dutDumpMessages();
-	return true;
-}
-
-
-void SampleApplication::release()
-{    
-    if( _winHandle )
-    {
-        // Release loaded resources
-        releaseResources();
-
-        // Release engine
-        h3dRelease();
-
-        // Destroy window
-        glfwDestroyWindow( _winHandle );
-        _winHandle = 0;
-    }
-}
-
-
-void SampleApplication::windowCloseListener(  GLFWwindow* win )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-    
-    if( app )
-        app->_running = false;
-}
-
-
-void SampleApplication::windowResizeListener(  GLFWwindow* win, int width, int height )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-
-    if( app )
-        app->resizeViewport();
-}
-
-
-void SampleApplication::keyPressListener( GLFWwindow* win, int key, int scancode, int action, int mods )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-    
-    if ( app && app->_running )
-    {
-        app->keyEventHandler(key, scancode, action, mods);
-    }
-}
-
-
-void SampleApplication::mouseMoveListener( GLFWwindow* win, double x, double y )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-    
-    if ( app && app->_running )
-    {
-        app->mouseMoveHandler( (float) x, (float) y, app->_prevMx, app->_prevMy );
-
-        app->_prevMx = (float) x;
-        app->_prevMy = (float) y;
-	}
-}
-
-
-void SampleApplication::mouseEnterListener( GLFWwindow* win, int entered )
-{
-    SampleApplication* app = static_cast<SampleApplication*>( glfwGetWindowUserPointer( win ) );
-
-    if ( app && app->_running )
-    {
-        app->_winHasCursor = entered != 0;
-    }
-}

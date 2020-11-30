@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -14,7 +14,6 @@
 #define _egRendererBaseGL4_H_
 
 #include "egRendererBase.h"
-#include "utOpenGL.h"
 #include <string.h>
 
 
@@ -93,8 +92,8 @@ struct RDIGeometryInfoGL4
 
 struct RDIShaderStorageGL4
 {
-	uint32 oglObject;
-	uint8 slot;
+	uint32 	oglObject;
+	uint8 	slot;
 
 	RDIShaderStorageGL4( uint8 targetSlot, uint32 glObj ) : oglObject( glObj ), slot( targetSlot )
 	{
@@ -186,7 +185,7 @@ struct RDIRenderBufferGL4
 	uint32  depthTex, colTexs[MaxColorAttachmentCount];
 	uint32  depthBuf, colBufs[MaxColorAttachmentCount];  // Used for multisampling
 
-	RDIRenderBufferGL4() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 ), samples( 0 )
+	RDIRenderBufferGL4() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), samples( 0 ), depthTex( 0 ), depthBuf( 0 )
 	{
 		for( uint32 i = 0; i < MaxColorAttachmentCount; ++i ) colTexs[i] = colBufs[i] = 0;
 	}
@@ -205,6 +204,9 @@ public:
 	void initStates();
 	bool init();
 	
+	bool enableDebugOutput();
+	bool disableDebugOutput();
+
 // -----------------------------------------------------------------------------
 // Resources
 // -----------------------------------------------------------------------------
@@ -231,9 +233,10 @@ public:
 	void unmapBuffer( uint32 geoObj, uint32 bufObj );
 
 	// Textures
-	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
+// 	uint32 calcTextureSize( TextureFormats::List format, int width, int height, int depth );
 	uint32 createTexture( TextureTypes::List type, int width, int height, int depth, TextureFormats::List format,
-	                      bool hasMips, bool genMips, bool compress, bool sRGB );
+	                      int maxMipLevel, bool genMips, bool compress, bool sRGB );
+	void generateTextureMipmap( uint32 texObj );
 	void uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
 	void destroyTexture( uint32 &texObj );
 	void updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels );
@@ -258,7 +261,7 @@ public:
 
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-	                           bool depth, uint32 numColBufs, uint32 samples );
+	                           bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel );
 	void destroyRenderBuffer(uint32 &rbObj );
 	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex );
 	void setRenderBuffer( uint32 rbObj );
@@ -331,6 +334,10 @@ protected:
 	inline uint32 createBuffer( uint32 type, uint32 size, const void *data );
 
 	inline void	  decreaseBufferRefCount( uint32 bufObj );
+
+	bool isCompressedTextureFormat( TextureFormats::List fmt );
+
+	void initRDIFuncs();
 protected:
 
 	RDIVertexLayout                    _vertexLayouts[MaxNumVertexLayouts];
@@ -345,8 +352,8 @@ protected:
  	uint32                             _indexFormat;
  	uint32                             _activeVertexAttribsMask;
 
-	uint16                             _lastTessPatchVertsValue;
-	uint16                             _maxComputeBufferAttachments;
+	uint32                             _lastTessPatchVertsValue;
+	uint32                             _maxComputeBufferAttachments;
 
 	bool                               _doubleBuffered;
 };

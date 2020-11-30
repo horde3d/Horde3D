@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -21,6 +21,8 @@
 #include <vector>
 #include <string>
 
+// Forward declarations
+class FrameworkBackend;
 
 struct Particle
 {
@@ -46,7 +48,7 @@ class CrowdSim
 public:
 	CrowdSim( const std::string& contentDir ) : _contentDir( contentDir ) {}
 
-	void init();
+	void init( FrameworkBackend *backend );
 	void update( float fps );
 
 private:

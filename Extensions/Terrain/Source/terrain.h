@@ -2,7 +2,7 @@
 //
 // Horde3D Terrain Extension
 // --------------------------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz, Volker Wiendl and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz, Volker Wiendl and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -31,6 +31,9 @@ extern const char *fsTerrainDebugView;
 
 extern const char *vsTerrainDebugViewGL4;
 extern const char *fsTerrainDebugViewGL4;
+
+extern const char *vsTerrainDebugViewGLES3;
+extern const char *fsTerrainDebugViewGLES3;
 
 struct TerrainNodeTpl : public SceneNodeTpl
 {
@@ -76,10 +79,10 @@ public:
 
 	static SceneNodeTpl *parsingFunc( std::map< std::string, std::string > &attribs );
 	static SceneNode *factoryFunc( const SceneNodeTpl &nodeTpl );
-	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, const std::string &theClass,
+	static void renderFunc(uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 
-	virtual bool canAttach( SceneNode &parent );
+	virtual bool canAttach( SceneNode &parent ) const;
 	virtual int getParamI( int param ) const;
 	virtual void setParamI( int param, int value );
 	virtual float getParamF( int param, int compIdx ) const;
@@ -95,6 +98,7 @@ public:
 public:
 	static uint32 vlTerrain;
 	static ShaderCombination debugViewShader;
+	static int uni_terBlockParams;
 
 protected:
 	TerrainNode( const TerrainNodeTpl &terrainTpl );

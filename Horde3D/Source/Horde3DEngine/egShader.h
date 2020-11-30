@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -137,22 +137,25 @@ struct ShaderCombination
 	uint32              lastUpdateStamp;
 
 	// Engine uniforms
-	int                 uni_frameBufSize;
-	int                 uni_viewMat, uni_viewMatInv, uni_projMat, uni_viewProjMat, uni_viewProjMatInv, uni_viewerPos;
-	int                 uni_worldMat, uni_worldNormalMat, uni_nodeId, uni_customInstData;
-	int                 uni_skinMatRows;
-	int                 uni_lightPos, uni_lightDir, uni_lightColor;
-	int                 uni_shadowSplitDists, uni_shadowMats, uni_shadowMapSize, uni_shadowBias;
-	int                 uni_parPosArray, uni_parSizeAndRotArray, uni_parColorArray;
-	int                 uni_olayColor;
+// 	int                 uni_frameBufSize;
+// 	int                 uni_viewMat, uni_viewMatInv, uni_projMat, uni_viewProjMat, uni_viewProjMatInv, uni_viewerPos;
+// 	int                 uni_worldMat, uni_worldNormalMat, uni_nodeId, uni_customInstData;
+// 	int                 uni_skinMatRows;
+// 	int                 uni_lightPos, uni_lightDir, uni_lightColor;
+// 	int                 uni_shadowSplitDists, uni_shadowMats, uni_shadowMapSize, uni_shadowBias;
+// 	int                 uni_parPosArray, uni_parSizeAndRotArray, uni_parColorArray;
 
-	std::vector< int >  customSamplers;
-	std::vector< int >  customUniforms;
-	std::vector< int >  customBuffers;
+	std::vector< int >  samplersLocs;
+	std::vector< int >  uniLocs;
+	std::vector< int >  bufferLocs;
 
 
 	ShaderCombination() :
-		combMask( 0 ), shaderObj( 0 ), lastUpdateStamp( 0 )
+		combMask( 0 ), shaderObj( 0 ), lastUpdateStamp( 0 ) 
+// 		uni_frameBufSize( -1 ), uni_viewMat( -1 ), uni_viewMatInv( -1 ), uni_projMat( -1 ), uni_viewProjMat( -1 ), 
+// 		uni_viewProjMatInv( -1 ), uni_viewerPos( -1 ), uni_worldMat( -1 ), uni_worldNormalMat( -1 ), uni_nodeId( -1 ), uni_customInstData( -1 ),
+// 		uni_skinMatRows( -1 ), uni_lightPos( -1 ), uni_lightDir( -1 ), uni_lightColor( -1 ), uni_shadowSplitDists( -1 ), uni_shadowMats( -1 ), 
+// 		uni_shadowMapSize( -1 ), uni_shadowBias( -1 ), uni_parPosArray( -1 ), uni_parSizeAndRotArray( -1 ), uni_parColorArray( -1 )
 	{
 	}
 };
@@ -165,14 +168,14 @@ struct ShaderContext
 	
 	// RenderConfig
 	BlendModes::List                  blendStateSrc;
-	BlendModes::List				  blendStateDst;
+	BlendModes::List                  blendStateDst;
 	TestModes::List                   depthFunc;
 	CullModes::List                   cullMode;
-	uint16							  tessVerticesInPatchCount;
+	uint16                            tessVerticesInPatchCount;
 	bool                              depthTest;
 	bool                              writeDepth;
 	bool                              alphaToCoverage;
-	bool							  blendingEnabled;
+	bool                              blendingEnabled;
 	
 	// Shaders
 	std::vector< ShaderCombination >  shaderCombs;
@@ -181,10 +184,9 @@ struct ShaderContext
 
 
 	ShaderContext() :
-		blendStateSrc( BlendModes::Zero ), blendStateDst( BlendModes::Zero ), depthFunc( TestModes::LessEqual ),
-		cullMode( CullModes::Back ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ), tessVerticesInPatchCount( 1 ),
-		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false ),
-		blendingEnabled( false )
+		flagMask( 0 ), blendStateSrc( BlendModes::Zero ), blendStateDst( BlendModes::Zero ), depthFunc( TestModes::LessEqual ),
+		cullMode( CullModes::Back ), tessVerticesInPatchCount( 1 ), depthTest( true ), writeDepth( true ), alphaToCoverage( false ), blendingEnabled( false ),
+		vertCodeIdx( -1 ), fragCodeIdx( -1 ), geomCodeIdx( -1 ), tessCtlCodeIdx( -1 ), tessEvalCodeIdx( -1 ), computeCodeIdx( -1 ), compiled( false )
 	{
 	}
 };
@@ -202,10 +204,10 @@ struct ShaderSampler
 	PTextureResource       defTex;
 	int                    texUnit;
 	uint32                 sampState;
-	uint32				   usage;
+	uint32                 usage;
 
 	ShaderSampler() :
-		texUnit( -1 ), sampState( 0 ), type( TextureTypes::Tex2D ), usage( 0 )
+		type( TextureTypes::Tex2D ), texUnit( -1 ), sampState( 0 ), usage( 0 )
 	{
 	}
 };
@@ -222,6 +224,17 @@ class ShaderResource : public Resource
 public:
 	static Resource *factoryFunc( const std::string &name, int flags )
 		{ return new ShaderResource( name, flags ); }
+
+	static void getPreambles( const std::string *vertPreamble, const std::string *fragPreamble, const std::string *geomPreamble,
+							  const std::string *tessCtlPreamble, const std::string *tessEvalPreamble, const std::string *computePreamble ) 
+	{
+		if ( vertPreamble ) vertPreamble = &_vertPreamble; 
+		if ( fragPreamble ) fragPreamble = &_fragPreamble;
+		if ( geomPreamble ) geomPreamble = &_geomPreamble;
+		if ( tessCtlPreamble ) tessCtlPreamble = &_tessCtlPreamble;
+		if ( tessEvalPreamble ) tessEvalPreamble = &_tessEvalPreamble;
+		if ( computePreamble ) computePreamble = &_computePreamble;
+	}
 
 	static void setPreambles( const std::string &vertPreamble, const std::string &fragPreamble, const std::string &geomPreamble,
 							  const std::string &tessCtlPreamble, const std::string &tessEvalPreamble, const std::string &computePreamble )

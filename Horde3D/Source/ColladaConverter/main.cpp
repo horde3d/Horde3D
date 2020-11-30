@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -30,6 +30,8 @@
 #endif
 
 using namespace std;
+using namespace Horde3D;
+using namespace ColladaConverter;
 
 
 struct AssetTypes
@@ -74,7 +76,7 @@ void createAssetList( const string &basePath, const string &assetPath, vector< s
 	struct stat fileStat;
 	string finalPath = basePath + assetPath;
 	DIR *dir = opendir( finalPath.c_str() );
-    if( dir == 0x0 ) return;
+	if( dir == 0x0 ) return;
 
 	while( (dirEnt = readdir( dir )) != 0x0 )
 	{
@@ -88,9 +90,9 @@ void createAssetList( const string &basePath, const string &assetPath, vector< s
 			files.push_back( dirEnt->d_name );
 	}
 
-    closedir( dir );
+	closedir( dir );
 
-    sort( directories.begin(), directories.end() );
+	sort( directories.begin(), directories.end() );
 	sort( files.begin(), files.end() );
 #endif
 
@@ -134,7 +136,7 @@ void printHelp()
 
 int main( int argc, char **argv )
 {
-	log( "Horde3D ColladaConv - 1.0.0" );
+	log( "Horde3D ColladaConv - 2.0.0" );
 	log( "" );
 	
 	if( argc < 2 )
@@ -198,7 +200,7 @@ int main( int argc, char **argv )
 			else if( _stricmp( arg.c_str(), "-lodDist3" ) == 0 ) index = 2;
 			else if( _stricmp( arg.c_str(), "-lodDist4" ) == 0 ) index = 3;
 			
-			lodDists[index] = (float)atof( argv[++i] );
+			lodDists[index] = toFloat( argv[++i] );
 		}
 		else if( _stricmp( arg.c_str(), "-addModelName" ) == 0 )
 		{

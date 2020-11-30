@@ -12,7 +12,7 @@ using System.Security.Permissions;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("Horde3D.NET.dll")]
-[assembly: AssemblyCopyright("Copyright ©  2006-2016 Nicolas Schulz, Martin Burkhard and Horde3D team")]
+[assembly: AssemblyCopyright("Copyright Â©  2006-2020 Nicolas Schulz, Martin Burkhard and Horde3D team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: AssemblyDefaultAlias("Horde3D.NET")]
@@ -26,9 +26,9 @@ using System.Security.Permissions;
 // The form "{Major}.{Minor}.*" will automatically update the build and revision,
 // and "{Major}.{Minor}.{Build}.*" will update just the revision.
 
-[assembly: AssemblyVersion("1.0.0")]
-[assembly: AssemblyFileVersion("1.0.0")]
-[assembly: AssemblyInformationalVersion("1.0.0")]
+[assembly: AssemblyVersion("2.0.0")]
+[assembly: AssemblyFileVersion("2.0.0")]
+[assembly: AssemblyInformationalVersion("2.0.0")]
 
 // The following attributes are used to specify the signing key for the assembly, 
 // if desired. See the Mono documentation for more information about signing.

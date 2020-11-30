@@ -3,7 +3,7 @@
 // h3d .NET wrapper
 // ----------------------------------
 // Copyright (C) 2007 Martin Burkhard
-// Copyright (C) 2009-2017 Volker Wiendl and Horde3D team
+// Copyright (C) 2009-2020 Volker Wiendl and Horde3D team
 //
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
@@ -17,6 +17,8 @@ using System.Security;
 
 namespace Horde3DNET
 {
+    public delegate void log_callBack(int level, string msg);
+
     /// <summary>
     /// Separates native methods from managed code.
     /// </summary>
@@ -65,6 +67,9 @@ namespace Horde3DNET
 
         // --- General functions ---
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dSetMessageCallback( log_callBack cb );
+
+        [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         internal static extern IntPtr h3dGetMessage(out int level, out float time);
 
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
@@ -86,6 +91,21 @@ namespace Horde3DNET
 
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         internal static extern void h3dClearOverlays();
+
+        // technically overlays are in extension now, but samples currently rely on it,
+        // so currently these functions are here 
+        [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dShowText(string text, float x, float y, float size,
+                                             float colR, float colG, float colB,
+                                             int fontMatRes);
+
+        [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dShowInfoBox(float x, float y, float width, string title,
+                                             int numRows, string[] column1, string[] column2,
+                                             int fontMaterialRes, int panelMaterialRes);
+
+        [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        internal static extern void h3dShowFrameStats(int fontMaterialRes, int boxMaterialRes, int mode);
 
         // --- Resource functions ---
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
@@ -288,9 +308,8 @@ namespace Horde3DNET
 
         // Mesh specific
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
-        internal static extern int h3dAddMeshNode(int parent, string name, int matRes, 
-								    int batchStart, int batchCount,
-							    int vertRStart, int vertREnd );
+        internal static extern int h3dAddMeshNode(int parent, string name, int matRes, int primType,
+								    int batchStart, int batchCount, int vertRStart, int vertREnd );
       
         // Joint specific
         [DllImport(ENGINE_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]

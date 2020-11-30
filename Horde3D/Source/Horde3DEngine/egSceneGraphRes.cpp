@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -51,18 +51,30 @@ void SceneGraphResource::release()
 }
 
 
+bool SceneGraphResource::raiseError( const string &msg )
+{
+	// Reset
+	release();
+	initDefault();
+
+	Modules::log().writeError( "SceneGraph resource '%s': %s", _name.c_str(), msg.c_str() );
+
+	return false;
+}
+
+
 void SceneGraphResource::parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &nodeTpl )
 {
 	nodeTpl.name = xmlNode.getAttribute( "name", "" );
-	nodeTpl.trans.x = (float)atof( xmlNode.getAttribute( "tx", "0" ) );
-	nodeTpl.trans.y = (float)atof( xmlNode.getAttribute( "ty", "0" ) );
-	nodeTpl.trans.z = (float)atof( xmlNode.getAttribute( "tz", "0" ) );
-	nodeTpl.rot.x = (float)atof( xmlNode.getAttribute( "rx", "0" ) );
-	nodeTpl.rot.y = (float)atof( xmlNode.getAttribute( "ry", "0" ) );
-	nodeTpl.rot.z = (float)atof( xmlNode.getAttribute( "rz", "0" ) );
-	nodeTpl.scale.x = (float)atof( xmlNode.getAttribute( "sx", "1" ) );
-	nodeTpl.scale.y = (float)atof( xmlNode.getAttribute( "sy", "1" ) );
-	nodeTpl.scale.z = (float)atof( xmlNode.getAttribute( "sz", "1" ) );
+	nodeTpl.trans.x = toFloat( xmlNode.getAttribute( "tx", "0" ) );
+	nodeTpl.trans.y = toFloat( xmlNode.getAttribute( "ty", "0" ) );
+	nodeTpl.trans.z = toFloat( xmlNode.getAttribute( "tz", "0" ) );
+	nodeTpl.rot.x = toFloat( xmlNode.getAttribute( "rx", "0" ) );
+	nodeTpl.rot.y = toFloat( xmlNode.getAttribute( "ry", "0" ) );
+	nodeTpl.rot.z = toFloat( xmlNode.getAttribute( "rz", "0" ) );
+	nodeTpl.scale.x = toFloat( xmlNode.getAttribute( "sx", "1" ) );
+	nodeTpl.scale.y = toFloat( xmlNode.getAttribute( "sy", "1" ) );
+	nodeTpl.scale.z = toFloat( xmlNode.getAttribute( "sz", "1" ) );
 
 	XMLNode node1 = xmlNode.getFirstChild( "Attachment" );
 	if( !node1.isEmpty() )
@@ -73,7 +85,7 @@ void SceneGraphResource::parseBaseAttributes( XMLNode &xmlNode, SceneNodeTpl &no
 }
 
 
-void SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
+bool SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
 {
 	SceneNodeTpl *nodeTpl = 0x0;
 
@@ -140,7 +152,7 @@ void SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
 		{
 			Modules::log().writeWarning( "SceneGraph resource '%s': Unknown node type or missing attribute for '%s'",
 										 _name.c_str(), xmlNode.getName() );
-			return;
+			return false;
 		}
 	}
 	
@@ -153,6 +165,8 @@ void SceneGraphResource::parseNode( XMLNode &xmlNode, SceneNodeTpl *parentTpl )
 
 		xmlNode1 = xmlNode1.getNextSibling();
 	}
+
+	return true;
 }
 
 
@@ -163,22 +177,14 @@ bool SceneGraphResource::load( const char *data, int size )
 	XMLDoc doc;
 	doc.parseBuffer( data, size );
 	if( doc.hasError() )
-	{
-		return false;
-	}
+		return raiseError( "XML parsing error" );
 
 	// Parse scene nodes and load resources
 	XMLNode rootNode = doc.getRootNode();
-	if( !rootNode.isEmpty() )
-	{	
-		parseNode( rootNode, 0x0 );
-	}
-	else
-	{
-		return false;
-	}
+	if( rootNode.isEmpty() )
+		return raiseError( "Empty XML" );
 
-	return true;
+	return parseNode( rootNode, 0x0 );
 }
 
 }  // namespace

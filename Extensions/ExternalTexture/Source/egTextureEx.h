@@ -19,22 +19,21 @@ namespace Horde3DExternalTexture {
 class TextureResourceEx : public Horde3D::TextureResource
 {
 public:
-    static Resource *factoryFunc( const std::string &name, int flags )
-        { return new TextureResourceEx( name, flags ); }
+	static Resource *factoryFunc( const std::string &name, int flags )
+	    { return new TextureResourceEx( name, flags ); }
 
-    TextureResourceEx( const std::string &name, int flags );
+	TextureResourceEx( const std::string &name, int flags );
 
-    void release();
+	void release();
 
-    bool importTexGL(uint32 texGL , int width, int height);
+	void importTexGL(uint32 texGL , int width, int height);
 
-    uint32 getGLTexID();
+	uint32 getGLTexID();
 
-private:    
-    void replaceTexObj(uint32 texObj );
+private:
+	void replaceTexObj(uint32 texObj );
 
-    bool  m_imported;
-
+	bool  m_imported;
 };
 
 }

@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -53,7 +53,7 @@ public:
 	
 	TextureResource( const std::string &name, int flags );
 	TextureResource( const std::string &name, uint32 width, uint32 height, uint32 depth,
-                    TextureFormats::List fmt, int flags );
+	                 TextureFormats::List fmt, int flags );
 	~TextureResource();
 	
 	void initDefault();
@@ -72,20 +72,23 @@ public:
 	uint32 getDepth() const { return _depth; }
 	uint32 getTexObject() const { return _texObject; }
 	uint32 getRBObject() const { return _rbObj; }
-	bool hasMipMaps() const { return _hasMipMaps; }
+	uint32 getMaxMipLevel() const { return _maxMipLevel; }
 
 public:
-	static uint32 defTex2DObject;
-	static uint32 defTex3DObject;
-	static uint32 defTexCubeObject;
+	static uint32	defTex2DObject;
+	static uint32	defTex3DObject;
+	static uint32	defTexCubeObject;
+	static bool		bgraSwizzleRequired;
 
 protected:
 	bool raiseError( const std::string &msg );
 	bool checkDDS( const char *data, int size ) const;
+	bool checkKTX( const char *data, int size ) const;
+	bool loadKTX( const char *data, int size );
 	bool loadDDS( const char *data, int size );
 	bool loadSTBI( const char *data, int size );
-	int getMipCount() const;
-	
+    uint32 getMaxAtMipFullLevel() const;
+
 protected:
 	static unsigned char  *mappedData;
 	static int            mappedWriteImage;
@@ -94,9 +97,9 @@ protected:
 	TextureFormats::List  _texFormat;
 	int                   _width, _height, _depth;
 	uint32                _texObject;
-	uint32                _rbObj;  // Used when texture is renderable
+	uint32                _rbObj;           // Used when texture is renderable
+	uint32                _maxMipLevel;     // number of mip levels = _maxMipLevel + 1
 	bool                  _sRGB;
-	bool                  _hasMipMaps;
 
 	friend class ResourceManager;
 };

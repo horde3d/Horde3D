@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -17,6 +17,9 @@
 #include <algorithm>
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConverter {
+
 
 void OptVertex::updateScore( int cacheIndex )
 {
@@ -65,7 +68,7 @@ unsigned int MeshOptimizer::removeDegeneratedTriangles( TriGroup *triGroup, vect
 
 void MeshOptimizer::optimizeIndexOrder( TriGroup *triGroup, vector< Vertex > &vertices,
                                         vector< unsigned int > &indices,
-										map< unsigned int, unsigned int > &vertMap )
+                                        map< unsigned int, unsigned int > &vertMap )
 {
 	// Implementation of Linear-Speed Vertex Cache Optimisation by Tom Forsyth
 	// (see http://home.comcast.net/~tom_forsyth/papers/fast_vert_cache_opt.html)
@@ -222,3 +225,7 @@ float MeshOptimizer::calcCacheEfficiency( TriGroup *triGroup, vector< unsigned i
 	float atvr = (float)(triGroup->count + misses) / triGroup->count;
 	return atvr;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

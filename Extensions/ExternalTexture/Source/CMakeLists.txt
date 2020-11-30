@@ -1,17 +1,20 @@
 SET(EXTERNAL_TEXTURE_EXTENSION_SOURCES
 	extension.cpp	
-        egTextureEx.cpp
+	egTextureEx.cpp
 )
 
 SET(EXTERNAL_TEXTURE_HEADERS	
 	extension.h	
-        egTextureEx.h
+	egTextureEx.h
 )
+
+# CMAKE_BINARY_DIR is used for inclusion of automatically generated files
+include_directories( ${CMAKE_BINARY_DIR} )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
-        endif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+	endif(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 ADD_LIBRARY( Horde3DExternalTexture STATIC ${EXTERNAL_TEXTURE_EXTENSION_SOURCES}  ${EXTERNAL_TEXTURE_HEADERS} )
 

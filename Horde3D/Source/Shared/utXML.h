@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -23,9 +23,14 @@
 #include "rapidxml.h"
 
 
+#ifdef RAPIDXML_NO_EXCEPTIONS
 inline void rapidxml::parse_error_handler( const char *what, void *where )
 {
+	// When not using exceptions, program has to be terminated on xml error
+	fprintf( stderr, "Parse error: %s\n", what );
+	std::abort();
 }
+#endif
 
 
 namespace Horde3D {
@@ -88,15 +93,20 @@ protected:
 class XMLDoc
 {
 public:
-	XMLDoc() : buf( 0x0 ) {}
+	XMLDoc() : buf( 0x0 ), err(false) {}
 	~XMLDoc() { delete[] buf; }
 	
-	bool hasError() const { return doc.first_node() == 0x0; }
+	bool hasError() const { return err || doc.first_node() == 0x0; }
 	XMLNode getRootNode() const { return XMLNode( doc.first_node() ); }
 	
 	void parseString( char *text )
 	{
+#ifdef RAPIDXML_NO_EXCEPTIONS
 		doc.parse< rapidxml::parse_validate_closing_tags >( text );
+#else
+		try { doc.parse< rapidxml::parse_validate_closing_tags >( text ); }
+		catch (const std::exception&) { err = true; }
+#endif
 	}
 
 	void parseBuffer( const char *charbuf, int size )
@@ -130,6 +140,7 @@ public:
 private:
 	rapidxml::xml_document<>  doc;
 	char                      *buf;
+	bool                      err;
 };
 
 

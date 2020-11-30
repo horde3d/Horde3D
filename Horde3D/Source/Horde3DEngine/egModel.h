@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -49,7 +49,8 @@ struct ModelUpdateFlags
 	enum Flags
 	{
 		Animation = 1,
-		Geometry = 2
+		Geometry = 2,
+		ChildNodes = 3
 	};
 };
 
@@ -104,7 +105,7 @@ public:
 	void update( int flags );
 	uint32 calcLodLevel( const Vec3f &viewPoint ) const;
 
-	void setCustomInstData( float *data, uint32 count );
+	void setCustomInstData( const float *data, uint32 count );
 
 	GeometryResource *getGeometryResource() const { return _geometryRes; }
 	bool jointExists( uint32 jointIndex ) const { return jointIndex < _skinMatRows.size() / 3; }

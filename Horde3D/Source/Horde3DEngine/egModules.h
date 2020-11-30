@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -26,6 +26,7 @@ class SceneManager;
 class ResourceManager;
 class Renderer;
 class ExtensionManager;
+class ExternalPipelineCommandsManager;
 
 
 // =================================================================================================
@@ -48,7 +49,7 @@ public:
 	static ResourceManager &resMan() { return *_resourceManager; }
 	static Renderer &renderer() { return *_renderer; }
 	static ExtensionManager &extMan() { return *_extensionManager; }
-
+	static ExternalPipelineCommandsManager &pipeMan() { return *_extCmdPipeMan; }
 public:
 	static const char *versionString;
 
@@ -56,15 +57,17 @@ private:
 	static void installExtensions();
 
 private:
-	static bool                   _errorFlag;
+	static bool								_errorFlag;
 
-	static EngineConfig           *_engineConfig;
-	static EngineLog              *_engineLog;
-	static StatManager            *_statManager;
-	static SceneManager           *_sceneManager;
-	static ResourceManager        *_resourceManager;
-	static Renderer               *_renderer;
-	static ExtensionManager       *_extensionManager;
+	static EngineConfig						*_engineConfig;
+	static EngineLog						*_engineLog;
+	static StatManager						*_statManager;
+	static SceneManager						*_sceneManager;
+	static ResourceManager					*_resourceManager;
+	static Renderer							*_renderer;
+	static ExtensionManager					*_extensionManager;
+	static ExternalPipelineCommandsManager	*_extCmdPipeMan;
+
 };
 
 // =================================================================================================

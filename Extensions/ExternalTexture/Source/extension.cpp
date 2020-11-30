@@ -27,43 +27,44 @@ using namespace Horde3D;
 
 bool ExternalTexture::init()
 {
-    //Modules::log().writeDebugInfo( "ExternalTexture extension: overwriting TextureResource with inherited implementation TextureResourceEx" );
-    Modules::resMan().registerResType( Horde3D::ResourceTypes::Texture, "Texture", 0x0, TextureResource::releaseFunc, TextureResourceEx::factoryFunc );
-    return true;
+	//Modules::log().writeDebugInfo( "ExternalTexture extension: overwriting TextureResource with inherited implementation TextureResourceEx" );
+	Modules::resMan().registerResType( Horde3D::ResourceTypes::Texture, "Texture", 0x0, TextureResource::releaseFunc, TextureResourceEx::factoryFunc );
+	return true;
 }
 
 void ExternalTexture::release()
-{    
-    //Modules::log().writeDebugInfo( "Reenable default implementation for texture resources" );
-    Modules::resMan().registerResType( Horde3D::ResourceTypes::Texture, "Texture", 0x0, TextureResource::releaseFunc, TextureResource::factoryFunc );
+{
+	//Modules::log().writeDebugInfo( "Reenable default implementation for texture resources" );
+	Modules::resMan().registerResType( Horde3D::ResourceTypes::Texture, "Texture", 0x0, TextureResource::releaseFunc, TextureResource::factoryFunc );
 }
 
 // Public C API
-DLLEXP bool h3dextImportTexture( Horde3D::ResHandle texRes, int texID )
+H3D_IMPL bool h3dextImportTexture( Horde3D::ResHandle texRes, int texID )
 {
-    Resource *res = Modules::resMan().resolveResHandle(texRes);
-    if( res == 0x0 || res->getType() != ResourceTypes::Texture )
-    {
-        Modules::log().writeError("Error adding texture resource");
-        return 0;
-    }
+	Resource *res = Modules::resMan().resolveResHandle(texRes);
+	if( res == 0x0 || res->getType() != ResourceTypes::Texture )
+	{
+		Modules::log().writeError("Error adding texture resource");
+		return false;
+	}
 
-    TextureResourceEx* texEx = static_cast<TextureResourceEx*>(res);
-    return texEx->importTexGL( texID, 0, 0 );
+	TextureResourceEx* texEx = static_cast<TextureResourceEx*>(res);
+	texEx->importTexGL( texID, 0, 0 );
+	return true;
 }
 
 // Public C API
-DLLEXP int h3dextGetGLTextureID( Horde3D::ResHandle texRes )
+H3D_IMPL int h3dextGetGLTextureID( Horde3D::ResHandle texRes )
 {
-    Resource *res = Modules::resMan().resolveResHandle(texRes);
-    if( res == 0x0 || res->getType() != ResourceTypes::Texture )
-    {
-        Modules::log().writeError("Error getting texture resource");
-        return 0;
-    }
+	Resource *res = Modules::resMan().resolveResHandle(texRes);
+	if( res == 0x0 || res->getType() != ResourceTypes::Texture )
+	{
+		Modules::log().writeError("Error getting texture resource");
+		return 0;
+	}
 
-    TextureResourceEx* texEx = static_cast<TextureResourceEx*>(res);
-    return texEx->getGLTexID();
+	TextureResourceEx* texEx = static_cast<TextureResourceEx*>(res);
+	return texEx->getGLTexID();
 }
 
 

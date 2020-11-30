@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -21,11 +21,14 @@
 #include <math.h>
 #include <iomanip>
 
+#include "FrameworkBackend.h"
+#include "Horde3DOverlays.h"
+
 using namespace std;
 
 
 KnightSample::KnightSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Knight - Horde3D Sample", H3DRenderDevice::OpenGL2 ),
+    SampleApplication( argc, argv, "Knight - Horde3D Sample" ),
     _animTime(0),
     _weight(1.0f)
 {
@@ -34,7 +37,7 @@ KnightSample::KnightSample( int argc, char** argv ) :
     _helpRows += 1;
     
     // Default to HDR pipeline
-    _curPipeline = 2;
+	_curPipeline = 2;
 }
 
 
@@ -50,7 +53,16 @@ bool KnightSample::initResources()
     H3DRes envRes = h3dAddResource( H3DResTypes::SceneGraph, "models/sphere/sphere.scene.xml", 0 );
 
     // Knight
-	H3DRes knightRes = h3dAddResource( H3DResTypes::SceneGraph, "models/knight/knight.scene.xml", 0 );
+	H3DRes knightRes = 0;
+	if ( _renderInterface != H3DRenderDevice::OpenGLES3 )
+	{
+		knightRes = h3dAddResource( H3DResTypes::SceneGraph, "models/knight/knight.scene.xml", 0 );
+	}
+	else
+	{
+		knightRes = h3dAddResource( H3DResTypes::SceneGraph, "models/knight/knightES.scene.xml", 0 );
+	}
+
 	H3DRes knightAnim1Res = h3dAddResource( H3DResTypes::Animation, "animations/knight_order.anim", 0 );
 	H3DRes knightAnim2Res = h3dAddResource( H3DResTypes::Animation, "animations/knight_attack.anim", 0 );
 
@@ -65,7 +77,7 @@ bool KnightSample::initResources()
 
 	// 2. Load resources
 
-    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
 	{
 		h3dutDumpMessages();
         return false;
@@ -111,6 +123,14 @@ bool KnightSample::initResources()
 	h3dSetMaterialUniform( matRes, "hdrBrightThres", 0.5f, 0, 0, 0 );
 	h3dSetMaterialUniform( matRes, "hdrBrightOffset", 0.08f, 0, 0, 0 );
 	
+	// Set platform specific options
+	auto platform = getBackend()->getPlatform();
+	if ( platform == Platform::Android || platform == Platform::IOS )
+	{
+		// Enable FPS output
+		showStatPanel( 1 );
+	}
+
 	return true;
 }
 
@@ -121,18 +141,21 @@ void KnightSample::update()
     int freeze_mode = checkFlag( SampleApplication::FreezeMode );
     float frame_time = 1.0f / getFPS();
 
+	auto backend = getBackend();
+	auto window = getWindowHandle();
+
     // --------------
     // Key-down state
     // --------------
     if( freeze_mode != 2 )
     {
-        if( isKeyDown(GLFW_KEY_1) )
+        if( backend->checkKeyDown( window, KEY_1) )
         {
             // Change blend weight
             _weight += frame_time;
             if( _weight > 1 ) _weight = 1;
         }
-        if( isKeyDown(GLFW_KEY_2) )
+        if( backend->checkKeyDown( window, KEY_2) )
         {
             // Change blend weight
             _weight -= frame_time;
@@ -163,6 +186,6 @@ void KnightSample::update()
 		// Display weight
 		_text.str( "" );
 		_text << fixed << setprecision( 2 ) << "Weight: " << _weight;
-        h3dutShowText( _text.str().c_str(), 0.175f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
+        h3dShowText( _text.str().c_str(), 0.175f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}
 }
