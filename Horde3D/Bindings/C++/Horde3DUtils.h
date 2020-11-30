@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -15,18 +15,6 @@
 #pragma once
 
 #include "Horde3D.h"
-
-#ifndef DLL
-#	if defined( WIN32 ) || defined( _WINDOWS )
-#		define DLL extern "C" __declspec( dllimport )
-#	else
-#  if defined( __GNUC__ ) && __GNUC__ >= 4
-#   define DLL extern "C" __attribute__ ((visibility("default")))
-#  else
-#		define DLL extern "C"
-#  endif
-#	endif
-#endif
 
 
 /*	Topic: Introduction
@@ -60,7 +48,7 @@ const int H3DUTMaxStatMode = 2;
 	Returns:
 		nothing
 */
-DLL void h3dutFreeMem( char **ptr );
+H3D_API void h3dutFreeMem( char **ptr );
 
 /*	Function: h3dutDumpMessages
 		Writes all messages in the queue to a log file.
@@ -75,7 +63,7 @@ DLL void h3dutFreeMem( char **ptr );
 	Returns:
 		true in case of success, otherwise false
 */
-DLL bool h3dutDumpMessages();
+H3D_API bool h3dutDumpMessages();
 
 /*	Group: Resource management */
 /* Function: h3dutGetResourcePath
@@ -94,7 +82,7 @@ DLL bool h3dutDumpMessages();
 	Returns:
 		pointer to the search path string
 */
-DLL const char *h3dutGetResourcePath( int type );
+H3D_API const char *h3dutGetResourcePath( int type );
 
 /* Function: h3dutSetResourcePath
 		*Deprecated*
@@ -113,7 +101,7 @@ DLL const char *h3dutGetResourcePath( int type );
 	Returns:
 		nothing
 */
-DLL void h3dutSetResourcePath( int type, const char *path );
+H3D_API void h3dutSetResourcePath( int type, const char *path );
 
 /* Function: h3dutLoadResourcesFromDisk
 		Loads previously added resources from a data drive.
@@ -130,7 +118,7 @@ DLL void h3dutSetResourcePath( int type, const char *path );
 	Returns:
 		false if at least one resource could not be loaded, otherwise true
 */
-DLL bool h3dutLoadResourcesFromDisk( const char *contentDir );
+H3D_API bool h3dutLoadResourcesFromDisk( const char *contentDir );
 
 /* Function: h3dutCreateGeometryRes
 		Creates a Geometry resource from specified vertex data.
@@ -156,7 +144,7 @@ DLL bool h3dutLoadResourcesFromDisk( const char *contentDir );
 	Returns:
 		handle to new Geometry resource or 0 in case of failure
 */
-DLL H3DRes h3dutCreateGeometryRes( const char *name, int numVertices, int numTriangleIndices, 
+H3D_API H3DRes h3dutCreateGeometryRes( const char *name, int numVertices, int numTriangleIndices, 
 								   float *posData, unsigned int *indexData, short *normalData,
 								   short *tangentData, short *bitangentData, 
 								   float *texData1, float *texData2 );
@@ -184,8 +172,8 @@ DLL H3DRes h3dutCreateGeometryRes( const char *name, int numVertices, int numTri
 	Returns:
 		false if at least one resource could not be loaded, otherwise true
 */
-DLL bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height, int bpp,
-                              char **outData, int *outSize );
+H3D_API bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height, int bpp,
+                                  char **outData, int *outSize );
 
 /*	Group: Utils */
 /* Function: h3dutScreenshot
@@ -201,7 +189,7 @@ DLL bool h3dutCreateTGAImage( const unsigned char *pixels, int width, int height
 	Returns:
 		true if the file could be written, otherwise false
 */
-DLL bool h3dutScreenshot( const char *filename );
+H3D_API bool h3dutScreenshot( const char *filename );
 
 
 /*	Group: Scene graph */
@@ -223,8 +211,8 @@ DLL bool h3dutScreenshot( const char *filename );
 	Returns:
 		nothing
 */
-DLL void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, float *oy, float *oz,
-                       float *dx, float *dy, float *dz );
+H3D_API void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, float *oy, float *oz,
+                           float *dx, float *dy, float *dz );
 
 /* Function: h3dutPickNode
 		Returns the scene node which is at the specified window coordinates.
@@ -242,102 +230,37 @@ DLL void h3dutPickRay( H3DNode cameraNode, float nwx, float nwy, float *ox, floa
 	Returns:
 		handle of picked node or 0 if no node was hit
 */
-DLL H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
+H3D_API H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
 
 /* Function: h3dutGetScreenshotParam
-   Return width and height for current screenshot.
+		Return width and height for current screenshot.
 
-   Details:
-   This function is useful in conjunction with h3dutScreenshotRaw to allocate
-   arrays with the correct size.
+	Details:
+		This function is useful in conjunction with h3dutScreenshotRaw to allocate
+		arrays with the correct size.
 
-   Parameters:
-   width: will contain the screenshot width
-   height: will contain the screenshot height
+	Parameters:
+		width: will contain the screenshot width
+	height: will contain the screenshot height
 
-   Returns:
-   None
+	Returns:
+		None
 */
-DLL void h3dutGetScreenshotParam( int *width,  int *height);
+H3D_API void h3dutGetScreenshotParam( int *width,  int *height);
 
 /* Function: h3dutScreenshotRaw
-   Take screenshot and copy it to user provided `rgb` buffer.
+		Take screenshot and copy it to user provided `rgb` buffer.
 
-   Details:
-
-   The user must provide an RGB array and its size in bytes. The buffer must be
-   at least width * height * 3 bytes large. Use `h3dutGetScreenshotParam` to
-   determine the width and height.
-
-   Parameters:
-   rgb: buffer to hold the image (must be at least width * height * 3 bytes large)
-   rgb_len: length of `rgb` buffer in bytes.
-
-   Returns:
-   true if screenshot could be copied.
-*/
-DLL bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len);
-
-/*	Group: Overlays */
-/* Function: h3dutShowText
-		Shows text on the screen using a font texture.
-	
 	Details:
-		This utility function uses overlays to display a text string at a specified position on the screen.
-		The font texture of the specified font material has to be a regular 16x16 grid containing all
-		ASCII characters in row-major order.
-	
-	Parameters:
-		text              - text string to be displayed
-		x, y              - position of the lower left corner of the first character;
-		                    for more details on coordinate system see overlay documentation
-		size              - size (scale) factor of the font
-		colR, colG, colB  - font color
-		fontMaterialRes   - font material resource used for rendering
-		
-	Returns:
-		nothing
-*/
-DLL void h3dutShowText( const char *text, float x, float y, float size,
-                        float colR, float colG, float colB, H3DRes fontMaterialRes );
+		The user must provide an RGB array and its size in bytes. The buffer must be
+		at least width * height * 3 bytes large. Use `h3dutGetScreenshotParam` to
+		determine the width and height.
 
-/* Function: h3dutShowInfoBox
-		Shows a customizable info box on the screen.
-	
-	Details:
-		This utility function displays an info box with custom text for the current frame on the screen.
-	
 	Parameters:
-	    x, y              - position of the top left corner of the box;
-		                    for more details on coordinate system see overlay documentation
-		width             - maximum width of info box
-		title             - title string of info box
-		numRows           - Number of info rows
-		column1           - list of strings to print in first column (=numRows)
-		column2           - list of strings to print in second column (=numRows)
-		panelMaterialRes  - material resource used for drawing info box
-		
-	Returns:
-		nothing
-*/
-DLL void h3dutShowInfoBox( float x, float y, float width, const char *title,
-                           int numRows, const char **column1, const char **column2,
-                           H3DRes fontMaterialRes, H3DRes panelMaterialRes );
+		rgb: buffer to hold the image (must be at least width * height * 3 bytes large)
+		rgb_len: length of `rgb` buffer in bytes.
 
-/* Function: h3dutShowFrameStats
-		Shows frame statistics on the screen.
-	
-	Details:
-		This utility function displays an info box with statistics for the current frame on the screen.
-		Since the statistic counters are reset after the call, the function should be called exactly once
-		per frame to obtain correct values.
-	
-	Parameters:
-		fontMaterialRes	  - font material resource used for drawing text
-		panelMaterialRes  - material resource used for drawing info box
-		mode              - display mode, specifying which data is shown (<= MaxStatMode)
-		
 	Returns:
-		nothing
+		true if screenshot could be copied.
 */
-DLL void h3dutShowFrameStats( H3DRes fontMaterialRes, H3DRes panelMaterialRes, int mode );
+H3D_API bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len);

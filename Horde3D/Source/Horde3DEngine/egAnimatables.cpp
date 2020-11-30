@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -22,6 +22,8 @@ namespace Horde3D {
 
 using namespace std;
 
+static const RDIPrimType rdiPrimitiveTypes[ 3 ] = { PRIM_TRILIST, PRIM_LINELIST, PRIM_PATCHES };
+
 
 // *************************************************************************************************
 // Class MeshNode
@@ -29,12 +31,14 @@ using namespace std;
 
 MeshNode::MeshNode( const MeshNodeTpl &meshTpl ) :
 	SceneNode( meshTpl ),
-	_materialRes( meshTpl.matRes ), _batchStart( meshTpl.batchStart ), _batchCount( meshTpl.batchCount ),
-	_vertRStart( meshTpl.vertRStart ), _vertREnd( meshTpl.vertREnd ), _lodLevel( meshTpl.lodLevel ),
-	_parentModel( 0x0 ), _tessellatable( meshTpl.tessellatable )
+	_materialRes( meshTpl.matRes ), _primType( rdiPrimitiveTypes[ meshTpl.primType ] ),
+	_batchStart( meshTpl.batchStart ), _batchCount( meshTpl.batchCount ),
+	_vertRStart( meshTpl.vertRStart ), _vertREnd( meshTpl.vertREnd ),
+	_lodLevel(meshTpl.lodLevel), _parentModel(0x0) 
 {
 	_renderable = true;
 	_lodSupported = true;
+	_occlusionCullingSupported = true;
 
 	if( _materialRes != 0x0 )
 		_sortKey = (float)_materialRes->getHandle();
@@ -59,7 +63,7 @@ SceneNodeTpl *MeshNode::parsingFunc( map< string, string > &attribs )
 	bool result = true;
 	
 	map< string, string >::iterator itr;
-	MeshNodeTpl *meshTpl = new MeshNodeTpl( "", 0x0, 0, 0, 0, 0 );
+	MeshNodeTpl *meshTpl = new MeshNodeTpl( "", 0x0, MeshPrimType::TriangleList, 0, 0, 0, 0 );
 
 	itr = attribs.find( "material" );
 	if( itr != attribs.end() )
@@ -85,13 +89,16 @@ SceneNodeTpl *MeshNode::parsingFunc( map< string, string > &attribs )
 	itr = attribs.find( "lodLevel" );
 	if( itr != attribs.end() ) meshTpl->lodLevel = atoi( itr->second.c_str() );
 
-	itr = attribs.find( "tessellatable" );
-	if ( itr != attribs.end() )
-	{
-		if ( _stricmp( itr->second.c_str(), "true" ) == 0 ||
-		   	 _stricmp( itr->second.c_str(), "1" ) == 0 )
-		{
-			meshTpl->tessellatable = 1;
+	itr = attribs.find( "primType" );
+	if( itr != attribs.end() ) {
+		if (_stricmp(itr->second.c_str(), "TriangleList") == 0) {
+			meshTpl->primType = MeshPrimType::TriangleList;
+		} else if (_stricmp(itr->second.c_str(), "LineList") == 0) {
+			meshTpl->primType = MeshPrimType::LineList;
+		} else if ( _stricmp( itr->second.c_str(), "Patches" ) == 0 ) {
+			meshTpl->primType = MeshPrimType::Patches;
+		} else {
+			result = false;
 		}
 	}
 
@@ -152,8 +159,6 @@ int MeshNode::getParamI( int param ) const
 		return _vertREnd;
 	case MeshNodeParams::LodLevelI:
 		return _lodLevel;
-	case MeshNodeParams::TessellatableI:
-		return _tessellatable;
 	}
 
 	return SceneNode::getParamI( param );
@@ -180,9 +185,6 @@ void MeshNode::setParamI( int param, int value )
 		return;
 	case MeshNodeParams::LodLevelI:
 		_lodLevel = value;
-		return;
-	case MeshNodeParams::TessellatableI:
-		_tessellatable = value;
 		return;
 	}
 

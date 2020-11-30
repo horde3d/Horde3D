@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -18,7 +18,6 @@
 #include "egScene.h"
 #include "egLight.h"
 #include "egCamera.h"
-#include "egResource.h"
 #include "egRendererBase.h"
 #include "egRenderer.h"
 #include "egPipeline.h"
@@ -28,40 +27,28 @@
 
 
 // Extensions
-#ifdef CMAKE
-	#include "egExtensions_auto_include.h"
-#else
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-	#include "Terrain/Source/extension.h"
-	#pragma comment( lib, "Extension_Terrain.lib" )
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#endif
+#include "egExtensions_auto_include.h"
 
 #include "utDebug.h"
 
 
 namespace Horde3D {
 
-const char *Modules::versionString = "Horde3D 1.0.0";
+const char *Modules::versionString = "Horde3D 2.0.0";
 
-bool                   Modules::_errorFlag = false;
-EngineConfig           *Modules::_engineConfig = 0x0;
-EngineLog              *Modules::_engineLog = 0x0;
-StatManager            *Modules::_statManager = 0x0;
-SceneManager           *Modules::_sceneManager = 0x0;
-ResourceManager        *Modules::_resourceManager = 0x0;
-Renderer               *Modules::_renderer = 0x0;
-ExtensionManager       *Modules::_extensionManager = 0x0;
+bool								Modules::_errorFlag = false;
+EngineConfig						*Modules::_engineConfig = 0x0;
+EngineLog							*Modules::_engineLog = 0x0;
+StatManager							*Modules::_statManager = 0x0;
+SceneManager						*Modules::_sceneManager = 0x0;
+ResourceManager						*Modules::_resourceManager = 0x0;
+Renderer							*Modules::_renderer = 0x0;
+ExtensionManager					*Modules::_extensionManager = 0x0;
+ExternalPipelineCommandsManager		*Modules::_extCmdPipeMan = 0x0;
 
 void Modules::installExtensions()
 {
-#ifdef CMAKE
 	#include "egExtensions_auto_install.h"
-#else
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++	
-	extMan().installExtension( new Horde3DTerrain::ExtTerrain() );
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-#endif
 }
 
 
@@ -75,6 +62,7 @@ bool Modules::init( int backendType )
 	if( _resourceManager == 0x0 ) _resourceManager = new ResourceManager();
 	if( _renderer == 0x0 ) _renderer = new Renderer();
 	if( _statManager == 0x0 ) _statManager = new StatManager();
+	if ( _extCmdPipeMan == 0x0 ) _extCmdPipeMan = new ExternalPipelineCommandsManager();
 
 	// Init modules
 	if ( !renderer().init( ( RenderBackendType::List ) backendType ) ) return false;
@@ -87,8 +75,8 @@ bool Modules::init( int backendType )
 		GeometryResource::releaseFunc, GeometryResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Animation, "Animation", 0x0, 0x0,
 		AnimationResource::factoryFunc );
-	resMan().registerResType( ResourceTypes::Material, "Material", 0x0, 0x0,
-		MaterialResource::factoryFunc );
+	resMan().registerResType( ResourceTypes::Material, "Material", MaterialResource::initializationFunc, 
+		MaterialResource::releaseFunc, MaterialResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Code, "Code", 0x0, 0x0,
 		CodeResource::factoryFunc );
 	resMan().registerResType( ResourceTypes::Shader, "Shader", ShaderResource::initializationFunc, 0x0,
@@ -167,10 +155,11 @@ bool Modules::init( int backendType )
 void Modules::release()
 {
 	// Remove overlays since they reference resources and resource manager is removed before renderer
-	if( _renderer ) _renderer->clearOverlays();
+//	if( _renderer ) _renderer->clearOverlays();
 	
 	// Order of destruction is important
 	delete _extensionManager; _extensionManager = 0x0;
+	delete _extCmdPipeMan; _extCmdPipeMan = 0x0;
 	delete _sceneManager; _sceneManager = 0x0;
 	delete _resourceManager; _resourceManager = 0x0;
 	delete _renderer; _renderer = 0x0;

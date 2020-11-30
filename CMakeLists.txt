@@ -1,32 +1,99 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.14) # Native support for Android in CMAKE requires at least version 3.7.
 
 # Project details.
 project(Horde3D)
 
-SET(${PROJECT_NAME}_MAJOR_VERSION 1)
+set(CMAKE_CXX_STANDARD 11)
+
+SET(${PROJECT_NAME}_MAJOR_VERSION 2)
 SET(${PROJECT_NAME}_MINOR_VERSION 0)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # Add local repository for FindXXX.cmake modules.
-SET(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Modules/" ${CMAKE_MODULE_PATH})
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/BuildTools/CMake/Modules" ${CMAKE_MODULE_PATH})
 
 # Check for strncpy_s function.
 include(CheckFunctionExists)
 check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
-# To build or not to build examples (removes GLFW dependency)
+# To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
 
-# Look for required GLFW library.
+# Check the required windowing backend
 if(HORDE3D_BUILD_EXAMPLES)
-    option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
-    find_package(GLFW)
-    IF(GLFW_FOUND)
-        include_directories(${GLFW_INCLUDE_DIR})
-    ENDIF(GLFW_FOUND)
+    include(CMakeDependentOption)
+    # We can use SDL or GLFW
+
+    # SDL is the only choice for IOS and Android
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR 
+       ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR
+       ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" OFF)
+        option(HORDE3D_USE_GLFW "Use GLFW for window creation/event handling" ON)
+    else()
+        # IOS and android are not supported by glfw   
+        option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" ON)
+    endif()
+
+    if(HORDE3D_USE_GLFW)
+        # Look for required GLFW library.
+        option(HORDE3D_FORCE_DOWNLOAD_GLFW "Force linking Horde3D to a downloaded version of GLFW" OFF)
+        find_package(GLFW)
+        IF(GLFW_FOUND)
+            include_directories(${GLFW_INCLUDE_DIR})
+        ENDIF(GLFW_FOUND)
+    endif()
+
+    if(HORDE3D_USE_SDL)
+        # Look for required SDL library.
+        option(HORDE3D_FORCE_DOWNLOAD_SDL "Force linking Horde3D to a downloaded version of SDL" OFF)
+
+        IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+            set( HORDE3D_FORCE_DOWNLOAD_SDL OFF )
+        endif()
+
+        find_package(SDL2)
+        IF(SDL2_FOUND)
+            include_directories(${SDL2_INCLUDE_DIR})
+        ENDIF(SDL2_FOUND)
+    endif()
+
+        # Only one library can be used, so disable the other one
+    if(GLFW_FOUND)
+        set(HORDE3D_USE_SDL OFF CACHE BOOL "Use SDL for window creation/event handling" FORCE)
+    elseif(SDL_FOUND)
+        set(HORDE3D_USE_GLFW OFF CACHE BOOL "Use GLFW for window creation/event handling" FORCE)
+    endif()
 else()
     message("Not building examples.")
 endif(HORDE3D_BUILD_EXAMPLES)
+
+# Render backend selection
+option(HORDE3D_USE_GL2 "Add OpenGL 2 render backend. Turns off ES3 render backend." ON)
+option(HORDE3D_USE_GL4 "Add OpenGL 4 render backend. Turns off ES3 render backend." ON)
+option(HORDE3D_USE_GLES3 "Add OpenGL ES 3 render backend. Turns off desktop GL backends." OFF)
+
+if(HORDE3D_USE_GLES3)
+	set(USE_GLES3 TRUE)
+	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+	set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+endif(HORDE3D_USE_GLES3)
+
+if(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
+	if(HORDE3D_USE_GL2)
+		set(USE_GL2 TRUE)
+	endif(HORDE3D_USE_GL2)
+	
+	if(HORDE3D_USE_GL4)
+		set(USE_GL4 TRUE)
+	endif(HORDE3D_USE_GL4)
+	
+	set(HORDE3D_USE_GLES3 OFF CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
+endif(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
+
+if (NOT HORDE3D_USE_GL2 AND NOT HORDE3D_USE_GL4 AND NOT HORDE3D_USE_GLES3 )
+    message( SEND_ERROR "Rendering backend is not selected!")
+endif()
 
 # Set binaries output folder.
 SET(HORDE3D_OUTPUT_PATH_PREFIX "${PROJECT_BINARY_DIR}/Binaries")
@@ -40,8 +107,44 @@ ENDIF(${CMAKE_CFG_INTDIR} STREQUAL ".")
 
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/${HORDE3D_OUTPUT_PATH_SUFFIX} CACHE STRING "Where binaries and shared lib files go" FORCE)
 
+IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
+    # Copy android project into build directory
+    SET(HORDE3D_ANDROID_PROJECT_PATH "${PROJECT_SOURCE_DIR}/BuildTools/android")
+
+    # For Linux we have to set ANDROID_SDK_ROOT variable
+    set(ANDROID_SDK_ROOT_PATH "" CACHE STRING "Path to Android SDK")
+
+    # Set rendering interface to GLES3
+    set(USE_GLES3 TRUE)
+	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+    
+    # On Linux set gradlew to be executable (a bit of a hack)
+    if( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux" )
+        execute_process( COMMAND chmod "+x" "${PROJECT_SOURCE_DIR}/BuildTools/android/gradlew" )
+    endif()
+#     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}) 
+#     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/android/app/src/main/jniLibs/${ANDROID_ABI} )
+ENDIF()
+
+IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
+    include( "ios" )
+
+    SET(HORDE3D_IOS_TOOLS_PATH "${PROJECT_SOURCE_DIR}/BuildTools/ios")
+
+    set(IOS_CODE_SIGN_IDENTITY "Apple Development" CACHE STRING "Code sign (used for application signing)")
+    set(IOS_DEVELOPMENT_TEAM "" CACHE STRING "Development team id (used for application signing)")
+
+    # Set rendering interface to GLES3
+    set(USE_GLES3 TRUE)
+	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GLES3 ON CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
+ENDIF()
+
 IF(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup ")
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 ENDIF(MSVC)
 
 

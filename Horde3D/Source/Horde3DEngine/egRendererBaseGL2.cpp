@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -17,9 +17,13 @@
 
 #include "utDebug.h"
 
+#include <array>
+
 
 namespace Horde3D {
 namespace RDI_GL2 {
+
+	using namespace h3dGL;
 
 #ifdef H3D_VALIDATE_DRAWCALLS
 #	define CHECK_GL_ERROR checkError();
@@ -49,13 +53,65 @@ static const uint32 textureTypes[ 3 ] = { GL_TEXTURE_2D, GL_TEXTURE_3D, GL_TEXTU
 
 static const uint32 bufferMappingTypes[ 3 ] = { GL_READ_ONLY, GL_WRITE_ONLY, GL_READ_WRITE };
 
+// Texture formats mapping to supported non compressed GL texture formats
+struct GLTextureFormatAndType
+{
+	uint32 glCreateFormat;
+	uint32 glInputFormat;
+	uint32 glSRGBFormat;
+	uint32 glInputType;
+};
+
+// DEPTH is used as array count as it is always last in the list
+// if no srgb format is available the same format is used
+static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > textureGLFormats = { {
+	{ 0, 0, 0, 0 },																							// TextureFormats::Unknown
+	{ GL_R8, GL_RED, GL_R8, GL_UNSIGNED_BYTE },																// TextureFormats::R8
+	{ GL_R16, GL_RED, GL_R16, GL_HALF_FLOAT },																// TextureFormats::R16F
+	{ GL_R32F, GL_RED, GL_R32F, GL_FLOAT },																	// TextureFormats::R32F
+	{ GL_RG8, GL_RG, GL_RG8, GL_UNSIGNED_BYTE },															// TextureFormats::RG8
+	{ GL_RG16F, GL_RG, GL_RG16F, GL_HALF_FLOAT },															// TextureFormats::RG16F
+	{ GL_RG32F, GL_RG, GL_RG32F, GL_FLOAT },																// TextureFormats::RG32F
+	{ GL_RGBA8, GL_BGRA, GL_SRGB8_ALPHA8, GL_UNSIGNED_BYTE },												// TextureFormats::BGRA8
+	{ GL_RGBA16F, GL_RGBA, GL_RGBA16F, GL_HALF_FLOAT },														// TextureFormats::RGBA16F
+	{ GL_RGBA32F, GL_RGBA, GL_RGBA32F, GL_FLOAT },															// TextureFormats::RGBA32F
+	{ GL_RGBA32UI, GL_RGBA_INTEGER, GL_RGBA32UI, GL_UNSIGNED_INT },											// TextureFormats::RGBA32UI
+	{ GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT, 0 },						// TextureFormats::DXT1
+	{ GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT, 0 },						// TextureFormats::DXT3
+	{ GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, 0, GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT, 0 },						// TextureFormats::DXT5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ETC1
+	{ 0, 0, 0, 0 },																							// TextureFormats::RGB8_ETC2
+	{ 0, 0, 0, 0 },																							// TextureFormats::RGBA8_ETC2
+	{ GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB, 0, GL_COMPRESSED_RGB_BPTC_UNSIGNED_FLOAT_ARB, GL_FLOAT },	// TextureFormats::BC6_UF16
+	{ GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB, 0, GL_COMPRESSED_RGB_BPTC_SIGNED_FLOAT_ARB, GL_FLOAT },		// TextureFormats::BC6_SF16
+	{ GL_COMPRESSED_RGBA_BPTC_UNORM_ARB, 0, GL_COMPRESSED_SRGB_ALPHA_BPTC_UNORM_ARB, GL_UNSIGNED_BYTE },	// TextureFormats::BC7
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_4x4
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_5x4
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_5x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_6x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_6x6
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_8x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_8x6
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_8x8
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x5
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x6
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x8
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_10x10
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_12x10
+	{ 0, 0, 0, 0 },																							// TextureFormats::ASTC_12x12
+	{ GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT }								// TextureFormats::DEPTH
+} };
+
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
 
 GPUTimerGL2::GPUTimerGL2() : _numQueries( 0 ),  _queryFrame( 0 ), _activeQuery( false )
 {
-	GPUTimer::initFunctions< GPUTimerGL2 >();
+	_beginQuery.bind< GPUTimerGL2, &GPUTimerGL2::beginQuery >( this );
+	_endQuery.bind< GPUTimerGL2, &GPUTimerGL2::endQuery >( this );
+	_updateResults.bind< GPUTimerGL2, &GPUTimerGL2::updateResults >( this );
+	_reset.bind< GPUTimerGL2, &GPUTimerGL2::reset >( this );
 
 	reset();
 }
@@ -150,7 +206,7 @@ void GPUTimerGL2::reset()
 
 RenderDeviceGL2::RenderDeviceGL2()
 {
-	RenderDeviceInterface::initRDIFunctions< RenderDeviceGL2 >();
+	initRDIFuncs(); // bind render device functions
 
 	_numVertexLayouts = 0;
 	
@@ -168,7 +224,7 @@ RenderDeviceGL2::RenderDeviceGL2()
 	_curGeometryIndex = 1;
 	_defaultFBO = 0;
 	_defaultFBOMultisampled = false;
-    _indexFormat = (uint32)IDXFMT_16;
+	_indexFormat = (uint32)IDXFMT_16;
 	_activeVertexAttribsMask = 0;
 	_pendingMask = 0;
 	_tessPatchVerts = 0;
@@ -184,6 +240,74 @@ RenderDeviceGL2::RenderDeviceGL2()
 
 RenderDeviceGL2::~RenderDeviceGL2()
 {
+}
+
+
+void RenderDeviceGL2::initRDIFuncs()
+{
+	_delegate_init.bind< RenderDeviceGL2, &RenderDeviceGL2::init >( this );
+	_delegate_initStates.bind< RenderDeviceGL2, &RenderDeviceGL2::initStates >( this );
+	_delegate_enableDebugOutput.bind< RenderDeviceGL2, &RenderDeviceGL2::enableDebugOutput >( this );
+	_delegate_disableDebugOutput.bind< RenderDeviceGL2, &RenderDeviceGL2::disableDebugOutput >( this );
+	_delegate_registerVertexLayout.bind< RenderDeviceGL2, &RenderDeviceGL2::registerVertexLayout >( this );
+	_delegate_beginRendering.bind< RenderDeviceGL2, &RenderDeviceGL2::beginRendering >( this );
+
+	_delegate_beginCreatingGeometry.bind< RenderDeviceGL2, &RenderDeviceGL2::beginCreatingGeometry >( this );
+	_delegate_finishCreatingGeometry.bind< RenderDeviceGL2, &RenderDeviceGL2::finishCreatingGeometry >( this );
+	_delegate_destroyGeometry.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyGeometry >( this );
+	_delegate_setGeomVertexParams.bind< RenderDeviceGL2, &RenderDeviceGL2::setGeomVertexParams >( this );
+	_delegate_setGeomIndexParams.bind< RenderDeviceGL2, &RenderDeviceGL2::setGeomIndexParams >( this );
+	_delegate_createVertexBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createVertexBuffer >( this );
+	_delegate_createIndexBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createIndexBuffer >( this );
+	_delegate_createTextureBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createTextureBuffer >( this );
+	_delegate_createShaderStorageBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createShaderStorageBuffer >( this );
+	_delegate_destroyBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyBuffer >( this );
+	_delegate_destroyTextureBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyTextureBuffer >( this );
+	_delegate_updateBufferData.bind< RenderDeviceGL2, &RenderDeviceGL2::updateBufferData >( this );
+	_delegate_mapBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::mapBuffer >( this );
+	_delegate_unmapBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::unmapBuffer >( this );
+
+	_delegate_createTexture.bind< RenderDeviceGL2, &RenderDeviceGL2::createTexture >( this );
+	_delegate_generateTextureMipmap.bind< RenderDeviceGL2, &RenderDeviceGL2::generateTextureMipmap >( this );
+	_delegate_uploadTextureData.bind< RenderDeviceGL2, &RenderDeviceGL2::uploadTextureData >( this );
+	_delegate_destroyTexture.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyTexture >( this );
+	_delegate_updateTextureData.bind< RenderDeviceGL2, &RenderDeviceGL2::updateTextureData >( this );
+	_delegate_getTextureData.bind< RenderDeviceGL2, &RenderDeviceGL2::getTextureData >( this );
+	_delegate_bindImageToTexture.bind< RenderDeviceGL2, &RenderDeviceGL2::bindImageToTexture >( this );
+
+	_delegate_createShader.bind< RenderDeviceGL2, &RenderDeviceGL2::createShader >( this );
+	_delegate_destroyShader.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyShader >( this );
+	_delegate_bindShader.bind< RenderDeviceGL2, &RenderDeviceGL2::bindShader >( this );
+	_delegate_getShaderConstLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderConstLoc >( this );
+	_delegate_getShaderSamplerLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderSamplerLoc >( this );
+	_delegate_getShaderBufferLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderBufferLoc >( this );
+	_delegate_runComputeShader.bind< RenderDeviceGL2, &RenderDeviceGL2::runComputeShader >( this );
+	_delegate_setShaderConst.bind< RenderDeviceGL2, &RenderDeviceGL2::setShaderConst >( this );
+	_delegate_setShaderSampler.bind< RenderDeviceGL2, &RenderDeviceGL2::setShaderSampler >( this );
+	_delegate_getDefaultVSCode.bind< RenderDeviceGL2, &RenderDeviceGL2::getDefaultVSCode >( this );
+	_delegate_getDefaultFSCode.bind< RenderDeviceGL2, &RenderDeviceGL2::getDefaultFSCode >( this );
+
+	_delegate_createRenderBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::createRenderBuffer >( this );
+	_delegate_destroyRenderBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyRenderBuffer >( this );
+	_delegate_getRenderBufferTex.bind< RenderDeviceGL2, &RenderDeviceGL2::getRenderBufferTex >( this );
+	_delegate_setRenderBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::setRenderBuffer >( this );
+	_delegate_getRenderBufferData.bind< RenderDeviceGL2, &RenderDeviceGL2::getRenderBufferData >( this );
+	_delegate_getRenderBufferDimensions.bind< RenderDeviceGL2, &RenderDeviceGL2::getRenderBufferDimensions >( this );
+
+	_delegate_createOcclusionQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::createOcclusionQuery >( this );
+	_delegate_destroyQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyQuery >( this );
+	_delegate_beginQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::beginQuery >( this );
+	_delegate_endQuery.bind< RenderDeviceGL2, &RenderDeviceGL2::endQuery >( this );
+	_delegate_getQueryResult.bind< RenderDeviceGL2, &RenderDeviceGL2::getQueryResult >( this );
+
+	_delegate_createGPUTimer.bind< RenderDeviceGL2, &RenderDeviceGL2::createGPUTimer >( this );
+	_delegate_commitStates.bind< RenderDeviceGL2, &RenderDeviceGL2::commitStates >( this );
+	_delegate_resetStates.bind< RenderDeviceGL2, &RenderDeviceGL2::resetStates >( this );
+	_delegate_clear.bind< RenderDeviceGL2, &RenderDeviceGL2::clear >( this );
+
+	_delegate_draw.bind< RenderDeviceGL2, &RenderDeviceGL2::draw >( this );
+	_delegate_drawIndexed.bind< RenderDeviceGL2, &RenderDeviceGL2::drawIndexed >( this );
+	_delegate_setStorageBuffer.bind< RenderDeviceGL2, &RenderDeviceGL2::setStorageBuffer >( this );
 }
 
 
@@ -253,6 +377,11 @@ bool RenderDeviceGL2::init()
 		Modules::log().writeError( "Extension EXT_texture_sRGB not supported" );
 		failed = true;
 	}
+	if ( !glExt::ARB_texture_rg )
+	{
+		Modules::log().writeError( "Extension ARB_texture_rg not supported" );
+		failed = true;
+	}
 	
 	if( failed )
 	{
@@ -273,6 +402,10 @@ bool RenderDeviceGL2::init()
 	_caps.instancing = false;
 	_caps.maxJointCount = 75;
 	_caps.maxTexUnitCount = 16;
+	_caps.texDXT = true;
+	_caps.texETC2 = false;
+	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
+	_caps.texASTC = false;
 
 	// Init states before creating test render buffer, to
 	// ensure binding the current FBO again
@@ -280,7 +413,7 @@ bool RenderDeviceGL2::init()
 
 	// Find supported depth format (some old ATI cards only support 16 bit depth for FBOs)
 	_depthFormat = GL_DEPTH_COMPONENT24;
-	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0 ); 
+	uint32 testBuf = createRenderBuffer( 32, 32, TextureFormats::BGRA8, true, 1, 0, false ); 
 	if( testBuf == 0 )
 	{	
 		_depthFormat = GL_DEPTH_COMPONENT16;
@@ -294,6 +427,17 @@ bool RenderDeviceGL2::init()
 	return true;
 }
 
+
+bool RenderDeviceGL2::enableDebugOutput()
+{
+	return true;
+}
+
+
+bool RenderDeviceGL2::disableDebugOutput()
+{
+	return true;
+}
 
 // =================================================================================================
 // Vertex layouts
@@ -448,10 +592,10 @@ uint32 RenderDeviceGL2::createTextureBuffer( TextureFormats::List format, uint32
 		case TextureFormats::RGBA32F:
 			buf.glFmt = GL_RGBA32F_ARB;
 			break;
-		case TextureFormats::R32:
+		case TextureFormats::R32F:
 			buf.glFmt = GL_R32F_ARB;
 			break;
-		case TextureFormats::RG32:
+		case TextureFormats::RG32F:
 			buf.glFmt = GL_RG32F_ARB;
 			break;
 		default:
@@ -565,34 +709,27 @@ void RenderDeviceGL2::unmapBuffer( uint32 geoObj, uint32 bufObj )
 // Textures
 // =================================================================================================
 
-uint32 RenderDeviceGL2::calcTextureSize( TextureFormats::List format, int width, int height, int depth )
-{
-	switch( format )
-	{
-	case TextureFormats::BGRA8:
-		return width * height * depth * 4;
-	case TextureFormats::DXT1:
-		return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 8;
-	case TextureFormats::DXT3:
-		return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 16;
-	case TextureFormats::DXT5:
-		return std::max( width / 4, 1 ) * std::max( height / 4, 1 ) * depth * 16;
-	case TextureFormats::RGBA16F:
-		return width * height * depth * 8;
-	case TextureFormats::RGBA32F:
-		return width * height * depth * 16;
-	default:
-		return 0;
-	}
-}
-
-
 uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int height, int depth,
-                                    TextureFormats::List format,
-                                    bool hasMips, bool genMips, bool compress, bool sRGB )
+                                       TextureFormats::List format,
+                                       int maxMipLevel, bool genMips, bool compress, bool sRGB )
 {
 	ASSERT( depth > 0 );
 
+	if ( !_caps.texETC2 && ( format == TextureFormats::ETC1 || format == TextureFormats::RGB8_ETC2 || format == TextureFormats::RGBA8_ETC2 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: ETC1, ETC2" );
+		return 0;
+	}
+	if ( !_caps.texBPTC && ( format == TextureFormats::BC6_SF16 || format == TextureFormats::BC6_UF16 || format == TextureFormats::BC7 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: BC6, BC7" );
+		return 0;
+	}
+	if ( !_caps.texASTC && ( format >= TextureFormats::ASTC_4x4 && format <= TextureFormats::ASTC_12x12 ) )
+	{
+		Modules::log().writeWarning( "Unsupported texture formats: ASTC" );
+		return 0;
+	}
 	if( !_caps.texNPOT )
 	{
 		// Check if texture is NPOT
@@ -608,42 +745,22 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 	tex.depth = depth;
 	tex.sRGB = sRGB && Modules::config().sRGBLinearization;
 	tex.genMips = genMips;
-	tex.hasMips = hasMips;
-	
-	switch( format )
-	{
-	case TextureFormats::BGRA8:
-		tex.glFmt = tex.sRGB ? GL_SRGB8_ALPHA8_EXT : GL_RGBA8;
-		break;
-	case TextureFormats::DXT1:
-		tex.glFmt = tex.sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT : GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-		break;
-	case TextureFormats::DXT3:
-		tex.glFmt = tex.sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT : GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-		break;
-	case TextureFormats::DXT5:
-		tex.glFmt = tex.sRGB ? GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT : GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-		break;
-	case TextureFormats::RGBA16F:
-		tex.glFmt = GL_RGBA16F_ARB;
-		break;
-	case TextureFormats::RGBA32F:
-		tex.glFmt = GL_RGBA32F_ARB;
-		break;
-	case TextureFormats::DEPTH:
-		tex.glFmt = _depthFormat;
-		break;
-	default:
-		ASSERT( 0 );
-		break;
-	};
-	
+	tex.hasMips = maxMipLevel > 0;
+
+	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
+
+	tex.glFmt = format != TextureFormats::DEPTH
+				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
+				: _depthFormat;
+
 	glGenTextures( 1, &tex.glObj );
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
-	
+
+	glTexParameteri( tex.type, GL_TEXTURE_MAX_LEVEL, maxMipLevel );
+
 	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
+	glTexParameterfv( tex.type, GL_TEXTURE_BORDER_COLOR, borderColor );
 	
 	tex.samplerState = 0;
 	applySamplerState( tex );
@@ -653,8 +770,7 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
 
 	// Calculate memory requirements
-	tex.memSize = calcTextureSize( format, width, height, depth );
-	if( hasMips || genMips ) tex.memSize += ftoi_r( tex.memSize * 1.0f / 3.0f );
+	tex.memSize = calcTextureSize( format, width, height, depth, maxMipLevel );
 	if( type == TextureTypes::TexCube ) tex.memSize *= 6;
 	_textureMem += tex.memSize;
 	
@@ -662,32 +778,32 @@ uint32 RenderDeviceGL2::createTexture( TextureTypes::List type, int width, int h
 }
 
 
+void RenderDeviceGL2::generateTextureMipmap( uint32 texObj )
+{
+	const RDITextureGL2 &tex = _textures.getRef( texObj );
+
+	glActiveTexture( GL_TEXTURE15 );
+	glBindTexture( tex.type, tex.glObj );
+	glGenerateMipmapEXT( tex.type );
+	glBindTexture( tex.type, 0 );
+	if( _texSlots[15].texObj )
+		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+}
+
+
 void RenderDeviceGL2::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
+	ASSERT( pixels );
 	const RDITextureGL2 &tex = _textures.getRef( texObj );
 	TextureFormats::List format = tex.format;
 
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
 	
-	int inputFormat = GL_BGRA, inputType = GL_UNSIGNED_BYTE;
-	bool compressed = (format == TextureFormats::DXT1) || (format == TextureFormats::DXT3) ||
-	                  (format == TextureFormats::DXT5);
-	
-	switch( format )
-	{
-	case TextureFormats::RGBA16F:
-		inputFormat = GL_RGBA;
-		inputType = GL_FLOAT;
-		break;
-	case TextureFormats::RGBA32F:
-		inputFormat = GL_RGBA;
-		inputType = GL_FLOAT;
-		break;
-	case TextureFormats::DEPTH:
-		inputFormat = GL_DEPTH_COMPONENT;
-		inputType = GL_FLOAT;
-	};
+	bool compressed = isCompressedTextureFormat( format );
+
+	int inputType = textureGLFormats[ format ].glInputType;
+	int inputFormat = textureGLFormats[ format ].glInputFormat;
 	
 	// Calculate size of next mipmap using "floor" convention
 	int width = std::max( tex.width >> mipLevel, 1 ), height = std::max( tex.height >> mipLevel, 1 );
@@ -743,6 +859,23 @@ void RenderDeviceGL2::destroyTexture( uint32& texObj )
 }
 
 
+bool RenderDeviceGL2::isCompressedTextureFormat( TextureFormats::List fmt )
+{
+	return	( fmt == TextureFormats::DXT1 ) || ( fmt == TextureFormats::DXT3 ) ||
+			( fmt == TextureFormats::DXT5 ) || ( fmt == TextureFormats::ETC1 ) ||
+			( fmt == TextureFormats::RGB8_ETC2 ) || ( fmt == TextureFormats::RGBA8_ETC2 ) ||
+			( fmt == TextureFormats::BC6_SF16 ) || ( fmt == TextureFormats::BC6_UF16 ) ||
+			( fmt == TextureFormats::BC7 ) || ( fmt == TextureFormats::ASTC_4x4 ) ||
+			( fmt == TextureFormats::ASTC_5x4 ) || ( fmt == TextureFormats::ASTC_5x5 ) ||
+			( fmt == TextureFormats::ASTC_6x5 ) || ( fmt == TextureFormats::ASTC_6x6 ) ||
+			( fmt == TextureFormats::ASTC_8x5 ) || ( fmt == TextureFormats::ASTC_8x6 ) ||
+			( fmt == TextureFormats::ASTC_8x8 ) || ( fmt == TextureFormats::ASTC_10x5 ) ||
+			( fmt == TextureFormats::ASTC_10x6 ) || ( fmt == TextureFormats::ASTC_10x8 ) ||
+			( fmt == TextureFormats::ASTC_10x10 ) || ( fmt == TextureFormats::ASTC_12x10 ) ||
+			( fmt == TextureFormats::ASTC_12x12 ) ;
+}
+
+
 void RenderDeviceGL2::updateTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
 	uploadTextureData( texObj, slice, mipLevel, pixels );
@@ -756,29 +889,16 @@ bool RenderDeviceGL2::getTextureData( uint32 texObj, int slice, int mipLevel, vo
 	int target = tex.type == textureTypes[ TextureTypes::TexCube ] ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
 	if( target == GL_TEXTURE_CUBE_MAP ) target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice;
 	
-	int fmt, type, compressed = 0;
+	int fmt, type = 0;
 	glActiveTexture( GL_TEXTURE15 );
 	glBindTexture( tex.type, tex.glObj );
+	
+	bool compressed = isCompressedTextureFormat( tex.format );
 
-	switch( tex.format )
-	{
-	case TextureFormats::BGRA8:
-		fmt = GL_BGRA;
-		type = GL_UNSIGNED_BYTE;
-		break;
-	case TextureFormats::DXT1:
-	case TextureFormats::DXT3:
-	case TextureFormats::DXT5:
-		compressed = 1;
-		break;
-	case TextureFormats::RGBA16F:
-	case TextureFormats::RGBA32F:
-		fmt = GL_RGBA;
-		type = GL_FLOAT;
-		break;
-	default:
-		return false;
-	};
+	if ( tex.format > ( int ) textureGLFormats.size() ) return false;
+
+	fmt = textureGLFormats[ tex.format ].glInputFormat;
+	type = textureGLFormats[ tex.format ].glInputType;
 
 	if( compressed )
 		glGetCompressedTexImage( target, mipLevel, buffer );
@@ -1032,6 +1152,18 @@ void RenderDeviceGL2::setShaderConst( int loc, RDIShaderConstType type, void *va
 	case CONST_FLOAT33:
 		glUniformMatrix3fv( loc, count, false, (float *)values );
 		break;
+	case CONST_INT:
+		glUniform1iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT2:
+		glUniform2iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT3:
+		glUniform3iv( loc, count, (GLint *)values );
+		break;
+	case CONST_INT4:
+		glUniform4iv( loc, count, (GLint *)values );
+		break;
 	}
 }
 
@@ -1069,7 +1201,7 @@ void RenderDeviceGL2::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDi
 // =================================================================================================
 
 uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
-                                         bool depth, uint32 numColBufs, uint32 samples )
+                                            bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel )
 {
 	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
 	{
@@ -1106,9 +1238,8 @@ uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, Texture
 		for( uint32 j = 0; j < numColBufs; ++j )
 		{
 			// Create a color texture
-			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, false, false, false, false );
+			uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, format, maxMipLevel, maxMipLevel > 0, false, false );
 			ASSERT( texObj != 0 );
-			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
 			RDITextureGL2 &tex = _textures.getRef( texObj );
 			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
@@ -1158,10 +1289,9 @@ uint32 RenderDeviceGL2::createRenderBuffer( uint32 width, uint32 height, Texture
 	{
 		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
 		// Create a depth texture
-		uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, false, false, false, false );
+		uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, 0, false, false, false );
 		ASSERT( texObj != 0 );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
-		uploadTextureData( texObj, 0, 0, 0x0 );
 		rb.depthTex = texObj;
 		RDITextureGL2 &tex = _textures.getRef( texObj );
 		// Attach the texture
@@ -1449,12 +1579,14 @@ uint32 RenderDeviceGL2::getQueryResult( uint32 queryObj )
 
 void RenderDeviceGL2::checkError()
 {
+#if !defined( NDEBUG )
 	uint32 error = glGetError();
 	ASSERT( error != GL_INVALID_ENUM );
 	ASSERT( error != GL_INVALID_VALUE );
 	ASSERT( error != GL_INVALID_OPERATION );
 	ASSERT( error != GL_OUT_OF_MEMORY );
 	ASSERT( error != GL_STACK_OVERFLOW && error != GL_STACK_UNDERFLOW );
+#endif
 }
 
 

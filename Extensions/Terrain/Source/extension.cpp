@@ -2,7 +2,7 @@
 //
 // Horde3D Terrain Extension
 // --------------------------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz, Volker Wiendl and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz, Volker Wiendl and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -30,6 +30,8 @@ bool ExtTerrain::init()
 		TerrainNode::parsingFunc, TerrainNode::factoryFunc );
 	Modules::renderer().registerRenderFunc( SNT_TerrainNode, TerrainNode::renderFunc );
 
+	TerrainNode::uni_terBlockParams = Modules::renderer().registerEngineUniform( "terBlockParams" );
+
 	// Create vertex layout
 	VertexLayoutAttrib attribs[2] = {
 		{"vertPos", 0, 3, 0},
@@ -38,17 +40,27 @@ bool ExtTerrain::init()
 	TerrainNode::vlTerrain = Modules::renderer().getRenderDevice()->registerVertexLayout( 2, attribs );
 
 	// Upload default shader used for debug view
-	if ( Modules::renderer().getRenderDeviceType() == RenderBackendType::OpenGL2 )
+	switch ( Modules::renderer().getRenderDeviceType() )
 	{
-		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-                                              vsTerrainDebugView, fsTerrainDebugView, 0, 0, 0, 0 );
-	} 
-	else
-	{
-		Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
-                                              vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, 0, 0, 0, 0 );
+		case RenderBackendType::OpenGL2:
+		{
+			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+												  vsTerrainDebugView, fsTerrainDebugView, nullptr, nullptr, nullptr, nullptr );
+		}
+		case RenderBackendType::OpenGL4:
+		{
+			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+												  vsTerrainDebugViewGL4, fsTerrainDebugViewGL4, nullptr, nullptr, nullptr, nullptr );
+		case RenderBackendType::OpenGLES3:
+		{
+			Modules::renderer().createShaderComb( TerrainNode::debugViewShader,
+												  vsTerrainDebugViewGLES3, fsTerrainDebugViewGLES3, nullptr, nullptr, nullptr, nullptr );
+		}
+		default:
+			return false;
+		}
 	}
-	
+
 	return true;
 }
 
@@ -70,8 +82,8 @@ std::string safeStr( const char *str )
 }
 
 
-DLLEXP NodeHandle h3dextAddTerrainNode( NodeHandle parent, const char *name, ResHandle heightMapRes,
-                                        ResHandle materialRes )
+H3D_IMPL NodeHandle h3dextAddTerrainNode( NodeHandle parent, const char *name, ResHandle heightMapRes,
+                                          ResHandle materialRes )
 {
 	SceneNode *parentNode = Modules::sceneMan().resolveNodeHandle( parent );
 	if( parentNode == 0x0 ) return 0;
@@ -91,8 +103,8 @@ DLLEXP NodeHandle h3dextAddTerrainNode( NodeHandle parent, const char *name, Res
 }
 
 
-DLLEXP ResHandle h3dextCreateTerrainGeoRes( NodeHandle node, const char *name, float meshQuality )
-{	
+H3D_IMPL ResHandle h3dextCreateTerrainGeoRes( NodeHandle node, const char *name, float meshQuality )
+{
 	SceneNode *sn = Modules::sceneMan().resolveNodeHandle( node );
 	if( sn != 0x0 && sn->getType() == SNT_TerrainNode )
 		return ((TerrainNode *)sn)->createGeometryResource( safeStr( name ), 1.0f / meshQuality );

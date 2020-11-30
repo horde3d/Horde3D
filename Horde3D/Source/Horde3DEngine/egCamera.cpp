@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -72,17 +72,17 @@ SceneNodeTpl *CameraNode::parsingFunc( map< string, string > &attribs )
 	itr = attribs.find( "outputBufferIndex" );
 	if( itr != attribs.end() ) cameraTpl->outputBufferIndex = atoi( itr->second.c_str() );
 	itr = attribs.find( "leftPlane" );
-	if( itr != attribs.end() ) cameraTpl->leftPlane = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) cameraTpl->leftPlane = toFloat( itr->second.c_str() );
 	itr = attribs.find( "rightPlane" );
-	if( itr != attribs.end() ) cameraTpl->rightPlane = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) cameraTpl->rightPlane = toFloat( itr->second.c_str() );
 	itr = attribs.find( "bottomPlane" );
-	if( itr != attribs.end() ) cameraTpl->bottomPlane = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) cameraTpl->bottomPlane = toFloat( itr->second.c_str() );
 	itr = attribs.find( "topPlane" );
-	if( itr != attribs.end() ) cameraTpl->topPlane = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) cameraTpl->topPlane = toFloat( itr->second.c_str() );
 	itr = attribs.find( "nearPlane" );
-	if( itr != attribs.end() ) cameraTpl->nearPlane = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) cameraTpl->nearPlane = toFloat( itr->second.c_str() );
 	itr = attribs.find( "farPlane" );
-	if( itr != attribs.end() ) cameraTpl->farPlane = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) cameraTpl->farPlane = toFloat( itr->second.c_str() );
 	itr = attribs.find( "orthographic" );
 	if( itr != attribs.end() ) 
 	{

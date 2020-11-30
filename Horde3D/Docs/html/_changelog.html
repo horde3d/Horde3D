@@ -1,4 +1,5 @@
 <!-- saved from url=(0022)http://internet.e-mail -->
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -12,6 +13,40 @@
 <h1>Horde3D SDK Change Log</h1>
 <br />
 <p>You can find out here what has changed in the Horde3D SDK releases.</p>
+
+<h2>Version [2.0.0]</h2>
+
+<h4>Core Engine</h4>
+<ul>
+	<li>Added support for OpenGL ES 3.</li>
+	<li>Added support for Android and iOS operating systems.</li>
+	<li>Added support for KTX texture format.</li>
+	<li>Added support for more compressed texture formats - BPTC (BC6-7), ETC1, ETC2, ASTC.</li>
+	<li>Reworked frustum culling - now everything is culled and render queues are generated in the beginning of the frame. Up to 2x performance on scenes with many objects.</li>
+	<li>Deferred shaders now support rendering particles.</li>
+	<li>Mesh drawing type can now be specified during mesh creation.</li>
+	<li>Added support for custom pipeline actions. Overlays are now moved to extension.</li>
+	<li>Material class processing optimized (up to 15-20% fps increase on material heavy scenes).</li>
+	<li>Added new render device capabilities.</li>
+	<li>Added support for debug output of the render backend driver (opengl 4, opengl es).</li>
+	<li>Reworked engine static linking mechanism.</li>
+	<li>Bugs fixed.</li>
+</ul>
+
+<h4>Samples</h4>
+<ul>
+	<li>SDL can now also be used for samples as window backend. Samples on Android and iOS work only through SDL.</li>
+	<li>GLFW updated to version 3.3.2.</li>
+	<li>Tested SDL version is 2.0.9. Newer versions are likely to work, but some issues may arise on Android/iOS platforms.</li>
+</ul>
+
+<h4>Known issues</h4>
+<ul>
+	<li>Geometry flickering on iOS when using Forward and HDR pipelines. Use deferred pipeline as a workaround.</li>
+	<li>Horde3D Editor may not work with Mesa3D OpenGL implementation as it does not provide compatibility profile.
+		Editor will remove deprecated OpenGL functions, used for grid and gizmos, in the next version.</li>
+</ul>
+
 
 <h2>Version [1.0.0]</h2>
 
@@ -142,7 +177,7 @@
 	<li>Replaced texture unit configuration in materials by named samplers (pipeline command BindBuffer was changed and UnbindBuffers added).</li>
 	<li>Added more configurable render states to shader contexts.</li>
 	<li>Added configurable sampler states to shader format (resource flags NoTexFiltering and NoTexRepeat were removed).</li>
-	<li>Adapted all sample shaders to refactored shader system and implemented a single übershader for models.</li>
+	<li>Adapted all sample shaders to refactored shader system and implemented a single ï¿½bershader for models.</li>
 	<li>Refactored LOD system: models can have LOD meshes now (Group node params MinDist and MaxDist were removed).</li>
 	<li>Optimized scene management by implementing a basic spatial graph.</li>
 	<li>Optimized performance of adding nodes to large scene graphs.</li>
@@ -164,7 +199,7 @@
 	<li>Renamed AnisotropyFactor to MaxAnisotropy in EngineOptions enum.</li>
 	<li>Renamed resource Effect to ParticleEffect in order to avoid confusion with shader effects (also adapted emitter node params and default file extension).</li>
 	<li>Did many smaller bug fixes, code cleanups and optimizations in engine core.</li>
-	<li>ColladaConv update: Removed shader name command line parameter since it is usually not required with übershaders.</li>
+	<li>ColladaConv update: Removed shader name command line parameter since it is usually not required with ï¿½bershaders.</li>
 	<li>ColladaConv update: ColladaConv writes skinning shader flag to materials when the model has joints.</li>
 	<li>Added support for node libraries to ColladaConv.</li>
 	<li>Added support for polygon tags to ColladaConv.</li>

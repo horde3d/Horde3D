@@ -5,7 +5,7 @@
 //
 // Sample Application
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 //
 // This sample source file is not covered by the EPL as the rest of the SDK
@@ -23,6 +23,8 @@
 #include <iostream>
 #include <string.h>
 #include <memory>
+
+#include "../Framework/FrameworkBackend.h"
 
 using namespace std;
 
@@ -45,12 +47,15 @@ void normalize( float &x, float &y, float &z )
 }
 
 ParticleVortexSample::ParticleVortexSample( int argc, char** argv ) :
-    SampleApplication( argc, argv, "Particle vortex - Horde3D Sample", H3DRenderDevice::OpenGL4, 45.0f, 0.1f, 5000.0f )
+    SampleApplication( argc, argv, "Particle vortex - Horde3D Sample", 45.0f, 0.1f, 5000.0f )
 {
     _x = 125; _y = 25; _z = 85;
     _rx = -10; _ry = 55;
 
 	_animTime = 0;
+
+	showStatPanel( 1 ); 
+	setRequiredCapabilities( RenderCapabilities::ComputeShader | RenderCapabilities::GeometryShader );
 }
 
 
@@ -62,6 +67,19 @@ bool ParticleVortexSample::initResources()
 	if ( !h3dGetDeviceCapabilities( H3DDeviceCapabilities::GeometryShaders ) &&
 	     !h3dGetDeviceCapabilities( H3DDeviceCapabilities::ComputeShaders ) )
 		return false;
+
+	// Set shader preambles for opengl es
+	if ( getBackend()->getRenderAPI() == RenderAPI::OpenGLES3 )
+	{
+		std::string vertPreamble = "#version 320 es\n precision highp float;\n";
+		std::string fragPreamble = "#version 320 es\n precision highp float;\n precision highp sampler2D;\n precision highp sampler2DShadow;\n";
+		std::string geomPreamble = "#version 320 es\n precision highp float;\n";
+		std::string tessCtlPreamble = "#version 320 es\n precision highp float;\n";
+		std::string tessEvalPreamble = "#version 320 es\n precision highp float;\n";
+		std::string computePreamble = "#version 310 es\n";
+		h3dSetShaderPreambles( vertPreamble.c_str(), fragPreamble.c_str(), geomPreamble.c_str(), 
+							   tessCtlPreamble.c_str(), tessEvalPreamble.c_str(), computePreamble.c_str() );
+	}
 
     // 1. Add resources
 
@@ -82,8 +100,11 @@ bool ParticleVortexSample::initResources()
 	H3DRes compBuf = h3dAddResource( H3DResTypes::ComputeBuffer, "CompBuf", H3DResFlags::NoQuery );
 
 	// Generate random position data for particles
-	size_t particlesCount = 1000000;
-    ParticleData* compData = static_cast<ParticleData*>( malloc(sizeof(ParticleData) * particlesCount) );
+	size_t particlesCount;
+	if ( getBackend()->getRenderAPI() == RenderAPI::OpenGLES3 ) particlesCount = 100000; // 1 million particles is too heavy for mobiles
+	else particlesCount = 1000000;
+    
+	ParticleData* compData = static_cast<ParticleData*>( malloc(sizeof(ParticleData) * particlesCount) );
     if( !compData )
     {
         std::cout << "Out of memory when allocating particle data" << std::endl;
@@ -143,7 +164,7 @@ bool ParticleVortexSample::initResources()
 
     // 3. Load resources
 
-    if ( !h3dutLoadResourcesFromDisk( getResourcePath() ) )
+    if ( !getBackend()->loadResources( getResourcePath() ) )
     {
 		h3dutDumpMessages();
         return false;
@@ -155,7 +176,7 @@ bool ParticleVortexSample::initResources()
 	_cam = h3dAddCameraNode( H3DRootNode, "Camera", getPipelineRes() );
 
 	// In order to draw the results of compute buffer we need a compute node
-	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", computeDrawMatRes, compBuf, 2, ( int ) particlesCount );
+	_compNode = h3dAddComputeNode( H3DRootNode, "Vortex", computeDrawMatRes, compBuf, H3DMeshPrimType::Points, ( int ) particlesCount );
 
 	// Set node AABB size because currently there is no way to do it otherwise
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMinF, 0, -100.0f ); // x
@@ -166,18 +187,32 @@ bool ParticleVortexSample::initResources()
 	h3dSetNodeParamF( _compNode, H3DComputeNode::AABBMaxF, 2, 100.0f ); // z
 
 	// If you wish, you can change the number of drawn elements and drawing type on the fly
-//	h3dSetNodeParamI( _compNode, H3DComputeNode::DrawTypeI, 2 ); 	// Set preferred draw type (for this example we draw with points - 2)
+//	h3dSetNodeParamI( _compNode, H3DComputeNode::DrawTypeI, H3DMeshPrimType::TriangleList ); 	// Set preferred draw type (for this example we draw with points)
 //	h3dSetNodeParamI( _compNode, H3DComputeNode::ElementsCountI, ( int ) particlesCount ); 	// Set number of elements to draw (for this example we draw 1000000 points)
 
 	// Set material uniforms that will not be changed during runtime
 	h3dSetMaterialUniform( _computeMatRes, "totalParticles", ( float ) particlesCount, 0, 0, 0 );
 
 	// Calculate number of groups for compute shader
-	size_t numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
-	double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
-	root = ceil( root );
-	_computeGroupX = _computeGroupY = ( unsigned int ) root;
+	auto platform = getBackend()->getPlatform();
+	if ( platform == Platform::Android )
+	{
+		// some android phones do not support 1024 compute workgroups and support only 128. Handle that case
+		size_t numGroups = ( particlesCount % 128 != 0 ) ? ( ( particlesCount / 128 ) + 1 ) : ( particlesCount / 128 );
+		double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
+		root = ceil( root );
 
+		// Mali only supports 128 for workgroup size on not so old devices
+		_computeGroupX = _computeGroupY = ( unsigned int ) root;
+	}
+	else
+	{
+		size_t numGroups = ( particlesCount % 1024 != 0 ) ? ( ( particlesCount / 1024 ) + 1 ) : ( particlesCount / 1024 );
+		double root = pow( ( double ) numGroups, ( double ) ( 1.0 / 2.0 ) );
+		root = ceil( root );
+		_computeGroupX = _computeGroupY = ( unsigned int ) root;
+	}
+	
 	return true;
 }
 

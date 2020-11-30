@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -26,6 +26,9 @@
 #include <algorithm>
 
 using namespace std;
+namespace Horde3D {
+namespace ColladaConverter {
+
 
 // little endian element writer
 template<class T>
@@ -45,7 +48,7 @@ inline void fwrite_le(const T* data, size_t count, FILE* f)
     }
 }
 
-Converter::Converter( ColladaDocument &doc, const string &outPath, float *lodDists ) :
+Converter::Converter( ColladaDocument &doc, const string &outPath, const float *lodDists ) :
 	_daeDoc( doc )
 {
 	_outPath = outPath;
@@ -174,13 +177,13 @@ void Converter::checkNodeName( SceneNode *node )
 		// If necessary, cut name to make room for the postfix
 		if( strlen( node->name ) > 240 ) node->name[240] = '\0';
 
-		char newName[256];
+        char newName[512];
 		unsigned int index = 2;
 
 		// Find a free name
 		while( true )
 		{
-			sprintf( newName, "%s_%i", node->name, index++ );
+            snprintf( newName, sizeof(newName), "%s_%i", node->name, index++ );
 
 			if( !findNode( newName, node ) )
 			{
@@ -1439,3 +1442,7 @@ bool Converter::writeAnimation( const string &assetPath, const string &assetName
 
 	return true;
 }
+
+
+} // namespace ColladaConverter
+} // namespace Horde3D

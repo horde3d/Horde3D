@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -29,6 +29,16 @@ class ModelNode;
 // Mesh Node
 // =================================================================================================
 
+struct MeshPrimType
+{
+	enum List
+	{
+		TriangleList = 0,
+		LineList = 1,
+		Patches = 2,
+	};
+};
+
 struct MeshNodeParams
 {
 	enum List
@@ -38,8 +48,7 @@ struct MeshNodeParams
 		BatchCountI,
 		VertRStartI,
 		VertREndI,
-		LodLevelI,
-		TessellatableI
+		LodLevelI
 	};
 };
 
@@ -48,15 +57,17 @@ struct MeshNodeParams
 struct MeshNodeTpl : public SceneNodeTpl
 {
 	PMaterialResource  matRes;
+	MeshPrimType::List primType;
 	uint32             batchStart, batchCount;
 	uint32             vertRStart, vertREnd;
 	uint32             lodLevel;
-	uint32			   tessellatable;
 
-	MeshNodeTpl( const std::string &name, MaterialResource *materialRes, uint32 batchStart,
-	             uint32 batchCount, uint32 vertRStart, uint32 vertREnd ) :
-		SceneNodeTpl( SceneNodeTypes::Mesh, name ), matRes( materialRes ), batchStart( batchStart ),
-		batchCount( batchCount ), vertRStart( vertRStart ), vertREnd( vertREnd ), lodLevel( 0 ), tessellatable( 0 )
+	MeshNodeTpl( const std::string &name, MaterialResource *materialRes, MeshPrimType::List primType,
+	             uint32 batchStart, uint32 batchCount, uint32 vertRStart, uint32 vertREnd ) :
+		SceneNodeTpl( SceneNodeTypes::Mesh, name ), matRes( materialRes ), 
+		primType(primType), batchStart( batchStart ), 
+		batchCount( batchCount ), vertRStart( vertRStart ), vertREnd( vertREnd ), 
+		lodLevel( 0 )
 	{
 	}
 };
@@ -87,12 +98,12 @@ public:
 	void onPostUpdate();
 
 	MaterialResource *getMaterialRes() const { return _materialRes; }
+	RDIPrimType getPrimType() { return _primType; }
 	uint32 getBatchStart() const { return _batchStart; }
 	uint32 getBatchCount() const { return _batchCount; }
 	uint32 getVertRStart() const { return _vertRStart; }
 	uint32 getVertREnd() const { return _vertREnd; }
 	uint32 getLodLevel() const { return _lodLevel; }
-	uint32 getTessellationStatus() const { return _tessellatable; }
 	ModelNode *getParentModel() const { return _parentModel; }
 
 protected:
@@ -101,16 +112,13 @@ protected:
 
 protected:
 	PMaterialResource   _materialRes;
+	RDIPrimType         _primType;
 	uint32              _batchStart, _batchCount;
 	uint32              _vertRStart, _vertREnd;
 	uint32              _lodLevel;
-	uint32				_tessellatable;
 	
 	ModelNode           *_parentModel;
 	BoundingBox         _localBBox;
-
-	std::vector< uint32 >  _occQueries;
-	std::vector< uint32 >  _lastVisited;
 
 	friend class SceneManager;
 	friend class SceneNode;

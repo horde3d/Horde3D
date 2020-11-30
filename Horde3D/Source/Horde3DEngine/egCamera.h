@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -94,6 +94,11 @@ public:
 	const Matrix4f &getViewMat() const { return _viewMat; }
 	const Matrix4f &getProjMat() const { return _projMat; }
 	const Vec3f &getAbsPos() const { return _absPos; }
+	
+	int getViewportX() const { return _vpX; }
+	int getViewportY() const { return _vpY; }
+	int getViewportWidth() const { return _vpWidth; }
+	int getViewportHeight() const { return _vpHeight; }
 
 private:
 	CameraNode( const CameraNodeTpl &cameraTpl );

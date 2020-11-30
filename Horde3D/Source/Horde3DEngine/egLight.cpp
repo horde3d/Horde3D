@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2016 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -35,6 +35,10 @@ LightNode::LightNode( const LightNodeTpl &lightTpl ) :
 	_shadowMapCount = lightTpl.shadowMapCount;
 	_shadowSplitLambda = lightTpl.shadowSplitLambda;
 	_shadowMapBias = lightTpl.shadowMapBias;
+
+	_shadowRenderParamsID = -1;
+	_renderViewID = -1;
+	_occlusionCullingSupported = true;
 }
 
 
@@ -71,23 +75,23 @@ SceneNodeTpl *LightNode::parsingFunc( map< string, string > &attribs )
 	if( itr != attribs.end() ) lightTpl->shadowContext = itr->second;
 	else result = false;
 	itr = attribs.find( "radius" );
-	if( itr != attribs.end() ) lightTpl->radius = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->radius = toFloat( itr->second.c_str() );
 	itr = attribs.find( "fov" );
-	if( itr != attribs.end() ) lightTpl->fov = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->fov = toFloat( itr->second.c_str() );
 	itr = attribs.find( "col_R" );
-	if( itr != attribs.end() ) lightTpl->col_R = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->col_R = toFloat( itr->second.c_str() );
 	itr = attribs.find( "col_G" );
-	if( itr != attribs.end() ) lightTpl->col_G = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->col_G = toFloat( itr->second.c_str() );
 	itr = attribs.find( "col_B" );
-	if( itr != attribs.end() ) lightTpl->col_B = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->col_B = toFloat( itr->second.c_str() );
 	itr = attribs.find( "colMult" );
-	if( itr != attribs.end() ) lightTpl->colMult = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->colMult = toFloat( itr->second.c_str() );
 	itr = attribs.find( "shadowMapCount" );
 	if( itr != attribs.end() ) lightTpl->shadowMapCount = atoi( itr->second.c_str() );
 	itr = attribs.find( "shadowSplitLambda" );
-	if( itr != attribs.end() ) lightTpl->shadowSplitLambda = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->shadowSplitLambda = toFloat( itr->second.c_str() );
 	itr = attribs.find( "shadowMapBias" );
-	if( itr != attribs.end() ) lightTpl->shadowMapBias = (float)atof( itr->second.c_str() );
+	if( itr != attribs.end() ) lightTpl->shadowMapBias = toFloat( itr->second.c_str() );
 	
 	if( !result )
 	{
@@ -283,13 +287,17 @@ void LightNode::calcScreenSpaceAABB( const Matrix4f &mat, float &x, float &y, fl
 		if( pts[i].x > max_x ) max_x = pts[i].x;
 		if( pts[i].y > max_y ) max_y = pts[i].y;
 	}
-	
+
 	// Clamp values
-	if( min_x < 0 ) min_x = 0; if( min_x > 1 ) min_x = 1;
-	if( max_x < 0 ) max_x = 0; if( max_x > 1 ) max_x = 1;
-	if( min_y < 0 ) min_y = 0; if( min_y > 1 ) min_y = 1;
-	if( max_y < 0 ) max_y = 0; if( max_y > 1 ) max_y = 1;
-	
+	if( min_x < 0 ) min_x = 0;
+	if( min_x > 1 ) min_x = 1;
+	if( max_x < 0 ) max_x = 0;
+	if( max_x > 1 ) max_x = 1;
+	if( min_y < 0 ) min_y = 0;
+	if( min_y > 1 ) min_y = 1;
+	if( max_y < 0 ) max_y = 0;
+	if( max_y > 1 ) max_y = 1;
+
 	x = min_x; y = min_y;
 	w = max_x - min_x; h = max_y - min_y;
 

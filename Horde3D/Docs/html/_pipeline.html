@@ -458,6 +458,7 @@ render device is used by default.</b> </p>
 <table>
 	<tr><td><b>OpenGL2</b> - default render interface (no tag required)</td></tr>
 	<tr><td><b>OpenGL4</b></td></tr>
+	<tr><td><b>OpenGLES3</b></td></tr>
 </table>
 </div>
 
@@ -476,6 +477,15 @@ OpenGL4
     {
         VertexShader = compile GLSL VS_GENERAL_GL4;
         PixelShader = compile GLSL FS_AMBIENT_GL4;
+    }
+}
+
+OpenGLES3
+{
+    context AMBIENT
+    {
+        VertexShader = compile GLSL VS_GENERAL_GLES3;
+        PixelShader = compile GLSL FS_AMBIENT_GLES3;
     }
 }
 </pre>
