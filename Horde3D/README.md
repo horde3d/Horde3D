@@ -14,12 +14,23 @@ The source code of the engine and tools is included in the SDK. It has the follo
 
  * **RapidXml**: http://rapidxml.sourceforge.net
  * **stbi** by Sean Barrett: http://nothings.org
- * **GLFW** for window management in samples: http://glfw.sourceforge.net
+ * **GLFW** for window management in samples: https://glfw.org
+ * **SDL** - alternative window management library for samples: https://libsdl.org
 		
 These libraries are included directly as code in the SDK.
 
 ## Release Notes
-	
+
+Release 2.0 brings support for Android and iOS, new features and performance improvements.
+Notable features:
+
+ * New OpenGLES 3 render interface. Works on Android, iOS and Linux (also usable on Windows with mobile driver emulator)
+ * Performance increase on lighting calculations - scenes with lots of objects will gain a massive performance increase (up to two times)
+ * Performance increase on material handling - by eliminating string compares we get a 15-20% performance increase on material heavy scenes.
+ * Extensions are now able to create new pipeline actions 
+
+
+***
 The 1.0 release brings a lot of new features and performance improvements. 
 Some notable features:
 
@@ -36,7 +47,7 @@ Some notable features:
 
 ## License
 
-Copyright (C) 2006-2017 Nicolas Schulz and the Horde3D Team
+Copyright (C) 2006-2020 Nicolas Schulz and the Horde3D Team
 	
 The complete SDK is licensed under the terms of the Eclipse Public License (EPL).
 	
