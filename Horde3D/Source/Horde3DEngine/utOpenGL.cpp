@@ -761,10 +761,10 @@ void initModernExtensions( bool &r )
 	glExt::KHR_debug = isExtensionSupported( "GL_KHR_debug" );
 	if ( glExt::KHR_debug )
 	{
-		r &= ( glDebugMessageCallbackKHR = ( PFNGLDEBUGMESSAGECALLBACKKHRPROC ) platGetProcAddress( "glDebugMessageCallbackKHR" ) ) != 0x0;
-		r &= ( glDebugMessageControlKHR = ( PFNGLDEBUGMESSAGECONTROLKHRPROC ) platGetProcAddress( "glDebugMessageControlKHR" ) ) != 0x0;
-		r &= ( glDebugMessageInsertKHR = ( PFNGLDEBUGMESSAGEINSERTKHRPROC ) platGetProcAddress( "glDebugMessageInsertKHR" ) ) != 0x0;
-		r &= ( glGetDebugMessageLogKHR = ( PFNGLGETDEBUGMESSAGELOGKHRPROC ) platGetProcAddress( "glGetDebugMessageLogKHR" ) ) != 0x0;
+		r &= ( glDebugMessageCallbackKHR = ( PFNGLDEBUGMESSAGECALLBACKKHRPROC ) platGetProcAddress( "glDebugMessageCallback" ) ) != 0x0;
+		r &= ( glDebugMessageControlKHR = ( PFNGLDEBUGMESSAGECONTROLKHRPROC ) platGetProcAddress( "glDebugMessageControl" ) ) != 0x0;
+		r &= ( glDebugMessageInsertKHR = ( PFNGLDEBUGMESSAGEINSERTKHRPROC ) platGetProcAddress( "glDebugMessageInsert" ) ) != 0x0;
+		r &= ( glGetDebugMessageLogKHR = ( PFNGLGETDEBUGMESSAGELOGKHRPROC ) platGetProcAddress( "glGetDebugMessageLog" ) ) != 0x0;
 	}
 }
 
