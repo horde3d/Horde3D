@@ -137,7 +137,7 @@ SampleApplication::~SampleApplication()
 bool SampleApplication::init()
 {
 	// Init params can be changed in derived user applications
-	auto params = setupInitParameters();
+	auto params = setupInitParameters( defaultRenderInterface() );
 	if ( !_backend->init( params ) ) return false;
 
 	auto winParams = setupWindowParameters();
@@ -147,9 +147,32 @@ bool SampleApplication::init()
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
         _backend->logMessage( LogMessageLevel::Error, "Unable to initialize engine" );
-
 		h3dutDumpMessages();
+
+#if defined( H3D_USE_GL4 ) && defined ( H3D_USE_GL2 )
+        // Fallback to OpenGL2 backend
+        _backend->logMessage( LogMessageLevel::Info, "Trying OpenGL2 render backend" );
+
+        release();
+        _backend->release();
+
+        _renderInterface = H3DRenderDevice::OpenGL2;
+        params = setupInitParameters( _renderInterface );
+        if ( !_backend->init( params ) ) return false;
+        	
+        auto winParams = setupWindowParameters();
+	    if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) return false;
+
+        if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
+        {
+            _backend->logMessage( LogMessageLevel::Error, "Unable to initialize engine" );
+		    h3dutDumpMessages();
+
+            return false;
+        }
+#else
 		return false;
+#endif
 	}
 
 	// Samples require overlays extension in order to display information
@@ -247,7 +270,7 @@ void SampleApplication::release()
 }
 
 
-BackendInitParameters SampleApplication::setupInitParameters()
+int SampleApplication::defaultRenderInterface()
 {
 	// Check available render interfaces
 #if defined( H3D_USE_GL4 ) && defined( H3D_USE_GL2 )
@@ -261,8 +284,14 @@ BackendInitParameters SampleApplication::setupInitParameters()
 	_renderInterface = H3DRenderDevice::OpenGL2;
 #endif
 
+    return _renderInterface;
+}
+
+
+BackendInitParameters SampleApplication::setupInitParameters( int render_interface )
+{
 	BackendInitParameters params;
-	switch ( _renderInterface )
+	switch ( render_interface )
 	{
 		case ( int ) RenderAPI::OpenGL2:
 			params.requestedAPI = RenderAPI::OpenGL2;
