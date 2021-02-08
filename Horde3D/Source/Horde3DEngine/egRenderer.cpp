@@ -211,21 +211,7 @@ bool Renderer::init( RenderBackendType::List type )
 	{
 		releaseRenderDevice();
 
-		if ( type == RenderBackendType::OpenGL4 )
-		{
-			// try to use legacy OpenGL renderer backend
-			_renderDevice = createRenderDevice( RenderBackendType::OpenGL2 );
-			if ( !_renderDevice ) return false;
-
-			if ( !_renderDevice->init() )
-			{
-				releaseRenderDevice();
-				return false;
-			}
-			type = RenderBackendType::OpenGL2;
-		}
-		else
-			return false;
+		return false;
 	}
 
 	// Check capabilities
@@ -1120,7 +1106,7 @@ Matrix4f Renderer::calcCropMatrix( int renderView, const LightNode *light, const
 	// Merge frustum and AABB bounds and clamp to post-projective range [-1, 1]
 	float minX = clamp( maxf( frustMinX, bbMinX ), -1, 1 );
 	float minY = clamp( maxf( frustMinY, bbMinY ), -1, 1 );
-	float minZ = clamp( minf( frustMinZ, bbMinZ ), -1, 1 );
+	float minZ = clamp( maxf( frustMinZ, bbMinZ ), -1, 1 );
 	float maxX = clamp( minf( frustMaxX, bbMaxX ), -1, 1 );
 	float maxY = clamp( minf( frustMaxY, bbMaxY ), -1, 1 );
 	float maxZ = clamp( minf( frustMaxZ, bbMaxZ ), -1, 1 );
