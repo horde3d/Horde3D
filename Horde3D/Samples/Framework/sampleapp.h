@@ -143,7 +143,9 @@ public:
 	
 protected:
 //     GLFWwindow* getWindowHandle() const { return _winHandle; }
-	virtual BackendInitParameters setupInitParameters();
+    int defaultRenderInterface();
+
+	virtual BackendInitParameters setupInitParameters( int render_interface );
 	virtual WindowCreateParameters setupWindowParameters();
 
     virtual bool initResources();
