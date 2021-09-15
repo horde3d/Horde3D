@@ -12,6 +12,10 @@ SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 # Add local repository for FindXXX.cmake modules.
 SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/BuildTools/CMake/Modules" ${CMAKE_MODULE_PATH})
 
+# Check for strncpy_s function.
+include(CheckFunctionExists)
+check_function_exists(strncpy_s HAVE_STRNCPY_S)
+
 # To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
 
