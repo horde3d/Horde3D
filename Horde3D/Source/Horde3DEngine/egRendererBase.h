@@ -184,6 +184,7 @@ struct DeviceCaps
 	bool	texETC2;
 	bool	texASTC;
 	bool	texBPTC;
+    bool    binaryShaders;
 };
 
 
@@ -969,6 +970,9 @@ public:
 
 	const DeviceCaps &getCaps() const { return _caps; }
 
+	const std::string &getRendererName() const { return _rendererName; }
+	const std::string &getRendererVersion() const { return _rendererVersion; }
+	
 	friend class Renderer;
 
 protected:
@@ -991,6 +995,9 @@ protected:
 
 	DeviceCaps					_caps;
 
+    std::string                 _rendererName;
+    std::string                 _rendererVersion;
+    
 	RDITexSlot					_texSlots[ 16 ];
 	// 	std::vector< RDITexSlot >	_texSlots;
 	RDIRasterState				_curRasterState, _newRasterState;

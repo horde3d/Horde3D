@@ -369,9 +369,13 @@ bool RenderDeviceGLES3::init()
 		return false;
 	}
 
-	Modules::log().writeInfo( "Initializing GLES3 backend using OpenGL driver '%s' by '%s' on '%s'",
+	Modules::log().writeInfo( "Initializing GLES3 backend using OpenGL ES driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
 	
+    // Save renderer name and version (used for binary shaders)
+    _rendererName = std::string( renderer );
+    _rendererVersion = std::string( version );
+    
 	// Init extensions
 	if( !initOpenGLExtensions() )
 	{	
@@ -437,7 +441,8 @@ bool RenderDeviceGLES3::init()
 	_caps.texETC2 = true;
 	_caps.texBPTC = glESExt::EXT_texture_compression_bptc;
 	_caps.texASTC = glESExt::KHR_texture_compression_astc;
-
+    _caps.binaryShaders = true;
+    
     // Get the currently bound frame buffer object.
     glGetIntegerv( GL_FRAMEBUFFER_BINDING, &_defaultFBO );
     

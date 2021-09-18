@@ -382,6 +382,10 @@ bool RenderDeviceGL4::init()
 	Modules::log().writeInfo( "Initializing GL4 backend using OpenGL driver '%s' by '%s' on '%s'",
 							  version, vendor, renderer );
 	
+    // Save renderer name and version (used for binary shaders)
+    _rendererName = std::string( renderer );
+    _rendererVersion = std::string( version );
+    
 	// Init extensions
 	if( !initOpenGLExtensions( false ) )
 	{	
@@ -437,7 +441,8 @@ bool RenderDeviceGL4::init()
 	_caps.texETC2 = glExt::ARB_ES3_compatibility;
 	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
 	_caps.texASTC = glExt::KHR_texture_compression_astc;
-
+    _caps.binaryShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
+    
 	// Find maximum number of storage buffers in compute shader
 	glGetIntegerv( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, (GLint *) &_maxComputeBufferAttachments );
 	// Init states before creating test render buffer, to

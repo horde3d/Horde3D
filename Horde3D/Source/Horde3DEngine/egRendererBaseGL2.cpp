@@ -342,6 +342,10 @@ bool RenderDeviceGL2::init()
 	Modules::log().writeInfo( "Initializing GL2 backend using OpenGL driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
 	
+    // Save renderer name and version (used for binary shaders)
+    _rendererName = std::string( renderer );
+    _rendererVersion = std::string( version );
+    
 	// Init extensions
 	if( !initOpenGLExtensions(true) )
 	{	
@@ -406,6 +410,7 @@ bool RenderDeviceGL2::init()
 	_caps.texETC2 = false;
 	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
 	_caps.texASTC = false;
+    _caps.binaryShaders = false;
 
 	// Init states before creating test render buffer, to
 	// ensure binding the current FBO again
