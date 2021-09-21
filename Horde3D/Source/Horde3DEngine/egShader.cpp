@@ -11,6 +11,7 @@
 // *************************************************************************************************
 
 #include "egShader.h"
+#include "egShaderParser.h"
 #include "egModules.h"
 #include "egCom.h"
 #include "egRenderer.h"
@@ -18,6 +19,7 @@
 #include <cstring>
 
 #include "utDebug.h"
+#include <utEndian.h>
 
 
 namespace Horde3D {
@@ -1024,6 +1026,7 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 	return true;
 }
 
+
 bool ShaderResource::load( const char *data, int size )
 {
 	if( !Resource::load( data, size ) ) return false;
@@ -1034,7 +1037,35 @@ bool ShaderResource::load( const char *data, int size )
 	char *fxCode = 0x0;
 	std::vector< std::string > tempCodeSections;
 	tempCodeSections.reserve( 16 );
+    ShaderParser shp( _name );
 
+    // check if shader is a binary
+    if ( size < 5 )
+        return raiseError( "Invalid shader resource" );
+    
+    char header[ 5 ];
+    char *pBinData = elemcpy_le( header, (char*)(pData), 5 );
+    if( header[ 0 ] == 'H' || header[ 1 ] == '3' || header[ 2 ] == 'D' || header[ 3 ] == 'S' || header[ 4 ] == 'B' )
+		_binaryShader = true;
+        
+    if ( _binaryShader )
+    {
+        if ( !Modules::renderer().getRenderDevice()->getCaps().binaryShaders )
+            return raiseError( "Render device does not support binary shaders" );
+        
+        if ( !shp.parseBinaryShader( pBinData, size - 5 ) )
+        {
+            // Reset
+            release();
+            initDefault();
+            
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // standard path (text-based shader)
 	while( pData < eof )
 	{
 		if( pData < eof-1 && *pData == '[' && *(pData+1) == '[' )
