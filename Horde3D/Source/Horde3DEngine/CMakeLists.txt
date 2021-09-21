@@ -25,6 +25,7 @@ set(HORDE3D_SOURCES
 	egScene.cpp
 	egSceneGraphRes.cpp
 	egShader.cpp
+	egShaderParser.cpp
 	egTexture.cpp
 	utImage.cpp
 #	config.h
@@ -50,6 +51,7 @@ set(HORDE3D_SOURCES
 	egScene.h
 	egSceneGraphRes.h
 	egShader.h
+	egShaderParser.h
 	egTexture.h
 	utImage.h
 	utTimer.h
