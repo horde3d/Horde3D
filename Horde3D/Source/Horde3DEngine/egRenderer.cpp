@@ -28,6 +28,9 @@
 #	if defined( H3D_USE_GL4 )
 #		include "egRendererBaseGL4.h"
 #	endif
+#   if defined( H3D_USE_NULL )
+#       include "egRendererBaseNull.h"
+#   endif
 #else
 #	include "egRendererBaseGLES3.h"
 #endif
@@ -340,6 +343,12 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 		case RenderBackendType::OpenGL2:
 		{
 			return new RDI_GL2::RenderDeviceGL2();
+		}
+#endif
+#if defined( DESKTOP_OPENGL_AVAILABLE ) && defined ( H3D_USE_NULL )
+		case 256: // special case for Null backend that is used for testing (unit, intergration, engine performance, etc.)
+		{
+			return new RDI_Null:RenderDeviceNull();
 		}
 #endif
 #if defined ( H3D_USE_GLES3 )	
