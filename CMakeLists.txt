@@ -19,6 +19,9 @@ check_function_exists(strncpy_s HAVE_STRNCPY_S)
 # To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
 
+# Specifies whether to build tests 
+option(HORDE3D_BUILD_TESTS "Build Horde3D unit and integration tests" OFF)
+
 # Check the required windowing backend
 if(HORDE3D_BUILD_EXAMPLES)
     include(CMakeDependentOption)
