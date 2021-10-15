@@ -29,6 +29,8 @@ bool ShaderParser::raiseError( const std::string& msg, int line )
 
 bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
 {
+    if ( !data || samplerCount == 0 ) return false;
+    
     std::vector< uint8 > unitFree( Modules::renderer().getRenderDevice()->getCaps().maxTexUnitCount - 4, true ); // I don't understand why marciano excluded 4 texunits, but currently I'll leave it this way  
 
     _samplers.reserve( samplerCount );
@@ -55,16 +57,14 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
                 sampler.defTex = (TextureResource *)Modules::resMan().findResource( ResourceTypes::Texture, "$TexCube" );
                 break;
             default:
-                Modules::log().writeWarning( "Unknown sampler type for sampler '%d'. Skipping sampler.", i );
-                continue; // next sampler
+                return raiseError( "Unknown sampler type for sampler '%d'.", i );
         }
         
         uint16 samplerIdSize;
         data = elemcpy_le( &samplerIdSize, (uint16*)( data ), 1 );
         if ( samplerIdSize == 0 )
         {
-            Modules::log().writeWarning( "Incorrect sampler id. Skipping sampler." );
-            continue;
+            return raiseError( "Incorrect sampler id for sampler '%d'", i );
         }
         if ( samplerIdSize > 255 )
         {
@@ -187,6 +187,67 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
     return true;
 }
 
+bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
+{
+    // main uniform parsing function
+    auto parseUniform = []( char *data, ShaderUniform *uni )
+    {
+        uint16 uniformIdSize;
+        data = elemcpy_le( &uniformIdSize, (uint16*)( data ), 1 );
+        
+        // uniform id cannot be larger than 256 characters
+        if ( uniformIdSize == 0 || uniformIdSize > 255 ) return false;
+        
+        char uniformName[ 256 ] = { 0 };
+        data = elemcpy_le( uniformName, ( char * ) (data), uniformIdSize );
+        if ( uniformName[ 0 ] == '\0' ) return false;
+        
+        uint16 uniformDefValuesSize;
+        data = elemcpy_le( &uniformDefValuesSize, (uint16*)( data ), 1 );
+        
+        data = elemcpy_le( uni->defValues, (float*)( data ), uniformDefValuesSize );
+        uni->id = uniformName;
+        
+        return true;
+    };
+    
+    // find out uniform count for each type
+    uint16 float4_uniforms;
+    data = elemcpy_le( &float4_uniforms, (uint16*)( data ), 1 );
+
+    uint16 float_uniforms;
+    data = elemcpy_le( &float_uniforms, (uint16*)( data ), 1 );
+
+    if ( float4_uniforms + float_uniforms != variablesCount ) 
+        return raiseError( "Incorrect number of uniforms!" );
+        
+    // parsing for each uniform type
+    _uniforms.reserve( variablesCount );
+    for( size_t i = 0; i < float4_uniforms; i++ )
+    {
+        ShaderUniform uni;
+        uni.size = 4;
+        
+        if ( !parseUniform( data, &uni ) )
+            return raiseError( "Failed to parse uniform float4 %i", i );
+        
+        _uniforms.emplace_back( uni );
+    }
+    
+    for( size_t i = 0; i < float_uniforms; i++ )
+    {
+        ShaderUniform uni;
+        uni.size = 1;
+        
+        if ( !parseUniform( data, &uni ) )
+            return raiseError( "Failed to parse uniform float %i", i );
+        
+        _uniforms.emplace_back( uni );
+    }
+    
+    return true;
+}
+
 bool ShaderParser::parseBinaryShader( char *data, uint32 size )
 {
     uint16 version;
@@ -225,8 +286,18 @@ bool ShaderParser::parseBinaryShader( char *data, uint32 size )
     uint16 samplersCount;
     data = elemcpy_le( &samplersCount, (uint16*)( data ), 1 );
 
-    if ( !parseBinarySampler( data, samplersCount ) ) return false;
-        
+    if ( samplersCount )
+    {
+        if ( !parseBinarySampler( data, samplersCount ) ) return false;
+    }
+    
+    uint16 variablesCount;
+    data = elemcpy_le( &variablesCount, (uint16*)( data ), 1 );
+    
+    if ( variablesCount )
+    {
+        if ( !parseBinaryUniforms( data, variablesCount ) ) return false;
+    }
     
     return true;
 }
