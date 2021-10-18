@@ -192,13 +192,21 @@ inline float toFloat(const char* str)
 {
 #ifdef PLATFORM_WIN
 	// Make a "C" locale instance in a unique_ptr RAII wrapper
+	#ifdef __MINGW32__
+	static std::unique_ptr<localeinfo_struct, void(*)(_locale_t)> locale(
+	#else
 	static std::unique_ptr<__crt_locale_pointers, void(*)(_locale_t)> locale(
+	#endif
 		_create_locale(LC_ALL, "C"),
 		[](_locale_t locale) {
 			_free_locale(locale);
 		}
 	);
+	#ifdef __MINGW32__
+	return _atof_l(str, locale.get());
+	#else
 	return _strtof_l(str, nullptr, locale.get());
+	#endif
 #else
 	// Make a "C" locale instance in a unique_ptr RAII wrapper
 	using locale_struct = std::remove_reference<decltype(*std::declval<locale_t>())>::type;

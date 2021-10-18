@@ -602,12 +602,12 @@ void Renderer::prepareRenderViews()
 	int start = shadowViewStartID;
 	for ( int i = 0; i < processedLightsCount; ++i )
 	{
-		RenderView *view = &views[ start + i ];
+		RenderView *view = &views[ start ];
 		if ( view->type != RenderViewType::Shadow ) continue;
 
 		LightNode *light = ( LightNode * ) view->node;
 
-		prepareShadowMapFrustum( light, start + i );
+		prepareShadowMapFrustum( light, start );
 		start += light->_shadowMapCount;
 	}
 
@@ -1106,7 +1106,7 @@ Matrix4f Renderer::calcCropMatrix( int renderView, const LightNode *light, const
 	// Merge frustum and AABB bounds and clamp to post-projective range [-1, 1]
 	float minX = clamp( maxf( frustMinX, bbMinX ), -1, 1 );
 	float minY = clamp( maxf( frustMinY, bbMinY ), -1, 1 );
-	float minZ = clamp( maxf( frustMinZ, bbMinZ ), -1, 1 );
+	float minZ = clamp( minf( frustMinZ, bbMinZ ), -1, 1 );
 	float maxX = clamp( minf( frustMaxX, bbMaxX ), -1, 1 );
 	float maxY = clamp( minf( frustMaxY, bbMaxY ), -1, 1 );
 	float maxZ = clamp( minf( frustMaxZ, bbMaxZ ), -1, 1 );

@@ -131,6 +131,7 @@ void printHelp()
 	log( "-lodDist2 dist    distance for LOD2" );
 	log( "-lodDist3 dist    distance for LOD3" );
 	log( "-lodDist4 dist    distance for LOD4" );
+	log( "-useMaterialId    use material id instead of material name" );
 }
 
 
@@ -152,7 +153,7 @@ int main( int argc, char **argv )
 	vector< string > assetList;
 	string input = argv[1], basePath = "./", outPath = "./";
 	AssetTypes::List assetType = AssetTypes::Model;
-	bool geoOpt = true, overwriteMats = false, addModelName = false;
+	bool geoOpt = true, overwriteMats = false, addModelName = false, useMaterialId = false;
 	float lodDists[4] = { 10, 20, 40, 80 };
 	string modelName = "";	
 
@@ -205,6 +206,10 @@ int main( int argc, char **argv )
 		else if( _stricmp( arg.c_str(), "-addModelName" ) == 0 )
 		{
 			addModelName = true;
+		}
+		else if( _stricmp( arg.c_str(), "-useMaterialId" ) == 0 )
+		{
+			useMaterialId = true;
 		}
 		else
 		{
@@ -272,6 +277,19 @@ int main( int argc, char **argv )
 			log( "Parsing dae asset '" + assetList[i] + "'..." );
 			if( !daeDoc->parseFile( sourcePath ) )
 				return 1;
+
+			// By default, material's names are used to make `.material.xml` filenames.
+			// These names might contains filesystem's reserved characters that might cause unexpected 
+			// issues when transfering files from one filesystem to an other.
+			// The command line arguement `-useMaterialId` allow to use material's `id` instead of names,
+			// as `id` are less prone to contain reserved characters.
+			if( useMaterialId )
+			{
+				for( unsigned int i = 0; i < daeDoc->libMaterials.materials.size(); ++i )
+				{
+					daeDoc->libMaterials.materials[i]->name = daeDoc->libMaterials.materials[i]->id;
+				}
+			}
 			
 			if( assetType == AssetTypes::Model )
 			{
