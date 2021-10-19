@@ -3,7 +3,7 @@
 // --------------------------------------
 //		- Skinning functions -
 //
-// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2021 Nicolas Schulz and Horde3D team
 //
 // You may use the following code in projects based on the Horde3D graphics engine.
 //
