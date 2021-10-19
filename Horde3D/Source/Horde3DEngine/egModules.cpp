@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2021 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -34,7 +34,7 @@
 
 namespace Horde3D {
 
-const char *Modules::versionString = "Horde3D 2.0.0";
+const char *Modules::versionString = "Horde3D 2.0.1";
 
 bool								Modules::_errorFlag = false;
 EngineConfig						*Modules::_engineConfig = 0x0;
