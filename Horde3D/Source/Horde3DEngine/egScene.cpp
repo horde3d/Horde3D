@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2021 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -428,7 +428,7 @@ void SpatialGraph::updateQueues( const Frustum &frustum1, const Frustum *frustum
 }
 
 
-void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /*= false*/ )
+void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /*= false*/, bool preparingViews /* = false*/ )
 {
 	// Check that some views are still not updated
 	if ( !forceUpdateAllViews )
@@ -450,7 +450,11 @@ void SpatialGraph::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /
 		}
 	}
 
-	Modules::sceneMan().updateNodes();
+	// Updating nodes during render view preparation is unnecessary
+	// because it is done as the first action and nodes do not change
+	// during render view preparation
+	if ( !preparingViews )
+		Modules::sceneMan().updateNodes();
 
 	Vec3f camPos;
 	if ( Modules::renderer().getCurCamera() != 0x0 )
@@ -707,9 +711,9 @@ void SceneManager::updateQueues( const Frustum &frustum1, const Frustum *frustum
 }
 
 
-void SceneManager::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /* = false */ )
+void SceneManager::updateQueues( uint32 filterIgnore, bool forceUpdateAllViews /* = false */, bool preparingViews /* = false */ )
 {
-	_spatialGraph->updateQueues( filterIgnore, forceUpdateAllViews );
+	_spatialGraph->updateQueues( filterIgnore, forceUpdateAllViews, preparingViews );
 }
 
 

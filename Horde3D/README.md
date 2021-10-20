@@ -1,4 +1,4 @@
-Horde3D SDK v2.0.0
+Horde3D SDK v2.0.1
 ==================
 
 > Next-Generation Graphics Engine
@@ -47,7 +47,7 @@ Some notable features:
 
 ## License
 
-Copyright (C) 2006-2020 Nicolas Schulz and the Horde3D Team
+Copyright (C) 2006-2021 Nicolas Schulz and the Horde3D Team
 	
 The complete SDK is licensed under the terms of the Eclipse Public License (EPL).
 	

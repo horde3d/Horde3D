@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2021 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -271,7 +271,7 @@ public:
 	virtual void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
 	                   RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderQueue );
 
-	virtual void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false );
+	virtual void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false, bool preparingViews = false );
 
 	// Render view handling
 	void clearViews();
@@ -363,7 +363,25 @@ public:
 	//
 	void updateSpatialNode( uint32 sgHandle ) { _spatialGraph->updateNode( sgHandle ); }
 
-	void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false );
+	/* Function: updateQueues
+			Updates internal queues of the spatial graph.
+		
+		Details:
+			This function updates spatial nodes registered in the graph. It performs scene graph update,
+			if required, but its main purpose is to perform culling for registered render views and
+			generate render queues.
+		
+		Parameters:
+			filterIgnore - allows filtering nodes that have the provided flags (see SceneNodeFlags).
+			forceUpdateAllViews - allows forcing full update for all render views, will perform culling
+								  for all objects and render views again (default:false).
+			preparingViews - is updateQueues called from prepareRenderViews function. If yes, additional
+							 root node update is not called (default:false)
+			
+		Returns:
+			nothing
+	*/
+	void updateQueues( uint32 filterIgnore, bool forceUpdateAllViews = false, bool preparingViews = false );
 	void updateQueues( const Frustum &frustum1, const Frustum *frustum2,
 		RenderingOrder::List order, uint32 filterIgnore, bool lightQueue, bool renderableQueue );
 
