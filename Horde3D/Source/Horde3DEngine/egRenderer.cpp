@@ -3,7 +3,7 @@
 // Horde3D
 //   Next-Generation Graphics Engine
 // --------------------------------------
-// Copyright (C) 2006-2020 Nicolas Schulz and Horde3D team
+// Copyright (C) 2006-2021 Nicolas Schulz and Horde3D team
 //
 // This software is distributed under the terms of the Eclipse Public License v1.0.
 // A copy of the license may be obtained at: http://www.eclipse.org/legal/epl-v10.html
@@ -541,9 +541,9 @@ void Renderer::prepareRenderViews()
 	// Clear old views 
 	scm.clearRenderViews();
 
-	// WARNING! Currently lighting will not be present in the first frame, because scene update will happen
-	// after lights addition to render views. If that behavior is not desirable uncomment the following statement (may reduce performance a bit)
-//	scm.updateNodes();
+	// Update all nodes before preparing render views. This eliminates problems with frustum culling 
+	// lagging one frame behind for lights and camera movements.
+	scm.updateNodes();
 
 	//
 	// Step 1. Add views for camera and lights based on their frustums
@@ -568,7 +568,7 @@ void Renderer::prepareRenderViews()
 	}
 
 	// Generate render queue for camera and lights
-	scm.updateQueues( SceneNodeFlags::NoDraw );
+	scm.updateQueues( SceneNodeFlags::NoDraw, false, true );
 
 	//
 	// Step 2. Create temporary crop shadow frustums that are used for creating tighter shadow frustums to increase shadow quality
@@ -592,7 +592,7 @@ void Renderer::prepareRenderViews()
 	}
 
 	// Prepare render queues for crop frustums
-	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow );
+	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
 
 	//
 	// Step 3. Calculate final shadow frustums
@@ -612,7 +612,7 @@ void Renderer::prepareRenderViews()
 	}
 
 	// Shadow frustums are ready, prepare render queues for them
-	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow );
+	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
 
 	timer->setEnabled( false );
 }
