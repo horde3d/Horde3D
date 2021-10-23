@@ -62,6 +62,7 @@ set(HORDE3D_SOURCES
 
 add_definitions(-DCMAKE )
 
+# Desktop GL render backends
 if (USE_GL2 OR USE_GL4)
 	if (USE_GL2)
 #		add_definitions(-DH3D_USE_GL2)
@@ -83,6 +84,7 @@ if (USE_GL2 OR USE_GL4)
 	list(APPEND HORDE3D_SOURCES "utOpenGL.cpp")
 endif(USE_GL2 OR USE_GL4)
 
+# GLES 3 render backend
 if (USE_GLES3)
 #	add_definitions(-DH3D_USE_GLES3)
 	set( H3D_USE_GLES3 1 )
@@ -94,6 +96,12 @@ if (USE_GLES3)
 	list(APPEND HORDE3D_SOURCES "utOpenGLES3.cpp")
 
 endif (USE_GLES3)
+
+# Null render backend
+if ( USE_NULL )
+    list(APPEND HORDE3D_SOURCES "egRendererBaseNull.h")
+	list(APPEND HORDE3D_SOURCES "egRendererBaseNull.cpp")
+endif( USE_NULL )
 
 # Add renderers, specified during build, in the config.h file
 configure_file( config.h.in ${CMAKE_BINARY_DIR}/config.h )
