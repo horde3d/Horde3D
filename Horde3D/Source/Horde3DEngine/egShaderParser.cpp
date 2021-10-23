@@ -57,19 +57,19 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
                 sampler.defTex = (TextureResource *)Modules::resMan().findResource( ResourceTypes::Texture, "$TexCube" );
                 break;
             default:
-                return raiseError( "Unknown sampler type for sampler '%d'.", i );
+                return raiseError( "Unknown sampler type for sampler " + std::to_string( i ) );
         }
         
         uint16 samplerIdSize;
         data = elemcpy_le( &samplerIdSize, (uint16*)( data ), 1 );
         if ( samplerIdSize == 0 )
         {
-            return raiseError( "Incorrect sampler id for sampler '%d'", i );
+            return raiseError( "Incorrect sampler id for sampler " + std::to_string( i ) );
         }
         if ( samplerIdSize > 255 )
         {
             samplerIdSize = 255;
-            Modules::log().writeWarning( "Limiting sampler id to 255 chars. May lead to incorrect behavior. Decrease sampler id length." );
+            Modules::log().writeWarning( "Limiting sampler id to 255 chars for sampler '%d'. May lead to incorrect behavior. Decrease sampler id length", i );
         }
         
         char id[ 256 ];
@@ -81,8 +81,8 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
         if ( samplerTexNameSize > 255 )
         {
             samplerTexNameSize = 255;
-            Modules::log().writeWarning( "Limiting sampler texture name to 255 chars. May lead to incorrect behavior."
-                                         "Decrease sampler texture name length." );
+            Modules::log().writeWarning( "Limiting sampler texture name to 255 chars. May lead to incorrect behavior. "
+                                         "Decrease sampler texture name length" );
         }
         
         if ( samplerTexNameSize > 0 )
@@ -115,7 +115,7 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
                 sampler.sampState |= SS_ADDR_CLAMPCOL;
                 break;
             default:
-                return raiseError( "Unsupported sampler address value for sampler '%d'", i );
+                return raiseError( "Unsupported sampler address value for sampler " + std::to_string( i ) );
         }
         
         uint16 samplerFilter;
@@ -132,7 +132,7 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
                 sampler.sampState |= SS_FILTER_TRILINEAR;
                 break;
             default:
-                return raiseError( "Unsupported sampler filter value for sampler %d", i );
+                return raiseError( "Unsupported sampler filter value for sampler " + std::to_string( i ) );
         }
         
         uint16 samplerMaxAnisotropy;
@@ -155,15 +155,18 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
                 sampler.sampState |= SS_ANISO16;
                 break;
             default:
-                return raiseError( "Unsupported max anisotropy value for sampler %d", i );
+                return raiseError( "Unsupported max anisotropy value for sampler " + std::to_string( i ) );
         }
         
         uint16 samplerUsage;
         data = elemcpy_le( &samplerUsage, (uint16*)( data ), 1 );
         if ( sampler.type != TextureTypes::Tex2D )
-            return raiseError( "Invalid sampler type is used as compute image, only sampler2D is supported, sampler %d", i );
+            return raiseError( "Invalid sampler type is used as compute image, only sampler2D is supported, sampler " 
+                                + std::to_string( i ) );
+            
         if ( !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
-            return raiseError( "Using texture as compute image is not supported on this version of render interface, sampler %d", i );
+            return raiseError( "Using texture as compute image is not supported on this version of render interface,"
+                               "sampler " + std::to_string( i ) );
 
         switch( samplerUsage )
         {
@@ -180,7 +183,7 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
                 sampler.usage = TextureUsage::ComputeImageRW;
                 break;
             default:
-                return raiseError( "Unsupported texture usage, sampler %d", i );
+                return raiseError( "Unsupported texture usage, sampler " + std::to_string( i ) );
         }
     }
     
@@ -229,7 +232,7 @@ bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
         uni.size = 4;
         
         if ( !parseUniform( data, &uni ) )
-            return raiseError( "Failed to parse uniform float4 %i", i );
+            return raiseError( "Failed to parse uniform float4 " + std::to_string( i ) );
         
         _uniforms.emplace_back( uni );
     }
@@ -240,7 +243,7 @@ bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
         uni.size = 1;
         
         if ( !parseUniform( data, &uni ) )
-            return raiseError( "Failed to parse uniform float %i", i );
+            return raiseError( "Failed to parse uniform float " + std::to_string( i ) );
         
         _uniforms.emplace_back( uni );
     }
@@ -256,7 +259,8 @@ bool ShaderParser::parseBinaryShader( char *data, uint32 size )
     
     uint16 renderBackendType;
     data = elemcpy_le( &renderBackendType, (uint16*)( data ), 1 );
-    if( renderBackendType != RenderBackendType::OpenGL4 && renderBackendType != RenderBackendType::OpenGLES3 ) 
+    if( renderBackendType != RenderBackendType::OpenGL4 && renderBackendType != RenderBackendType::OpenGLES3 && 
+        renderBackendType != 256 /* Null backend */ ) 
         return raiseError( "Unsupported render backend for binary shader file" );
     
     // check generator/driver name and version
