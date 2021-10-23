@@ -22,12 +22,18 @@
 namespace Horde3D {
 namespace RDI_Null {
 
+#define NULL_VERTEX_BUFFER 0
+#define NULL_INDEX_BUFFER 1
+    
+static const char *defaultShaderVS = "Null\n";
 
+static const char *defaultShaderFS = "Null\n";
+    
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
 
-GPUTimerNull::GPUTimerNull() : _numQueries( 0 ),  _queryFrame( 0 ), _activeQuery( false )
+GPUTimerNull::GPUTimerNull() : _queryFrame( 0 ), _activeQuery( false )
 {
 	_beginQuery.bind< GPUTimerNull, &GPUTimerNull::beginQuery >( this );
 	_endQuery.bind< GPUTimerNull, &GPUTimerNull::endQuery >( this );
@@ -53,24 +59,11 @@ void GPUTimerNull::beginQuery( uint32 frameID )
 		if( !updateResults() ) return;
 
 		_queryFrame = frameID;
-		_numQueries = 0;
 	}
 	
-	// Create new query pair if necessary
-	uint32 queryObjs[2];
-	if( _numQueries++ * 2 == _queryPool.size() )
-	{
-		glGenQueries( 2, queryObjs );
-		_queryPool.push_back( queryObjs[0] );
-		_queryPool.push_back( queryObjs[1] );
-	}
-	else
-	{
-		queryObjs[0] = _queryPool[(_numQueries - 1) * 2];
-	}
-	
+	_t0 = std::chrono::steady_clock::now();
+    
 	_activeQuery = true;
-	 glQueryCounterARB( queryObjs[0], GL_TIMESTAMP );
 }
 
 
@@ -78,35 +71,15 @@ void GPUTimerNull::endQuery()
 {
 	if( _activeQuery )
 	{	
-		glQueryCounterARB( _queryPool[_numQueries * 2 - 1], GL_TIMESTAMP );
-		_activeQuery = false;
+        _t1 = std::chrono::steady_clock::now();
+        _activeQuery = false;
 	}
 }
 
 
 bool GPUTimerNull::updateResults()
 {
-	if( _numQueries == 0 )
-	{
-		_time = 0;
-		return true;
-	}
-	
-	// Make sure that last query is available
-	GLint available;
-	glGetQueryObjectiv( _queryPool[_numQueries * 2 - 1], GL_QUERY_RESULT_AVAILABLE, &available );
-	if( !available ) return false;
-	
-	//  Accumulate time
-	GLuint64 timeStart = 0, timeEnd = 0, timeAccum = 0;
-	for( uint32 i = 0; i < _numQueries; ++i )
-	{
-		glGetQueryObjectui64vARB( _queryPool[i * 2], GL_QUERY_RESULT, &timeStart );
-		glGetQueryObjectui64vARB( _queryPool[i * 2 + 1], GL_QUERY_RESULT, &timeEnd );
-		timeAccum += timeEnd - timeStart;
-	}
-	
-	_time = (float)((double)timeAccum / 1000000.0);
+	_time = std::chrono::duration_cast<std::chrono::duration< float > >( _t1 - _t0 ).count();
 	return true;
 }
 
@@ -375,8 +348,8 @@ void RenderDeviceNull::destroyGeometry( uint32& geoObj, bool destroyBindedBuffer
 			destroyBuffer( geo.vertexBufInfo[ i ].vbObj );
 		}
 
-		decreaseBufferRefCount( geo.indexBufIdx );
-		destroyBuffer( geo.indexBufIdx );
+		decreaseBufferRefCount( geo.indexBuf );
+		destroyBuffer( geo.indexBuf );
 	}
 	else
 	{
@@ -386,7 +359,7 @@ void RenderDeviceNull::destroyGeometry( uint32& geoObj, bool destroyBindedBuffer
 			decreaseBufferRefCount( geo.vertexBufInfo[ i ].vbObj );
 		}
 
-		decreaseBufferRefCount( geo.indexBufIdx );
+		decreaseBufferRefCount( geo.indexBuf );
 	}
 	
 	_geometryInfo.remove( geoObj );
@@ -398,7 +371,7 @@ void RenderDeviceNull::decreaseBufferRefCount( uint32 bufObj )
 {
 	if ( bufObj == 0 ) return;
 
-	RDIBufferGL2 &buf = _buffers.getRef( bufObj );
+	RDIBufferNull &buf = _buffers.getRef( bufObj );
 
 	buf.geometryRefCount--;
 }
@@ -406,56 +379,23 @@ void RenderDeviceNull::decreaseBufferRefCount( uint32 bufObj )
 
 uint32 RenderDeviceNull::createVertexBuffer( uint32 size, const void *data )
 {
-	return createBuffer( GL_ARRAY_BUFFER, size, data );
+	return createBuffer( NULL_VERTEX_BUFFER, size, data );
 }
 
 
 uint32 RenderDeviceNull::createIndexBuffer( uint32 size, const void *data )
 {
-	return createBuffer( GL_ELEMENT_ARRAY_BUFFER, size, data );;
+	return createBuffer( NULL_INDEX_BUFFER, size, data );;
 }
 
 
 uint32 RenderDeviceNull::createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data )
 {
-	RDITextureBufferGL2 buf;
-
-	buf.bufObj = createBuffer( GL_TEXTURE_BUFFER_ARB, bufSize, data );
-
-	glGenTextures( 1, &buf.glTexID );
-	glActiveTexture( GL_TEXTURE15 );
-	glBindTexture( GL_TEXTURE_BUFFER_ARB, buf.glTexID );
-
-	switch ( format )
-	{
-		case TextureFormats::BGRA8:
-			buf.glFmt = GL_RGBA8;
-			break;
-		case TextureFormats::RGBA16F:
-			buf.glFmt = GL_RGBA16F_ARB;
-			break;
-		case TextureFormats::RGBA32F:
-			buf.glFmt = GL_RGBA32F_ARB;
-			break;
-		case TextureFormats::R32F:
-			buf.glFmt = GL_R32F_ARB;
-			break;
-		case TextureFormats::RG32F:
-			buf.glFmt = GL_RG32F_ARB;
-			break;
-		default:
-			ASSERT( 0 );
-			break;
-	};
-
-	// bind texture to buffer
-	glTexBufferARB( GL_TEXTURE_BUFFER_ARB, buf.glFmt, _buffers.getRef( buf.bufObj ).glObj );
-
-	glBindTexture( GL_TEXTURE_BUFFER_ARB, 0 );
-	if ( _texSlots[ 15 ].texObj )
-		glBindTexture( _textures.getRef( _texSlots[ 15 ].texObj ).type, _textures.getRef( _texSlots[ 15 ].texObj ).glObj );
-
-	return _textureBuffs.add( buf );
+    H3D_UNUSED_VAR( format );
+	H3D_UNUSED_VAR( bufSize );
+    H3D_UNUSED_VAR( data );
+    
+	return 0;
 }
 
 
@@ -472,14 +412,10 @@ uint32 RenderDeviceNull::createShaderStorageBuffer( uint32 size, const void *dat
 
 uint32 RenderDeviceNull::createBuffer( uint32 bufType, uint32 size, const void *data )
 {
-	RDIBufferGL2 buf;
+	RDIBufferNull buf;
 
 	buf.type = bufType;
 	buf.size = size;
-	glGenBuffers( 1, &buf.glObj );
-	glBindBuffer( buf.type, buf.glObj );
-	glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
-	glBindBuffer( buf.type, 0 );
 	
 	_bufferMem += size;
 	return _buffers.add( buf );
@@ -491,12 +427,10 @@ void RenderDeviceNull::destroyBuffer( uint32& bufObj )
 	if( bufObj == 0 )
 		return;
 	
-	RDIBufferGL2 &buf = _buffers.getRef( bufObj );
+	RDIBufferNull &buf = _buffers.getRef( bufObj );
 
 	if ( buf.geometryRefCount < 1 )
 	{
-		glDeleteBuffers( 1, &buf.glObj );
-
 		_bufferMem -= buf.size;
 		_buffers.remove( bufObj );
 		bufObj = 0;
@@ -506,47 +440,26 @@ void RenderDeviceNull::destroyBuffer( uint32& bufObj )
 
 void RenderDeviceNull::destroyTextureBuffer( uint32& bufObj )
 {
-	
+	H3D_UNUSED_VAR( bufObj );
 }
 
 
 void RenderDeviceNull::updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data )
 {
-	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
-	ASSERT( offset + size <= buf.size );
 	
-	glBindBuffer( buf.type, buf.glObj );
-	
-	if( offset == 0 && size == buf.size )
-	{
-		// Replacing the whole buffer can help the driver to avoid pipeline stalls
-		glBufferData( buf.type, size, data, GL_DYNAMIC_DRAW );
-		return;
-	}
-
-	glBufferSubData( buf.type, offset, size, data );
 }
 
 
 void * RenderDeviceNull::mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType )
 {
-	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
-	ASSERT( offset + size <= buf.size );
-
-	glBindBuffer( buf.type, buf.glObj );
-
-	return glMapBuffer( buf.type, bufferMappingTypes[ mapType ] );
+	return nullptr;
 }
 
 
 void RenderDeviceNull::unmapBuffer( uint32 geoObj, uint32 bufObj )
 {
-	const RDIBufferGL2 &buf = _buffers.getRef( bufObj );
-
-	// multiple buffers can be mapped at the same time, so bind the one that needs to be unmapped
-	glBindBuffer( buf.type, buf.glObj );
-
-	glUnmapBuffer( buf.type );
+    H3D_UNUSED_VAR( geoObj );
+    H3D_UNUSED_VAR( bufObj );
 }
 
 
@@ -582,8 +495,8 @@ uint32 RenderDeviceNull::createTexture( TextureTypes::List type, int width, int 
 			Modules::log().writeWarning( "Texture has non-power-of-two dimensions although NPOT is not supported by GPU" );
 	}
 	
-	RDITextureGL2 tex;
-	tex.type = textureTypes[ type ];
+	RDITextureNull tex;
+	tex.type = 1;
 	tex.format = format;
 	tex.width = width;
 	tex.height = height;
@@ -592,28 +505,11 @@ uint32 RenderDeviceNull::createTexture( TextureTypes::List type, int width, int 
 	tex.genMips = genMips;
 	tex.hasMips = maxMipLevel > 0;
 
-	if ( format > ( int ) textureGLFormats.size() ) { ASSERT( 0 ); return 0; }
-
-	tex.glFmt = format != TextureFormats::DEPTH
-				? ( tex.sRGB ? textureGLFormats[ format ].glSRGBFormat : textureGLFormats[ format ].glCreateFormat )
-				: _depthFormat;
-
-	glGenTextures( 1, &tex.glObj );
-	glActiveTexture( GL_TEXTURE15 );
-	glBindTexture( tex.type, tex.glObj );
-
-	glTexParameteri( tex.type, GL_TEXTURE_MAX_LEVEL, maxMipLevel );
-
-	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glTexParameterfv( tex.type, GL_TEXTURE_BORDER_COLOR, borderColor );
+	tex.glFmt = 1;
 	
 	tex.samplerState = 0;
 	applySamplerState( tex );
 	
-	glBindTexture( tex.type, 0 );
-	if( _texSlots[15].texObj )
-		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
-
 	// Calculate memory requirements
 	tex.memSize = calcTextureSize( format, width, height, depth, maxMipLevel );
 	if( type == TextureTypes::TexCube ) tex.memSize *= 6;
@@ -625,67 +521,16 @@ uint32 RenderDeviceNull::createTexture( TextureTypes::List type, int width, int 
 
 void RenderDeviceNull::generateTextureMipmap( uint32 texObj )
 {
-	const RDITextureGL2 &tex = _textures.getRef( texObj );
-
-	glActiveTexture( GL_TEXTURE15 );
-	glBindTexture( tex.type, tex.glObj );
-	glGenerateMipmapEXT( tex.type );
-	glBindTexture( tex.type, 0 );
-	if( _texSlots[15].texObj )
-		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+	H3D_UNUSED_VAR( texObj );
 }
 
 
 void RenderDeviceNull::uploadTextureData( uint32 texObj, int slice, int mipLevel, const void *pixels )
 {
-	const RDITextureGL2 &tex = _textures.getRef( texObj );
-	TextureFormats::List format = tex.format;
-
-	glActiveTexture( GL_TEXTURE15 );
-	glBindTexture( tex.type, tex.glObj );
-	
-	bool compressed = isCompressedTextureFormat( format );
-
-	int inputType = textureGLFormats[ format ].glInputType;
-	int inputFormat = textureGLFormats[ format ].glInputFormat;
-	
-	// Calculate size of next mipmap using "floor" convention
-	int width = std::max( tex.width >> mipLevel, 1 ), height = std::max( tex.height >> mipLevel, 1 );
-	
-	if( tex.type == textureTypes[ TextureTypes::Tex2D ] || tex.type == textureTypes[ TextureTypes::TexCube ] )
-	{
-		int target = ( tex.type == textureTypes[ TextureTypes::Tex2D ] ) ?
-			GL_TEXTURE_2D : ( GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice );
-		
-		if( compressed )
-			glCompressedTexImage2D( target, mipLevel, tex.glFmt, width, height, 0,
-			                        calcTextureSize( format, width, height, 1 ), pixels );
-		else
-			glTexImage2D( target, mipLevel, tex.glFmt, width, height, 0, inputFormat, inputType, pixels );
-	}
-	else if ( tex.type == textureTypes[ TextureTypes::Tex3D ] )
-	{
-		int depth = std::max( tex.depth >> mipLevel, 1 );
-		
-		if( compressed )
-			glCompressedTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			                        calcTextureSize( format, width, height, depth ), pixels );	
-		else
-			glTexImage3D( GL_TEXTURE_3D, mipLevel, tex.glFmt, width, height, depth, 0,
-			              inputFormat, inputType, pixels );
-	}
-
-	if( tex.genMips && (tex.type != GL_TEXTURE_CUBE_MAP || slice == 5) )
-	{
-		// Note: for cube maps mips are only generated when the side with the highest index is uploaded
-		glEnable( tex.type );  // Workaround for ATI driver bug
-		glGenerateMipmapEXT( tex.type );
-		glDisable( tex.type );
-	}
-
-	glBindTexture( tex.type, 0 );
-	if( _texSlots[15].texObj )
-		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
+	H3D_UNUSED_VAR( texObj );
+    H3D_UNUSED_VAR( slice );
+    H3D_UNUSED_VAR( mipLevel );
+    H3D_UNUSED_VAR( pixels );
 }
 
 
@@ -694,8 +539,7 @@ void RenderDeviceNull::destroyTexture( uint32& texObj )
 	if( texObj == 0 )
 		return;
 	
-	const RDITextureGL2 &tex = _textures.getRef( texObj );
-	if( tex.glObj ) glDeleteTextures( 1, &tex.glObj );
+	const RDITextureNull &tex = _textures.getRef( texObj );
 
 	_textureMem -= tex.memSize;
 	_textures.remove( texObj );
@@ -728,138 +572,40 @@ void RenderDeviceNull::updateTextureData( uint32 texObj, int slice, int mipLevel
 
 bool RenderDeviceNull::getTextureData( uint32 texObj, int slice, int mipLevel, void *buffer )
 {
-	const RDITextureGL2 &tex = _textures.getRef( texObj );
+	const RDITextureNull &tex = _textures.getRef( texObj );
+
+    memset( buffer, 0, tex.memSize );
 	
-	int target = tex.type == textureTypes[ TextureTypes::TexCube ] ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
-	if( target == GL_TEXTURE_CUBE_MAP ) target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + slice;
-	
-	int fmt, type = 0;
-	glActiveTexture( GL_TEXTURE15 );
-	glBindTexture( tex.type, tex.glObj );
-	
-	bool compressed = isCompressedTextureFormat( tex.format );
-
-	if ( tex.format > ( int ) textureGLFormats.size() ) return false;
-
-	fmt = textureGLFormats[ tex.format ].glInputFormat;
-	type = textureGLFormats[ tex.format ].glInputType;
-
-	if( compressed )
-		glGetCompressedTexImage( target, mipLevel, buffer );
-	else
-		glGetTexImage( target, mipLevel, fmt, type, buffer );
-
-	glBindTexture( tex.type, 0 );
-	if( _texSlots[15].texObj )
-		glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
-
 	return true;
 }
 
 void RenderDeviceNull::bindImageToTexture(uint32 texObj, void *eglImage)
 {
-	if( !glExt::OES_EGL_image )
-		Modules::log().writeError("OES_egl_image not supported");
-	else
-	{
-		const RDITextureGL2 &tex = _textures.getRef( texObj );
-		glActiveTexture( GL_TEXTURE15 );
-		glBindTexture( tex.type, tex.glObj );
-		glEGLImageTargetTexture2DOES( tex.type, eglImage );
-		glBindTexture( tex.type, 0 );
-		if( _texSlots[15].texObj )
-			glBindTexture( _textures.getRef( _texSlots[15].texObj ).type, _textures.getRef( _texSlots[15].texObj ).glObj );
-	}
+    H3D_UNUSED_VAR( texObj );
+    H3D_UNUSED_VAR( eglImage );
 }
 
 // =================================================================================================
 // Shaders
 // =================================================================================================
 
-uint32 RenderDeviceNull::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc )
+uint32 RenderDeviceNull::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
+                                              const char *tessControlShaderSrc, const char *tessEvalShaderSrc, const char *computeShaderSrc )
 {
-	int infologLength = 0;
-	int charsWritten = 0;
-	char *infoLog = 0x0;
-	int status;
-
-	_shaderLog = "";
-
-	// Vertex shader
-	uint32 vs = glCreateShader( GL_VERTEX_SHADER );
-	glShaderSource( vs, 1, &vertexShaderSrc, 0x0 );
-	glCompileShader( vs );
-	glGetShaderiv( vs, GL_COMPILE_STATUS, &status );
-	if( !status )
-	{	
-		// Get info
-		glGetShaderiv( vs, GL_INFO_LOG_LENGTH, &infologLength );
-		if( infologLength > 1 )
-		{
-			infoLog = new char[infologLength];
-			glGetShaderInfoLog( vs, infologLength, &charsWritten, infoLog );
-			_shaderLog = _shaderLog + "[Vertex Shader]\n" + infoLog;
-			delete[] infoLog; infoLog = 0x0;
-		}
-
-		glDeleteShader( vs );
-		return 0;
-	}
-
-	// Fragment shader
-	uint32 fs = glCreateShader( GL_FRAGMENT_SHADER );
-	glShaderSource( fs, 1, &fragmentShaderSrc, 0x0 );
-	glCompileShader( fs );
-	glGetShaderiv( fs, GL_COMPILE_STATUS, &status );
-	if( !status )
-	{	
-		glGetShaderiv( fs, GL_INFO_LOG_LENGTH, &infologLength );
-		if( infologLength > 1 )
-		{
-			infoLog = new char[infologLength];
-			glGetShaderInfoLog( fs, infologLength, &charsWritten, infoLog );
-			_shaderLog = _shaderLog + "[Fragment Shader]\n" + infoLog;
-			delete[] infoLog; infoLog = 0x0;
-		}
-
-		glDeleteShader( vs );
-		glDeleteShader( fs );
-		return 0;
-	}
-
-	// Shader program
-	uint32 program = glCreateProgram();
-	glAttachShader( program, vs );
-	glAttachShader( program, fs );
-	glDeleteShader( vs );
-	glDeleteShader( fs );
-
-	return program;
+    H3D_UNUSED_VAR( vertexShaderSrc );
+    H3D_UNUSED_VAR( fragmentShaderSrc );
+    H3D_UNUSED_VAR( geometryShaderSrc );
+    H3D_UNUSED_VAR( tessControlShaderSrc );
+    H3D_UNUSED_VAR( tessEvalShaderSrc );
+    H3D_UNUSED_VAR( computeShaderSrc );
+    
+	return 1;
 }
 
 
 bool RenderDeviceNull::linkShaderProgram( uint32 programObj )
 {
-	int infologLength = 0;
-	int charsWritten = 0;
-	char *infoLog = 0x0;
-	int status;
-
-	_shaderLog = "";
-	
-	glLinkProgram( programObj );
-	glGetProgramiv( programObj, GL_INFO_LOG_LENGTH, &infologLength );
-	if( infologLength > 1 )
-	{
-		infoLog = new char[infologLength];
-		glGetProgramInfoLog( programObj, infologLength, &charsWritten, infoLog );
-		_shaderLog = _shaderLog + "[Linking]\n" + infoLog;
-		delete[] infoLog; infoLog = 0x0;
-	}
-	
-	glGetProgramiv( programObj, GL_LINK_STATUS, &status );
-	if( !status ) return false;
-
+    H3D_UNUSED_VAR( programObj );
 	return true;
 }
 
@@ -873,51 +619,15 @@ uint32 RenderDeviceNull::createShader( const char *vertexShaderSrc, const char *
 	H3D_UNUSED_VAR( computeShaderSrc );
 
 	// Compile and link shader
-	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
+	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
+                                             tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
 	if( programObj == 0 ) return 0;
 	if( !linkShaderProgram( programObj ) ) return 0;
 	
-	uint32 shaderId = _shaders.add( RDIShaderGL2() );
-	RDIShaderGL2 &shader = _shaders.getRef( shaderId );
+	uint32 shaderId = _shaders.add( RDIShaderNull() );
+	RDIShaderNull &shader = _shaders.getRef( shaderId );
 	shader.oglProgramObj = programObj;
 	
-	int attribCount;
-	glGetProgramiv( programObj, GL_ACTIVE_ATTRIBUTES, &attribCount );
-	
-	for( uint32 i = 0; i < _numVertexLayouts; ++i )
-	{
-		RDIVertexLayout &vl = _vertexLayouts[i];
-		bool allAttribsFound = true;
-		
-		for( uint32 j = 0; j < 16; ++j )
-			shader.inputLayouts[i].attribIndices[j] = -1;
-		
-		for( int j = 0; j < attribCount; ++j )
-		{
-			char name[32];
-			uint32 size, type;
-			glGetActiveAttrib( programObj, j, 32, 0x0, (int *)&size, &type, name );
-
-			bool attribFound = false;
-			for( uint32 k = 0; k < vl.numAttribs; ++k )
-			{
-				if( vl.attribs[k].semanticName.compare(name) == 0 )
-				{
-					shader.inputLayouts[i].attribIndices[k] = glGetAttribLocation( programObj, name );
-					attribFound = true;
-				}
-			}
-
-			if( !attribFound )
-			{
-				allAttribsFound = false;
-				break;
-			}
-		}
-
-		shader.inputLayouts[i].valid = allAttribsFound;
-	}
-
 	return shaderId;
 }
 
@@ -927,8 +637,7 @@ void RenderDeviceNull::destroyShader( uint32& shaderId )
 	if( shaderId == 0 )
 		return;
 
-	RDIShaderGL2 &shader = _shaders.getRef( shaderId );
-	glDeleteProgram( shader.oglProgramObj );
+	RDIShaderNull &shader = _shaders.getRef( shaderId );
 	_shaders.remove( shaderId );
 	shaderId = 0;
 }
@@ -936,16 +645,6 @@ void RenderDeviceNull::destroyShader( uint32& shaderId )
 
 void RenderDeviceNull::bindShader( uint32 shaderId )
 {
-	if( shaderId != 0 )
-	{
-		RDIShaderGL2 &shader = _shaders.getRef( shaderId );
-		glUseProgram( shader.oglProgramObj );
-	}
-	else
-	{
-		glUseProgram( 0 );
-	}
-	
 	_curShaderId = shaderId;
 	_pendingMask |= PM_GEOMETRY;
 } 
@@ -953,15 +652,13 @@ void RenderDeviceNull::bindShader( uint32 shaderId )
 
 int RenderDeviceNull::getShaderConstLoc( uint32 shaderId, const char *name )
 {
-	RDIShaderGL2 &shader = _shaders.getRef( shaderId );
-	return glGetUniformLocation( shader.oglProgramObj, name );
+    return 0;
 }
 
 
 int RenderDeviceNull::getShaderSamplerLoc( uint32 shaderId, const char *name )
 {
-	RDIShaderGL2 &shader = _shaders.getRef( shaderId );
-	return glGetUniformLocation( shader.oglProgramObj, name );
+	return 0;
 }
 
 
@@ -970,51 +667,22 @@ int RenderDeviceNull::getShaderBufferLoc( uint32 shaderId, const char *name )
 	H3D_UNUSED_VAR( shaderId );
 	H3D_UNUSED_VAR( name );
 
-	// Not supported on OpenGL 2
 	return -1;
 }
 
 void RenderDeviceNull::setShaderConst( int loc, RDIShaderConstType type, void *values, uint32 count )
 {
-	switch( type )
-	{
-	case CONST_FLOAT:
-		glUniform1fv( loc, count, (float *)values );
-		break;
-	case CONST_FLOAT2:
-		glUniform2fv( loc, count, (float *)values );
-		break;
-	case CONST_FLOAT3:
-		glUniform3fv( loc, count, (float *)values );
-		break;
-	case CONST_FLOAT4:
-		glUniform4fv( loc, count, (float *)values );
-		break;
-	case CONST_FLOAT44:
-		glUniformMatrix4fv( loc, count, false, (float *)values );
-		break;
-	case CONST_FLOAT33:
-		glUniformMatrix3fv( loc, count, false, (float *)values );
-		break;
-	case CONST_INT:
-		glUniform1iv( loc, count, (GLint *)values );
-		break;
-	case CONST_INT2:
-		glUniform2iv( loc, count, (GLint *)values );
-		break;
-	case CONST_INT3:
-		glUniform3iv( loc, count, (GLint *)values );
-		break;
-	case CONST_INT4:
-		glUniform4iv( loc, count, (GLint *)values );
-		break;
-	}
+	H3D_UNUSED_VAR( loc );
+    H3D_UNUSED_VAR( type );
+    H3D_UNUSED_VAR( values );
+    H3D_UNUSED_VAR( count );
 }
 
 
 void RenderDeviceNull::setShaderSampler( int loc, uint32 texUnit )
 {
-	glUniform1i( loc, (int)texUnit );
+    H3D_UNUSED_VAR( loc );
+    H3D_UNUSED_VAR( texUnit );
 }
 
 
@@ -1032,12 +700,8 @@ const char *RenderDeviceNull::getDefaultFSCode()
 
 void RenderDeviceNull::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
 {
-	H3D_UNUSED_VAR( shaderId );
-	H3D_UNUSED_VAR( xDim );
-	H3D_UNUSED_VAR( yDim );
-	H3D_UNUSED_VAR( zDim );
-
-	Modules::log().writeError( "Compute shaders are not supported on OpenGL 2 render device." );
+	Modules::log().writeInfo( "Launching compute shader: shaderID = %u xDim = %u yDim = %u zDim = %u", 
+                              shaderId, xDim, yDim, zDim );
 }
 
 // =================================================================================================
@@ -1047,19 +711,12 @@ void RenderDeviceNull::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yD
 uint32 RenderDeviceNull::createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
                                             bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel )
 {
-	if( (format == TextureFormats::RGBA16F || format == TextureFormats::RGBA32F) && !_caps.texFloat )
-	{
-		return 0;
-	}
-
-	if( numColBufs > RDIRenderBufferGL2::MaxColorAttachmentCount ) return 0;
+	if( numColBufs > RDIRenderBufferNull::MaxColorAttachmentCount ) return 0;
 
 	uint32 maxSamples = 0;
 	if( _caps.rtMultisampling )
 	{
-		GLint value;
-		glGetIntegerv( GL_MAX_SAMPLES_EXT, &value );
-		maxSamples = (uint32)value;
+		maxSamples = 16;
 	}
 	if( samples > maxSamples )
 	{
@@ -1067,15 +724,14 @@ uint32 RenderDeviceNull::createRenderBuffer( uint32 width, uint32 height, Textur
 		Modules::log().writeWarning( "GPU does not support desired multisampling quality for render target" );
 	}
 
-	RDIRenderBufferGL2 rb;
+	RDIRenderBufferNull rb;
 	rb.width = width;
 	rb.height = height;
 	rb.samples = samples;
 
 	// Create framebuffers
-	glGenFramebuffersEXT( 1, &rb.fbo );
-	if( samples > 0 ) glGenFramebuffersEXT( 1, &rb.fboMS );
-
+    rb.fbo = 1;
+	
 	if( numColBufs > 0 )
 	{
 		// Attach color buffers
@@ -1086,122 +742,38 @@ uint32 RenderDeviceNull::createRenderBuffer( uint32 width, uint32 height, Textur
 			ASSERT( texObj != 0 );
 			uploadTextureData( texObj, 0, 0, 0x0 );
 			rb.colTexs[j] = texObj;
-			RDITextureGL2 &tex = _textures.getRef( texObj );
-			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
-			// Attach the texture
-			glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + j, GL_TEXTURE_2D, tex.glObj, 0 );
 
-			if( samples > 0 )
-			{
-				glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fboMS );
-				// Create a multisampled renderbuffer
-				glGenRenderbuffersEXT( 1, &rb.colBufs[j] );
-				glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rb.colBufs[j] );
-				glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, rb.samples, tex.glFmt, rb.width, rb.height );
-				// Attach the renderbuffer
-				glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + j,
-				                              GL_RENDERBUFFER_EXT, rb.colBufs[j] );
-			}
-		}
-
-		uint32 buffers[] = { GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT,
-		                     GL_COLOR_ATTACHMENT2_EXT, GL_COLOR_ATTACHMENT3_EXT };
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
-		glDrawBuffers( numColBufs, buffers );
-		
-		if( samples > 0 )
-		{
-			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fboMS );
-			glDrawBuffers( numColBufs, buffers );
-		}
-	}
-	else
-	{	
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
-		glDrawBuffer( GL_NONE );
-		glReadBuffer( GL_NONE );
-		
-		if( samples > 0 )
-		{
-			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fboMS );
-			glDrawBuffer( GL_NONE );
-			glReadBuffer( GL_NONE );
 		}
 	}
 
 	// Attach depth buffer
 	if( depth )
 	{
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
 		// Create a depth texture
 		uint32 texObj = createTexture( TextureTypes::Tex2D, rb.width, rb.height, 1, TextureFormats::DEPTH, 0, false, false, false );
 		ASSERT( texObj != 0 );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE );
 		uploadTextureData( texObj, 0, 0, 0x0 );
 		rb.depthTex = texObj;
-		RDITextureGL2 &tex = _textures.getRef( texObj );
-		// Attach the texture
-		glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, tex.glObj, 0 );
-
-		if( samples > 0 )
-		{
-			glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fboMS );
-			// Create a multisampled renderbuffer
-			glGenRenderbuffersEXT( 1, &rb.depthBuf );
-			glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rb.depthBuf );
-			glRenderbufferStorageMultisampleEXT( GL_RENDERBUFFER_EXT, rb.samples, _depthFormat, rb.width, rb.height );
-			// Attach the renderbuffer
-			glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,
-			                              GL_RENDERBUFFER_EXT, rb.depthBuf );
-		}
 	}
 
 	uint32 rbObj = _rendBufs.add( rb );
-	
-	// Check if FBO is complete
-	bool valid = true;
-	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
-	uint32 status = glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT );
-	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-	if( status != GL_FRAMEBUFFER_COMPLETE_EXT ) valid = false;
-	
-	if( samples > 0 )
-	{
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fboMS );
-		status = glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT );
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-		if( status != GL_FRAMEBUFFER_COMPLETE_EXT ) valid = false;
-	}
-
-	if( !valid )
-	{
-		destroyRenderBuffer( rbObj );
-		return 0;
-	}
-	
+			
 	return rbObj;
 }
 
 
 void RenderDeviceNull::destroyRenderBuffer( uint32& rbObj )
 {
-	RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
-	
-	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-	
-	if( rb.depthTex != 0 ) destroyTexture( rb.depthTex );
-	if( rb.depthBuf != 0 ) glDeleteRenderbuffersEXT( 1, &rb.depthBuf );
+	RDIRenderBufferNull &rb = _rendBufs.getRef( rbObj );
+
 	rb.depthTex = rb.depthBuf = 0;
 		
-	for( uint32 i = 0; i < RDIRenderBufferGL2::MaxColorAttachmentCount; ++i )
+	for( uint32 i = 0; i < RDIRenderBufferNull::MaxColorAttachmentCount; ++i )
 	{
 		if( rb.colTexs[i] != 0 ) destroyTexture( rb.colTexs[i] );
-		if( rb.colBufs[i] != 0 ) glDeleteRenderbuffersEXT( 1, &rb.colBufs[i] );
 		rb.colTexs[i] = rb.colBufs[i] = 0;
 	}
 
-	if( rb.fbo != 0 ) glDeleteFramebuffersEXT( 1, &rb.fbo );
-	if( rb.fboMS != 0 ) glDeleteFramebuffersEXT( 1, &rb.fboMS );
 	rb.fbo = rb.fboMS = 0;
 
 	_rendBufs.remove( rbObj );
@@ -1211,16 +783,16 @@ void RenderDeviceNull::destroyRenderBuffer( uint32& rbObj )
 
 uint32 RenderDeviceNull::getRenderBufferTex( uint32 rbObj, uint32 bufIndex )
 {
-	RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
+	RDIRenderBufferNull &rb = _rendBufs.getRef( rbObj );
 	
-	if( bufIndex < RDIRenderBufferGL2::MaxColorAttachmentCount ) return rb.colTexs[bufIndex];
+	if( bufIndex < RDIRenderBufferNull::MaxColorAttachmentCount ) return rb.colTexs[bufIndex];
 	else if( bufIndex == 32 ) return rb.depthTex;
 	else return 0;
 }
 
 void RenderDeviceNull::getRenderBufferDimensions( uint32 rbObj, int *width, int *height )
 {
-	RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
+	RDIRenderBufferNull &rb = _rendBufs.getRef( rbObj );
 	
 	*width = rb.width;
 	*height = rb.height;
@@ -1228,41 +800,9 @@ void RenderDeviceNull::getRenderBufferDimensions( uint32 rbObj, int *width, int 
 
 void RenderDeviceNull::resolveRenderBuffer( uint32 rbObj )
 {
-	RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
+	RDIRenderBufferNull &rb = _rendBufs.getRef( rbObj );
 	
 	if( rb.fboMS == 0 ) return;
-	
-	glBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, rb.fboMS );
-	glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, rb.fbo );
-
-	bool depthResolved = false;
-	for( uint32 i = 0; i < RDIRenderBufferGL2::MaxColorAttachmentCount; ++i )
-	{
-		if( rb.colBufs[i] != 0 )
-		{
-			glReadBuffer( GL_COLOR_ATTACHMENT0_EXT + i );
-			glDrawBuffer( GL_COLOR_ATTACHMENT0_EXT + i );
-			
-			int mask = GL_COLOR_BUFFER_BIT;
-			if( !depthResolved && rb.depthBuf != 0 )
-			{
-				mask |= GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
-				depthResolved = true;
-			}
-			glBlitFramebufferEXT( 0, 0, rb.width, rb.height, 0, 0, rb.width, rb.height, mask, GL_NEAREST );
-		}
-	}
-
-	if( !depthResolved && rb.depthBuf != 0 )
-	{
-		glReadBuffer( GL_NONE );
-		glDrawBuffer( GL_NONE );
-		glBlitFramebufferEXT( 0, 0, rb.width, rb.height, 0, 0, rb.width, rb.height,
-							  GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT, GL_NEAREST );
-	}
-
-	glBindFramebufferEXT( GL_READ_FRAMEBUFFER_EXT, _defaultFBO );
-	glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, _defaultFBO );
 }
 
 
@@ -1276,34 +816,14 @@ void RenderDeviceNull::setRenderBuffer( uint32 rbObj )
 	
 	if( rbObj == 0 )
 	{
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-		if( _defaultFBO == 0 )
-		{
-			if( _doubleBuffered )
-				glDrawBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
-			else
-				glDrawBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
-		}
 		_fbWidth = _vpWidth + _vpX;
 		_fbHeight = _vpHeight + _vpY;
-		if( _defaultFBOMultisampled ) glEnable( GL_MULTISAMPLE );
-		else glDisable( GL_MULTISAMPLE );
 	}
 	else
 	{
 		// Unbind all textures to make sure that no FBO attachment is bound any more
 		for( uint32 i = 0; i < 16; ++i ) setTexture( i, 0, 0, 0 );
 		commitStates( PM_TEXTURES );
-		
-		RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
-
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fboMS != 0 ? rb.fboMS : rb.fbo );
-		ASSERT( glCheckFramebufferStatusEXT( GL_FRAMEBUFFER_EXT ) == GL_FRAMEBUFFER_COMPLETE_EXT );
-		_fbWidth = rb.width;
-		_fbHeight = rb.height;
-
-		if( rb.fboMS != 0 ) glEnable( GL_MULTISAMPLE );
-		else glDisable( GL_MULTISAMPLE );
 	}
 }
 
@@ -1312,10 +832,8 @@ bool RenderDeviceNull::getRenderBufferData( uint32 rbObj, int bufIndex, int *wid
                                         int *compCount, void *dataBuffer, int bufferSize )
 {
 	int x, y, w, h;
-	int format = GL_RGBA;
-	int type = GL_FLOAT;
+
 	beginRendering();
-	glPixelStorei( GL_PACK_ALIGNMENT, 4 );
 	
 	if( rbObj == 0 )
 	{
@@ -1324,58 +842,18 @@ bool RenderDeviceNull::getRenderBufferData( uint32 rbObj, int bufIndex, int *wid
 		if( height != 0x0 ) *height = _vpHeight;
 		
 		x = _vpX; y = _vpY; w = _vpWidth; h = _vpHeight;
-
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-		if( bufIndex != 32 )
-		{
-			if( _doubleBuffered )
-				glReadBuffer( _outputBufferIndex == 1 ? GL_BACK_RIGHT : GL_BACK_LEFT );
-			else
-				glReadBuffer( _outputBufferIndex == 1 ? GL_FRONT_RIGHT : GL_FRONT_LEFT );
-		}
-		//format = GL_BGRA;
-		//type = GL_UNSIGNED_BYTE;
 	}
 	else
 	{
 		resolveRenderBuffer( rbObj );
-		RDIRenderBufferGL2 &rb = _rendBufs.getRef( rbObj );
-		
-		if( bufIndex == 32 && rb.depthTex == 0 ) return false;
-		if( bufIndex != 32 )
-		{
-			if( (unsigned)bufIndex >= RDIRenderBufferGL2::MaxColorAttachmentCount || rb.colTexs[bufIndex] == 0 )
-				return false;
-		}
-		if( width != 0x0 ) *width = rb.width;
-		if( height != 0x0 ) *height = rb.height;
-
-		x = 0; y = 0; w = rb.width; h = rb.height;
-		
-		glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb.fbo );
-		if( bufIndex != 32 ) glReadBuffer( GL_COLOR_ATTACHMENT0_EXT + bufIndex );
-	}
-
-	if( bufIndex == 32 )
-	{	
-		format = GL_DEPTH_COMPONENT;
-		type = GL_FLOAT;
 	}
 	
 	int comps = (bufIndex == 32 ? 1 : 4);
 	if( compCount != 0x0 ) *compCount = comps;
 	
-	bool retVal = false;
-	if( dataBuffer != 0x0 &&
-	    bufferSize >= w * h * comps * (type == GL_FLOAT ? 4 : 1) ) 
-	{
-		glFinish();
-		glReadPixels( x, y, w, h, format, type, dataBuffer );
-		retVal = true;
-	}
-	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
-
-	return retVal;
+    memset( dataBuffer, 0, bufferSize );
+    
+	return true;
 }
 
 
@@ -1385,37 +863,32 @@ bool RenderDeviceNull::getRenderBufferData( uint32 rbObj, int bufIndex, int *wid
 
 uint32 RenderDeviceNull::createOcclusionQuery()
 {
-	uint32 queryObj;
-	glGenQueries( 1, &queryObj );
-	return queryObj;
+    return 0;
 }
 
 
 void RenderDeviceNull::destroyQuery( uint32 queryObj )
 {
-	if( queryObj == 0 ) return;
-	
-	glDeleteQueries( 1, &queryObj );
+    H3D_UNUSED_VAR( queryObj );
 }
 
 
 void RenderDeviceNull::beginQuery( uint32 queryObj )
 {
-	glBeginQuery( GL_SAMPLES_PASSED, queryObj );
+    H3D_UNUSED_VAR( queryObj );
 }
 
 
 void RenderDeviceNull::endQuery( uint32 /*queryObj*/ )
 {
-	glEndQuery( GL_SAMPLES_PASSED );
+
 }
 
 
 uint32 RenderDeviceNull::getQueryResult( uint32 queryObj )
 {
-	uint32 samples = 0;
-	glGetQueryObjectuiv( queryObj, GL_QUERY_RESULT, &samples );
-	return samples;
+	H3D_UNUSED_VAR( queryObj );
+	return 0;
 }
 
 
@@ -1425,14 +898,7 @@ uint32 RenderDeviceNull::getQueryResult( uint32 queryObj )
 
 void RenderDeviceNull::checkError()
 {
-#if !defined( NDEBUG )
-	uint32 error = glGetError();
-	ASSERT( error != GL_INVALID_ENUM );
-	ASSERT( error != GL_INVALID_VALUE );
-	ASSERT( error != GL_INVALID_OPERATION );
-	ASSERT( error != GL_OUT_OF_MEMORY );
-	ASSERT( error != GL_STACK_OVERFLOW && error != GL_STACK_UNDERFLOW );
-#endif
+
 }
 
 
@@ -1443,7 +909,7 @@ void RenderDeviceNull::setStorageBuffer( uint8 slot, uint32 bufObj )
 }
 
 
-bool RenderDeviceNull::applyVertexLayout( const RDIGeometryInfoGL2 &geo )
+bool RenderDeviceNull::applyVertexLayout( RDIGeometryInfoNull &geo )
 {
 	uint32 newVertexAttribMask = 0;
 	
@@ -1452,78 +918,23 @@ bool RenderDeviceNull::applyVertexLayout( const RDIGeometryInfoGL2 &geo )
 		if( _curShaderId == 0 ) return false;
 		
 		RDIVertexLayout &vl = _vertexLayouts[ geo.layout - 1];
-		RDIShaderGL2 &shader = _shaders.getRef( _curShaderId );
-		RDIInputLayoutGL2 &inputLayout = shader.inputLayouts[ geo.layout - 1];
+		RDIShaderNull &shader = _shaders.getRef( _curShaderId );
+		RDIInputLayoutNull &inputLayout = shader.inputLayouts[ geo.layout - 1];
 		
 		if( !inputLayout.valid )
 			return false;
 
-		// Set vertex attrib pointers
-		for( uint32 i = 0; i < vl.numAttribs; ++i )
-		{
-			int8 attribIndex = inputLayout.attribIndices[i];
-			if( attribIndex >= 0 )
-			{
-				VertexLayoutAttrib &attrib = vl.attribs[i];
-				const RDIVertBufSlotGL2 &vbSlot = geo.vertexBufInfo[ attrib.vbSlot ];
-				
-				ASSERT( _buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj != 0 &&
-						_buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).type == GL_ARRAY_BUFFER );
-				
-				glBindBuffer( GL_ARRAY_BUFFER, _buffers.getRef( geo.vertexBufInfo[ attrib.vbSlot ].vbObj ).glObj );
-				glVertexAttribPointer( attribIndex, attrib.size, GL_FLOAT, GL_FALSE,
-									   vbSlot.stride, (char *)0 + vbSlot.offset + attrib.offset );
-
-				newVertexAttribMask |= 1 << attribIndex;
-			}
-		}
 	}
 	
-	for( uint32 i = 0; i < 16; ++i )
-	{
-		uint32 curBit = 1 << i;
-		if( (newVertexAttribMask & curBit) != (_activeVertexAttribsMask & curBit) )
-		{
-			if( newVertexAttribMask & curBit ) glEnableVertexAttribArray( i );
-			else glDisableVertexAttribArray( i );
-		}
-	}
 	_activeVertexAttribsMask = newVertexAttribMask;
 
 	return true;
 }
 
 
-void RenderDeviceNull::applySamplerState( RDITextureGL2 &tex )
+void RenderDeviceNull::applySamplerState( RDITextureNull &tex )
 {
-	uint32 state = tex.samplerState;
-	uint32 target = tex.type;
-	
-	const uint32 magFilters[] = { GL_LINEAR, GL_LINEAR, GL_NEAREST };
-	const uint32 minFiltersMips[] = { GL_LINEAR_MIPMAP_NEAREST, GL_LINEAR_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_NEAREST };
-	const uint32 maxAniso[] = { 1, 2, 4, 0, 8, 0, 0, 0, 16 };
-	const uint32 wrapModes[] = { GL_CLAMP_TO_EDGE, GL_REPEAT, GL_CLAMP_TO_BORDER };
 
-	if( tex.hasMips )
-		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, minFiltersMips[(state & SS_FILTER_MASK) >> SS_FILTER_START] );
-	else
-		glTexParameteri( target, GL_TEXTURE_MIN_FILTER, magFilters[(state & SS_FILTER_MASK) >> SS_FILTER_START] );
-
-	glTexParameteri( target, GL_TEXTURE_MAG_FILTER, magFilters[(state & SS_FILTER_MASK) >> SS_FILTER_START] );
-	glTexParameteri( target, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso[(state & SS_ANISO_MASK) >> SS_ANISO_START] );
-	glTexParameteri( target, GL_TEXTURE_WRAP_S, wrapModes[(state & SS_ADDRU_MASK) >> SS_ADDRU_START] );
-	glTexParameteri( target, GL_TEXTURE_WRAP_T, wrapModes[(state & SS_ADDRV_MASK) >> SS_ADDRV_START] );
-	glTexParameteri( target, GL_TEXTURE_WRAP_R, wrapModes[(state & SS_ADDRW_MASK) >> SS_ADDRW_START] );
-	
-	if( !(state & SS_COMP_LEQUAL) )
-	{
-		glTexParameteri( target, GL_TEXTURE_COMPARE_MODE, GL_NONE );
-	}
-	else
-	{
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL );
-	}
 }
 
 
@@ -1531,74 +942,19 @@ void RenderDeviceNull::applyRenderStates()
 {
 	// Rasterizer state
 	if( _newRasterState.hash != _curRasterState.hash )
-	{
-		if( _newRasterState.fillMode == RS_FILL_SOLID ) glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
-		else glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-
-		if( _newRasterState.cullMode == RS_CULL_BACK )
-		{
-			glEnable( GL_CULL_FACE );
-			glCullFace( GL_BACK );
-		}
-		else if( _newRasterState.cullMode == RS_CULL_FRONT )
-		{
-			glEnable( GL_CULL_FACE );
-			glCullFace( GL_FRONT );
-		}
-		else
-		{
-			glDisable( GL_CULL_FACE );
-		}
-
-		if( !_newRasterState.scissorEnable ) glDisable( GL_SCISSOR_TEST );
-		else glEnable( GL_SCISSOR_TEST );
-
-		if( _newRasterState.renderTargetWriteMask ) glColorMask( GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE );
-		else glColorMask( GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE );
-		
+	{	
 		_curRasterState.hash = _newRasterState.hash;
 	}
 
 	// Blend state
 	if( _newBlendState.hash != _curBlendState.hash )
-	{
-		if( !_newBlendState.alphaToCoverageEnable ) glDisable( GL_SAMPLE_ALPHA_TO_COVERAGE );
-		else glEnable( GL_SAMPLE_ALPHA_TO_COVERAGE );
-
-		if( !_newBlendState.blendEnable )
-		{
-			glDisable( GL_BLEND );
-		}
-		else
-		{
-			uint32 oglBlendFuncs[ 16 ] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_DST_COLOR, GL_SRC_COLOR,
-										   GL_ONE_MINUS_DST_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_ZERO, GL_ZERO, GL_ZERO, GL_ZERO, GL_ZERO, GL_ZERO };
-
-			glEnable( GL_BLEND );
-			glBlendFunc( oglBlendFuncs[_newBlendState.srcBlendFunc], oglBlendFuncs[_newBlendState.destBlendFunc] );
-		}
-		
+	{	
 		_curBlendState.hash = _newBlendState.hash;
 	}
 
 	// Depth-stencil state
 	if( _newDepthStencilState.hash != _curDepthStencilState.hash )
 	{
-		if( _newDepthStencilState.depthWriteMask ) glDepthMask( GL_TRUE );
-		else glDepthMask( GL_FALSE);
-
-		if( _newDepthStencilState.depthEnable )
-		{
-			uint32 oglDepthFuncs[8] = { GL_LEQUAL, GL_LESS, GL_EQUAL, GL_GREATER, GL_GEQUAL, GL_ALWAYS, GL_ALWAYS, GL_ALWAYS };
-			
-			glEnable( GL_DEPTH_TEST );
-			glDepthFunc( oglDepthFuncs[_newDepthStencilState.depthFunc] );
-		}
-		else
-		{
-			glDisable( GL_DEPTH_TEST );
-		}
-		
 		_curDepthStencilState.hash = _newDepthStencilState.hash;
 	}
 }
@@ -1613,7 +969,6 @@ bool RenderDeviceNull::commitStates( uint32 filter )
 		// Set viewport
 		if( mask & PM_VIEWPORT )
 		{
-			glViewport( _vpX, _vpY, _vpWidth, _vpHeight );
 			_pendingMask &= ~PM_VIEWPORT;
 		}
 
@@ -1626,88 +981,23 @@ bool RenderDeviceNull::commitStates( uint32 filter )
 		// Set scissor rect
 		if( mask & PM_SCISSOR )
 		{
-			glScissor( _scX, _scY, _scWidth, _scHeight );
 			_pendingMask &= ~PM_SCISSOR;
 		}
 		
-		// Bind index buffer
-// 		if( mask & PM_INDEXBUF )
-// 		{
-// 			if( _newIndexBuf != _curIndexBuf )
-// 			{
-// 				if( _newIndexBuf != 0 )
-// 					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _buffers.getRef( _newIndexBuf ).glObj );
-// 				else
-// 					glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-// 				
-// 				_curIndexBuf = _newIndexBuf;
-// 				_pendingMask &= ~PM_INDEXBUF;
-// 			}
-// 		}
-// 
 		// Bind textures and set sampler state
 		if( mask & PM_TEXTURES )
 		{
-			for( uint32 i = 0; i < 16; ++i )
-			{
-				glActiveTexture( GL_TEXTURE0 + i );
-
-				if( _texSlots[i].texObj != 0 )
-				{
-					RDITextureGL2 &tex = _textures.getRef( _texSlots[i].texObj );
-					glBindTexture( tex.type, tex.glObj );
-
-					// Apply sampler state
-					if( tex.samplerState != _texSlots[i].samplerState )
-					{
-						tex.samplerState = _texSlots[i].samplerState;
-						applySamplerState( tex );
-					}
-				}
-				else
-				{
-					glBindTexture( GL_TEXTURE_CUBE_MAP, 0 );
-					glBindTexture( GL_TEXTURE_3D, 0 );
-					glBindTexture( GL_TEXTURE_2D, 0 );
-				}
-			}
-			
 			_pendingMask &= ~PM_TEXTURES;
 		}
 
 		// Bind vertex buffers
 		if( mask & PM_GEOMETRY )
 		{
-			//if( _newVertLayout != _curVertLayout || _curShader != _prevShader )
-			{
-				RDIGeometryInfoGL2 &geo = _geometryInfo.getRef( _curGeometryIndex );
-				
-				// index buffer mapping
-				if ( geo.indexBufIdx != _curIndexBuf )
-				{
-					if ( geo.indexBufIdx != 0 )
-					{
-						RDIBufferGL2 &buf = _buffers.getRef( geo.indexBufIdx );
-						ASSERT( buf.glObj != 0 )
-
-						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, buf.glObj );
-					}
-					else
-						glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-				}
-
-				if( !applyVertexLayout( geo ) )
-					return false;
-
-// 				_curVertLayout = _newVertLayout;
-				_indexFormat = geo.indexBuf32Bit;
-				_curIndexBuf = geo.indexBufIdx;
-				_prevShaderId = _curShaderId;
-				_pendingMask &= ~PM_GEOMETRY;
-			}
+            _indexFormat = 0;
+            _prevShaderId = _curShaderId;
+            _pendingMask &= ~PM_GEOMETRY;	
 		}
 
-		CHECK_GL_ERROR
 	}
 
 	return true;
@@ -1716,7 +1006,6 @@ bool RenderDeviceNull::commitStates( uint32 filter )
 
 void RenderDeviceNull::resetStates()
 {
- 	_curIndexBuf = 1; 
 // 	_curVertLayout = 1; _newVertLayout = 0;
 	_curGeometryIndex = 1;
 	_curRasterState.hash = 0xFFFFFFFF; _newRasterState.hash = 0;
@@ -1729,12 +1018,6 @@ void RenderDeviceNull::resetStates()
 
 	setColorWriteMask( true );
 	_pendingMask = 0xFFFFFFFF;
-	commitStates();
-
-	glBindBuffer( GL_ARRAY_BUFFER, 0 );
-//	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-
-	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, _defaultFBO );
 }
 
 
@@ -1744,82 +1027,28 @@ void RenderDeviceNull::resetStates()
 
 void RenderDeviceNull::clear( uint32 flags, float *colorRGBA, float depth )
 {
-	uint32 prevBuffers[4] = { 0 };
-
-	if( _curRendBuf != 0x0 )
-	{
-		RDIRenderBufferGL2 &rb = _rendBufs.getRef( _curRendBuf );
-		
-		if( (flags & CLR_DEPTH) && rb.depthTex == 0 ) flags &= ~CLR_DEPTH;
-		
-		// Store state of glDrawBuffers
-		for( uint32 i = 0; i < 4; ++i )
-			glGetIntegerv( GL_DRAW_BUFFER0 + i, (int *)&prevBuffers[i] );
-		
-		uint32 buffers[4], cnt = 0;
-		
-		if( (flags & CLR_COLOR_RT0) && rb.colTexs[0] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT0_EXT;
-		if( (flags & CLR_COLOR_RT1) && rb.colTexs[1] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT1_EXT;
-		if( (flags & CLR_COLOR_RT2) && rb.colTexs[2] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT2_EXT;
-		if( (flags & CLR_COLOR_RT3) && rb.colTexs[3] != 0 ) buffers[cnt++] = GL_COLOR_ATTACHMENT3_EXT;
-
-		if( cnt == 0 )
-			flags &= ~(CLR_COLOR_RT0 | CLR_COLOR_RT1 | CLR_COLOR_RT2 | CLR_COLOR_RT3);
-		else
-			glDrawBuffers( cnt, buffers );
-	}
-	
-	uint32 oglClearMask = 0;
-	
-	if( flags & CLR_DEPTH )
-	{
-		oglClearMask |= GL_DEPTH_BUFFER_BIT;
-		glClearDepth( depth );
-	}
-	if( flags & (CLR_COLOR_RT0 | CLR_COLOR_RT1 | CLR_COLOR_RT2 | CLR_COLOR_RT3) )
-	{
-		oglClearMask |= GL_COLOR_BUFFER_BIT;
-		if( colorRGBA ) glClearColor( colorRGBA[0], colorRGBA[1], colorRGBA[2], colorRGBA[3] );
-		else glClearColor( 0, 0, 0, 0 );
-	}
-	
-	if( oglClearMask )
-	{	
-		commitStates( PM_VIEWPORT | PM_SCISSOR | PM_RENDERSTATES );
-		glClear( oglClearMask );
-	}
-
-	// Restore state of glDrawBuffers
-	if( _curRendBuf != 0x0 )
-		glDrawBuffers( 4, prevBuffers );
-
-	CHECK_GL_ERROR
+    Modules::log().writeInfo( "%s: clearing with flags %u, colorRGBA is %p, depth is %f",
+                              __func__, flags, colorRGBA, depth );
 }
 
 
 void RenderDeviceNull::draw( RDIPrimType primType, uint32 firstVert, uint32 numVerts )
 {
-	if( commitStates() )
-	{
-		glDrawArrays( RDI_GL2::primitiveTypes[ (uint32)primType ], firstVert, numVerts );
-	}
-
-	CHECK_GL_ERROR
+    Modules::log().writeInfo( "%s: drawing with primType %d, firstVert is %u, numVerts is %u",
+                              __func__, primType, firstVert, numVerts );
+    
+    commitStates();
 }
 
 
 void RenderDeviceNull::drawIndexed( RDIPrimType primType, uint32 firstIndex, uint32 numIndices,
                                 uint32 firstVert, uint32 numVerts )
 {
-	if( commitStates() )
-	{
-		firstIndex *= (_indexFormat == IDXFMT_16) ? sizeof( short ) : sizeof( int );
-		
-		glDrawRangeElements( RDI_GL2::primitiveTypes[ ( uint32 ) primType ], firstVert, firstVert + numVerts,
-		                     numIndices, RDI_GL2::indexFormats[ _indexFormat ], (char *)0 + firstIndex );
-	}
-
-	CHECK_GL_ERROR
+    Modules::log().writeInfo( "%s: drawing with primType %d, firstIndex is %u,"
+                              "numIndices is %u, firstVert is %u, numVerts is %u",
+                              __func__, primType, firstIndex, numIndices, firstVert, numVerts );
+    
+    commitStates();
 }
 
 }  // namespace RDI_Null

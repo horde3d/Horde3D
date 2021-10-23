@@ -21,6 +21,7 @@
 
 #include "utDebug.h"
 
+// Check what backends should be included
 #if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined( H3D_USE_GLES3 )
 #	if defined( H3D_USE_GL2 )
 #		include "egRendererBaseGL2.h"
@@ -28,12 +29,15 @@
 #	if defined( H3D_USE_GL4 )
 #		include "egRendererBaseGL4.h"
 #	endif
-#   if defined( H3D_USE_NULL )
-#       include "egRendererBaseNull.h"
-#   endif
 #else
 #	include "egRendererBaseGLES3.h"
 #endif
+
+// Null backend, used for testing
+#if defined ( H3D_USE_NULL )
+#   include "egRendererBaseNull.h"
+#endif
+
 
 // Constants
 constexpr int defaultCameraView = 0;
@@ -345,16 +349,16 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 			return new RDI_GL2::RenderDeviceGL2();
 		}
 #endif
-#if defined( DESKTOP_OPENGL_AVAILABLE ) && defined ( H3D_USE_NULL )
-		case 256: // special case for Null backend that is used for testing (unit, intergration, engine performance, etc.)
-		{
-			return new RDI_Null:RenderDeviceNull();
-		}
-#endif
 #if defined ( H3D_USE_GLES3 )	
 		case RenderBackendType::OpenGLES3:
 		{
 			return new RDI_GLES3::RenderDeviceGLES3();
+		}
+#endif
+#if defined ( H3D_USE_NULL )
+		case 256: // special case for Null backend that is used for testing (unit, intergration, engine performance, etc.)
+		{
+			return new RDI_Null::RenderDeviceNull();
 		}
 #endif
 		default:

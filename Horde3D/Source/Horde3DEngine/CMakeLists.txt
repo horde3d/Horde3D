@@ -99,6 +99,9 @@ endif (USE_GLES3)
 
 # Null render backend
 if ( USE_NULL )
+
+	set( H3D_USE_NULL 1 )
+	
     list(APPEND HORDE3D_SOURCES "egRendererBaseNull.h")
 	list(APPEND HORDE3D_SOURCES "egRendererBaseNull.cpp")
 endif( USE_NULL )

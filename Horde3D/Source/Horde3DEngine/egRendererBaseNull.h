@@ -16,6 +16,7 @@
 #include "egRendererBase.h"
 #include <string.h>
 
+#include <chrono>
 
 namespace Horde3D {
 namespace RDI_Null {
@@ -41,10 +42,11 @@ public:
 //	float getTimeMS() const { return _time; }
 
 private:
-	std::vector < uint32 >  _queryPool;
-	uint32                  _numQueries;
+	
+    std::chrono::time_point< std::chrono::steady_clock > _t0, _t1;
+    
 	uint32                  _queryFrame;
-//	float                   _time;
+	float                   _time;
 	bool                    _activeQuery;
 };
 
