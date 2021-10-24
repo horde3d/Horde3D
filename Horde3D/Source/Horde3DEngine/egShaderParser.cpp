@@ -62,17 +62,12 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
         
         uint16 samplerIdSize;
         data = elemcpy_le( &samplerIdSize, (uint16*)( data ), 1 );
-        if ( samplerIdSize == 0 )
+        if ( samplerIdSize == 0 || samplerIdSize > 255 )
         {
             return raiseError( "Incorrect sampler id for sampler " + std::to_string( i ) );
         }
-        if ( samplerIdSize > 255 )
-        {
-            samplerIdSize = 255;
-            Modules::log().writeWarning( "Limiting sampler id to 255 chars for sampler '%d'. May lead to incorrect behavior. Decrease sampler id length", i );
-        }
         
-        char id[ 256 ];
+        char id[ 256 ] = { 0 };
         data = elemcpy_le( id, (char*)( data ), samplerIdSize );
         sampler.id = std::string( id );
         
@@ -80,14 +75,12 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
         data = elemcpy_le( &samplerTexNameSize, (uint16*)( data ), 1 );
         if ( samplerTexNameSize > 255 )
         {
-            samplerTexNameSize = 255;
-            Modules::log().writeWarning( "Limiting sampler texture name to 255 chars. May lead to incorrect behavior. "
-                                         "Decrease sampler texture name length" );
+            return raiseError( "Sampler texture name larger than 255 chars. Sampler " + std::to_string( i ) );
         }
         
         if ( samplerTexNameSize > 0 )
         {
-            char idtex[ 256 ];
+            char idtex[ 256 ] = { 0 };
             data = elemcpy_le( idtex, (char*)( data ), samplerTexNameSize );
             
             ResHandle texMap =  Modules::resMan().addResource( ResourceTypes::Texture, idtex, 0, false );
@@ -96,8 +89,9 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
         
         short samplerTexUnit;
         data = elemcpy_le( &samplerTexUnit, (short*)( data ), 1 );
-        sampler.texUnit = samplerTexUnit;
-        if( sampler.texUnit > ( int ) unitFree.size() - 1 ) return raiseError( "Sampler texUnit exceeds limit" );
+        sampler.texUnit = samplerTexUnit; // default -1
+        if ( sampler.texUnit < -1 ) return raiseError( "Incorrect texUnit for sampler " + std::to_string( i ) );
+        if( sampler.texUnit > ( int ) unitFree.size() - 1 ) return raiseError( "texUnit exceeds limit for sampler " + std::to_string( i ) );
         if( sampler.texUnit >= 0 ) unitFree[ sampler.texUnit ] = false;
         
         uint16 samplerAddress;
@@ -105,7 +99,7 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
         sampler.sampState &= ~SS_ADDR_MASK;
         switch( samplerAddress )
         {
-            case 0: // Wrap
+            case 0: // Wrap - default
                 sampler.sampState |= SS_ADDR_WRAP;
                 break;
             case 1: // Clamp
@@ -128,7 +122,7 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
             case 1: // Bilinear
                 sampler.sampState |= SS_FILTER_BILINEAR;
                 break;
-            case 2: // Trilinear
+            case 2: // Trilinear - default
                 sampler.sampState |= SS_FILTER_TRILINEAR;
                 break;
             default:
@@ -148,7 +142,7 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
             case 4:
                 sampler.sampState |= SS_ANISO4;
                 break;
-            case 8:
+            case 8: // default
                 sampler.sampState |= SS_ANISO8;
                 break;
             case 16:
@@ -160,17 +154,10 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
         
         uint16 samplerUsage;
         data = elemcpy_le( &samplerUsage, (uint16*)( data ), 1 );
-        if ( sampler.type != TextureTypes::Tex2D )
-            return raiseError( "Invalid sampler type is used as compute image, only sampler2D is supported, sampler " 
-                                + std::to_string( i ) );
-            
-        if ( !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
-            return raiseError( "Using texture as compute image is not supported on this version of render interface,"
-                               "sampler " + std::to_string( i ) );
 
         switch( samplerUsage )
         {
-            case 0: // use as texture
+            case 0: // use as texture - default
                 sampler.usage = TextureUsage::Texture;
                 break;
             case 1: // use as read-only compute image
@@ -185,6 +172,14 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
             default:
                 return raiseError( "Unsupported texture usage, sampler " + std::to_string( i ) );
         }
+        
+        if ( samplerUsage != 0 && sampler.type != TextureTypes::Tex2D )
+            return raiseError( "Invalid sampler type is used as compute image, only sampler2D is supported, sampler " 
+                                + std::to_string( i ) );
+    
+        if ( samplerUsage != 0 && !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
+            return raiseError( "Using texture as compute image is not supported on this version of render interface, "
+                               "sampler " + std::to_string( i ) );
     }
     
     return true;
