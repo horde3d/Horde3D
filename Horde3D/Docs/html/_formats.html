@@ -1146,6 +1146,119 @@ it contains the triangle data as well as information about the skeleton of a mod
 	</tr>
 </table>
 </div>
+
+<h2>Binary Shader</h2>
+<p><i>Filename-extensions: .hshb</i></p>
+<p>The binary shader resource is a binary representation of the shader resource.
+It can be used for optimizing application load time - compile and save binary shaders during first application start
+and only load binary shaders during other application starts.
+
+In newer versions it will also be used for Vulkan shaders.
+</p>
+
+<h3>Version 1</h3>
+
+<div class="descbox">
+<table>
+    <tr>
+        <td><b>Header</b></td>
+        <td>File header at beginning of the file
+			<table>
+                <tr>
+                    <td><b>magic</b></td>
+					<td>5 <b>char</b>s</td>
+                    <td>byte sequence 'H3DSB'</td>
+                </tr>
+				<tr>
+					<td><b>version</b></td>
+					<td><b>uint16</b></td>
+					<td>version number: 1</td>
+				</tr>
+				<tr>
+					<td><b>renderBackend</b></td>
+					<td><b>uint16</b></td>
+					<td>one of the supported backends: 4 - OpenGL, 8 - OpenGL ES</td>
+				</tr>
+				<tr>
+					<td><b>generator</b></td>
+					<td>32 <b>char</b>s</td>
+					<td>name of driver or generator software that created contents of this binary shader, must be null-terminated</td>
+				</tr>
+                <tr>
+					<td><b>generatorVersion</b></td>
+					<td>16 <b>char</b>s</td>
+					<td>version of driver or generator software that created contents of this binary shader, must be null-terminated</td>
+				</tr>
+            </table>
+		</td>
+	</tr>
+
+	<tr>
+	    <td><b>FX section. Samplers</b></td>
+		<td>Like FX section in text-based shader, this section provides information about samplers, variables 
+            and contexts for the engine. FX section starts with samplers.
+			<table>
+				<tr>
+					<td><b>samplersCount</b></td>
+					<td><b>uint16</b></td>
+					<td>number of samplers used in the shader. The following attributes are parsed samplersCount times. </td>
+				</tr>
+				<tr>
+					<td><b>samplerType</b></td>
+					<td><b>uint16</b></td>
+					<td>type of the sampler: 2 - 2d sampler, 3 - 3d sampler, 6 - cube sampler</td>
+				</tr>
+				<tr>
+					<td><b>samplerIdSize</b></td>
+					<td><b>uint16</b></td>
+					<td>size of the sampler id string. Cannot be larger than 256 chars.</td>
+				</tr>
+				<tr>
+					<td><b>samplerId</b></td>
+					<td><b>samplerIdSize</b> chars</td>
+					<td>string that represents id of the sampler. Cannot be larger than 256 chars.</td>
+				</tr>
+				<tr>
+					<td><b>samplerTexNameSize</b></td>
+					<td><b>uint16</b></td>
+					<td>size of the texture name, used by sampler. Can be zero if no texture used.</td>
+				</tr>
+                <tr>
+					<td><b>samplerTexName</b></td>
+					<td><b>samplerTexNameSize</b> chars</td>
+					<td>name of the texture that is used by sampler. Skipped if samplerTexNameSize is zero.</td>
+				</tr>
+                <tr>
+					<td><b>samplerTexUnit</b></td>
+					<td><b>short</b></td>
+					<td>texture unit that is used by the sampler. -1 (default) for automatic assignment. Available tex units: 0-11. </td>
+				</tr>
+                <tr>
+					<td><b>samplerAddress</b></td>
+					<td><b>uint16</b></td>
+					<td>how textures in the sampler are handled. 0 - Wrap (default), 1 - Clamp, 2 - Border. </td>
+				</tr>
+                <tr>
+					<td><b>samplerFilter</b></td>
+					<td><b>uint16</b></td>
+					<td>how sampler texture is filtered. 0 - None, 1 - Bilinear, 2 - Trilinear (default). </td>
+				</tr>
+                <tr>
+					<td><b>samplerMaxAnisotropy</b></td>
+					<td><b>uint16</b></td>
+					<td>Maximum anisotropic filtering value for sampler. Values: 1, 2, 4, 8 (default), 16 </td>
+				</tr>
+                <tr>
+					<td><b>samplerUsage</b></td>
+					<td><b>uint16</b></td>
+					<td>how sampler is used. 0 - Texture (default), 1 - Read-only compute image, 2 - Write-only compute image, 3 - Read-Write compute image. Sampler should be of type sampler2D. </td>
+				</tr>
+	        </table>
+		</td>
+	</tr>
+</table>
+</div>
+
 <br /><br />
 
 </body>
