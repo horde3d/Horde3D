@@ -307,6 +307,11 @@ public:
 	RDITextureNull &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
 	RDIRenderBufferNull &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
 
+// -----------------------------------------------------------------------------
+// Null backend specific
+// -----------------------------------------------------------------------------
+    void setCaps( const DeviceCaps &caps ) { _caps = caps; }
+
 //	friend class Renderer;
 
 protected:
