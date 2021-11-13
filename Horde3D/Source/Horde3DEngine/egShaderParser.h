@@ -5,6 +5,19 @@
 
 namespace Horde3D {
     
+
+struct ShaderBinaryData
+{
+    int     shaderType;
+    
+    uint16  contextId;
+    uint16  combinationId;
+    
+    uint32  dataSize;
+    
+    uint8   *data;
+};
+
 class ShaderParser
 {
 public:
@@ -22,12 +35,25 @@ protected:
     
     bool parseBinaryUniforms( char *data, uint32 variablesCount );
 
+    bool parseBinaryBuffer( char *data, uint32 bufferCount );
+    
+    bool parseBinaryFlags( char *data, uint32 flagsCount );
+    
+    bool parseBinaryContexts( char *data, uint32 contextCount );
+    
+    bool parseBinaryContextShaderCombs( char *data, uint32 shaderCombs );
+    
 private:
     std::string _shaderName;
     
-    std::vector< ShaderSampler > _samplers;
-    std::vector< ShaderUniform > _uniforms;
-
+    std::vector< ShaderSampler >        _samplers;
+    std::vector< ShaderUniform >        _uniforms;
+    std::vector< ShaderBuffer >         _buffers;
+    std::vector< ShaderFlag >           _flags;
+    std::vector< ShaderContext >        _contexts;
+    std::vector< ShaderBinaryData >     _binaryShaders;
+    int                                 _shaderType;
+    
     friend class ShaderResource;
 };
 
