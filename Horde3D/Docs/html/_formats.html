@@ -1189,6 +1189,11 @@ In newer versions it will also be used for Vulkan shaders.
 					<td>16 <b>char</b>s</td>
 					<td>version of driver or generator software that created contents of this binary shader, must be null-terminated</td>
 				</tr>
+                <tr>
+					<td><b>shaderType</b></td>
+					<td><b>uint16</b></td>
+					<td>type of the binary shader. 1 - device dependent binary shader (usually created by OpenGL/ES drivers), 2 - SPIRV binary shader</td>
+				</tr>
             </table>
 		</td>
 	</tr>
@@ -1199,9 +1204,9 @@ In newer versions it will also be used for Vulkan shaders.
             and contexts for the engine. FX section starts with samplers.
 			<table>
 				<tr>
-					<td><b>samplersCount</b></td>
+					<td><b>samplerCount</b></td>
 					<td><b>uint16</b></td>
-					<td>number of samplers used in the shader. The following attributes are parsed samplersCount times. </td>
+					<td>number of samplers used in the shader. The following attributes are parsed samplersCount times. If samplerCount is zero then section is skipped.</td>
 				</tr>
 				<tr>
 					<td><b>samplerType</b></td>
@@ -1252,6 +1257,206 @@ In newer versions it will also be used for Vulkan shaders.
 					<td><b>samplerUsage</b></td>
 					<td><b>uint16</b></td>
 					<td>how sampler is used. 0 - Texture (default), 1 - Read-only compute image, 2 - Write-only compute image, 3 - Read-Write compute image. Sampler should be of type sampler2D. </td>
+				</tr>
+	        </table>
+		</td>
+	</tr>
+    <tr>
+	    <td><b>FX section. Uniforms</b></td>
+		<td>Next FX section is shader uniforms.
+			<table>
+				<tr>
+					<td><b>uniformCount</b></td>
+					<td><b>uint16</b></td>
+					<td>number of uniforms used in the shader. The following attributes are parsed uniformCount times. If uniformCount is zero then section is skipped. </td>
+				</tr>
+				<tr>
+					<td><b>uniformType</b></td>
+					<td><b>uint16</b></td>
+					<td>type of the uniform variable: 0 - float, 1 - float4</td>
+				</tr>
+				<tr>
+					<td><b>uniformIdSize</b></td>
+					<td><b>uint16</b></td>
+					<td>number of characters in uniformId string. Cannot be larger than 256 chars.</td>
+				</tr>
+				<tr>
+					<td><b>uniformId</b></td>
+					<td><b>uniformIdSize</b> chars</td>
+					<td>string that represents uniform id/name. Cannot be larger than 256 characters.</td>
+				</tr>
+                <tr>
+					<td><b>uniformDefValuesSize</b></td>
+					<td><b>uint16</b></td>
+					<td>number of default values for uniform variable. Should be 1 for float and 4 for float4 types.</td>
+				</tr>
+                <tr>
+					<td><b>uniformDefValues</b></td>
+					<td><b>float * uniformDefValuesSize</b></td>
+					<td>default values for uniform variable.</td>
+				</tr>
+	        </table>
+		</td>
+	</tr>
+    <tr>
+	    <td><b>FX section. Buffers</b></td>
+		<td>Next FX section is shader buffers.
+			<table>
+				<tr>
+					<td><b>bufferCount</b></td>
+					<td><b>uint16</b></td>
+					<td>number of shader buffers (ssbo) used in the shader. The following attributes are parsed bufferCount times. If bufferCount is zero then section is skipped. </td>
+				</tr>
+				<tr>
+					<td><b>bufferIdSize</b></td>
+					<td><b>uint16</b></td>
+					<td>number of characters in bufferId string. Cannot be larger than 256 chars.</td>
+				</tr>
+				<tr>
+					<td><b>bufferId</b></td>
+					<td><b>bufferIdSize</b> chars</td>
+					<td>string that represents buffer id/name. Cannot be larger than 256 characters.</td>
+				</tr>
+	        </table>
+		</td>
+	</tr>
+    <tr>
+	    <td><b>FX section. Flags</b></td>
+		<td>Next FX section is shader flags.
+			<table>
+				<tr>
+					<td><b>flagCount</b></td>
+					<td><b>uint16</b></td>
+					<td>number of shader flags used in the shader. The following attributes are parsed flagCount times. If flagCount is zero then section is skipped. </td>
+				</tr>
+				<tr>
+					<td><b>flagIdSize</b></td>
+					<td><b>uint16</b></td>
+					<td>number of characters in flagId string. Cannot be larger than 256 chars.</td>
+				</tr>
+				<tr>
+					<td><b>flagId</b></td>
+					<td><b>flagIdSize</b> chars</td>
+					<td>string that represents flag id/name. Cannot be larger than 256 characters.</td>
+				</tr>
+	        </table>
+		</td>
+	</tr>
+    <tr>
+	    <td><b>FX section. Contexts</b></td>
+		<td>Next FX section is shader contexts.
+			<table>
+				<tr>
+					<td><b>contextCount</b></td>
+					<td><b>uint16</b></td>
+					<td>number of shader contexts used in the shader. The following attributes are parsed contextCount times. If contextCount is zero then error is generated - at least one context should be present. </td>
+				</tr>
+				<tr>
+					<td><b>contextIdSize</b></td>
+					<td><b>uint16</b></td>
+					<td>number of characters in contextId string. Cannot be larger than 256 chars.</td>
+				</tr>
+				<tr>
+					<td><b>contextId</b></td>
+					<td><b>contextIdSize</b> chars</td>
+					<td>string that represents context id/name. Cannot be larger than 256 characters.</td>
+				</tr>
+                <tr>
+					<td><b>contextApplicability</b></td>
+					<td><b>uint16</b></td>
+					<td>render interface/backend that the context belongs to. 4 - OpenGL4, 8 - OpenGLES3</td>
+				</tr>
+                <tr>
+					<td><b>contextZWriteEnable</b></td>
+					<td><b>uint16</b></td>
+					<td>is writing to depth enabled or not. 0 - disabled, 1 - enabled.</td>
+				</tr>
+                <tr>
+					<td><b>contextZEnable</b></td>
+					<td><b>uint16</b></td>
+					<td>is depth test enabled or not. 0 - disabled, 1 - enabled.</td>
+				</tr>
+                <tr>
+					<td><b>contextZFunc</b></td>
+					<td><b>uint16</b></td>
+					<td>used depth function. 0 - Always, 1 - Equal, 2 - Less, 3 - LessEqual (default), 4 - Greater, 5 - GreaterEqual.</td>
+				</tr>
+                <tr>
+					<td><b>contextBlendMode</b></td>
+					<td><b>uint16</b></td>
+					<td>used blending mode. If contextBlendModeEx is 0, then following modes available: 0 - Replace, 1 - Blend, 2 - Add, 3 - AddBlended, 4 - Mult. If contextBlendModeEx is not empty, contextBlendMode acts as source configuration and works the same as contextBlendModeEx.</td>
+				</tr>
+                <tr>
+					<td><b>contextBlendModeEx</b></td>
+					<td><b>uint16</b></td>
+					<td>advanced blending mode configuration. If not zero, then contextBlendModeEx acts as destination configuration and following modes available: 10 - Zero, 11 - One, 12 - SrcAlpha, 13 - OneMinusSrcAlpha, 14 - DestAlpha, 15 - OneMinusDestAlpha, 16 - DestColor, 17 - SrcColor, 18 - OneMinusDestColor, 19 - OneMinusSrcColor. </td>
+				</tr>
+                <tr>
+					<td><b>contextCullMode</b></td>
+					<td><b>uint16</b></td>
+					<td>used culling mode. 0 - Back, 1 - Front, 2 - None</td>
+				</tr>
+                <tr>
+					<td><b>contextAlphaToCoverage</b></td>
+					<td><b>uint16</b></td>
+					<td>0 - disabled, 1 - enabled</td>
+				</tr>
+                <tr>
+					<td><b>contextTessPatchVertices</b></td>
+					<td><b>uint16</b></td>
+					<td>vertices in tessellation patch. Valid values from 1 to 32.</td>
+				</tr>
+                <tr>
+					<td><b>contextFlagMask</b></td>
+					<td><b>uint32</b></td>
+					<td>used flags.</td>
+				</tr>
+                <tr>
+					<td><b>contextCombinations</b></td>
+					<td><b>uint16</b></td>
+					<td>number of shader combinations in the context. Cannot be larger than 255.</td>
+				</tr>
+	        </table>
+		</td>
+	</tr>
+    <tr>
+	    <td><b>Shader combinations</b></td>
+		<td>Shader combinations that are used by the contexts defined in the previous section.
+			<table>
+				<tr>
+					<td><b>combinationCount</b></td>
+					<td><b>uint16</b></td>
+					<td>number of shader combinations in the binary shader. </td>
+				</tr>
+				<tr>
+					<td><b>combinationContextId</b></td>
+					<td><b>uint16</b></td>
+					<td>index of the context this combination belongs to. Starts from 0.</td>
+				</tr>
+				<tr>
+					<td><b>combinationMask</b></td>
+					<td><b>uint32</b></td>
+					<td>flag mask of the combination</td>
+				</tr>
+                <tr>
+					<td><b>combinationShaderSectionCount</b></td>
+					<td><b>uint16</b></td>
+					<td>number of shader data sections (vertex, fragment, geometry, tessEval, tessControl, compute) in the combination. Next attributes are parsed combinationShaderSectionCount number of times.</td>
+				</tr>
+                <tr>
+					<td><b>combinationShaderSectionType</b></td>
+					<td><b>uint16</b></td>
+					<td>type of the shader data section. 0 - Vertex, 1 - Fragment, 2 - Geometry, 3 - TessEvaluation, 4 - TessControl, 5 - Compute. </td>
+				</tr>
+                <tr>
+					<td><b>combinationShaderSectionSize</b></td>
+					<td><b>uint32</b></td>
+					<td>size of the shader section in bytes</td>
+				</tr>
+                <tr>
+					<td><b>combinationShaderSectionData</b></td>
+					<td><b>uint16</b></td>
+					<td>binary data of the shader section.</td>
 				</tr>
 	        </table>
 		</td>
