@@ -4,19 +4,6 @@
 #include "egShader.h"
 
 namespace Horde3D {
-    
-
-struct ShaderBinaryData
-{
-    int     shaderType;
-    
-    uint16  contextId;
-    uint16  combinationId;
-    
-    uint32  dataSize;
-    
-    uint8   *data;
-};
 
 class ShaderParser
 {

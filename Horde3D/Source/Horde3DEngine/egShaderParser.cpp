@@ -200,6 +200,8 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
 
 bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
 {
+    if ( !data || variablesCount == 0 ) return false;
+
     // main uniform parsing function
     auto parseUniform = []( char *data, ShaderUniform *uni )
     {
@@ -215,7 +217,8 @@ bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
         
         uint16 uniformDefValuesSize;
         data = elemcpy_le( &uniformDefValuesSize, (uint16*)( data ), 1 );
-        
+        if ( uniformDefValuesSize != uni->size ) return false;
+
         data = elemcpy_le( uni->defValues, (float*)( data ), uniformDefValuesSize );
         uni->id = uniformName;
         
@@ -223,38 +226,44 @@ bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
     };
     
     // find out uniform count for each type
-    uint16 float4_uniforms;
-    data = elemcpy_le( &float4_uniforms, (uint16*)( data ), 1 );
-
-    uint16 float_uniforms;
-    data = elemcpy_le( &float_uniforms, (uint16*)( data ), 1 );
-
-    if ( float4_uniforms + float_uniforms != variablesCount ) 
-        return raiseError( "Incorrect number of uniforms!" );
+//     uint16 float4_uniforms;
+//     data = elemcpy_le( &float4_uniforms, (uint16*)( data ), 1 );
+// 
+//     uint16 float_uniforms;
+//     data = elemcpy_le( &float_uniforms, (uint16*)( data ), 1 );
+// 
+//     if ( float4_uniforms + float_uniforms != variablesCount ) 
+//         return raiseError( "Incorrect number of uniforms!" );
         
     // parsing for each uniform type
     _uniforms.reserve( variablesCount );
-    for( size_t i = 0; i < float4_uniforms; i++ )
+    for( size_t i = 0; i < variablesCount; i++ )
     {
         ShaderUniform uni;
-        uni.size = 4;
         
+        uint16 uniformType;
+        data = elemcpy_le( &uniformType, (uint16*)( data ), 1 );
+
+        if ( uniformType == 0 ) uni.size = 1;
+        else if ( uniformType == 1 ) uni.size = 4;
+        else return raiseError( "Failed to parse uniform type for uniform " + std::to_string( i ) );
+  
         if ( !parseUniform( data, &uni ) )
-            return raiseError( "Failed to parse uniform float4 " + std::to_string( i ) );
+            return raiseError( "Failed to parse uniform " + std::to_string( i ) );
         
         _uniforms.emplace_back( uni );
     }
     
-    for( size_t i = 0; i < float_uniforms; i++ )
-    {
-        ShaderUniform uni;
-        uni.size = 1;
-        
-        if ( !parseUniform( data, &uni ) )
-            return raiseError( "Failed to parse uniform float " + std::to_string( i ) );
-        
-        _uniforms.emplace_back( uni );
-    }
+//     for( size_t i = 0; i < float_uniforms; i++ )
+//     {
+//         ShaderUniform uni;
+//         uni.size = 1;
+//         
+//         if ( !parseUniform( data, &uni ) )
+//             return raiseError( "Failed to parse uniform float " + std::to_string( i ) );
+//         
+//         _uniforms.emplace_back( uni );
+//     }
     
     return true;
 }
@@ -346,7 +355,7 @@ bool ShaderParser::parseBinaryContexts( char *data, uint32 contextCount )
         
         switch( contextApplicability )
         {
-            case RenderBackendType::OpenGL2 :
+//            case RenderBackendType::OpenGL2 :
             case RenderBackendType::OpenGL4 :
             case RenderBackendType::OpenGLES3 :
                 break;
@@ -407,7 +416,7 @@ bool ShaderParser::parseBinaryContexts( char *data, uint32 contextCount )
         data = elemcpy_le( &contextBlendMode, (uint16*)( data ), 1 );
         data = elemcpy_le( &contextBlendMode2, (uint16*)( data ), 1 );
                 
-        if ( contextBlendMode2 != 0 )
+        if ( contextBlendMode2 == 0 )
         {
             // Blend mode used the old way - Replace, Blend, Add, Mult
             switch( contextBlendMode )
@@ -616,8 +625,8 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
                                     std::to_string( i ) + ", context id " + std::to_string( combinationContextId ) );
                 
             // binary shader size 
-            uint16 combinationShaderSize;
-            data = elemcpy_le( &combinationShaderSize, (uint16*)( data ), 1 );
+            uint32 combinationShaderSize;
+            data = elemcpy_le( &combinationShaderSize, (uint32*)( data ), 1 );
             
             // shader data
             uint8_t *combinationShaderData = new uint8_t[ combinationShaderSize ];
@@ -632,7 +641,7 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
             _binaryShaders.emplace_back( bin );
         }
 
-        // further processing is done in the egShader, parsing is done
+        // further processing is done in the egShader, parsing is complete
     }
     
     return true;
