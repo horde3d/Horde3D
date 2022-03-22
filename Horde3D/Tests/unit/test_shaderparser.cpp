@@ -57,7 +57,16 @@ enum class SamplerData
     Correct
 };
 
-uint8_t *generateBinarySamplerData( SamplerData genType, int iteration )
+enum class UniformData
+{
+    Incorrect_NoUniforms,
+    Incorrect_Type,
+    Incorrect_Id,
+    Incorrect_DefValue,
+    Correct
+};
+
+static uint8_t *generateBinarySamplerData( SamplerData genType, int iteration )
 {
     uint8_t *data = new uint8_t[ 1024 ];
     memset( data, 0, 1024 );
@@ -240,6 +249,110 @@ uint8_t *generateBinarySamplerData( SamplerData genType, int iteration )
     return data;
 }
 
+static uint8_t *generateBinaryUniformData( UniformData genType, int iteration )
+{
+    uint8_t *data = new uint8_t[ 1024 ];
+    memset( data, 0, 1024 );
+    
+    switch( genType )
+    {
+        case UniformData::Incorrect_NoUniforms:
+        {
+            uint16_t *uniData = ( uint16_t * ) data;
+            
+            if ( iteration == 0 ) uniData[ 0 ] = 0;
+
+            break;
+        }
+        case UniformData::Incorrect_Type:
+        {
+            uint16_t *uniData = ( uint16_t * ) data;
+
+            if ( iteration == 0 ) uniData[ 0 ] = 3;
+            if ( iteration == 1 ) uniData[ 0 ] = 10;
+            if ( iteration == 2 ) uniData[ 0 ] = 2;
+            if ( iteration == 3 ) uniData[ 0 ] = 3;
+
+            break;
+        }
+        case UniformData::Incorrect_Id:
+        {
+            uint16_t *uniData = ( uint16_t * ) data;
+            uniData[ 0 ] = 0; // float
+            
+            if ( iteration == 0 ) uniData[ 1 ] = 0;
+            if ( iteration == 1 ) 
+            {
+                uniData[ 1 ] = 257;
+                uniData[ 2 ] = 'a';
+            }
+            if ( iteration == 2 )
+            {
+                uniData[ 1 ] = 15;
+                uniData[ 2 ] = '\0';
+            }
+
+            break;
+        }
+        case UniformData::Incorrect_DefValue:
+        {
+            uint16_t *uniData = ( uint16_t * ) data;
+            uniData[ 0 ] = 0; // float
+            uniData[ 1 ] = 2; // id size
+            uniData[ 2 ] = 'a'; // id
+
+            if ( iteration == 0 ) uniData[ 3 ] = 2;
+            if ( iteration == 1 ) uniData[ 3 ] = 4;
+            if ( iteration == 2 )
+            {
+                uniData[ 0 ] = 1; // float4
+                uniData[ 3 ] = 3;
+            }
+            if ( iteration == 2 )
+            {
+                uniData[ 0 ] = 1; // float4
+                uniData[ 3 ] = 1;
+            }
+
+            break;
+        }
+        case UniformData::Correct:
+        {
+            if ( iteration == 0 )
+            {
+                uint16_t *uniData = ( uint16_t * ) data;
+                uniData[ 0 ] = 0; // float
+                uniData[ 1 ] = 2; // id size
+                uniData[ 2 ] = 'a'; // id
+                uniData[ 3 ] = 1;
+
+                float *defValueData = ( float * )( data + sizeof( uint16_t ) * 4);
+                defValueData[ 0 ] = 15.5f;
+            }
+            if ( iteration == 1 )
+            {
+                uint16_t *uniData = ( uint16_t * ) data;
+                uniData[ 0 ] = 1; // float
+                uniData[ 1 ] = 2; // id size
+                uniData[ 2 ] = 'a'; // id
+                uniData[ 3 ] = 4;
+
+                float *defValueData = ( float * )( data + sizeof( uint16_t ) * 4);
+                defValueData[ 0 ] = 15.5f;
+                defValueData[ 1 ] = 25.5f;
+                defValueData[ 2 ] = 35.5f;
+                defValueData[ 3 ] = 45.5f;
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
+    
+    return data;
+}
+
 TEST_CASE( "create shader parser", "[unit-shader]" )
 {
     ShaderParser p( "test_shader" );
@@ -381,5 +494,68 @@ TEST_CASE( "parse binary sampler", "[unit-shader]" )
     {
         samplerData.reset( generateBinarySamplerData( SamplerData::Correct, 0 ) );
         REQUIRE( p.test_parseBinarySampler( (char *) samplerData.get(), 1 ) == true );        
+    }
+}
+
+TEST_CASE( "parse binary uniform", "[unit-shader]" )
+{
+    TestShaderParser p( "test_shader" );
+
+    std::unique_ptr< uint8_t > uniformData = nullptr;
+
+    SECTION( "no data" )
+    {
+        REQUIRE_FALSE( p.test_parseBinaryUniform( nullptr, 0 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_NoUniforms, 0 ) );
+
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 0 ) );
+    }
+
+    SECTION( "incorrect type" )
+    {
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_Type, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_Type, 1 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_Type, 2 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_Type, 3 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+    }
+
+    SECTION( "incorrect id" )
+    {
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_Id, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_Id, 1 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_Id, 2 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+    }
+
+    SECTION( "incorrect def value" )
+    {
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_DefValue, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_DefValue, 1 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_DefValue, 2 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Incorrect_DefValue, 3 ) );
+        REQUIRE_FALSE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) );
+    }
+
+    SECTION( "correct usage" )
+    {
+
     }
 }
