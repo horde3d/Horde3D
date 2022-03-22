@@ -203,7 +203,7 @@ bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
     if ( !data || variablesCount == 0 ) return false;
 
     // main uniform parsing function
-    auto parseUniform = []( char *data, ShaderUniform *uni )
+    auto parseUniform = []( char *&data, ShaderUniform *uni )
     {
         uint16 uniformIdSize;
         data = elemcpy_le( &uniformIdSize, (uint16*)( data ), 1 );
