@@ -332,7 +332,7 @@ static uint8_t *generateBinaryUniformData( UniformData genType, int iteration )
             if ( iteration == 1 )
             {
                 uint16_t *uniData = ( uint16_t * ) data;
-                uniData[ 0 ] = 1; // float
+                uniData[ 0 ] = 1; // float4
                 uniData[ 1 ] = 2; // id size
                 uniData[ 2 ] = 'a'; // id
                 uniData[ 3 ] = 4;
@@ -342,6 +342,31 @@ static uint8_t *generateBinaryUniformData( UniformData genType, int iteration )
                 defValueData[ 1 ] = 25.5f;
                 defValueData[ 2 ] = 35.5f;
                 defValueData[ 3 ] = 45.5f;
+            }
+            if ( iteration == 2 )
+            {
+                uint16_t *uniData = ( uint16_t * ) data;
+                uniData[ 0 ] = 1; // float4
+                uniData[ 1 ] = 2; // id size
+                uniData[ 2 ] = 'a'; // id
+                uniData[ 3 ] = 4;
+
+                float *defValueData = ( float * )( data + sizeof( uint16_t ) * 4);
+                defValueData[ 0 ] = 15.5f;
+                defValueData[ 1 ] = 25.5f;
+                defValueData[ 2 ] = 35.5f;
+                defValueData[ 3 ] = 45.5f;
+
+                // skip 16 bytes, 8 uint16_t
+                uniData[ 12 ] = 1; // float4
+                uniData[ 13 ] = 2; // id size
+                uniData[ 14 ] = 'a'; // id
+                uniData[ 15 ] = 4;
+
+                defValueData[ 6 ] = 15.5f;
+                defValueData[ 7 ] = 25.5f;
+                defValueData[ 8 ] = 35.5f;
+                defValueData[ 9 ] = 45.5f;
             }
 
             break;
@@ -556,6 +581,13 @@ TEST_CASE( "parse binary uniform", "[unit-shader]" )
 
     SECTION( "correct usage" )
     {
+        uniformData.reset( generateBinaryUniformData( UniformData::Correct, 0 ) );
+        REQUIRE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) == true );
 
+        uniformData.reset( generateBinaryUniformData( UniformData::Correct, 1 ) );
+        REQUIRE( p.test_parseBinaryUniform( (char *) uniformData.get(), 1 ) == true );
+
+        uniformData.reset( generateBinaryUniformData( UniformData::Correct, 2 ) );
+        REQUIRE( p.test_parseBinaryUniform( (char *) uniformData.get(), 2 ) == true );
     }
 }
