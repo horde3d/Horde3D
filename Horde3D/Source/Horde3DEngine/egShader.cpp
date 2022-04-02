@@ -1062,6 +1062,14 @@ bool ShaderResource::load( const char *data, int size )
             return false;
         }
         
+        // get all data from shader parser and compile contexts
+        _contexts.swap( shp._contexts );
+        _buffers.swap( shp._buffers );
+        _uniforms.swap( shp._uniforms );
+        _samplers.swap( shp._samplers );
+        _binarySections.swap( shp._binaryShaders );
+        
+        compileContexts();
         return true;
     }
     
@@ -1371,6 +1379,74 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 }
 
 
+bool ShaderResource::compileBinaryCombination( ShaderContext &context, ShaderCombination &sc )
+{
+    // we have all the necessary data, either whole program, or binary shaders
+	Modules::log().writeInfo( "---- C O M P I L I N G  . S H A D E R . %s@%s[%i] ----",
+                              _name.c_str(), context.id.c_str(), sc.combMask );
+	
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+	// Unload shader if necessary
+	if( sc.shaderObj != 0 )
+	{
+		rdi->destroyShader( sc.shaderObj );
+		sc.shaderObj = 0;
+	}
+	
+	// Compile shader
+	RDIShaderCreateParams scp;
+    
+	bool compiled = Modules::renderer().createShaderComb( sc,
+                                                          scp
+														  );
+	if( !compiled )
+	{
+		Modules::log().writeError( "Shader resource '%s': Failed to compile shader context '%s' (comb %i)",
+			_name.c_str(), context.id.c_str(), sc.combMask );
+	}
+	else
+	{
+		rdi->bindShader( sc.shaderObj );
+
+		// Find samplers in compiled shader
+		sc.samplersLocs.reserve( _samplers.size() );
+		for( uint32 i = 0; i < _samplers.size(); ++i )
+		{
+			int samplerLoc = rdi->getShaderSamplerLoc( sc.shaderObj, _samplers[i].id.c_str() );
+			sc.samplersLocs.push_back( samplerLoc );
+			
+			// Set texture unit
+			if( samplerLoc >= 0 )
+				rdi->setShaderSampler( samplerLoc, _samplers[i].texUnit );
+		}
+		
+		// Find buffers in compiled shader
+		sc.bufferLocs.reserve( _buffers.size() );
+		for ( uint32 i = 0; i < _buffers.size(); ++i )
+		{
+			int bufferLoc = rdi->getShaderBufferLoc( sc.shaderObj, _buffers[ i ].id.c_str() );
+			sc.bufferLocs.push_back( bufferLoc );
+		}
+
+		// Find uniforms in compiled shader
+		sc.uniLocs.reserve( Modules::renderer().totalEngineUniforms() + _uniforms.size() );
+		for( uint32 i = 0; i < _uniforms.size(); ++i )
+		{
+			sc.uniLocs.push_back(
+				rdi->getShaderConstLoc( sc.shaderObj, _uniforms[i].id.c_str() ) );
+		}
+	}
+
+	rdi->bindShader( 0 );
+
+	// Output shader log
+	if( rdi->getShaderLog() != "" )
+		Modules::log().writeInfo( "Shader resource '%s': ShaderLog: %s", _name.c_str(), rdi->getShaderLog().c_str() );
+
+	return compiled;    
+}
+
 void ShaderResource::compileContexts()
 {
 	for( uint32 i = 0; i < _contexts.size(); ++i )
@@ -1380,19 +1456,22 @@ void ShaderResource::compileContexts()
 		if( context.compiled )
 			continue;
 		
-		context.flagMask = 0;
+        if ( !_binaryShader )
+        {
+            context.flagMask = 0;
 
-		if ( ( context.vertCodeIdx >= 0 && !getCode( context.vertCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.fragCodeIdx >= 0 && !getCode( context.fragCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.geomCodeIdx >= 0 && !getCode( context.geomCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.tessCtlCodeIdx >= 0 && !getCode( context.tessCtlCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.tessEvalCodeIdx >= 0 && !getCode( context.tessEvalCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.computeCodeIdx >= 0 && !getCode( context.computeCodeIdx )->tryLinking( &context.flagMask ) )
-		   )
-		{
-			continue;
-		}
-
+            if ( ( context.vertCodeIdx >= 0 && !getCode( context.vertCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.fragCodeIdx >= 0 && !getCode( context.fragCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.geomCodeIdx >= 0 && !getCode( context.geomCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.tessCtlCodeIdx >= 0 && !getCode( context.tessCtlCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.tessEvalCodeIdx >= 0 && !getCode( context.tessEvalCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.computeCodeIdx >= 0 && !getCode( context.computeCodeIdx )->tryLinking( &context.flagMask ) )
+            )
+            {
+                continue;
+            }
+        }
+        
 		// Add preloaded combinations
 		for( std::set< uint32 >::iterator itr = _preLoadList.begin(); itr != _preLoadList.end(); ++itr )
 		{
@@ -1419,7 +1498,10 @@ void ShaderResource::compileContexts()
 		bool combinationsCompileStatus = true;
 		for( size_t j = 0; j < context.shaderCombs.size(); ++j )
 		{
-			combinationsCompileStatus &= compileCombination( context, context.shaderCombs[j] );
+            if ( !_binaryShader )
+                combinationsCompileStatus &= compileCombination( context, context.shaderCombs[j] );
+            else
+                combinationsCompileStatus &= compileBinaryCombination( context, context.shaderCombs[j] );
 		}
 
 		context.compiled = combinationsCompileStatus;
