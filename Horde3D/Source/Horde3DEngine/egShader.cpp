@@ -1553,6 +1553,102 @@ uint32 ShaderResource::calcCombMask( const std::vector< std::string > &flags )
 }
 
 
+bool ShaderResource::createBinaryShaderStream( uint8 *&data )
+{
+	if ( !data || !*data ) return false;
+
+	char *d = ( char *) data;
+
+	// add header
+	d = elemcpyd_le( (char*) d, "H3DSB", 5 );
+
+	// add version
+	d = elemset_le<uint16>( (uint16 *) d, 1 );
+
+	// add render backend type
+	d = elemset_le< uint16 >( (uint16 *) d, Modules::renderer().getRenderDeviceType() );
+
+	// add generator name
+	auto rndName = Modules::renderer().getRenderDevice()->getRendererName();
+	auto rndSize = rndName.size() > 32 ? 32 : rndName.size();
+	d = elemcpyd_le( (char *) d, rndName.size() > 32 ? rndName.substr( 0, 31 ).c_str() : rndName.c_str(), rndSize );
+
+	// add generator version
+	auto rndVersion = Modules::renderer().getRenderDevice()->getRendererVersion();
+	auto rndVersionSize = rndVersion.size() > 16 ? 16 : rndVersion.size();
+	d = elemcpyd_le( (char *) d, rndVersion.size() > 16 ? rndVersion.substr( 0, 15 ).c_str() : rndVersion.c_str(), rndVersionSize );
+
+	// add shader binary type
+	d = elemset_le< uint16 >( (uint16 *) d, ShaderForm::BinaryDeviceDependent );
+
+	// add fx section
+	// samplers
+	d = elemset_le< uint16 >( (uint16 *) d, _samplers.size() );
+	for( ShaderSampler &s : _samplers )
+	{
+		// type
+		int samplerType = 0;
+		if ( s.type == TextureTypes::Tex2D ) samplerType = 2;
+		if ( s.type == TextureTypes::Tex3D ) samplerType = 3;
+		if ( s.type == TextureTypes::TexCube ) samplerType = 6;
+
+		d = elemset_le< uint16 >( (uint16 *) d, samplerType );
+
+		// id
+		if ( s.id.size() <= 255 )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, s.id.size() );
+			d = elemcpyd_le( (char *) d, s.id.c_str(), s.id.size() );
+		}
+		else
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 255 );
+			d = elemcpyd_le( (char *) d, s.id.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// texid
+		auto &samplerTexName = s.defTex.getPtr()->getName();
+		if ( samplerTexName.size() > 255 )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, samplerTexName.size() );
+			d = elemcpyd_le( (char *) d, samplerTexName.c_str(), samplerTexName.size() );
+		}
+		else
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 255 );
+			d = elemcpyd_le( (char *) d, samplerTexName.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// texunit
+		d = elemset_le< uint16 >( (uint16 *) d, s.texUnit );
+
+		// tex address
+		if ( s.sampState & SS_ADDR_WRAP ) 		d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		if ( s.sampState & SS_ADDR_CLAMP ) 		d = elemset_le< uint16 >( (uint16 *) d, 1 );
+		if ( s.sampState & SS_ADDR_CLAMPCOL ) 	d = elemset_le< uint16 >( (uint16 *) d, 2 );
+
+		// tex filter
+		if ( s.sampState & SS_FILTER_POINT ) 		d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		if ( s.sampState & SS_FILTER_BILINEAR ) 	d = elemset_le< uint16 >( (uint16 *) d, 1 );
+		if ( s.sampState & SS_FILTER_TRILINEAR ) 	d = elemset_le< uint16 >( (uint16 *) d, 2 );
+
+		// anisotropy
+		if ( s.sampState & SS_ANISO1 ) d = elemset_le< uint16 >( (uint16 *) d, 1 );
+		if ( s.sampState & SS_ANISO2 ) d = elemset_le< uint16 >( (uint16 *) d, 2 );
+		if ( s.sampState & SS_ANISO4 ) d = elemset_le< uint16 >( (uint16 *) d, 4 );
+		if ( s.sampState & SS_ANISO8 ) d = elemset_le< uint16 >( (uint16 *) d, 8 );
+		if ( s.sampState & SS_ANISO16 ) d = elemset_le< uint16 >( (uint16 *) d, 16 );
+
+		// usage
+		d = elemset_le< uint16 >( (uint16 *) d, s.usage );
+	}
+
+	// uniforms
+
+	return true;
+}
+
+
 int ShaderResource::getElemCount( int elem ) const
 {
 	switch( elem )
@@ -1563,6 +1659,8 @@ int ShaderResource::getElemCount( int elem ) const
 		return (int)_samplers.size();
 	case ShaderResData::UniformElem:
 		return (int)_uniforms.size();
+	case ShaderResData::ShaderElem:
+		return 1;
 	default:
 		return Resource::getElemCount( elem );
 	}
@@ -1591,6 +1689,14 @@ int ShaderResource::getElemParamI( int elem, int elemIdx, int param ) const
 			case ShaderResData::SampDefTexResI:
 				return _samplers[elemIdx].defTex ? _samplers[elemIdx].defTex->getHandle() : 0;
 			}
+		}
+	case ShaderResData::ShaderElem:
+		switch( param )
+		{
+			case ShaderResData::ShaderTypeI:
+				return _binaryShader ? 1 : 0;
+			case ShaderResData::ShaderBinarySizeI:
+				return (int) _binaryShaderSize;
 		}
 	}
 	
@@ -1681,6 +1787,39 @@ const char *ShaderResource::getElemParamStr( int elem, int elemIdx, int param ) 
 	}
 	
 	return Resource::getElemParamStr( elem, elemIdx, param );
+}
+
+
+void *ShaderResource::mapStream( int elem, int elemIdx, int stream, bool read, bool write )
+{
+	if ( read && _mappedData )
+	{
+		if( elem == ShaderResData::ShaderElem && stream == ShaderResData::ShaderBinaryStream &&
+		    elemIdx < getElemCount( elem ) )
+		{
+			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+			_mappedData = Modules::renderer().useScratchBuf( 1 * 1024 * 1024, 0 ); // 1 mb should be enough for most cases
+																				   // additional checks are done during dumping
+			if ( !createBinaryShaderStream( _mappedData ) ) return nullptr;
+
+			return _mappedData;
+		}
+	}
+
+	return Resource::mapStream( elem, elemIdx, stream, read, write );
+}
+
+
+void ShaderResource::unmapStream()
+{
+	if( _mappedData != nullptr )
+	{
+		_mappedData = nullptr;
+		return;
+	}
+
+	Resource::unmapStream();
 }
 
 }  // namespace
