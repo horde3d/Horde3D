@@ -271,6 +271,8 @@ bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
 
 bool ShaderParser::parseBinaryBuffer( char *data, uint32 bufferCount )
 {
+    if ( !data || bufferCount == 0 ) return false;
+
     // parsing for each buffer
     _buffers.reserve( bufferCount );
     for( size_t i = 0; i < bufferCount; i++ )
@@ -387,30 +389,11 @@ bool ShaderParser::parseBinaryContexts( char *data, uint32 contextCount )
         uint16 contextZFunc;
         data = elemcpy_le( &contextZFunc, (uint16*)( data ), 1 );
         
-        switch( contextZFunc )
-        {
-            case 0: // Always
-                ctx.depthFunc = TestModes::Always;
-                break;
-            case 1: // Equal
-                ctx.depthFunc = TestModes::Equal;
-                break;
-            case 2: // Less
-                ctx.depthFunc = TestModes::Less;
-                break;
-            case 3: // LessEqual - default
-                ctx.depthFunc = TestModes::LessEqual;
-                break;
-            case 4: // Greater
-                ctx.depthFunc = TestModes::Greater;
-                break;
-            case 5: // GreaterEqual
-                ctx.depthFunc = TestModes::GreaterEqual;
-                break;
-            default:
-                return raiseError( "Incorrect ZFunc value for context " + std::to_string( i ) );
-        }
-        
+        if ( contextZFunc > TestModes::Always ) // should always be last element in enum
+            return raiseError( "Incorrect ZFunc value for context " + std::to_string( i ) );
+
+        ctx.depthFunc = ( TestModes::List ) contextZFunc;
+
         // BlendMode
         uint16 contextBlendMode, contextBlendMode2;
         data = elemcpy_le( &contextBlendMode, (uint16*)( data ), 1 );
