@@ -1644,6 +1644,153 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data )
 	}
 
 	// uniforms
+	d = elemset_le< uint16 >( (uint16 *) d, _uniforms.size() );
+	for( ShaderUniform &u : _uniforms )
+	{
+		// type
+		if ( u.size == 1 )
+			d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		else if ( u.size == 4 )
+			d = elemset_le< uint16 >( (uint16 *) d, 1 );
+
+		// id
+		if ( u.id.size() <= 255 )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, u.id.size() );
+			d = elemcpyd_le( (char *) d, u.id.c_str(), u.id.size() );
+		}
+		else
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 255 );
+			d = elemcpyd_le( (char *) d, u.id.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// number of default values
+		d = elemset_le< uint16 >( (uint16 *) d, u.size );
+
+		// default values
+		if ( u.size == 1 )
+			d = elemset_le< float >( (float *) d, u.defValues[ 0 ] );
+		else if ( u.size == 4 )
+			d = elemcpyd_le( (float *) d, u.defValues, 4 );
+	}
+
+	// buffers
+	d = elemset_le< uint16 >( (uint16 *) d, _buffers.size() );
+	for( ShaderBuffer &b : _buffers )
+	{
+		// id
+		if ( b.id.size() <= 255 )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, b.id.size() );
+			d = elemcpyd_le( (char *) d, b.id.c_str(), b.id.size() );
+		}
+		else
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 255 );
+			d = elemcpyd_le( (char *) d, b.id.substr( 0, 255 ).c_str(), 255 );
+		}
+	}
+
+	// flags
+	// TODO: currently write zero flags
+	d = elemset_le< uint16 >( (uint16 *) d, 0 );
+
+	// contexts
+	uint32 totalShaderCombs = 0;
+
+	d = elemset_le< uint16 >( (uint16 *) d, _contexts.size() );
+	for ( ShaderContext &ctx : _contexts )
+	{
+		// id
+		if ( ctx.id.size() <= 255 )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, ctx.id.size() );
+			d = elemcpyd_le( (char *) d, ctx.id.c_str(), ctx.id.size() );
+		}
+		else
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 255 );
+			d = elemcpyd_le( (char *) d, ctx.id.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// render interface
+		d = elemset_le< uint16 >( (uint16 *) d, Modules::renderer().getRenderDeviceType() );
+
+		// context options
+		d = elemset_le< uint16 >( (uint16 *) d, ctx.writeDepth ); // ZWriteEnable
+		d = elemset_le< uint16 >( (uint16 *) d, ctx.depthTest ); // ZEnable
+		d = elemset_le< uint16 >( (uint16 *) d, ctx.depthFunc ); // ZFunc
+
+		// blend
+		if ( ctx.blendStateSrc == BlendModes::Zero && ctx.blendStateDst == BlendModes::Zero )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 0 ); // replace
+			d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::SrcAlpha && ctx.blendStateDst == BlendModes::OneMinusSrcAlpha )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 1 ); // blend
+			d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::One && ctx.blendStateDst == BlendModes::One )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 2 ); // add
+			d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::SrcAlpha && ctx.blendStateDst == BlendModes::One )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 3 ); // AddBlended
+			d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::DestColor && ctx.blendStateDst == BlendModes::Zero )
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, 4 ); // Mult
+			d = elemset_le< uint16 >( (uint16 *) d, 0 );
+		}
+		else // separate blend modes
+		{
+			d = elemset_le< uint16 >( (uint16 *) d, ctx.blendStateSrc + 10 );
+			d = elemset_le< uint16 >( (uint16 *) d, ctx.blendStateDst + 10 );
+		}
+
+		// options continued
+		d = elemset_le< uint16 >( (uint16 *) d, ctx.cullMode );
+		d = elemset_le< uint16 >( (uint16 *) d, ctx.alphaToCoverage );
+		d = elemset_le< uint16 >( (uint16 *) d, ctx.tessVerticesInPatchCount );
+
+		// flag mask
+		d = elemset_le< uint32 >( (uint32 *) d, ctx.flagMask );
+
+		// number of shader combinations
+		d = elemset_le< uint16 >( (uint16 *) d, ctx.shaderCombs.size() );
+		totalShaderCombs += ctx.shaderCombs.size();
+	}
+
+	// shader combinations
+	uint32 curContext = 0, curShaderComb = 0;
+
+	d = elemset_le< uint16 >( (uint16 *) d, totalShaderCombs );
+	for( uint32 sc = 0; sc < totalShaderCombs; ++sc )
+	{
+		if ( sc >= _contexts[ curContext ].shaderCombs.size() )
+		{
+			curContext++;
+			curShaderComb = 0;
+		}
+
+		auto &ctx = _contexts[ curContext ];
+
+		d = elemset_le< uint16 >( (uint16 *) d, curContext );
+		d = elemset_le< uint32 >( (uint32 *) d, ctx.shaderCombs[ curShaderComb ].combMask );
+
+		// OpenGL only supports dumping whole programs, so always say that we have one shader and it is always Vertex shader
+		d = elemset_le< uint16 >( (uint16 *) d, 1 );
+		d = elemset_le< uint16 >( (uint16 *) d, ShaderType::Vertex );
+
+//		Modules::renderer().getRenderDevice()->getShaderBinary();
+		curShaderComb++;
+	}
 
 	return true;
 }
