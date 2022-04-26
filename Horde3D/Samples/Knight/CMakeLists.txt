@@ -69,9 +69,9 @@ else()
 endif()
 
 if(HORDE3D_USE_GLFW)
-    target_link_libraries(Knight Horde3D Horde3DUtils SampleFramework ${GLFW_LIBRARIES})
+    target_link_libraries(Knight SampleFramework Horde3D Horde3DUtils ${GLFW_LIBRARIES})
 elseif(HORDE3D_USE_SDL)
-    target_link_libraries(Knight Horde3D Horde3DUtils SampleFramework ${SDL2_LIBRARY})
+    target_link_libraries(Knight SampleFramework Horde3D Horde3DUtils ${SDL2_LIBRARY})
 endif()
 
 add_dependencies(Knight SampleFramework)
