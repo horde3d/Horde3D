@@ -1446,12 +1446,17 @@ In newer versions it will also be used for Vulkan shaders.
                 <tr>
 					<td><b>combinationShaderSectionType</b></td>
 					<td><b>uint16</b></td>
-					<td>type of the shader data section. 0 - Vertex, 1 - Fragment, 2 - Geometry, 3 - TessEvaluation, 4 - TessControl, 5 - Compute. </td>
+					<td>type of the shader data section. 0 - Vertex, 1 - Fragment, 2 - Geometry, 3 - TessEvaluation, 4 - TessControl, 5 - Compute. For OpenGL always use Vertex as a special case (OpenGL does not allow to dump separate shaders, only linked shader program).</td>
 				</tr>
                 <tr>
 					<td><b>combinationShaderSectionSize</b></td>
 					<td><b>uint32</b></td>
 					<td>size of the shader section in bytes</td>
+				</tr>
+                <tr>
+					<td><b>combinationShaderSectionFormat</b></td>
+					<td><b>uint32</b></td>
+					<td>format of shader section. Primarily used for dumping binary shaders from drivers. Use 0 for other cases.</td>
 				</tr>
                 <tr>
 					<td><b>combinationShaderSectionData</b></td>

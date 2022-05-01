@@ -611,6 +611,10 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
             uint32 combinationShaderSize;
             data = elemcpy_le( &combinationShaderSize, (uint32*)( data ), 1 );
             
+            // binary shader format
+            uint32 combinationShaderFormat;
+            data = elemcpy_le( &combinationShaderFormat, (uint32*)( data ), 1 );
+
             // shader data
             uint8_t *combinationShaderData = new uint8_t[ combinationShaderSize ];
             data = elemcpy_le( combinationShaderData, (uint8*)( data ), combinationShaderSize );
@@ -619,6 +623,7 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
             bin.contextId = combinationContextId;
             bin.shaderType = combinationShaderType;
             bin.dataSize = combinationShaderSize;
+            bin.dataFormat = combinationShaderFormat;
             bin.data = combinationShaderData;
             
             _binaryShaders.emplace_back( bin );
