@@ -172,6 +172,9 @@ public:
 	// Shader & material handling
 	bool createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
 						   const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader );
+    
+    bool createShaderComb( ShaderCombination &sc, const RDIShaderCreateParams &shcparams );
+    
 	void releaseShaderComb( ShaderCombination &sc );
 	void setShaderComb( ShaderCombination *sc );
 	void commitGeneralUniforms();

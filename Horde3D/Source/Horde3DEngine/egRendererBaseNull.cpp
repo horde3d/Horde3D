@@ -589,15 +589,9 @@ void RenderDeviceNull::bindImageToTexture(uint32 texObj, void *eglImage)
 // Shaders
 // =================================================================================================
 
-uint32 RenderDeviceNull::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
-                                              const char *tessControlShaderSrc, const char *tessEvalShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceNull::createShaderProgram( const RDIShaderCreateParams& shaderParameters )
 {
-    H3D_UNUSED_VAR( vertexShaderSrc );
-    H3D_UNUSED_VAR( fragmentShaderSrc );
-    H3D_UNUSED_VAR( geometryShaderSrc );
-    H3D_UNUSED_VAR( tessControlShaderSrc );
-    H3D_UNUSED_VAR( tessEvalShaderSrc );
-    H3D_UNUSED_VAR( computeShaderSrc );
+    H3D_UNUSED_VAR( shaderParameters );
     
 	return 1;
 }
@@ -610,19 +604,24 @@ bool RenderDeviceNull::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceNull::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-                                      const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceNull::createShader( const struct RDIShaderCreateParams &shaderParameters )
 {
-	H3D_UNUSED_VAR( geometryShaderSrc );
-	H3D_UNUSED_VAR( tessControlShaderSrc );
-	H3D_UNUSED_VAR( tessEvaluationShaderSrc );
-	H3D_UNUSED_VAR( computeShaderSrc );
-
 	// Compile and link shader
-	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
-                                             tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
-	if( programObj == 0 ) return 0;
-	if( !linkShaderProgram( programObj ) ) return 0;
+    uint32 programObj = 0;
+    if ( shaderParameters.type == RDIShaderType::SHADERTYPE_BINARY_DEVICE )
+    {
+        // path for device dependent binary shaders
+		static uint32 programCounter = 1;
+
+		programObj = programCounter++;
+    }
+    else
+    {
+        // path for text and spirv based shaders
+        programObj = createShaderProgram( shaderParameters );
+        if( programObj == 0 ) return 0;
+        if( !linkShaderProgram( programObj ) ) return 0;
+    }
 	
 	uint32 shaderId = _shaders.add( RDIShaderNull() );
 	RDIShaderNull &shader = _shaders.getRef( shaderId );

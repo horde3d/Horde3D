@@ -1024,16 +1024,19 @@ bool RenderDeviceGL2::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-                                      const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceGL2::createShader( RDIShaderType type, uint8 *vertexShaderSrc, uint8 *fragmentShaderSrc, uint8 *geometryShaderSrc, 
+                                      uint8 *tessControlShaderSrc, uint8 *tessEvaluationShaderSrc, uint8 *computeShaderSrc ) 
 {
 	H3D_UNUSED_VAR( geometryShaderSrc );
 	H3D_UNUSED_VAR( tessControlShaderSrc );
 	H3D_UNUSED_VAR( tessEvaluationShaderSrc );
 	H3D_UNUSED_VAR( computeShaderSrc );
 
+    if ( type == RDIShaderType::SHADERTYPE_BINARY_DEVICE || type == RDIShaderType::SHADERTYPE_BINARY_SPIRV )
+        return 0;
+    
 	// Compile and link shader
-	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
+	uint32 programObj = createShaderProgram( ( const char * ) vertexShaderSrc, ( const char * ) fragmentShaderSrc );
 	if( programObj == 0 ) return 0;
 	if( !linkShaderProgram( programObj ) ) return 0;
 	

@@ -1303,8 +1303,8 @@ bool RenderDeviceGLES3::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGLES3::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-									  const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceGLES3::createShader( RDIShaderType type, uint8 *vertexShaderSrc, uint8 *fragmentShaderSrc, uint8 *geometryShaderSrc, 
+                                        uint8 *tessControlShaderSrc, uint8 *tessEvaluationShaderSrc, uint8 *computeShaderSrc ) 
 {
 	// Compile and link shader
 	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );

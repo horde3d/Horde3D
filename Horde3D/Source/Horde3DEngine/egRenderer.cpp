@@ -638,7 +638,17 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 								 const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader )
 {
 	// Create shader program
-	uint32 shdObj = _renderDevice->createShader( vertexShader, fragmentShader, geometryShader, tessControlShader, tessEvaluationShader, computeShader );
+    RDIShaderCreateParams p;
+    p.type = RDIShaderType::SHADERTYPE_TEXT;
+    p.vertexShaderData = ( uint8 * ) vertexShader;
+    p.fragmentShaderData = ( uint8 * ) fragmentShader;
+    p.geometryShaderData = ( uint8 * ) geometryShader;
+    p.tessControlShaderData = ( uint8 * ) tessControlShader;
+    p.tessEvalShaderData = ( uint8 * ) tessEvaluationShader;
+    p.computeShaderData = ( uint8 * ) computeShader;
+    
+    return createShaderComb( sc, p );
+/*	uint32 shdObj = _renderDevice->createShader( p );
 	if( shdObj == 0 ) return false;
 	
 	sc.shaderObj = shdObj;
@@ -654,6 +664,7 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 	{
 		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
 	}
+*/
 
 // 	Misc general uniforms
 // 	sc.uni_frameBufSize = _renderDevice->getShaderConstLoc( shdObj, "frameBufSize" );
@@ -688,6 +699,30 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 // 	sc.uni_parColorArray = _renderDevice->getShaderConstLoc( shdObj, "parColorArray" );
 // 	
 // 	// Uniforms, requested by extensions
+
+//	return true;
+}
+
+
+bool Renderer::createShaderComb( ShaderCombination &sc, const RDIShaderCreateParams &shcparams )
+{
+	// Create shader program
+	uint32 shdObj = _renderDevice->createShader( shcparams );
+	if( shdObj == 0 ) return false;
+	
+	sc.shaderObj = shdObj;
+	_renderDevice->bindShader( shdObj );
+	
+	// Set standard uniforms
+	int loc =_renderDevice-> getShaderSamplerLoc( shdObj, "shadowMap" );
+	if( loc >= 0 ) _renderDevice->setShaderSampler( loc, 12 );
+
+	sc.uniLocs.reserve( _engineUniforms.size() );
+
+	for ( size_t i = 0; i < _engineUniforms.size(); ++i ) 
+	{
+		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
+	}
 
 	return true;
 }
