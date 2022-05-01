@@ -655,6 +655,27 @@ H3D_IMPL bool h3dutScreenshot( const char *filename )
 }
 
 
+H3D_IMPL bool h3dutCreateBinaryShader( H3DRes shaderResource, const char *filename )
+{
+	if ( h3dGetResType( shaderResource ) != H3DResTypes::Shader || !filename ) return false;
+
+	auto *data = (uint8 *) h3dMapResStream( shaderResource, H3DShaderRes::ShaderElem, 0, H3DShaderRes::ShaderBinaryStream, true, false );
+	if ( !data ) return false;
+
+	auto dataSize = h3dGetResParamI( shaderResource, H3DShaderRes::ShaderElem, 0, H3DShaderRes::ShaderBinarySizeI );
+
+	size_t bytesWritten = 0;
+	FILE *f = fopen( filename, "wb" );
+	if( f )
+	{
+		bytesWritten = fwrite( data, 1, dataSize, f );
+		fclose( f );
+	}
+
+	h3dUnmapResStream( shaderResource );
+	return true;
+}
+
 // =================================================================================================
 // DLL entry point
 // =================================================================================================

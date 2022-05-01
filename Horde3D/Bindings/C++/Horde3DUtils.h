@@ -246,7 +246,7 @@ H3D_API H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
 	Returns:
 		None
 */
-H3D_API void h3dutGetScreenshotParam( int *width,  int *height);
+H3D_API void h3dutGetScreenshotParam( int *width,  int *height );
 
 /* Function: h3dutScreenshotRaw
 		Take screenshot and copy it to user provided `rgb` buffer.
@@ -263,4 +263,6 @@ H3D_API void h3dutGetScreenshotParam( int *width,  int *height);
 	Returns:
 		true if screenshot could be copied.
 */
-H3D_API bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len);
+H3D_API bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len );
+
+H3D_API bool h3dutCreateBinaryShader( H3DRes shaderResource, const char *filename );
