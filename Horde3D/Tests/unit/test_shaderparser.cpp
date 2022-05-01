@@ -38,7 +38,16 @@ public:
     {
         return parseBinaryUniforms( data, variablesCount );
     }
-    
+
+    bool test_parseBinaryBuffer( char *data, uint32_t bufferCount )
+    {
+        return parseBinaryBuffer( data, bufferCount );
+    }
+
+    bool test_parseBinaryFlags( char *data, uint32_t flagCount )
+    {
+        return parseBinaryFlags( data, flagCount );
+    }
 private:
     
     bool _initialized;
@@ -63,6 +72,20 @@ enum class UniformData
     Incorrect_Type,
     Incorrect_Id,
     Incorrect_DefValue,
+    Correct
+};
+
+enum class BufferData
+{
+    Incorrect_NoBuffers,
+    Incorrect_Id,
+    Correct
+};
+
+enum class FlagData
+{
+    Incorrect_NoFlags,
+    Incorrect_Id,
     Correct
 };
 
@@ -378,6 +401,91 @@ static uint8_t *generateBinaryUniformData( UniformData genType, int iteration )
     return data;
 }
 
+static uint8_t *generateBinaryBufferData( BufferData genType, int iteration )
+{
+    uint8_t *data = new uint8_t[ 1024 ];
+    memset( data, 0, 1024 );
+
+    switch( genType )
+    {
+        case BufferData::Incorrect_NoBuffers:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            if ( iteration == 0 ) bufData[ 0 ] = 0;
+
+            break;
+        }
+        case BufferData::Incorrect_Id:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            if ( iteration == 0 ) bufData[ 1 ] = 0;
+            if ( iteration == 1 )
+            {
+                bufData[ 0 ] = 257;
+                bufData[ 1 ] = 'a';
+            }
+            if ( iteration == 2 )
+            {
+                bufData[ 0 ] = 15;
+                bufData[ 1 ] = '\0';
+            }
+
+            break;
+        }
+        case BufferData::Correct:
+        {
+            if ( iteration == 0 )
+            {
+                uint16_t *bufData = ( uint16_t * ) data;
+                bufData[ 0 ] = 2; // id size
+                bufData[ 1 ] = 'a'; // id
+            }
+            if ( iteration == 1 )
+            {
+                uint16_t *bufData = ( uint16_t * ) data;
+                bufData[ 0 ] = 2; // id size
+                bufData[ 1 ] = 'a'; // id
+                bufData[ 2 ] = 2; // id size
+                bufData[ 3 ] = 'b'; // id
+            }
+
+            break;
+        }
+        default:
+            break;
+    }
+
+    return data;
+}
+
+static uint8_t *generateBinaryFlagData( FlagData genType, int iteration )
+{
+    uint8_t *data = new uint8_t[ 1024 ];
+    memset( data, 0, 1024 );
+
+    switch ( genType )
+    {
+        case FlagData::Incorrect_NoFlags:
+        {
+            break;
+        }
+        case FlagData::Incorrect_Id:
+        {
+            break;
+        }
+        case FlagData::Correct:
+        {
+            break;
+        }
+        default:
+            break;
+    }
+
+    return data;
+}
+
 TEST_CASE( "create shader parser", "[unit-shader]" )
 {
     ShaderParser p( "test_shader" );
@@ -589,5 +697,79 @@ TEST_CASE( "parse binary uniform", "[unit-shader]" )
 
         uniformData.reset( generateBinaryUniformData( UniformData::Correct, 2 ) );
         REQUIRE( p.test_parseBinaryUniform( (char *) uniformData.get(), 2 ) == true );
+    }
+}
+
+TEST_CASE( "parse binary buffer", "[unit-shader]" )
+{
+    TestShaderParser p( "test_shader" );
+
+    std::unique_ptr< uint8_t > bufferData = nullptr;
+
+    SECTION( "no data" )
+    {
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( nullptr, 0 ) );
+
+        bufferData.reset( generateBinaryBufferData( BufferData::Incorrect_NoBuffers, 0 ) );
+
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) bufferData.get(), 0 ) );
+    }
+
+    SECTION( "incorrect id" )
+    {
+        bufferData.reset( generateBinaryBufferData( BufferData::Incorrect_Id, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) bufferData.get(), 1 ) );
+
+        bufferData.reset( generateBinaryBufferData( BufferData::Incorrect_Id, 1 ) );
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) bufferData.get(), 1 ) );
+
+        bufferData.reset( generateBinaryBufferData( BufferData::Incorrect_Id, 2 ) );
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) bufferData.get(), 1 ) );
+    }
+
+    SECTION( "correct" )
+    {
+        bufferData.reset( generateBinaryBufferData( BufferData::Correct, 0 ) );
+        REQUIRE( p.test_parseBinaryBuffer( (char *) bufferData.get(), 1 ) == true );
+
+        bufferData.reset( generateBinaryBufferData( BufferData::Correct, 1 ) );
+        REQUIRE( p.test_parseBinaryBuffer( (char *) bufferData.get(), 2 ) == true );
+    }
+}
+
+TEST_CASE( "parse binary flags", "[unit-shader]" )
+{
+    TestShaderParser p( "test_shader" );
+
+    std::unique_ptr< uint8_t > flagData = nullptr;
+
+    SECTION( "no data" )
+    {
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( nullptr, 0 ) );
+
+        flagData.reset( generateBinaryBufferData( BufferData::Incorrect_NoBuffers, 0 ) );
+
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) flagData.get(), 0 ) );
+    }
+
+    SECTION( "incorrect id" )
+    {
+        flagData.reset( generateBinaryBufferData( BufferData::Incorrect_Id, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) flagData.get(), 1 ) );
+
+        flagData.reset( generateBinaryBufferData( BufferData::Incorrect_Id, 1 ) );
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) flagData.get(), 1 ) );
+
+        flagData.reset( generateBinaryBufferData( BufferData::Incorrect_Id, 2 ) );
+        REQUIRE_FALSE( p.test_parseBinaryBuffer( (char *) flagData.get(), 1 ) );
+    }
+
+    SECTION( "correct" )
+    {
+        flagData.reset( generateBinaryBufferData( BufferData::Correct, 0 ) );
+        REQUIRE( p.test_parseBinaryBuffer( (char *) flagData.get(), 1 ) == true );
+
+        flagData.reset( generateBinaryBufferData( BufferData::Correct, 1 ) );
+        REQUIRE( p.test_parseBinaryBuffer( (char *) flagData.get(), 2 ) == true );
     }
 }
