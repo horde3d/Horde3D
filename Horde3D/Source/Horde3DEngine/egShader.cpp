@@ -1605,14 +1605,17 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 	d = pushElemU16( Modules::renderer().getRenderDeviceType() );
 
 	// add generator name
+	char nameBuf[ 64 ] = { 0 };
 	auto rndName = Modules::renderer().getRenderDevice()->getRendererName();
-	auto rndSize = rndName.size() > 32 ? 32 : rndName.size();
-	d = pushElemChar( rndName.size() > 32 ? rndName.substr( 0, 31 ).c_str() : rndName.c_str(), rndSize );
+	strncpy_s( nameBuf, 64, rndName.c_str(), 64 );
+//	auto rndSize = rndName.size() > 64 ? 64 : rndName.size();
+	d = pushElemChar( nameBuf, 64 );
 
 	// add generator version
+	char verBuf[ 64 ] = { 0 };
 	auto rndVersion = Modules::renderer().getRenderDevice()->getRendererVersion();
-	auto rndVersionSize = rndVersion.size() > 16 ? 16 : rndVersion.size();
-	d = pushElemChar( rndVersion.size() > 16 ? rndVersion.substr( 0, 15 ).c_str() : rndVersion.c_str(), rndVersionSize );
+	strncpy_s( verBuf, 64, rndVersion.c_str(), 64 );
+	d = pushElemChar( verBuf, 64 );
 
 	// add shader binary type
 	d = pushElemU16( ShaderForm::BinaryDeviceDependent );
@@ -1659,21 +1662,24 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 		d = pushElemU16( s.texUnit );
 
 		// tex address
-		if ( s.sampState & SS_ADDR_WRAP ) 		d = pushElemU16( 0 );
-		else if ( s.sampState & SS_ADDR_CLAMP ) 		d = pushElemU16( 1 );
+		if ( s.sampState & SS_ADDR_WRAP ) 			d = pushElemU16( 0 );
+		else if ( s.sampState & SS_ADDR_CLAMP ) 	d = pushElemU16( 1 );
 		else if ( s.sampState & SS_ADDR_CLAMPCOL ) 	d = pushElemU16( 2 );
+		else 										d = pushElemU16( 0 ); // default - wrap
 
 		// tex filter
-		if ( s.sampState & SS_FILTER_POINT ) 		d = pushElemU16( 0 );
+		if ( s.sampState & SS_FILTER_POINT ) 			d = pushElemU16( 0 );
 		else if ( s.sampState & SS_FILTER_BILINEAR ) 	d = pushElemU16( 1 );
 		else if ( s.sampState & SS_FILTER_TRILINEAR ) 	d = pushElemU16( 2 );
+		else 											d = pushElemU16( 2 ); // default - trilinear
 
 		// anisotropy
-		if ( s.sampState & SS_ANISO1 ) d = pushElemU16( 1 );
-		else if ( s.sampState & SS_ANISO2 ) d = pushElemU16( 2 );
-		else if ( s.sampState & SS_ANISO4 ) d = pushElemU16( 4 );
-		else if ( s.sampState & SS_ANISO8 ) d = pushElemU16( 8 );
-		else if ( s.sampState & SS_ANISO16 ) d = pushElemU16( 16 );
+		if ( s.sampState & SS_ANISO1 ) 			d = pushElemU16( 1 );
+		else if ( s.sampState & SS_ANISO2 ) 	d = pushElemU16( 2 );
+		else if ( s.sampState & SS_ANISO4 ) 	d = pushElemU16( 4 );
+		else if ( s.sampState & SS_ANISO8 ) 	d = pushElemU16( 8 );
+		else if ( s.sampState & SS_ANISO16 ) 	d = pushElemU16( 16 );
+		else 									d = pushElemU16( 8 ); // default - 8 aniso
 
 		// usage
 		d = pushElemU16( s.usage );
@@ -1812,7 +1818,7 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 	d = pushElemU16( totalShaderCombs );
 	for( uint32 sc = 0; sc < totalShaderCombs; ++sc )
 	{
-		if ( sc >= _contexts[ curContext ].shaderCombs.size() )
+		if ( curShaderComb >= _contexts[ curContext ].shaderCombs.size() )
 		{
 			curContext++;
 			curShaderComb = 0;
@@ -1829,15 +1835,15 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 		d = pushElemU16( ShaderType::Vertex );
 
 		uint32 binSize = 0;
-		uint32 binFormat;
-		uint8 *bin;
+		uint32 binFormat = 0;
+		uint8 *bin = nullptr;
 		if ( !Modules::renderer().getRenderDevice()->getShaderBinary( comb.shaderObj, bin, &binFormat, &binSize ) )
 		{
 			return raiseErrorAndClean( "Failed to obtain binary program!" );
 		}
 
 		// check the size of the binary, do we have enough space?
-		if ( binSize > dataSize - usedMem )
+		if ( binSize > dataSize - ( usedMem + 8 ) ) // 8 is bytes for binSize and binFormat
 		{
 			delete[] bin;
 			return raiseErrorAndClean( "Not enough memory to hold binary shader data!" );
@@ -1851,6 +1857,7 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 
 		// copy data
 		memcpy( d, bin, binSize );
+		d += binSize + 1;
 		usedMem += binSize;
 		delete[] bin;
 
@@ -2012,11 +2019,22 @@ void *ShaderResource::mapStream( int elem, int elemIdx, int stream, bool read, b
 		{
 			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
 
-			uint32 bufSize = 1 * 1024 * 1024;
-			_mappedData = Modules::renderer().useScratchBuf( bufSize, 0 ); // 1 mb should be enough for most cases
-																				   // additional checks are done during dumping
-			if ( !createBinaryShaderStream( _mappedData, bufSize ) ) return nullptr;
+			uint32 bufSize = 2 * 1024 * 1024;
+			_mappedData = Modules::renderer().useScratchBuf( bufSize, 0 ); // 2 mb should be enough for most cases
+																		   // additional checks are done during dumping
+			if ( !createBinaryShaderStream( _mappedData, bufSize ) )
+			{
+				// allocate a bigger buffer and try again
+				bufSize = 8 * 1024 * 1024;
+				_mappedData = Modules::renderer().useScratchBuf( bufSize, 0 );
+				if ( !createBinaryShaderStream( _mappedData, bufSize ) )
+				{
+					Modules::log().writeDebugInfo( "Please fix maximum buffer size for binary shaders!" );
+					return nullptr;
+				}
+			}
 
+			_binaryShaderSize = bufSize;
 			return _mappedData;
 		}
 	}
