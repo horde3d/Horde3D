@@ -30,7 +30,7 @@ bool ShaderParser::raiseError( const std::string& msg, int line )
 }
 
 
-bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
+bool ShaderParser::parseBinarySampler( char *&data, uint32 samplerCount )
 {
     if ( !data || samplerCount == 0 ) return false;
     
@@ -198,7 +198,7 @@ bool ShaderParser::parseBinarySampler( char *data, uint32 samplerCount )
 }
 
 
-bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
+bool ShaderParser::parseBinaryUniforms( char *&data, uint32 variablesCount )
 {
     if ( !data || variablesCount == 0 ) return false;
 
@@ -269,7 +269,7 @@ bool ShaderParser::parseBinaryUniforms( char *data, uint32 variablesCount )
 }
 
 
-bool ShaderParser::parseBinaryBuffer( char *data, uint32 bufferCount )
+bool ShaderParser::parseBinaryBuffer( char *&data, uint32 bufferCount )
 {
     if ( !data || bufferCount == 0 ) return false;
 
@@ -300,7 +300,7 @@ bool ShaderParser::parseBinaryBuffer( char *data, uint32 bufferCount )
 }
 
 
-bool ShaderParser::parseBinaryFlags( char *data, uint32 flagCount )
+bool ShaderParser::parseBinaryFlags( char *&data, uint32 flagCount )
 {
     // parsing for each flag - currently the same as parsing buffers
     _flags.reserve( flagCount );
@@ -330,7 +330,7 @@ bool ShaderParser::parseBinaryFlags( char *data, uint32 flagCount )
 }
 
 
-bool ShaderParser::parseBinaryContexts( char *data, uint32 contextCount )
+bool ShaderParser::parseBinaryContexts( char *&data, uint32 contextCount )
 {
     _contexts.reserve( contextCount );
     for( size_t i = 0; i < contextCount; ++i )
@@ -407,6 +407,7 @@ bool ShaderParser::parseBinaryContexts( char *data, uint32 contextCount )
                 case 0: // Replace
                     ctx.blendStateSrc = ctx.blendStateDst = BlendModes::Zero;
                     ctx.blendingEnabled = false;
+                    break;
                 case 1: // Blend
                     ctx.blendingEnabled = true; 
                     ctx.blendStateSrc = BlendModes::SrcAlpha;
@@ -576,8 +577,9 @@ bool ShaderParser::parseBinaryContexts( char *data, uint32 contextCount )
 }
 
 
-bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs )
+bool ShaderParser::parseBinaryContextShaderCombs( char *&data, uint32 shaderCombs )
 {
+    uint32 currentShaderComb = 0;
     for( size_t i = 0; i < shaderCombs; ++i )
     {
         // id of the context used by this combination - starts from 0
@@ -587,10 +589,14 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
         if ( combinationContextId > _contexts.size() - 1 )
             return raiseError( "Incorrect context id for shader combination " + std::to_string( i ) );
         
+        if ( currentShaderComb > _contexts[ combinationContextId ].shaderCombs.size() - 1 ) currentShaderComb = 0;
+
         // combination mask
         uint32 combinationMask;
         data = elemcpy_le( &combinationMask, (uint32*)( data ), 1 );
         
+        _contexts[ combinationContextId ].shaderCombs[ currentShaderComb ].combMask = combinationMask;
+
         // total shader count in the combination
         uint16 combinationShaderCount;
         data = elemcpy_le( &combinationShaderCount, (uint16*)( data ), 1 );
@@ -619,7 +625,8 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
             uint8_t *combinationShaderData = new uint8_t[ combinationShaderSize ];
             data = elemcpy_le( combinationShaderData, (uint8*)( data ), combinationShaderSize );
             
-            bin.combinationId = i;
+            bin.combinationId = currentShaderComb;
+            bin.combinationShadersLeft = combinationShaderCount - combShader - 1;
             bin.contextId = combinationContextId;
             bin.shaderType = combinationShaderType;
             bin.dataSize = combinationShaderSize;
@@ -629,6 +636,7 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
             _binaryShaders.emplace_back( bin );
         }
 
+        currentShaderComb++;
         // further processing is done in the egShader, parsing is complete
     }
     
@@ -638,35 +646,37 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *data, uint32 shaderCombs
 
 bool ShaderParser::parseBinaryShader( char *data, uint32 size )
 {
+    char *d = data;
+
     uint16 version;
-    data = elemcpy_le( &version, (uint16*)( data ), 1 );
+    d = elemcpy_le( &version, (uint16*)( d ), 1 );
     if( version != 1 ) return raiseError( "Unsupported version of binary shader file" );
     
     uint16 renderBackendType;
-    data = elemcpy_le( &renderBackendType, (uint16*)( data ), 1 );
+    d = elemcpy_le( &renderBackendType, (uint16*)( d ), 1 );
     if( renderBackendType != RenderBackendType::OpenGL4 && renderBackendType != RenderBackendType::OpenGLES3 && 
         renderBackendType != 256 /* Null backend */ ) 
         return raiseError( "Unsupported render backend for binary shader file" );
     
     // check generator/driver name and version
-    char generatorName[ 32 ] = { 0 };
-    data = elemcpy_le( generatorName, ( char * ) (data), 32 );
+    char generatorName[ 64 ] = { 0 };
+    d = elemcpy_le( generatorName, ( char * ) (d), 64 );
     if ( generatorName[ 0 ] == '\0' ) raiseError( "Corrupt binary shader file" );
     
-    char generatorVersion[ 16 ] = { 0 };
-    data = elemcpy_le( generatorVersion, ( char * ) (data), 16 );
+    char generatorVersion[ 64 ] = { 0 };
+    d = elemcpy_le( generatorVersion, ( char * ) (d), 64 );
     if ( generatorVersion[ 0 ] == '\0' ) raiseError( "Corrupt binary shader file" );
     
-    if ( strncmp( generatorName, Modules::renderer().getRenderDevice()->getRendererName().c_str(), 32 ) != 0 )
+    if ( strncmp( generatorName, Modules::renderer().getRenderDevice()->getRendererName().c_str(), 63 ) != 0 )
         return raiseError( "Binary shader was created with different driver/generator. Skipping." );
         
-    if ( strncmp( generatorVersion, Modules::renderer().getRenderDevice()->getRendererVersion().c_str(), 16 ) != 0 )
+    if ( strncmp( generatorVersion, Modules::renderer().getRenderDevice()->getRendererVersion().c_str(), 63 ) != 0 )
         Modules::log().writeWarning( "Binary shader was created with different version of driver/generator." 
                                      "Shader might not work as expected." );
     
     // shader type
     uint16 binaryType;
-    data = elemcpy_le( &binaryType, (uint16*)( data ), 1 );
+    d = elemcpy_le( &binaryType, (uint16*)( d ), 1 );
     if( binaryType == ShaderForm::BinaryDeviceDependent || binaryType == ShaderForm::BinarySPIRV ) 
         _shaderType = binaryType;
     else
@@ -681,48 +691,48 @@ bool ShaderParser::parseBinaryShader( char *data, uint32 size )
     // - contexts
     // - shader combinations for each context
     uint16 samplersCount;
-    data = elemcpy_le( &samplersCount, (uint16*)( data ), 1 );
+    d = elemcpy_le( &samplersCount, (uint16*)( d ), 1 );
 
     if ( samplersCount )
     {
-        if ( !parseBinarySampler( data, samplersCount ) ) return false;
+        if ( !parseBinarySampler( d, samplersCount ) ) return false;
     }
     
     uint16 variablesCount;
-    data = elemcpy_le( &variablesCount, (uint16*)( data ), 1 );
+    d = elemcpy_le( &variablesCount, (uint16*)( d ), 1 );
     
     if ( variablesCount )
     {
-        if ( !parseBinaryUniforms( data, variablesCount ) ) return false;
+        if ( !parseBinaryUniforms( d, variablesCount ) ) return false;
     }
     
     uint16 buffersCount;
-    data = elemcpy_le( &buffersCount, (uint16*)( data ), 1 );
+    d = elemcpy_le( &buffersCount, (uint16*)( d ), 1 );
     
     if ( buffersCount )
     {
-        if ( !parseBinaryBuffer( data, buffersCount ) ) return false;
+        if ( !parseBinaryBuffer( d, buffersCount ) ) return false;
     }
     
     uint16 flagsCount;
-    data = elemcpy_le( &flagsCount, (uint16*)( data ), 1 );
+    d = elemcpy_le( &flagsCount, (uint16*)( d ), 1 );
     if ( flagsCount )
     {
-        if ( !parseBinaryFlags( data, flagsCount ) ) return false;
+        if ( !parseBinaryFlags( d, flagsCount ) ) return false;
     }
     
     uint16 contextCount;
-    data = elemcpy_le( &contextCount, (uint16*)( data ), 1 );
+    d = elemcpy_le( &contextCount, (uint16*)( d ), 1 );
     if ( contextCount )
     {
-        if ( !parseBinaryContexts( data, contextCount ) ) return false;
+        if ( !parseBinaryContexts( d, contextCount ) ) return false;
     }
     
     uint16 shaderCombsCount;
-    data = elemcpy_le( &shaderCombsCount, (uint16*)( data ), 1 );
+    d = elemcpy_le( &shaderCombsCount, (uint16*)( d ), 1 );
     if ( shaderCombsCount )
     {
-        if ( !parseBinaryContextShaderCombs( data, shaderCombsCount ) ) return false;
+        if ( !parseBinaryContextShaderCombs( d, shaderCombsCount ) ) return false;
     }
     
     return true;

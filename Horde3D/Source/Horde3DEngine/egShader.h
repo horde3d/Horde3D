@@ -152,6 +152,7 @@ struct ShaderType
         TessEvaluation,
         TessControl,
         Compute,
+		Program,
         LastElement // should always stay last
     };
 };
@@ -258,7 +259,8 @@ struct ShaderBinaryData
     
     uint16  contextId;
     uint16  combinationId;
-    
+    uint16	combinationShadersLeft; // how many shaders are after this binary shader section
+
     uint32  dataSize;
 	uint32  dataFormat;
     
@@ -331,7 +333,7 @@ private:
 	bool parseFXSectionContext( Tokenizer &tok, const char * identifier, int targetRenderBackend );
 
 	bool compileCombination( ShaderContext &context, ShaderCombination &sc );
-    bool compileBinaryCombination( ShaderContext &context, ShaderCombination &sc );
+    bool compileBinaryCombination( ShaderContext &context, ShaderCombination &sc, uint32 contextID, uint32 scID );
 
 	bool createBinaryShaderStream( uint8 *&data, uint32 &dataSize );
 

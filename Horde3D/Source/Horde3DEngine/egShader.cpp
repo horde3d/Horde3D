@@ -1384,7 +1384,7 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 }
 
 
-bool ShaderResource::compileBinaryCombination( ShaderContext &context, ShaderCombination &sc )
+bool ShaderResource::compileBinaryCombination( ShaderContext &context, ShaderCombination &sc, uint32 contextID, uint32 scID )
 {
     // we have all the necessary data, either whole program, or binary shaders
 	Modules::log().writeInfo( "---- C O M P I L I N G  . S H A D E R . %s@%s[%i] ----",
@@ -1401,10 +1401,56 @@ bool ShaderResource::compileBinaryCombination( ShaderContext &context, ShaderCom
 	
 	// Compile shader
 	RDIShaderCreateParams scp;
-    
-	bool compiled = Modules::renderer().createShaderComb( sc,
-                                                          scp
-														  );
+	for( auto &bin : _binarySections )
+	{
+		if ( bin.contextId == contextID && bin.combinationId == scID )
+		{
+			if ( bin.shaderType == ShaderType::Program )
+			{
+				scp.programData = bin.data;
+				scp.programFormat = bin.dataFormat;
+				scp.programSize = bin.dataSize;
+				scp.type = SHADERTYPE_BINARY_DEVICE;
+			}
+			else
+			{
+				scp.type = SHADERTYPE_BINARY_SPIRV;
+				switch ( bin.shaderType )
+				{
+					case ShaderType::Vertex:
+						scp.vertexShaderData = bin.data;
+						scp.vertexShaderSize = bin.dataSize;
+						break;
+					case ShaderType::Fragment:
+						scp.fragmentShaderData = bin.data;
+						scp.fragmentShaderSize = bin.dataSize;
+						break;
+					case ShaderType::Geometry:
+						scp.geometryShaderData = bin.data;
+						scp.geometryShaderSize = bin.dataSize;
+						break;
+					case ShaderType::TessEvaluation:
+						scp.tessEvalShaderData = bin.data;
+						scp.tessEvalShaderSize = bin.dataSize;
+						break;
+					case ShaderType::TessControl:
+						scp.tessControlShaderData = bin.data;
+						scp.tessControlShaderSize = bin.dataSize;
+						break;
+					case ShaderType::Compute:
+						scp.computeShaderData = bin.data;
+						scp.computeShaderSize = bin.dataSize;
+						break;
+				}
+
+				if ( bin.combinationShadersLeft > 0 ) continue; // search for other shaders
+			}
+
+			break;
+		}
+	}
+
+	bool compiled = Modules::renderer().createShaderComb( sc, scp );
 	if( !compiled )
 	{
 		Modules::log().writeError( "Shader resource '%s': Failed to compile shader context '%s' (comb %i)",
@@ -1506,7 +1552,7 @@ void ShaderResource::compileContexts()
             if ( !_binaryShader )
                 combinationsCompileStatus &= compileCombination( context, context.shaderCombs[j] );
             else
-                combinationsCompileStatus &= compileBinaryCombination( context, context.shaderCombs[j] );
+                combinationsCompileStatus &= compileBinaryCombination( context, context.shaderCombs[j], i, j );
 		}
 
 		context.compiled = combinationsCompileStatus;
@@ -1830,9 +1876,9 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 		d = pushElemU16( curContext );
 		d = pushElemU32( comb.combMask );
 
-		// OpenGL only supports dumping whole programs, so always say that we have one shader and it is always Vertex shader
+		// OpenGL only supports dumping whole programs, so always say that we have one shader and it is always Program type
 		d = pushElemU16( 1 );
-		d = pushElemU16( ShaderType::Vertex );
+		d = pushElemU16( ShaderType::Program );
 
 		uint32 binSize = 0;
 		uint32 binFormat = 0;
@@ -1857,7 +1903,7 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 
 		// copy data
 		memcpy( d, bin, binSize );
-		d += binSize + 1;
+		d += binSize;
 		usedMem += binSize;
 		delete[] bin;
 

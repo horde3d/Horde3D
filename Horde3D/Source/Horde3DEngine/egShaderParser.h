@@ -18,17 +18,17 @@ public:
 protected:
     bool raiseError( const std::string &msg, int line = -1 );
 
-    bool parseBinarySampler( char *data, uint32 samplerCount );
+    bool parseBinarySampler( char *&data, uint32 samplerCount );
     
-    bool parseBinaryUniforms( char *data, uint32 variablesCount );
+    bool parseBinaryUniforms( char *&data, uint32 variablesCount );
 
-    bool parseBinaryBuffer( char *data, uint32 bufferCount );
+    bool parseBinaryBuffer( char *&data, uint32 bufferCount );
     
-    bool parseBinaryFlags( char *data, uint32 flagsCount );
+    bool parseBinaryFlags( char *&data, uint32 flagsCount );
     
-    bool parseBinaryContexts( char *data, uint32 contextCount );
+    bool parseBinaryContexts( char *&data, uint32 contextCount );
     
-    bool parseBinaryContextShaderCombs( char *data, uint32 shaderCombs );
+    bool parseBinaryContextShaderCombs( char *&data, uint32 shaderCombs );
     
 private:
     std::string _shaderName;
