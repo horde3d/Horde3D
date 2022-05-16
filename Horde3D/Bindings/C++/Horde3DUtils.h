@@ -103,6 +103,21 @@ H3D_API const char *h3dutGetResourcePath( int type );
 */
 H3D_API void h3dutSetResourcePath( int type, const char *path );
 
+/* Function: h3dutSetShaderCachePath
+		Sets the search path for binary shaders.
+
+	Details:
+		This function sets the search path for binary shaders. Allows replacing text-based shaders if binary variant is found
+		at the search path.
+
+	Parameters:
+		path  - path where the binary shaders can be found ((back-)slashes at end are removed)
+
+	Returns:
+		nothing
+*/
+H3D_API void h3dutSetShaderCachePath( const char *path );
+
 /* Function: h3dutLoadResourcesFromDisk
 		Loads previously added resources from a data drive.
 	
