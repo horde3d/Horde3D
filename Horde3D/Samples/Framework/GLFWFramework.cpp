@@ -5,6 +5,11 @@
 
 #include "Horde3DUtils.h"
 
+static void glfw_error_callback( int level, const char *msg )
+{
+	printf( "GLFW: level %d - %s\n", level, msg );
+}
+
 bool GLFWBackend::init( const BackendInitParameters &params )
 {
 	if ( !glfwInit() )
@@ -51,6 +56,8 @@ bool GLFWBackend::init( const BackendInitParameters &params )
 		default:
 			break;
 	}
+
+	glfwSetErrorCallback( glfw_error_callback );
 
 	// Save parameters for resetting/debug info
 	_usedInitParams = params;
@@ -118,7 +125,6 @@ void * GLFWBackend::createWindow( const WindowCreateParameters &params )
 	glfwSetKeyCallback( _wnd, keyPressListener );
 	glfwSetCursorPosCallback( _wnd, mouseMoveListener );
 	glfwSetCursorEnterCallback( _wnd, mouseEnterListener );
-//	glfwSetErrorCallback();
 
 	// Get correct mouse position
 	glfwPollEvents();
