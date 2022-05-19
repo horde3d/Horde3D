@@ -192,6 +192,9 @@ bool ShaderParser::parseBinarySampler( char *&data, uint32 samplerCount )
         if ( samplerUsage != 0 && !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
             return raiseError( "Using texture as compute image is not supported on this version of render interface, "
                                "sampler " + std::to_string( i ) );
+
+        // save parsed sampler
+        _samplers.emplace_back( sampler );
     }
     
     return true;
