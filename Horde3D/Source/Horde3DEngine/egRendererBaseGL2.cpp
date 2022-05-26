@@ -278,6 +278,7 @@ void RenderDeviceGL2::initRDIFuncs()
 	_delegate_createShader.bind< RenderDeviceGL2, &RenderDeviceGL2::createShader >( this );
 	_delegate_destroyShader.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyShader >( this );
 	_delegate_bindShader.bind< RenderDeviceGL2, &RenderDeviceGL2::bindShader >( this );
+	_delegate_getShaderBinary.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderBinary >( this );
 	_delegate_getShaderConstLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderConstLoc >( this );
 	_delegate_getShaderSamplerLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderSamplerLoc >( this );
 	_delegate_getShaderBufferLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderBufferLoc >( this );
@@ -1108,6 +1109,18 @@ void RenderDeviceGL2::bindShader( uint32 shaderId )
 	_curShaderId = shaderId;
 	_pendingMask |= PM_GEOMETRY;
 } 
+
+
+bool getShaderBinary( uint32 shaderId, uint8 *&shaderData, uint32 *shaderFormat, uint32 *shaderSize )
+{
+	H3D_UNUSED_VAR( shaderId );
+	H3D_UNUSED_VAR( shaderData );
+	H3D_UNUSED_VAR( shaderFormat );
+	H3D_UNUSED_VAR( shaderSize );
+
+	// Unsupported on OpenGL 2
+	return false;
+}
 
 
 int RenderDeviceGL2::getShaderConstLoc( uint32 shaderId, const char *name )

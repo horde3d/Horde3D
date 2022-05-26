@@ -1270,18 +1270,18 @@ uint32 RenderDeviceGL4::compileShader( RDIShaderType sourceType, int shaderType,
             }
             break;
         }
-        case RDIShaderType::SHADERTYPE_BINARY_DEVICE:
-        {
-            // judging by gpuinfo.org all vendors support only one binary format, both for gl and es
-            glShaderBinary( 1, &shader, 0, data, dataSize );
-            if ( glGetError() != GL_NO_ERROR )
-            {
-                _shaderLog = _shaderLog + shaderGLTypes[ shaderType ].second + "\n" + "Failed to load binary shader\n";
-                glDeleteShader( shader );
-                return 0;
-            }
-            break;
-        }
+//         case RDIShaderType::SHADERTYPE_BINARY_DEVICE:
+//         {
+//             // judging by gpuinfo.org all vendors support only one binary format, both for gl and es
+//             glShaderBinary( 1, &shader, 0, data, dataSize );
+//             if ( glGetError() != GL_NO_ERROR )
+//             {
+//                 _shaderLog = _shaderLog + shaderGLTypes[ shaderType ].second + "\n" + "Failed to load binary shader\n";
+//                 glDeleteShader( shader );
+//                 return 0;
+//             }
+//             break;
+//         }
         case RDIShaderType::SHADERTYPE_BINARY_SPIRV:
         {
             // TODO basically needed for vulkan, not so much for opengl (4.6 required)
@@ -1293,6 +1293,7 @@ uint32 RenderDeviceGL4::compileShader( RDIShaderType sourceType, int shaderType,
     
     return shader;
 }
+
 
 bool RenderDeviceGL4::linkShaderProgram( uint32 programObj )
 {
@@ -1459,6 +1460,7 @@ bool RenderDeviceGL4::getShaderBinary( uint32 shaderId, uint8 *&data, uint32 *fo
     
     return false;
 }
+
 
 int RenderDeviceGL4::getShaderConstLoc( uint32 shaderId, const char *name )
 {
