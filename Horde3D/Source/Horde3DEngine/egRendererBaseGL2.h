@@ -251,8 +251,7 @@ public:
     void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
-	uint32 createShader( RDIShaderType type, uint8 *vertexShaderSrc, uint8 *fragmentShaderSrc, uint8 *geometryShaderSrc, 
-						 uint8 *tessControlShaderSrc, uint8 *tessEvaluationShaderSrc, uint8 *computeShaderSrc );
+	uint32 createShader( const struct RDIShaderCreateParams &shaderParams );
 	void destroyShader(uint32 &shaderId );
 	void bindShader( uint32 shaderId );
 	std::string getShaderLog() const { return _shaderLog; }
