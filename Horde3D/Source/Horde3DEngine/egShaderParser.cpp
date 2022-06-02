@@ -285,7 +285,7 @@ bool ShaderParser::parseBinaryBuffer( char *&data, uint32 bufferCount )
         uint16 bufferIdSize;
         data = elemcpy_le( &bufferIdSize, (uint16*)( data ), 1 );
         
-        // uniform id cannot be larger than 256 characters
+        // buffer id cannot be larger than 256 characters
         if ( bufferIdSize == 0 || bufferIdSize > 255 ) 
             return raiseError( "Incorrect buffer id size for buffer " + std::to_string( i ) );
         
@@ -314,7 +314,7 @@ bool ShaderParser::parseBinaryFlags( char *&data, uint32 flagCount )
         uint16 flagIdSize;
         data = elemcpy_le( &flagIdSize, (uint16*)( data ), 1 );
         
-        // uniform id cannot be larger than 256 characters
+        // flags id cannot be larger than 256 characters
         if ( flagIdSize == 0 || flagIdSize > 255 ) 
             return raiseError( "Incorrect flag id size for flag " + std::to_string( i ) );
         
@@ -335,6 +335,8 @@ bool ShaderParser::parseBinaryFlags( char *&data, uint32 flagCount )
 
 bool ShaderParser::parseBinaryContexts( char *&data, uint32 contextCount )
 {
+    if ( !data || contextCount == 0 ) return false;
+
     _contexts.reserve( contextCount );
     for( size_t i = 0; i < contextCount; ++i )
     {
@@ -360,7 +362,6 @@ bool ShaderParser::parseBinaryContexts( char *&data, uint32 contextCount )
         
         switch( contextApplicability )
         {
-//            case RenderBackendType::OpenGL2 :
             case RenderBackendType::OpenGL4 :
             case RenderBackendType::OpenGLES3 :
                 break;
@@ -521,57 +522,6 @@ bool ShaderParser::parseBinaryContexts( char *&data, uint32 contextCount )
         
         ctx.shaderCombs.resize( contextCombinations );
         
-        // shader code sections indices
- /*       data = elemcpy_le( &ctx.vertCodeIdx, (int*)( data ), 1 );
-        data = elemcpy_le( &ctx.fragCodeIdx, (int*)( data ), 1 );
-        data = elemcpy_le( &ctx.geomCodeIdx, (int*)( data ), 1 );
-        data = elemcpy_le( &ctx.tessEvalCodeIdx, (int*)( data ), 1 );
-        data = elemcpy_le( &ctx.tessCtlCodeIdx, (int*)( data ), 1 );
-        data = elemcpy_le( &ctx.computeCodeIdx, (int*)( data ), 1 );
-        
-        // sanity check
-        if ( ctx.computeCodeIdx != -1 && 
-           ( ctx.vertCodeIdx != -1 || ctx.fragCodeIdx != -1 || ctx.geomCodeIdx != -1 || ctx.tessEvalCodeIdx != -1 || ctx.tessCtlCodeIdx != -1 ) )
-            return raiseError( "Using compute shader and other types of shaders in one context is not supported. Context " + std::to_string( i ) );
-            
-        if ( ctx.computeCodeIdx == -1 ) 
-        {
-            // Compute shader is a standalone type of shader and is not directly attached to any geometry object, hence it is not a part of VS-GS-FS shader pipeline
-            if ( ctx.vertCodeIdx < 0 )
-                return raiseError( "Vertex shader referenced by context '" + ctx.id + "' not found" );
-            if ( ctx.fragCodeIdx < 0 )
-                return raiseError( "Pixel shader referenced by context '" + ctx.id + "' not found" );
-            if ( ctx.geomCodeIdx != -1 )
-            {
-                if ( !Modules::renderer().getRenderDevice()->getCaps().geometryShaders )
-                    return raiseError( "Geometry shaders referenced by context '" + ctx.id + "' are not supported on this device" );
-                else if ( ctx.geomCodeIdx < 0 )
-                    return raiseError( "Geometry shader referenced by context '" + ctx.id + "' not found" );
-            }
-            if ( ctx.tessCtlCodeIdx != -1 )
-            {
-                if ( !Modules::renderer().getRenderDevice()->getCaps().tesselation )
-                    return raiseError( "Tessellation shaders referenced by context '" + ctx.id + "' are not supported on this device" );
-                else if ( ctx.tessCtlCodeIdx < 0 )
-                    return raiseError( "Tessellation control shader referenced by context '" + ctx.id + "' not found" );
-            }
-            if ( ctx.tessEvalCodeIdx != -1 )
-            {
-                if ( !Modules::renderer().getRenderDevice()->getCaps().tesselation )
-                    return raiseError( "Tessellation shaders referenced by context '" + ctx.id + "' are not supported on this device" );
-                else if ( ctx.tessEvalCodeIdx < 0 )
-                    return raiseError( "Tessellation evaluation shader referenced by context '" + ctx.id + "' not found" );
-            }
-        }
-        else
-        {
-            if ( !Modules::renderer().getRenderDevice()->getCaps().computeShaders )
-                return raiseError( "Compute shaders referenced by context '" + ctx.id + "' are not supported on this device" );
-            else if ( ctx.computeCodeIdx < 0 )
-                return raiseError( "Compute shader referenced by context '" + ctx.id + "' not found" );
-        }
-        */
- 
         // save context for future use
         _contexts.emplace_back( ctx );
     }
@@ -730,6 +680,7 @@ bool ShaderParser::parseBinaryShader( char *data, uint32 size )
     {
         if ( !parseBinaryContexts( d, contextCount ) ) return false;
     }
+    else return false; // at least 1 context should be present
     
     uint16 shaderCombsCount;
     d = elemcpy_le( &shaderCombsCount, (uint16*)( d ), 1 );
@@ -737,6 +688,7 @@ bool ShaderParser::parseBinaryShader( char *data, uint32 size )
     {
         if ( !parseBinaryContextShaderCombs( d, shaderCombsCount ) ) return false;
     }
+    else return false; // at least 1 shader combination should be present
     
     return true;
 }

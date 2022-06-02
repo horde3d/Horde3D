@@ -30,7 +30,7 @@ protected:
     
     bool parseBinaryContextShaderCombs( char *&data, uint32 shaderCombs );
     
-private:
+protected:
     std::string _shaderName;
     
     std::vector< ShaderSampler >        _samplers;
