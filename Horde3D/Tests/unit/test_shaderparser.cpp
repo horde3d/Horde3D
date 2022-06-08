@@ -55,10 +55,17 @@ public:
         return parseBinaryContexts( data, contextCount );
     }
 
+    bool test_parseBinaryCombination( char *data, uint32_t combinationCount )
+    {
+        return parseBinaryContextShaderCombs( data, combinationCount );
+    }
+
     std::vector< ShaderSampler > &getSamplers() { return _samplers; }
     std::vector< ShaderUniform > &getUniforms() { return _uniforms; }
     std::vector< ShaderBuffer > &getBuffers() { return _buffers; }
     std::vector< ShaderFlag > &getFlags() { return _flags; }
+    std::vector< ShaderContext > &getContexts() { return _contexts; }
+    std::vector< ShaderBinaryData> &getCombinations() { return _binaryShaders; }
 
 private:
     
@@ -114,6 +121,14 @@ enum class ContextData
     Incorrect_AlphaToCoverage,
     Incorrect_TestPatchVertices,
     Incorrect_Combinations,
+    Correct
+};
+
+enum class CombinationData
+{
+    Incorrect_Context,
+    Incorrect_CombinationCount,
+    Incorrect_CombinationShaderType,
     Correct
 };
 
@@ -584,7 +599,7 @@ static uint8_t *generateBinaryContextData( ContextData genType, int iteration )
         {
             uint16_t *bufData = ( uint16_t * ) data;
 
-            bufData[ 0 ] = 15;
+            bufData[ 0 ] = 2;
             bufData[ 1 ] = 'a'; // id
 
             if ( iteration == 0 ) bufData[ 2 ] = 1;
@@ -593,8 +608,237 @@ static uint8_t *generateBinaryContextData( ContextData genType, int iteration )
             if ( iteration == 3 ) bufData[ 2 ] = 6;
             if ( iteration == 4 ) bufData[ 2 ] = 10;
 
+            break;
+        }
+        case ContextData::Incorrect_ZWriteEnable:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+
+            if ( iteration == 0 ) bufData[ 3 ] = 2;
+            break;
+        }
+        case ContextData::Incorrect_ZEnable:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+
+            if ( iteration == 0 ) bufData[ 4 ] = 2;
+            break;
+        }
+        case ContextData::Incorrect_ZFunc:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+            bufData[ 4 ] = 1; // zenable
+
+            if ( iteration == 0 ) bufData[ 5 ] = 6;
+            break;
+        }
+        case ContextData::Incorrect_Blendmode:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+            bufData[ 4 ] = 1; // zenable
+            bufData[ 5 ] = 5; // zfunc
+
+            if ( iteration == 0 )
+            {
+                bufData[ 6 ] = 5;
+                bufData[ 7 ] = 0;
+            }
+            if ( iteration == 1 )
+            {
+                bufData[ 6 ] = 10;
+                bufData[ 7 ] = 0;
+            }
+            if ( iteration == 2 )
+            {
+                bufData[ 6 ] = 0;
+                bufData[ 7 ] = 10;
+            }
+            if ( iteration == 3 )
+            {
+                bufData[ 6 ] = 10;
+                bufData[ 7 ] = 1;
+            }
+            if ( iteration == 4 )
+            {
+                bufData[ 6 ] = 20;
+                bufData[ 7 ] = 20;
+            }
+
+            break;
+        }
+        case ContextData::Incorrect_Cullmode:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+            bufData[ 4 ] = 1; // zenable
+            bufData[ 5 ] = 5; // zfunc
+            bufData[ 6 ] = 10;
+            bufData[ 7 ] = 10;
+
+            if ( iteration == 0 ) bufData[ 8 ] = 3;
+            break;
+        }
+        case ContextData::Incorrect_AlphaToCoverage:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+            bufData[ 4 ] = 1; // zenable
+            bufData[ 5 ] = 5; // zfunc
+            bufData[ 6 ] = 10;
+            bufData[ 7 ] = 10;
+            bufData[ 8 ] = 2;
+
+            if ( iteration == 0 ) bufData[ 9 ] = 2;
+            break;
+        }
+        case ContextData::Incorrect_TestPatchVertices:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+            bufData[ 4 ] = 1; // zenable
+            bufData[ 5 ] = 5; // zfunc
+            bufData[ 6 ] = 10;
+            bufData[ 7 ] = 10;
+            bufData[ 8 ] = 2;
+            bufData[ 9 ] = 1;
+
+            if ( iteration == 0 ) bufData[ 10 ] = 0;
+            if ( iteration == 1 ) bufData[ 10 ] = 33;
+
+            break;
+        }
+        case ContextData::Incorrect_Combinations:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+            bufData[ 4 ] = 1; // zenable
+            bufData[ 5 ] = 5; // zfunc
+            bufData[ 6 ] = 10; // blendmode 1
+            bufData[ 7 ] = 10; // blendmode 2
+            bufData[ 8 ] = 2; // cull mode
+            bufData[ 9 ] = 1; // alpha_to_coverage
+            bufData[ 10 ] = 1; // tess patch vertices
+            bufData[ 11 ] = 1; // flag mask
+            bufData[ 12 ] = 1; // flag mask
+
+            if ( iteration == 0 ) bufData[ 13 ] = 256;
+
+            break;
         }
         case ContextData::Correct:
+        {
+           uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 2;
+            bufData[ 1 ] = 'a'; // id
+            bufData[ 2 ] = 4; // opengl
+            bufData[ 3 ] = 1; // zwriteenable
+            bufData[ 4 ] = 1; // zenable
+            bufData[ 5 ] = 5; // zfunc
+            bufData[ 6 ] = 10; // blendmode 1
+            bufData[ 7 ] = 10; // blendmode 2
+            bufData[ 8 ] = 2; // cull mode
+            bufData[ 9 ] = 1; // alpha_to_coverage
+            bufData[ 10 ] = 1; // tess patch vertices
+            bufData[ 11 ] = 1; // flag mask
+            bufData[ 12 ] = 1; // flag mask
+            bufData[ 13 ] = 1; // combinations
+            break;
+        }
+        default:
+            break;
+    }
+
+    return data;
+}
+
+static uint8_t *generateBinaryCombinationData( CombinationData genType, int iteration )
+{
+    uint8_t *data = new uint8_t[ 1024 ];
+    memset( data, 0, 1024 );
+
+    switch ( genType )
+    {
+        case CombinationData::Incorrect_Context:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            if ( iteration == 0 ) bufData[ 0 ] = 0;
+
+            break;
+        }
+        case CombinationData::Incorrect_CombinationCount:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            if ( iteration == 0 ) bufData[ 1 ] = 0;
+            if ( iteration == 1 )
+            {
+                bufData[ 0 ] = 257;
+                bufData[ 1 ] = 'a';
+            }
+            if ( iteration == 2 )
+            {
+                bufData[ 0 ] = 15;
+                bufData[ 1 ] = '\0';
+            }
+
+            break;
+        }
+        case CombinationData::Incorrect_CombinationShaderType:
+        {
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            if ( iteration == 0 ) bufData[ 1 ] = 0;
+            if ( iteration == 1 )
+            {
+                bufData[ 0 ] = 257;
+                bufData[ 1 ] = 'a';
+            }
+            if ( iteration == 2 )
+            {
+                bufData[ 0 ] = 15;
+                bufData[ 1 ] = '\0';
+            }
+
+            break;
+        }
+        case CombinationData::Correct:
         {
             if ( iteration == 0 )
             {
@@ -619,7 +863,6 @@ static uint8_t *generateBinaryContextData( ContextData genType, int iteration )
 
     return data;
 }
-
 
 TEST_CASE( "create shader parser", "[unit-shader]" )
 {
@@ -959,18 +1202,71 @@ TEST_CASE( "parse binary context", "[unit-shader]" )
         contextData.reset( generateBinaryContextData( ContextData::Incorrect_Applicability, 4 ) );
         REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
     }
-    SECTION( "incorrect ")
-//     SECTION( "correct" )
-//     {
-//         contextData.reset( generateBinaryFlagData( FlagData::Correct, 0 ) );
-//         REQUIRE( p.test_parseBinaryFlags( (char *) contextData.get(), 1 ) == true );
-//
-//         REQUIRE( p.getFlags().size() == 1 );
-//
-//         contextData.reset( generateBinaryFlagData( FlagData::Correct, 1 ) );
-//         REQUIRE( p.test_parseBinaryFlags( (char *) contextData.get(), 2 ) == true );
-//
-//         REQUIRE( p.getFlags().size() == 3 ); // we are not cleaning previous addition
-//     }
+    SECTION( "incorrect zwriteenable" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_ZWriteEnable, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "incorrect zenable" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_ZEnable, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "incorrect zfunc" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_ZFunc, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "incorrect blendmode" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_Blendmode, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_Blendmode, 1 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_Blendmode, 2 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_Blendmode, 3 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_Blendmode, 4 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "incorrect cullmode" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_Cullmode, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "incorrect alpha_to_coverage" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_AlphaToCoverage, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "incorrect tess patch vertices" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_TestPatchVertices, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_TestPatchVertices, 1 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "incorrect combination count" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Incorrect_Combinations, 0 ) );
+        REQUIRE_FALSE( p.test_parseBinaryContext( (char *) contextData.get(), 1 ) );
+    }
+    SECTION( "correct" )
+    {
+        contextData.reset( generateBinaryContextData( ContextData::Correct, 0 ) );
+        REQUIRE( p.test_parseBinaryContext( (char *) contextData.get(), 1 )  == true );
+
+        REQUIRE( p.getContexts().size() == 1 );
+    }
+}
+
+TEST_CASE( "parse shader binary combination", "[unit-shader]" )
+{
 
 }
