@@ -434,7 +434,7 @@ bool ShaderParser::parseBinaryContexts( char *&data, uint32 contextCount )
                     break;
                         
                 default:
-                    break;
+                    return raiseError( "Incorrect blend mode in context " + std::to_string( i ) );
             }
         }
         else
