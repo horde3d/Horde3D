@@ -554,6 +554,10 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *&data, uint32 shaderComb
         uint16 combinationShaderCount;
         data = elemcpy_le( &combinationShaderCount, (uint16*)( data ), 1 );
         
+        if ( !combinationShaderCount )
+            return raiseError( "Incorrect binary shader combination count - shader should contain at least one combination! Context "
+                               + std::to_string( combinationContextId ) );
+
         for( size_t combShader = 0; combShader < combinationShaderCount; ++combShader )
         {
             ShaderBinaryData bin;
