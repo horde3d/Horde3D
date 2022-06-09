@@ -798,7 +798,7 @@ static uint8_t *generateBinaryCombinationData( CombinationData genType, int iter
         {
             uint16_t *bufData = ( uint16_t * ) data;
 
-            if ( iteration == 0 ) bufData[ 0 ] = 0;
+            if ( iteration == 0 ) bufData[ 0 ] = 1;
 
             break;
         }
@@ -806,17 +806,11 @@ static uint8_t *generateBinaryCombinationData( CombinationData genType, int iter
         {
             uint16_t *bufData = ( uint16_t * ) data;
 
-            if ( iteration == 0 ) bufData[ 1 ] = 0;
-            if ( iteration == 1 )
-            {
-                bufData[ 0 ] = 257;
-                bufData[ 1 ] = 'a';
-            }
-            if ( iteration == 2 )
-            {
-                bufData[ 0 ] = 15;
-                bufData[ 1 ] = '\0';
-            }
+            bufData[ 0 ] = 0;
+            bufData[ 1 ] = 0; // mask
+            bufData[ 2 ] = 0; // mask
+
+            if ( iteration == 0 ) bufData[ 3 ] = 0;
 
             break;
         }
@@ -824,36 +818,30 @@ static uint8_t *generateBinaryCombinationData( CombinationData genType, int iter
         {
             uint16_t *bufData = ( uint16_t * ) data;
 
-            if ( iteration == 0 ) bufData[ 1 ] = 0;
-            if ( iteration == 1 )
-            {
-                bufData[ 0 ] = 257;
-                bufData[ 1 ] = 'a';
-            }
-            if ( iteration == 2 )
-            {
-                bufData[ 0 ] = 15;
-                bufData[ 1 ] = '\0';
-            }
+            bufData[ 0 ] = 0;
+            bufData[ 1 ] = 0;
+            bufData[ 2 ] = 0;
+            bufData[ 3 ] = 1;
+
+            if ( iteration == 0 ) bufData[ 4 ] = 7;
 
             break;
         }
         case CombinationData::Correct:
         {
-            if ( iteration == 0 )
-            {
-                uint16_t *bufData = ( uint16_t * ) data;
-                bufData[ 0 ] = 2; // id size
-                bufData[ 1 ] = 'a'; // id
-            }
-            if ( iteration == 1 )
-            {
-                uint16_t *bufData = ( uint16_t * ) data;
-                bufData[ 0 ] = 2; // id size
-                bufData[ 1 ] = 'a'; // id
-                bufData[ 2 ] = 2; // id size
-                bufData[ 3 ] = 'b'; // id
-            }
+            uint16_t *bufData = ( uint16_t * ) data;
+
+            bufData[ 0 ] = 0;
+            bufData[ 1 ] = 0;
+            bufData[ 2 ] = 0;
+            bufData[ 3 ] = 1;
+            bufData[ 4 ] = 0;
+            bufData[ 5 ] = 4; // size
+            bufData[ 6 ] = 0; // size
+            bufData[ 7 ] = 10; // format
+            bufData[ 8 ] = 0; // format
+            bufData[ 9 ] = 50; // data
+            bufData[ 10 ] = 50; // data
 
             break;
         }
@@ -1268,5 +1256,53 @@ TEST_CASE( "parse binary context", "[unit-shader]" )
 
 TEST_CASE( "parse shader binary combination", "[unit-shader]" )
 {
+    TestShaderParser p( "test_shader" );
 
+    std::unique_ptr< uint8_t > combData = nullptr;
+
+    SECTION( "incorrect combination context" )
+    {
+        combData.reset( generateBinaryCombinationData( CombinationData::Incorrect_Context, 0 ) );
+        p.getContexts().push_back( ShaderContext() );
+
+        REQUIRE_FALSE( p.test_parseBinaryCombination( (char *) combData.get(), 1 ) );
+    }
+    SECTION( "incorrect combination count" )
+    {
+        combData.reset( generateBinaryCombinationData( CombinationData::Incorrect_CombinationCount, 0 ) );
+
+        p.test_parseBinaryContext( (char *) generateBinaryContextData( ContextData::Correct, 0 ), 1 );
+
+        REQUIRE_FALSE( p.test_parseBinaryCombination( (char *) combData.get(), 1 ) );
+    }
+    SECTION( "incorrect combination type" )
+    {
+        combData.reset( generateBinaryCombinationData( CombinationData::Incorrect_CombinationShaderType, 0 ) );
+
+        p.test_parseBinaryContext( (char *) generateBinaryContextData( ContextData::Correct, 0 ), 1 );
+
+        REQUIRE_FALSE( p.test_parseBinaryCombination( (char *) combData.get(), 1 ) );
+    }
+    SECTION( "incorrect combination type" )
+    {
+        combData.reset( generateBinaryCombinationData( CombinationData::Correct, 0 ) );
+
+        p.test_parseBinaryContext( (char *) generateBinaryContextData( ContextData::Correct, 0 ), 1 );
+
+        REQUIRE( p.test_parseBinaryCombination( (char *) combData.get(), 1 ) == true );
+
+        auto combs = p.getCombinations();
+        REQUIRE( combs[ 0 ].combinationId == 0 );
+        REQUIRE( combs[ 0 ].combinationShadersLeft == 0 );
+        REQUIRE( combs[ 0 ].contextId == 0 );
+        REQUIRE( combs[ 0 ].dataFormat == 10 );
+        REQUIRE( combs[ 0 ].dataSize == 4 );
+        REQUIRE( combs[ 0 ].shaderType == 0 );
+
+        uint16 data[ 2 ];
+        memcpy( data, combs[ 0 ].data, 4 );
+
+        REQUIRE( data[ 0 ] == 50 );
+        REQUIRE( data[ 1 ] == 50 );
+    }
 }
