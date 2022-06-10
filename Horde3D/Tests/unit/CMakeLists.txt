@@ -2,10 +2,12 @@ include_directories(..)
 include_directories(../../Source/Horde3DEngine)
 include_directories(../../Source/Horde3DUtils)
 include_directories(../../Source/Shared)
+include_directories(../../Bindings/C++)
 include_directories(. ${CMAKE_BINARY_DIR})
 
 add_executable(H3DUnitTests WIN32 MACOSX_BUNDLE
     test_shaderparser.cpp
+    test_shader.cpp
     test_h3dutils.cpp
     ../main.cpp
 )
