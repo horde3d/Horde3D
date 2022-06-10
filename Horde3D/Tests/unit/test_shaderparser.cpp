@@ -1283,7 +1283,7 @@ TEST_CASE( "parse shader binary combination", "[unit-shader]" )
 
         REQUIRE_FALSE( p.test_parseBinaryCombination( (char *) combData.get(), 1 ) );
     }
-    SECTION( "incorrect combination type" )
+    SECTION( "correct combination" )
     {
         combData.reset( generateBinaryCombinationData( CombinationData::Correct, 0 ) );
 
