@@ -326,7 +326,7 @@ public:
 	std::vector< ShaderContext > &getContexts() { return _contexts; }
 	CodeResource *getCode( uint32 index ) { return &_codeSections[index]; }
 
-private:
+protected:
 	bool raiseError( const std::string &msg, int line = -1 );
 	bool parseFXSection( char *data );
 //     bool parseBinaryShader( char *data, uint32 size );
