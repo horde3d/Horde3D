@@ -13,6 +13,7 @@
 #ifndef _utPlatform_H_
 #define _utPlatform_H_
 
+#include <math.h>
 #include <locale.h>
 #include <memory>
 #if !defined( NDEBUG )
