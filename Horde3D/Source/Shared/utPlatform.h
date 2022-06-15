@@ -13,11 +13,13 @@
 #ifndef _utPlatform_H_
 #define _utPlatform_H_
 
-#include <math.h>
 #include <locale.h>
 #include <memory>
 #if !defined( NDEBUG )
 	#include <assert.h>
+#endif
+#if defined(__MINGW32__)
+	#include <math.h>
 #endif
 
 // Detect platform
