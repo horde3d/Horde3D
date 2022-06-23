@@ -1606,7 +1606,7 @@ uint32 ShaderResource::calcCombMask( const std::vector< std::string > &flags )
 
 bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 {
-	if ( !data || !*data ) return false;
+	if ( !data ) return false;
 
 	char *d = ( char *) data;
 	uint32 usedMem = 0;
