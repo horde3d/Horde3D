@@ -340,7 +340,6 @@ protected:
 protected:
 	static unsigned char  			   *_mappedData;
 
-private:
 	static std::string                 _vertPreamble, _fragPreamble, _geomPreamble, _tessCtlPreamble, _tessEvalPreamble, _computePreamble;
 	static std::string                 _tmpCodeVS, _tmpCodeFS, _tmpCodeGS, _tmpCodeCS, _tmpCodeTSCtl, _tmpCodeTSEval;
 	static bool					       _defaultPreambleSet;
