@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.14) # Native support for Android in CMAKE requi
 # Project details.
 project(Horde3D)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 SET(${PROJECT_NAME}_MAJOR_VERSION 2)
-SET(${PROJECT_NAME}_MINOR_VERSION 0)
+SET(${PROJECT_NAME}_MINOR_VERSION 1)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # Add local repository for FindXXX.cmake modules.
