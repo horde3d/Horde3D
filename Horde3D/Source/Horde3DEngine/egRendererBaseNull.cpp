@@ -168,6 +168,7 @@ void RenderDeviceNull::initRDIFuncs()
 	_delegate_createShader.bind< RenderDeviceNull, &RenderDeviceNull::createShader >( this );
 	_delegate_destroyShader.bind< RenderDeviceNull, &RenderDeviceNull::destroyShader >( this );
 	_delegate_bindShader.bind< RenderDeviceNull, &RenderDeviceNull::bindShader >( this );
+	_delegate_getShaderBinary.bind< RenderDeviceNull, &RenderDeviceNull::getShaderBinary >( this );
 	_delegate_getShaderConstLoc.bind< RenderDeviceNull, &RenderDeviceNull::getShaderConstLoc >( this );
 	_delegate_getShaderSamplerLoc.bind< RenderDeviceNull, &RenderDeviceNull::getShaderSamplerLoc >( this );
 	_delegate_getShaderBufferLoc.bind< RenderDeviceNull, &RenderDeviceNull::getShaderBufferLoc >( this );
@@ -647,6 +648,27 @@ void RenderDeviceNull::bindShader( uint32 shaderId )
 	_curShaderId = shaderId;
 	_pendingMask |= PM_GEOMETRY;
 } 
+
+
+bool RenderDeviceNull::getShaderBinary( uint32 shaderId, uint8 *&data, uint32 *format, uint32 *binarySize )
+{
+    if ( shaderId != 0 )
+    {
+		RDIShaderNull &shader = _shaders.getRef( shaderId );
+
+        // save parameters
+        *format = 1000;
+		data = new uint8[ 8 ];
+        data[ 0 ] = 'd'; data[ 1 ] = 'e'; data[ 2 ] = 'a'; data[ 3 ] = 'd';
+        data[ 4 ] = 'b'; data[ 5 ] = 'e'; data[ 6 ] = 'e'; data[ 7 ] = 'f';
+
+        *binarySize = 8;
+
+        return true;
+    }
+
+    return false;
+}
 
 
 int RenderDeviceNull::getShaderConstLoc( uint32 shaderId, const char *name )

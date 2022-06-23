@@ -250,6 +250,7 @@ public:
 	uint32 createShader( const struct RDIShaderCreateParams &shaderParameters );
 	void destroyShader(uint32 &shaderId );
 	void bindShader( uint32 shaderId );
+	bool getShaderBinary( uint32 shaderId, uint8 *&data, uint32 *format, uint32 *binarySize );
 	std::string getShaderLog() const { return _shaderLog; }
 	int getShaderConstLoc( uint32 shaderId, const char *name );
 	int getShaderSamplerLoc( uint32 shaderId, const char *name );
