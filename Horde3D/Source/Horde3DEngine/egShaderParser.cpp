@@ -364,6 +364,7 @@ bool ShaderParser::parseBinaryContexts( char *&data, uint32 contextCount )
         {
             case RenderBackendType::OpenGL4 :
             case RenderBackendType::OpenGLES3 :
+            case 256 : // Null renderer backend for testing
                 break;
             default:
                 return raiseError( "Incorrect render backend specified for context " + std::to_string( i ) );
@@ -445,24 +446,25 @@ bool ShaderParser::parseBinaryContexts( char *&data, uint32 contextCount )
                 uint16 blendData = blendOp == 0 ? contextBlendMode : contextBlendMode2;
                 BlendModes::List &target = blendOp == 0 ? ctx.blendStateSrc : ctx.blendStateDst;
                 
-                if ( blendData == 10 || /* Zero */
-                     blendData == 11 || /* One */
-                     blendData == 12 || /* SrcAlpha */
-                     blendData == 13 || /* OneMinusSrcAlpha */
-                     blendData == 14 || /* DestAlpha */
-                     blendData == 15 || /* OneMinusDestAlpha */
-                     blendData == 16 || /* DestColor */
-                     blendData == 17 || /* SrcColor */
-                     blendData == 18 || /* OneMinusDestColor */
-                     blendData == 19    /* OneMinusSrcColor */ )
-                    
-                    target = ( BlendModes::List) blendData;
-                else
-                    return raiseError( "Incorrect blend mode for " + 
-                                       (blendOp == 0 ? std::string( "source" ) : std::string( "destination" )) + 
-                                       std::string( " in context " ) + std::to_string( i ) );
+                switch( blendData )
+                {
+                    case 10: target = BlendModes::Zero; break;
+                    case 11: target = BlendModes::One; break;
+                    case 12: target = BlendModes::SrcAlpha; break;
+                    case 13: target = BlendModes::OneMinusSrcAlpha; break;
+                    case 14: target = BlendModes::DestAlpha; break;
+                    case 15: target = BlendModes::OneMinusDestAlpha; break;
+                    case 16: target = BlendModes::DestColor; break;
+                    case 17: target = BlendModes::SrcColor; break;
+                    case 18: target = BlendModes::OneMinusDestColor; break;
+                    case 19: target = BlendModes::OneMinusSrcColor; break;
+                    default:
+                        return raiseError(  "Incorrect blend mode for " +
+                                            (blendOp == 0 ? std::string( "source" ) : std::string( "destination" )) +
+                                            std::string( " in context " ) + std::to_string( i ) );
+                }
             }
-            
+
             // Set blending status
             if ( ctx.blendStateSrc == BlendModes::Zero && ctx.blendStateDst == BlendModes::Zero ) ctx.blendingEnabled = false;
             else ctx.blendingEnabled = true;
