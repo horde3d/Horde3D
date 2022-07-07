@@ -1111,7 +1111,7 @@ void RenderDeviceGL2::bindShader( uint32 shaderId )
 } 
 
 
-bool getShaderBinary( uint32 shaderId, uint8 *&shaderData, uint32 *shaderFormat, uint32 *shaderSize )
+bool RenderDeviceGL2::getShaderBinary( uint32 shaderId, uint8 *&shaderData, uint32 *shaderFormat, uint32 *shaderSize )
 {
 	H3D_UNUSED_VAR( shaderId );
 	H3D_UNUSED_VAR( shaderData );
