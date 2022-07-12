@@ -721,6 +721,7 @@ H3D_IMPL bool h3dutCreateBinaryShader( H3DRes shaderResource, const char *filena
 
 	auto dataSize = h3dGetResParamI( shaderResource, H3DShaderRes::ShaderElem, 0, H3DShaderRes::ShaderBinarySizeI );
 
+	bool result = true;
 	size_t bytesWritten = 0;
 	FILE *f = fopen( filename, "wb" );
 	if( f )
@@ -728,9 +729,10 @@ H3D_IMPL bool h3dutCreateBinaryShader( H3DRes shaderResource, const char *filena
 		bytesWritten = fwrite( data, 1, dataSize, f );
 		fclose( f );
 	}
+	else result = false;
 
 	h3dUnmapResStream( shaderResource );
-	return true;
+	return result;
 }
 
 // =================================================================================================
