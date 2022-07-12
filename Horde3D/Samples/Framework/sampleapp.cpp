@@ -40,6 +40,8 @@
 
 using namespace std;
 
+const std::string shaderCachePath = "shaderCache/";
+
 // Extracts an absolute path to the resources directory given the executable path.
 // It assumes that the ressources can be found in "[app path]/../../Content".
 // This function implements the platform specific differences.
@@ -92,7 +94,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
         float fov, float near_plane, float far_plane,
         int width, int height,
         bool fullscreen, bool show_cursor,
-        int benchmark_length ) :
+        int benchmark_length, bool use_binary_shaders ) :
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
     _velocity(0.1f),
@@ -113,9 +115,9 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
     _fov(fov), _nearPlane(near_plane), _farPlane(far_plane),
-    _statMode(0), _freezeMode(0), _renderCaps( 0 ), _renderInterface( 0 ),
+    _statMode(0), _freezeMode(0), _renderInterface( 0 ), _renderCaps( 0 ),
     _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false),
-    _invertMouseX( false ), _invertMouseY( false )
+    _invertMouseX( false ), _invertMouseY( false ), _useBinaryShaders( use_binary_shaders )
 {
     // Initialize backend
 	_backend = new Backend();
@@ -202,6 +204,9 @@ bool SampleApplication::init()
 		h3dutDumpMessages();
 		return false;
 	}
+
+	// If binary shaders are used but shader cache is empty - generate binary shaders
+    if ( _useBinaryShaders ) checkAndGenerateBinaryShaders( false ); // switch to true if shader regeneration is required
 
 	// Setup camera and resize buffers
 	int width, height;
@@ -604,6 +609,9 @@ bool SampleApplication::initResources()
     if ( _helpRows > 10 ) { _helpLabels[10] = "W/A/S/D:"; _helpValues[10] = "Movement"; }
     if ( _helpRows > 11 ) { _helpLabels[11] = "LShift:"; _helpValues[11] = "Turbo"; }
 	
+	if ( _useBinaryShaders ) // set shader cache path to load binary shaders from there
+        h3dutSetShaderCachePath( std::string( _resourcePath + "/" + shaderCachePath ).c_str() );
+
 	// 2. Load resources
     if ( !_backend->loadResources( _resourcePath.c_str() ) )
 	{
@@ -991,3 +999,40 @@ void SampleApplication::setViewportSize( int width, int height )
 }
 
 
+bool SampleApplication::checkAndGenerateBinaryShaders( bool forceRegenerate )
+{
+    auto checkFileExists = []( std::string &file )
+    {
+        FILE *f;
+        if ( (f = fopen( file.c_str(), "r" )) )
+        {
+            fclose( f );
+            return true;
+        }
+        else return false;
+    };
+
+    bool result = true;
+
+    std::string path, name;
+    path.reserve( 255 ); name.reserve( 64 );
+
+    int res = 0;
+    while ( (res = h3dGetNextResource( H3DResTypes::Shader, res ) ) != 0 )
+    {
+        name = h3dGetResName( res );
+        path = _resourcePath + "/" + shaderCachePath + name;
+
+        // binary shader uses .h3dsb extension
+        size_t dotIdx = path.find_last_of( "." );
+        path = std::string( path ).erase( dotIdx, path.size() - dotIdx );
+        path += ".h3dsb";
+
+        if ( !checkFileExists( path ) || forceRegenerate )
+        {
+            result &= h3dutCreateBinaryShader( res, path.c_str() );
+        }
+    }
+
+    return result;
+}
