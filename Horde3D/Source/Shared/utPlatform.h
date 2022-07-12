@@ -18,6 +18,9 @@
 #if !defined( NDEBUG )
 	#include <assert.h>
 #endif
+#if defined(__MINGW32__)
+	#include <math.h>
+#endif
 
 // Detect platform
 #if defined( WINCE )
