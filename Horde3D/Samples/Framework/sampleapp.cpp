@@ -308,6 +308,7 @@ BackendInitParameters SampleApplication::setupInitParameters( int render_interfa
 			params.majorVersion = 4;
 			params.minorVersion = 0;
 
+            if ( _renderCaps & RenderCapabilities::BinaryShaders ) params.minorVersion = 1;
 			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 1;
 			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 3;
             if ( _renderCaps & RenderCapabilities::DebugBackend ) params.debugContext = true;

@@ -45,7 +45,8 @@ struct RenderCapabilities
 		GeometryShader = 2,
 		TessellationShader = 4,
 		ComputeShader = 8,
-        DebugBackend = 16
+        DebugBackend = 16,
+        BinaryShaders = 32
 	};
 };
 
