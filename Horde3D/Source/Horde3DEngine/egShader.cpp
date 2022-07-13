@@ -476,11 +476,17 @@ void ShaderResource::release()
 		}
 	}
 
+	for ( auto &b : _binarySections )
+	{
+		delete[] b.data;
+	}
+
 	_contexts.clear();
 	_samplers.clear();
 	_uniforms.clear();
 	//_preLoadList.clear();
 	_codeSections.clear();
+	_binarySections.clear();
 }
 
 
@@ -2064,6 +2070,11 @@ void *ShaderResource::mapStream( int elem, int elemIdx, int stream, bool read, b
 		    elemIdx < getElemCount( elem ) )
 		{
 			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+			if (!rdi->getCaps().binaryShaders)
+			{
+				Modules::log().writeError( "Binary shaders are not supported by render backend!" );
+				return nullptr;
+			}
 
 			uint32 bufSize = 2 * 1024 * 1024;
 			_mappedData = Modules::renderer().useScratchBuf( bufSize, 0 ); // 2 mb should be enough for most cases
