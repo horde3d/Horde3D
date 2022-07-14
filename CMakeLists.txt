@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.14) # Native support for Android in CMAKE requi
 # Project details.
 project(Horde3D)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 SET(${PROJECT_NAME}_MAJOR_VERSION 2)
-SET(${PROJECT_NAME}_MINOR_VERSION 0)
+SET(${PROJECT_NAME}_MINOR_VERSION 1)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # Add local repository for FindXXX.cmake modules.
@@ -18,6 +18,9 @@ check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
 # To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
+
+# Specifies whether to build tests 
+option(HORDE3D_BUILD_TESTS "Build Horde3D unit and integration tests" OFF)
 
 # Check the required windowing backend
 if(HORDE3D_BUILD_EXAMPLES)
@@ -72,6 +75,12 @@ endif(HORDE3D_BUILD_EXAMPLES)
 option(HORDE3D_USE_GL2 "Add OpenGL 2 render backend. Turns off ES3 render backend." ON)
 option(HORDE3D_USE_GL4 "Add OpenGL 4 render backend. Turns off ES3 render backend." ON)
 option(HORDE3D_USE_GLES3 "Add OpenGL ES 3 render backend. Turns off desktop GL backends." OFF)
+option(HORDE3D_USE_NULL "Add Null render backend. Used for testing. Can work with other render backends." OFF)
+
+# Tests always enable Null render backend
+if(HORDE3D_BUILD_TESTS)
+    set(USE_NULL TRUE)
+endif(HORDE3D_BUILD_TESTS)
 
 if(HORDE3D_USE_GLES3)
 	set(USE_GLES3 TRUE)

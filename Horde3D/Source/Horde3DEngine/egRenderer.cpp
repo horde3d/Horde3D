@@ -21,6 +21,7 @@
 
 #include "utDebug.h"
 
+// Check what backends should be included
 #if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined( H3D_USE_GLES3 )
 #	if defined( H3D_USE_GL2 )
 #		include "egRendererBaseGL2.h"
@@ -31,6 +32,12 @@
 #else
 #	include "egRendererBaseGLES3.h"
 #endif
+
+// Null backend, used for testing
+#if defined ( H3D_USE_NULL )
+#   include "egRendererBaseNull.h"
+#endif
+
 
 // Constants
 constexpr int defaultCameraView = 0;
@@ -348,6 +355,12 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 			return new RDI_GLES3::RenderDeviceGLES3();
 		}
 #endif
+#if defined ( H3D_USE_NULL )
+		case 256: // special case for Null backend that is used for testing (unit, intergration, engine performance, etc.)
+		{
+			return new RDI_Null::RenderDeviceNull();
+		}
+#endif
 		default:
 			Modules::log().writeError( "Incorrect render interface type or type not specified. Renderer cannot be initialized." );
 			break;
@@ -625,7 +638,17 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 								 const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader )
 {
 	// Create shader program
-	uint32 shdObj = _renderDevice->createShader( vertexShader, fragmentShader, geometryShader, tessControlShader, tessEvaluationShader, computeShader );
+    RDIShaderCreateParams p;
+    p.type = RDIShaderType::SHADERTYPE_TEXT;
+    p.vertexShaderData = ( uint8 * ) vertexShader;
+    p.fragmentShaderData = ( uint8 * ) fragmentShader;
+    p.geometryShaderData = ( uint8 * ) geometryShader;
+    p.tessControlShaderData = ( uint8 * ) tessControlShader;
+    p.tessEvalShaderData = ( uint8 * ) tessEvaluationShader;
+    p.computeShaderData = ( uint8 * ) computeShader;
+    
+    return createShaderComb( sc, p );
+/*	uint32 shdObj = _renderDevice->createShader( p );
 	if( shdObj == 0 ) return false;
 	
 	sc.shaderObj = shdObj;
@@ -641,6 +664,7 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 	{
 		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
 	}
+*/
 
 // 	Misc general uniforms
 // 	sc.uni_frameBufSize = _renderDevice->getShaderConstLoc( shdObj, "frameBufSize" );
@@ -675,6 +699,30 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 // 	sc.uni_parColorArray = _renderDevice->getShaderConstLoc( shdObj, "parColorArray" );
 // 	
 // 	// Uniforms, requested by extensions
+
+//	return true;
+}
+
+
+bool Renderer::createShaderComb( ShaderCombination &sc, const RDIShaderCreateParams &shcparams )
+{
+	// Create shader program
+	uint32 shdObj = _renderDevice->createShader( shcparams );
+	if( shdObj == 0 ) return false;
+	
+	sc.shaderObj = shdObj;
+	_renderDevice->bindShader( shdObj );
+	
+	// Set standard uniforms
+	int loc =_renderDevice-> getShaderSamplerLoc( shdObj, "shadowMap" );
+	if( loc >= 0 ) _renderDevice->setShaderSampler( loc, 12 );
+
+	sc.uniLocs.reserve( _engineUniforms.size() );
+
+	for ( size_t i = 0; i < _engineUniforms.size(); ++i ) 
+	{
+		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
+	}
 
 	return true;
 }

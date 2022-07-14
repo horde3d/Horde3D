@@ -72,9 +72,9 @@ endif()
 #set_property(TARGET Tessellator PROPERTY CXX_STANDARD 11)
 
 if(HORDE3D_USE_GLFW)
-    target_link_libraries(Tessellator Horde3D Horde3DUtils SampleFramework ${GLFW_LIBRARIES})
+    target_link_libraries(Tessellator SampleFramework Horde3D Horde3DUtils ${GLFW_LIBRARIES})
 elseif(HORDE3D_USE_SDL)
-    target_link_libraries(Tessellator Horde3D Horde3DUtils SampleFramework ${SDL2_LIBRARY})
+    target_link_libraries(Tessellator SampleFramework Horde3D Horde3DUtils ${SDL2_LIBRARY})
 endif()
 
 add_dependencies(Tessellator SampleFramework)

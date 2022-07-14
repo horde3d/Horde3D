@@ -109,6 +109,15 @@ static const std::array< GLTextureFormatAndType, TextureFormats::DEPTH + 1 > tex
 	{ GL_DEPTH_COMPONENT24, GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT }								// TextureFormats::DEPTH
 } };
 
+static const std::array< std::pair< int, std::string >, 6 > shaderGLTypes = {{
+    { 0, "[Vertex Shader]" },
+    { 1, "[Fragment Shader]" },
+    { 2, "[Geometry Shader]" },
+    { 3, "[Tesselation Control Shader]" },
+    { 4, "[Tesselation Evaluation Shader]" },
+    { 5, "[Compute Shader]" },
+} };
+
 // Callback that is used for driver debug messages
 static void driver_log_callback( uint32 source, uint32 type, uint32 id, uint32 severity, int length, const char *message, const void *userParam )
 {
@@ -318,6 +327,7 @@ void RenderDeviceGL4::initRDIFuncs()
 	_delegate_createShader.bind< RenderDeviceGL4, &RenderDeviceGL4::createShader >( this );
 	_delegate_destroyShader.bind< RenderDeviceGL4, &RenderDeviceGL4::destroyShader >( this );
 	_delegate_bindShader.bind< RenderDeviceGL4, &RenderDeviceGL4::bindShader >( this );
+	_delegate_getShaderBinary.bind< RenderDeviceGL4, &RenderDeviceGL4::getShaderBinary >( this );
 	_delegate_getShaderConstLoc.bind< RenderDeviceGL4, &RenderDeviceGL4::getShaderConstLoc >( this );
 	_delegate_getShaderSamplerLoc.bind< RenderDeviceGL4, &RenderDeviceGL4::getShaderSamplerLoc >( this );
 	_delegate_getShaderBufferLoc.bind< RenderDeviceGL4, &RenderDeviceGL4::getShaderBufferLoc >( this );
@@ -382,6 +392,10 @@ bool RenderDeviceGL4::init()
 	Modules::log().writeInfo( "Initializing GL4 backend using OpenGL driver '%s' by '%s' on '%s'",
 							  version, vendor, renderer );
 	
+    // Save renderer name and version (used for binary shaders)
+    _rendererName = std::string( renderer );
+    _rendererVersion = std::string( version );
+    
 	// Init extensions
 	if( !initOpenGLExtensions( false ) )
 	{	
@@ -437,7 +451,8 @@ bool RenderDeviceGL4::init()
 	_caps.texETC2 = glExt::ARB_ES3_compatibility;
 	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
 	_caps.texASTC = glExt::KHR_texture_compression_astc;
-
+    _caps.binaryShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
+    
 	// Find maximum number of storage buffers in compute shader
 	glGetIntegerv( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, (GLint *) &_maxComputeBufferAttachments );
 	// Init states before creating test render buffer, to
@@ -1099,8 +1114,7 @@ void RenderDeviceGL4::bindImageToTexture( uint32 texObj, void *eglImage )
 // Shaders
 // =================================================================================================
 
-uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
-											 const char *tessControlShaderSrc, const char *tessEvalShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceGL4::createShaderProgram( const struct RDIShaderCreateParams &sp ) 
 {
 	int infologLength = 0;
 	int charsWritten = 0;
@@ -1108,163 +1122,85 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 	int status;
 
 	_shaderLog = "";
-	
+    
 	uint32 vs, fs, gs, tsC, tsE, cs;
 	vs = fs = gs = tsC = tsE = cs = 0;
 
 	// Vertex shader
-	if ( vertexShaderSrc )
+	if ( sp.vertexShaderData )
 	{
-		vs = glCreateShader( GL_VERTEX_SHADER );
-		glShaderSource( vs, 1, &vertexShaderSrc, 0x0 );
-		glCompileShader( vs );
-		glGetShaderiv( vs, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			// Get info
-			glGetShaderiv( vs, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( vs, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Vertex Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			glDeleteShader( vs );
-			return 0;
-		}
+        vs = compileShader( sp.type, GL_VERTEX_SHADER, sp.vertexShaderData, sp.vertexShaderSize );
+        if ( !vs ) return 0;
 	}
 	
 	// Fragment shader
-	if ( fragmentShaderSrc )
+	if ( sp.fragmentShaderData )
 	{
-		fs = glCreateShader( GL_FRAGMENT_SHADER );
-		glShaderSource( fs, 1, &fragmentShaderSrc, 0x0 );
-		glCompileShader( fs );
-		glGetShaderiv( fs, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			glGetShaderiv( fs, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( fs, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Fragment Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			glDeleteShader( vs );
-			glDeleteShader( fs );
-			return 0;
-		}
+        fs = compileShader( sp.type, GL_FRAGMENT_SHADER, sp.fragmentShaderData, sp.fragmentShaderSize );
+        if ( !fs ) 
+        {
+            // delete previous shaders
+            glDeleteShader( vs );
+            return 0;
+        }
 	}
 	
 	// Geometry shader
-	if ( geometryShaderSrc )
+	if ( sp.geometryShaderData )
 	{
-		gs = glCreateShader( GL_GEOMETRY_SHADER );
-		glShaderSource( gs, 1, &geometryShaderSrc, 0x0 );
-		glCompileShader( gs );
-		glGetShaderiv( gs, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			glGetShaderiv( gs, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( gs, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Geometry Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			glDeleteShader( vs );
+        gs = compileShader( sp.type, GL_GEOMETRY_SHADER, sp.geometryShaderData, sp.geometryShaderSize );
+        if ( !gs )
+        {
+            // delete previous shaders
+        	glDeleteShader( vs );
 			glDeleteShader( fs );
-			glDeleteShader( gs );
 			return 0;
-		}
+        }
 	}
 	
 	// Tesselation control shader
-	if ( tessControlShaderSrc )
+	if ( sp.tessControlShaderData )
 	{
-		tsC = glCreateShader( GL_TESS_CONTROL_SHADER );
-		glShaderSource( tsC, 1, &tessControlShaderSrc, 0x0 );
-		glCompileShader( tsC );
-		glGetShaderiv( tsC, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			glGetShaderiv( tsC, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( tsC, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Tesselation Control Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			glDeleteShader( vs );
-			glDeleteShader( fs );
-			if ( gs ) glDeleteShader( gs );
-			glDeleteShader( tsC );
-			return 0;
-		}
+        tsC = compileShader( sp.type, GL_TESS_CONTROL_SHADER, sp.tessControlShaderData, sp.tessControlShaderSize );
+        if ( !tsC )
+        {
+            // delete previous shaders
+            glDeleteShader( vs );
+            glDeleteShader( fs );
+            if ( gs) glDeleteShader( gs );
+            return 0;
+        }
 	}
 
 	// Tesselation evaluation shader
-	if ( tessEvalShaderSrc )
+	if ( sp.tessEvalShaderData )
 	{
-		tsE = glCreateShader( GL_TESS_EVALUATION_SHADER );
-		glShaderSource( tsE, 1, &tessEvalShaderSrc, 0x0 );
-		glCompileShader( tsE );
-		glGetShaderiv( tsE, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			glGetShaderiv( tsE, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( tsE, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Tesselation Evaluation Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			glDeleteShader( vs );
-			glDeleteShader( fs );
-			if ( gs ) glDeleteShader( gs );
-			glDeleteShader( tsC );
-			glDeleteShader( tsE );
-			return 0;
-		}
+        tsE = compileShader( sp.type, GL_TESS_EVALUATION_SHADER, sp.tessEvalShaderData, sp.tessEvalShaderSize );
+        if ( !tsE )
+        {
+            // delete previous shaders
+            glDeleteShader( vs );
+            glDeleteShader( fs );
+            if ( gs) glDeleteShader( gs );
+            glDeleteShader( tsC );
+            return 0;
+        }        
 	}
 
 	// Compute shader
-	if ( computeShaderSrc )
+	if ( sp.computeShaderData )
 	{
-		cs = glCreateShader( GL_COMPUTE_SHADER );
-		glShaderSource( cs, 1, &computeShaderSrc, 0x0 );
-		glCompileShader( cs );
-		glGetShaderiv( cs, GL_COMPILE_STATUS, &status );
-		if ( !status )
-		{
-			glGetShaderiv( cs, GL_INFO_LOG_LENGTH, &infologLength );
-			if ( infologLength > 1 )
-			{
-				infoLog = new char[ infologLength ];
-				glGetShaderInfoLog( cs, infologLength, &charsWritten, infoLog );
-				_shaderLog = _shaderLog + "[Compute Shader]\n" + infoLog;
-				delete[] infoLog; infoLog = 0x0;
-			}
-
-			// other shader types should not be present in compute context, but better check
+        cs = compileShader( sp.type, GL_COMPUTE_SHADER, sp.computeShaderData, sp.computeShaderSize );
+        if ( !cs )
+        {
+        	// other shader types should not be present in compute context, but better check
 			if ( vs ) glDeleteShader( vs );
 			if ( fs ) glDeleteShader( fs );
 			if ( gs ) glDeleteShader( gs );
 			if ( tsC ) glDeleteShader( tsC );
 			if ( tsE ) glDeleteShader( tsE );
-			glDeleteShader( cs );
-			return 0;
-		}
+			return 0;    
+        }
 	}
 
 	// Shader program
@@ -1277,7 +1213,6 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 		glDeleteShader( vs );
 		glDeleteShader( fs );
 	}
-
 	if ( gs )
 	{
 		glAttachShader( program, gs );
@@ -1300,6 +1235,63 @@ uint32 RenderDeviceGL4::createShaderProgram( const char *vertexShaderSrc, const 
 	}
 
 	return program;
+}
+
+
+uint32 RenderDeviceGL4::compileShader( RDIShaderType sourceType, int shaderType, uint8 *data, uint32 dataSize )
+{
+    int infologLength = 0;
+	int charsWritten = 0;
+	char *infoLog = 0x0;
+	int status;
+    
+    uint32 shader = glCreateShader( shaderType );
+    switch( sourceType )
+    {
+        case RDIShaderType::SHADERTYPE_TEXT:
+        {
+            glShaderSource( shader, 1, (const char **) &data, 0x0 );
+            glCompileShader( shader );
+            glGetShaderiv( shader, GL_COMPILE_STATUS, &status );
+            if ( !status )
+            {
+                // Get info
+                glGetShaderiv( shader, GL_INFO_LOG_LENGTH, &infologLength );
+                if ( infologLength > 1 )
+                {
+                    infoLog = new char[ infologLength ];
+                    glGetShaderInfoLog( shader, infologLength, &charsWritten, infoLog );
+                    _shaderLog = _shaderLog + shaderGLTypes[ shaderType ].second + "\n" + infoLog;
+                    delete[] infoLog; infoLog = 0x0;
+                }
+
+                glDeleteShader( shader );
+                return 0;
+            }
+            break;
+        }
+//         case RDIShaderType::SHADERTYPE_BINARY_DEVICE:
+//         {
+//             // judging by gpuinfo.org all vendors support only one binary format, both for gl and es
+//             glShaderBinary( 1, &shader, 0, data, dataSize );
+//             if ( glGetError() != GL_NO_ERROR )
+//             {
+//                 _shaderLog = _shaderLog + shaderGLTypes[ shaderType ].second + "\n" + "Failed to load binary shader\n";
+//                 glDeleteShader( shader );
+//                 return 0;
+//             }
+//             break;
+//         }
+        case RDIShaderType::SHADERTYPE_BINARY_SPIRV:
+        {
+            // TODO basically needed for vulkan, not so much for opengl (4.6 required)
+            return 0;
+        }
+        default:
+            return 0;
+    }
+    
+    return shader;
 }
 
 
@@ -1329,15 +1321,27 @@ bool RenderDeviceGL4::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGL4::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-									  const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceGL4::createShader( const struct RDIShaderCreateParams &shaderParameters ) 
 {
 	// Compile and link shader
-	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
-	if( programObj == 0 ) return 0;
-	if( !linkShaderProgram( programObj ) ) return 0;
-
-//	int loc = glGetFragDataLocation( programObj, "fragColor" );
+    uint32 programObj = 0;
+    if ( shaderParameters.type == RDIShaderType::SHADERTYPE_BINARY_DEVICE )
+    {
+        // path for device dependent binary shaders
+        programObj = glCreateProgram();
+        glProgramBinary( programObj, shaderParameters.programFormat, shaderParameters.programData, shaderParameters.programSize );
+        
+        int status;
+        glGetProgramiv( programObj, GL_LINK_STATUS, &status );
+        if( !status ) return false;
+    }
+    else
+    {
+        // path for text and spirv based shaders
+        programObj = createShaderProgram( shaderParameters );
+        if( programObj == 0 ) return 0;
+        if( !linkShaderProgram( programObj ) ) return 0;        
+    }
 
 	uint32 shaderId = _shaders.add( RDIShaderGL4() );
 	RDIShaderGL4 &shader = _shaders.getRef( shaderId );
@@ -1411,6 +1415,51 @@ void RenderDeviceGL4::bindShader( uint32 shaderId )
 	_curShaderId = shaderId;
 	_pendingMask |= PM_GEOMETRY;
 } 
+
+
+bool RenderDeviceGL4::getShaderBinary( uint32 shaderId, uint8 *&data, uint32 *format, uint32 *binarySize )
+{
+    if ( shaderId != 0 )
+    {
+		RDIShaderGL4 &shader = _shaders.getRef( shaderId );
+
+		// flush errors, if any
+		int numberOfErrors = 0;
+		while( glGetError() != GL_NO_ERROR )
+		{
+			numberOfErrors++;
+		}
+        
+        int size = 0;
+        uint32 fmt = 0;
+        glGetProgramiv( shader.oglProgramObj, GL_PROGRAM_BINARY_LENGTH, &size );
+        
+// 		if ( binarySize )
+// 		{
+// 			*binarySize = size;
+// 			return true;
+// 		}
+
+        uint8 *binData = new uint8[ size ];
+        glGetProgramBinary( shader.oglProgramObj, size, (int *) binarySize, &fmt, binData );
+        
+        int error = glGetError();
+        if ( error != GL_NO_ERROR )
+        {
+            delete[] binData;
+            return false;
+        }
+        
+        // save parameters
+        *format = fmt;
+//        *binarySize = size;
+        data = binData;
+        
+        return true;
+    }
+    
+    return false;
+}
 
 
 int RenderDeviceGL4::getShaderConstLoc( uint32 shaderId, const char *name )

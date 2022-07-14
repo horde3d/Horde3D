@@ -184,6 +184,7 @@ struct DeviceCaps
 	bool	texETC2;
 	bool	texASTC;
 	bool	texBPTC;
+    bool    binaryShaders;
 };
 
 
@@ -308,6 +309,13 @@ struct RDITexSlot
 // ---------------------------------------------------------
 // Shaders
 // ---------------------------------------------------------
+enum RDIShaderType
+{
+    SHADERTYPE_UNKNOWN,
+    SHADERTYPE_TEXT,
+    SHADERTYPE_BINARY_DEVICE,
+    SHADERTYPE_BINARY_SPIRV
+};
 
 enum RDIShaderConstType
 {
@@ -321,6 +329,32 @@ enum RDIShaderConstType
 	CONST_INT2,
 	CONST_INT3,
 	CONST_INT4
+};
+
+struct RDIShaderCreateParams
+{
+    // data pointers for various shader types
+    uint8   *vertexShaderData = nullptr;
+    uint8   *fragmentShaderData = nullptr;
+    uint8   *geometryShaderData = nullptr;
+    uint8   *tessControlShaderData = nullptr;
+    uint8   *tessEvalShaderData = nullptr;
+    uint8   *computeShaderData = nullptr;
+    
+    // binary program 
+    uint8   *programData = nullptr;
+    uint32  programFormat = 0;
+    uint32  programSize = 0;
+    
+    // size of shader data
+    uint32  vertexShaderSize = 0;
+    uint32  fragmentShaderSize = 0;
+    uint32  geometryShaderSize = 0;
+    uint32  tessControlShaderSize = 0;
+    uint32  tessEvalShaderSize = 0;
+    uint32  computeShaderSize = 0;
+    
+    RDIShaderType type = SHADERTYPE_UNKNOWN;
 };
 
 // ---------------------------------------------------------
@@ -525,9 +559,10 @@ protected:
 	RDIDelegate< bool ( uint32, int, int, void * ) >					_delegate_getTextureData;
 	RDIDelegate< void ( uint32, void * ) >								_delegate_bindImageToTexture;
 
-	RDIDelegate< uint32 ( const char *, const char *, const char *, const char *, const char *, const char * ) > _delegate_createShader;
+	RDIDelegate< uint32 ( const struct RDIShaderCreateParams & ) >      _delegate_createShader;
 	RDIDelegate< void ( uint32 & ) >									_delegate_destroyShader;
 	RDIDelegate< void ( uint32 ) >										_delegate_bindShader;
+    RDIDelegate< bool ( uint32, uint8 *&, uint32 *, uint32 *) >         _delegate_getShaderBinary;
 	RDIDelegate< int ( uint32, const char * ) >							_delegate_getShaderConstLoc;
 	RDIDelegate< int ( uint32, const char * ) >							_delegate_getShaderSamplerLoc;
 	RDIDelegate< int ( uint32, const char * ) >							_delegate_getShaderBufferLoc;
@@ -766,11 +801,9 @@ public:
 	}
 
 	// Shaders
-	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
-						 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc ) 
+	uint32 createShader( const struct RDIShaderCreateParams &shaderParameters ) 
 	{
-		return _delegate_createShader.invoke( vertexShaderSrc, fragmentShaderSrc, geometryShaderSrc, 
-											  tessControlShaderSrc, tessEvaluationShaderSrc, computeShaderSrc );
+		return _delegate_createShader.invoke( shaderParameters );
 	}
 	void destroyShader( uint32& shaderId )
 	{
@@ -784,6 +817,10 @@ public:
 	{
 		return _shaderLog; 
 	}
+	bool getShaderBinary( uint32 shaderId, uint8 *&shaderData, uint32 *shaderFormat, uint32 *shaderSize )
+    {
+        return _delegate_getShaderBinary.invoke( shaderId, shaderData, shaderFormat, shaderSize );
+    }
 	int getShaderConstLoc( uint32 shaderId, const char *name ) 
 	{ 
 		return _delegate_getShaderConstLoc.invoke( shaderId, name );
@@ -969,6 +1006,9 @@ public:
 
 	const DeviceCaps &getCaps() const { return _caps; }
 
+	const std::string &getRendererName() const { return _rendererName; }
+	const std::string &getRendererVersion() const { return _rendererVersion; }
+	
 	friend class Renderer;
 
 protected:
@@ -991,6 +1031,9 @@ protected:
 
 	DeviceCaps					_caps;
 
+    std::string                 _rendererName;
+    std::string                 _rendererVersion;
+    
 	RDITexSlot					_texSlots[ 16 ];
 	// 	std::vector< RDITexSlot >	_texSlots;
 	RDIRasterState				_curRasterState, _newRasterState;

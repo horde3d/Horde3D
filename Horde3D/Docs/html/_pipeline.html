@@ -500,7 +500,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 	<tr><td>[ <b>=</b> sampler_state {</td></tr>
 	<tr><td>[ Texture <b>=</b> <b>"</b><i>TextureResName</i><b>"</b> <b>;</b> ]</td></tr>
 	<tr><td>[ TexUnit <b>=</b> <b>-1</b> / 0 / 1 / 2 / 3 / 4 / 5 / 6 / 7 / 8 / 9 / 10 / 11 <b>;</b> ]</td></tr>
-	<tr><td>[ Address <b>=</b> <b>Wrap</b> / Clamp <b>;</b> ]</td></tr>
+	<tr><td>[ Address <b>=</b> <b>Wrap</b> / Clamp / Border ;</b> ]</td></tr>
 	<tr><td>[ Filter <b>=</b> None / Bilinear / <b>Trilinear</b> <b>;</b> ]</td></tr>
 	<tr><td>[ MaxAnisotropy <b>=</b> 1 / 2 / 4 / <b>8</b> / 16 <b>;</b> ]</td></tr>
 	<tr><td>[ Usage <b>=</b> <b>Texture</b> / ComputeImageRO / ComputeImageWO / ComputeImageRW <b>;</b> ]</td></tr>
@@ -517,7 +517,7 @@ highlighted as bold. Alternative values are separated by a slash.</p>
 <li>Aliasing for texture units is possible, meaning samplers can share the same texture unit if
     they are not used in the same shader context</li>
 <li>Texture can be set to act as a storage via Usage parameter. Can be used in compute and fragment shaders only. <b>Up to 8</b> textures can be used for compute purposes simultaneously. 
-	Available in OpenGL 4 render interface.</li>
+	Available in OpenGL 4 and OpenGL ES render interfaces.</li>
 </ul>
 
 <div class="descbox">

@@ -11,6 +11,7 @@
 // *************************************************************************************************
 
 #include "egShader.h"
+#include "egShaderParser.h"
 #include "egModules.h"
 #include "egCom.h"
 #include "egRenderer.h"
@@ -18,11 +19,17 @@
 #include <cstring>
 
 #include "utDebug.h"
+#include <utEndian.h>
 
 
 namespace Horde3D {
 
 using namespace std;
+
+// =================================================================================================
+// Static variables definition
+// =================================================================================================
+uint8 *ShaderResource::_mappedData = nullptr;
 
 // =================================================================================================
 // Code Resource
@@ -469,11 +476,17 @@ void ShaderResource::release()
 		}
 	}
 
+	for ( auto &b : _binarySections )
+	{
+		delete[] b.data;
+	}
+
 	_contexts.clear();
 	_samplers.clear();
 	_uniforms.clear();
 	//_preLoadList.clear();
 	_codeSections.clear();
+	_binarySections.clear();
 }
 
 
@@ -1024,6 +1037,7 @@ bool ShaderResource::parseFXSectionContext( Tokenizer &tok, const char * identif
 	return true;
 }
 
+
 bool ShaderResource::load( const char *data, int size )
 {
 	if( !Resource::load( data, size ) ) return false;
@@ -1034,7 +1048,43 @@ bool ShaderResource::load( const char *data, int size )
 	char *fxCode = 0x0;
 	std::vector< std::string > tempCodeSections;
 	tempCodeSections.reserve( 16 );
+    ShaderParser shp( _name );
 
+    // check if shader is a binary
+    if ( size < 5 )
+        return raiseError( "Invalid shader resource" );
+    
+    char header[ 5 ];
+    char *pBinData = elemcpy_le( header, (char*)(pData), 5 );
+    if( header[ 0 ] == 'H' || header[ 1 ] == '3' || header[ 2 ] == 'D' || header[ 3 ] == 'S' || header[ 4 ] == 'B' )
+		_binaryShader = true;
+        
+    if ( _binaryShader )
+    {
+        if ( !Modules::renderer().getRenderDevice()->getCaps().binaryShaders )
+            return raiseError( "Render device does not support binary shaders" );
+        
+        if ( !shp.parseBinaryShader( pBinData, size - 5 ) )
+        {
+            // Reset
+            release();
+            initDefault();
+            
+            return false;
+        }
+        
+        // get all data from shader parser and compile contexts
+        _contexts.swap( shp._contexts );
+        _buffers.swap( shp._buffers );
+        _uniforms.swap( shp._uniforms );
+        _samplers.swap( shp._samplers );
+        _binarySections.swap( shp._binaryShaders );
+        
+        compileContexts();
+        return true;
+    }
+    
+    // standard path (text-based shader)
 	while( pData < eof )
 	{
 		if( pData < eof-1 && *pData == '[' && *(pData+1) == '[' )
@@ -1340,6 +1390,120 @@ bool ShaderResource::compileCombination( ShaderContext &context, ShaderCombinati
 }
 
 
+bool ShaderResource::compileBinaryCombination( ShaderContext &context, ShaderCombination &sc, uint32 contextID, uint32 scID )
+{
+    // we have all the necessary data, either whole program, or binary shaders
+	Modules::log().writeInfo( "---- C O M P I L I N G  . S H A D E R . %s@%s[%i] ----",
+                              _name.c_str(), context.id.c_str(), sc.combMask );
+	
+	RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+
+	// Unload shader if necessary
+	if( sc.shaderObj != 0 )
+	{
+		rdi->destroyShader( sc.shaderObj );
+		sc.shaderObj = 0;
+	}
+	
+	// Compile shader
+	RDIShaderCreateParams scp;
+	for( auto &bin : _binarySections )
+	{
+		if ( bin.contextId == contextID && bin.combinationId == scID )
+		{
+			if ( bin.shaderType == ShaderType::Program )
+			{
+				scp.programData = bin.data;
+				scp.programFormat = bin.dataFormat;
+				scp.programSize = bin.dataSize;
+				scp.type = SHADERTYPE_BINARY_DEVICE;
+			}
+			else
+			{
+				scp.type = SHADERTYPE_BINARY_SPIRV;
+				switch ( bin.shaderType )
+				{
+					case ShaderType::Vertex:
+						scp.vertexShaderData = bin.data;
+						scp.vertexShaderSize = bin.dataSize;
+						break;
+					case ShaderType::Fragment:
+						scp.fragmentShaderData = bin.data;
+						scp.fragmentShaderSize = bin.dataSize;
+						break;
+					case ShaderType::Geometry:
+						scp.geometryShaderData = bin.data;
+						scp.geometryShaderSize = bin.dataSize;
+						break;
+					case ShaderType::TessEvaluation:
+						scp.tessEvalShaderData = bin.data;
+						scp.tessEvalShaderSize = bin.dataSize;
+						break;
+					case ShaderType::TessControl:
+						scp.tessControlShaderData = bin.data;
+						scp.tessControlShaderSize = bin.dataSize;
+						break;
+					case ShaderType::Compute:
+						scp.computeShaderData = bin.data;
+						scp.computeShaderSize = bin.dataSize;
+						break;
+				}
+
+				if ( bin.combinationShadersLeft > 0 ) continue; // search for other shaders
+			}
+
+			break;
+		}
+	}
+
+	bool compiled = Modules::renderer().createShaderComb( sc, scp );
+	if( !compiled )
+	{
+		Modules::log().writeError( "Shader resource '%s': Failed to compile shader context '%s' (comb %i)",
+			_name.c_str(), context.id.c_str(), sc.combMask );
+	}
+	else
+	{
+		rdi->bindShader( sc.shaderObj );
+
+		// Find samplers in compiled shader
+		sc.samplersLocs.reserve( _samplers.size() );
+		for( uint32 i = 0; i < _samplers.size(); ++i )
+		{
+			int samplerLoc = rdi->getShaderSamplerLoc( sc.shaderObj, _samplers[i].id.c_str() );
+			sc.samplersLocs.push_back( samplerLoc );
+			
+			// Set texture unit
+			if( samplerLoc >= 0 )
+				rdi->setShaderSampler( samplerLoc, _samplers[i].texUnit );
+		}
+		
+		// Find buffers in compiled shader
+		sc.bufferLocs.reserve( _buffers.size() );
+		for ( uint32 i = 0; i < _buffers.size(); ++i )
+		{
+			int bufferLoc = rdi->getShaderBufferLoc( sc.shaderObj, _buffers[ i ].id.c_str() );
+			sc.bufferLocs.push_back( bufferLoc );
+		}
+
+		// Find uniforms in compiled shader
+		sc.uniLocs.reserve( Modules::renderer().totalEngineUniforms() + _uniforms.size() );
+		for( uint32 i = 0; i < _uniforms.size(); ++i )
+		{
+			sc.uniLocs.push_back(
+				rdi->getShaderConstLoc( sc.shaderObj, _uniforms[i].id.c_str() ) );
+		}
+	}
+
+	rdi->bindShader( 0 );
+
+	// Output shader log
+	if( rdi->getShaderLog() != "" )
+		Modules::log().writeInfo( "Shader resource '%s': ShaderLog: %s", _name.c_str(), rdi->getShaderLog().c_str() );
+
+	return compiled;    
+}
+
 void ShaderResource::compileContexts()
 {
 	for( uint32 i = 0; i < _contexts.size(); ++i )
@@ -1349,19 +1513,22 @@ void ShaderResource::compileContexts()
 		if( context.compiled )
 			continue;
 		
-		context.flagMask = 0;
+        if ( !_binaryShader )
+        {
+            context.flagMask = 0;
 
-		if ( ( context.vertCodeIdx >= 0 && !getCode( context.vertCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.fragCodeIdx >= 0 && !getCode( context.fragCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.geomCodeIdx >= 0 && !getCode( context.geomCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.tessCtlCodeIdx >= 0 && !getCode( context.tessCtlCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.tessEvalCodeIdx >= 0 && !getCode( context.tessEvalCodeIdx )->tryLinking( &context.flagMask ) ) ||
-			 ( context.computeCodeIdx >= 0 && !getCode( context.computeCodeIdx )->tryLinking( &context.flagMask ) )
-		   )
-		{
-			continue;
-		}
-
+            if ( ( context.vertCodeIdx >= 0 && !getCode( context.vertCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.fragCodeIdx >= 0 && !getCode( context.fragCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.geomCodeIdx >= 0 && !getCode( context.geomCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.tessCtlCodeIdx >= 0 && !getCode( context.tessCtlCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.tessEvalCodeIdx >= 0 && !getCode( context.tessEvalCodeIdx )->tryLinking( &context.flagMask ) ) ||
+                ( context.computeCodeIdx >= 0 && !getCode( context.computeCodeIdx )->tryLinking( &context.flagMask ) )
+            )
+            {
+                continue;
+            }
+        }
+        
 		// Add preloaded combinations
 		for( std::set< uint32 >::iterator itr = _preLoadList.begin(); itr != _preLoadList.end(); ++itr )
 		{
@@ -1388,7 +1555,10 @@ void ShaderResource::compileContexts()
 		bool combinationsCompileStatus = true;
 		for( size_t j = 0; j < context.shaderCombs.size(); ++j )
 		{
-			combinationsCompileStatus &= compileCombination( context, context.shaderCombs[j] );
+            if ( !_binaryShader )
+                combinationsCompileStatus &= compileCombination( context, context.shaderCombs[j] );
+            else
+                combinationsCompileStatus &= compileBinaryCombination( context, context.shaderCombs[j], i, j );
 		}
 
 		context.compiled = combinationsCompileStatus;
@@ -1440,6 +1610,317 @@ uint32 ShaderResource::calcCombMask( const std::vector< std::string > &flags )
 }
 
 
+bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
+{
+	if ( !data ) return false;
+
+	char *d = ( char *) data;
+	uint32 usedMem = 0;
+
+	auto raiseErrorAndClean = [&]( const std::string &msg )
+	{
+		Modules::log().writeError( msg.c_str() );
+		return false;
+	};
+
+	auto pushElemU16 = [&]( uint16 value )
+	{
+		usedMem += 2;
+		return elemset_le<uint16>( (uint16 *) d, value );
+	};
+
+	auto pushElemU32 = [&]( uint32 value )
+	{
+		usedMem += 4;
+		return elemset_le<uint32>( (uint32 *) d, value );
+	};
+
+	auto pushElemF32 = [&]( float value )
+	{
+		usedMem += 4;
+		return elemset_le<float>( (float *) d, value );
+	};
+
+	auto pushElemChar = [&]( const char *str, uint32 count )
+	{
+		usedMem += count;
+		return elemcpyd_le( (char*) d, str, count );
+	};
+
+	// add header
+	d = pushElemChar( "H3DSB", 5 );
+
+	// add version
+	d = pushElemU16( 1 );
+
+	// add render backend type
+	d = pushElemU16( Modules::renderer().getRenderDeviceType() );
+
+	// add generator name
+	char nameBuf[ 64 ] = { 0 };
+	auto rndName = Modules::renderer().getRenderDevice()->getRendererName();
+	strncpy_s( nameBuf, 64, rndName.c_str(), 64 );
+//	auto rndSize = rndName.size() > 64 ? 64 : rndName.size();
+	d = pushElemChar( nameBuf, 64 );
+
+	// add generator version
+	char verBuf[ 64 ] = { 0 };
+	auto rndVersion = Modules::renderer().getRenderDevice()->getRendererVersion();
+	strncpy_s( verBuf, 64, rndVersion.c_str(), 64 );
+	d = pushElemChar( verBuf, 64 );
+
+	// add shader binary type
+	d = pushElemU16( ShaderForm::BinaryDeviceDependent );
+
+	// add fx section
+	// samplers
+	d = pushElemU16( _samplers.size() );
+	for( ShaderSampler &s : _samplers )
+	{
+		// type
+		int samplerType = 0;
+		if ( s.type == TextureTypes::Tex2D ) samplerType = 2;
+		else if ( s.type == TextureTypes::Tex3D ) samplerType = 3;
+		else if ( s.type == TextureTypes::TexCube ) samplerType = 6;
+
+		d = pushElemU16( samplerType );
+
+		// id
+		if ( s.id.size() <= 255 )
+		{
+			d = pushElemU16( s.id.size() );
+			d = pushElemChar( s.id.c_str(), s.id.size() );
+		}
+		else
+		{
+			d = pushElemU16( 255 );
+			d = pushElemChar( s.id.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// texid
+		auto &samplerTexName = s.defTex.getPtr()->getName();
+		if ( samplerTexName.size() <= 255 )
+		{
+			d = pushElemU16( samplerTexName.size() );
+			d = pushElemChar( samplerTexName.c_str(), samplerTexName.size() );
+		}
+		else
+		{
+			d = pushElemU16( 255 );
+			d = pushElemChar( samplerTexName.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// texunit
+		d = pushElemU16( s.texUnit );
+
+		// tex address
+		if ( s.sampState & SS_ADDR_WRAP ) 			d = pushElemU16( 0 );
+		else if ( s.sampState & SS_ADDR_CLAMP ) 	d = pushElemU16( 1 );
+		else if ( s.sampState & SS_ADDR_CLAMPCOL ) 	d = pushElemU16( 2 );
+		else 										d = pushElemU16( 0 ); // default - wrap
+
+		// tex filter
+		if ( s.sampState & SS_FILTER_POINT ) 			d = pushElemU16( 0 );
+		else if ( s.sampState & SS_FILTER_BILINEAR ) 	d = pushElemU16( 1 );
+		else if ( s.sampState & SS_FILTER_TRILINEAR ) 	d = pushElemU16( 2 );
+		else 											d = pushElemU16( 2 ); // default - trilinear
+
+		// anisotropy
+		if ( s.sampState & SS_ANISO1 ) 			d = pushElemU16( 1 );
+		else if ( s.sampState & SS_ANISO2 ) 	d = pushElemU16( 2 );
+		else if ( s.sampState & SS_ANISO4 ) 	d = pushElemU16( 4 );
+		else if ( s.sampState & SS_ANISO8 ) 	d = pushElemU16( 8 );
+		else if ( s.sampState & SS_ANISO16 ) 	d = pushElemU16( 16 );
+		else 									d = pushElemU16( 8 ); // default - 8 aniso
+
+		// usage
+		d = pushElemU16( s.usage );
+	}
+
+	// uniforms
+	d = pushElemU16( _uniforms.size() );
+	for( ShaderUniform &u : _uniforms )
+	{
+		// type
+		if ( u.size == 1 )
+			d = pushElemU16( 0 );
+		else if ( u.size == 4 )
+			d = pushElemU16( 1 );
+
+		// id
+		if ( u.id.size() <= 255 )
+		{
+			d = pushElemU16( u.id.size() );
+			d = pushElemChar( u.id.c_str(), u.id.size() );
+		}
+		else
+		{
+			d = pushElemU16( 255 );
+			d = pushElemChar( u.id.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// number of default values
+		d = pushElemU16( u.size );
+
+		// default values
+		if ( u.size == 1 )
+			d = pushElemF32( u.defValues[ 0 ] );
+		else if ( u.size == 4 )
+		{
+			d = pushElemChar( (const char *) u.defValues, 4 * sizeof( float ) );
+//			d = elemcpyd_le( (float *) d, u.defValues, 4 );
+		}
+	}
+
+	// buffers
+	d = pushElemU16( _buffers.size() );
+	for( ShaderBuffer &b : _buffers )
+	{
+		// id
+		if ( b.id.size() <= 255 )
+		{
+			d = pushElemU16( b.id.size() );
+			d = pushElemChar( b.id.c_str(), b.id.size() );
+		}
+		else
+		{
+			d = pushElemU16( 255 );
+			d = pushElemChar( b.id.substr( 0, 255 ).c_str(), 255 );
+		}
+	}
+
+	// flags
+	// TODO: currently write zero flags
+	d = pushElemU16( 0 );
+
+	// contexts
+	uint32 totalShaderCombs = 0;
+
+	d = pushElemU16( _contexts.size() );
+	for ( ShaderContext &ctx : _contexts )
+	{
+		// id
+		if ( ctx.id.size() <= 255 )
+		{
+			d = pushElemU16( ctx.id.size() );
+			d = pushElemChar( ctx.id.c_str(), ctx.id.size() );
+		}
+		else
+		{
+			d = pushElemU16( 255 );
+			d = pushElemChar( ctx.id.substr( 0, 255 ).c_str(), 255 );
+		}
+
+		// render interface
+		d = pushElemU16( Modules::renderer().getRenderDeviceType() );
+
+		// context options
+		d = pushElemU16( ctx.writeDepth ); // ZWriteEnable
+		d = pushElemU16( ctx.depthTest ); // ZEnable
+		d = pushElemU16( ctx.depthFunc ); // ZFunc
+
+		// blend
+		if ( ctx.blendStateSrc == BlendModes::Zero && ctx.blendStateDst == BlendModes::Zero )
+		{
+			d = pushElemU16( 0 ); // replace
+			d = pushElemU16( 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::SrcAlpha && ctx.blendStateDst == BlendModes::OneMinusSrcAlpha )
+		{
+			d = pushElemU16( 1 ); // blend
+			d = pushElemU16( 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::One && ctx.blendStateDst == BlendModes::One )
+		{
+			d = pushElemU16( 2 ); // add
+			d = pushElemU16( 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::SrcAlpha && ctx.blendStateDst == BlendModes::One )
+		{
+			d = pushElemU16( 3 ); // AddBlended
+			d = pushElemU16( 0 );
+		}
+		else if ( ctx.blendStateSrc == BlendModes::DestColor && ctx.blendStateDst == BlendModes::Zero )
+		{
+			d = pushElemU16( 4 ); // Mult
+			d = pushElemU16( 0 );
+		}
+		else // separate blend modes
+		{
+			d = pushElemU16( ctx.blendStateSrc + 10 );
+			d = pushElemU16( ctx.blendStateDst + 10 );
+		}
+
+		// options continued
+		d = pushElemU16( ctx.cullMode );
+		d = pushElemU16( ctx.alphaToCoverage );
+		d = pushElemU16( ctx.tessVerticesInPatchCount );
+
+		// flag mask
+		d = pushElemU32( ctx.flagMask );
+
+		// number of shader combinations
+		d = pushElemU16( ctx.shaderCombs.size() );
+		totalShaderCombs += ctx.shaderCombs.size();
+	}
+
+	// shader combinations
+	uint32 curContext = 0, curShaderComb = 0;
+
+	d = pushElemU16( totalShaderCombs );
+	for( uint32 sc = 0; sc < totalShaderCombs; ++sc )
+	{
+		if ( curShaderComb >= _contexts[ curContext ].shaderCombs.size() )
+		{
+			curContext++;
+			curShaderComb = 0;
+		}
+
+		auto &ctx = _contexts[ curContext ];
+		auto &comb = ctx.shaderCombs[ curShaderComb ];
+
+		d = pushElemU16( curContext );
+		d = pushElemU32( comb.combMask );
+
+		// OpenGL only supports dumping whole programs, so always say that we have one shader and it is always Program type
+		d = pushElemU16( 1 );
+		d = pushElemU16( ShaderType::Program );
+
+		uint32 binSize = 0;
+		uint32 binFormat = 0;
+		uint8 *bin = nullptr;
+		if ( !Modules::renderer().getRenderDevice()->getShaderBinary( comb.shaderObj, bin, &binFormat, &binSize ) )
+		{
+			return raiseErrorAndClean( "Failed to obtain binary program!" );
+		}
+
+		// check the size of the binary, do we have enough space?
+		if ( binSize > dataSize - ( usedMem + 8 ) ) // 8 is bytes for binSize and binFormat
+		{
+			delete[] bin;
+			return raiseErrorAndClean( "Not enough memory to hold binary shader data!" );
+		}
+
+		// add size
+		d = pushElemU32( binSize );
+
+		// add format
+		d = pushElemU32( binFormat );
+
+		// copy data
+		memcpy( d, bin, binSize );
+		d += binSize;
+		usedMem += binSize;
+		delete[] bin;
+
+		curShaderComb++;
+	}
+
+	dataSize = usedMem;
+	return true;
+}
+
+
 int ShaderResource::getElemCount( int elem ) const
 {
 	switch( elem )
@@ -1450,6 +1931,8 @@ int ShaderResource::getElemCount( int elem ) const
 		return (int)_samplers.size();
 	case ShaderResData::UniformElem:
 		return (int)_uniforms.size();
+	case ShaderResData::ShaderElem:
+		return 1;
 	default:
 		return Resource::getElemCount( elem );
 	}
@@ -1478,6 +1961,14 @@ int ShaderResource::getElemParamI( int elem, int elemIdx, int param ) const
 			case ShaderResData::SampDefTexResI:
 				return _samplers[elemIdx].defTex ? _samplers[elemIdx].defTex->getHandle() : 0;
 			}
+		}
+	case ShaderResData::ShaderElem:
+		switch( param )
+		{
+			case ShaderResData::ShaderTypeI:
+				return _binaryShader ? 1 : 0;
+			case ShaderResData::ShaderBinarySizeI:
+				return (int) _binaryShaderSize;
 		}
 	}
 	
@@ -1568,6 +2059,56 @@ const char *ShaderResource::getElemParamStr( int elem, int elemIdx, int param ) 
 	}
 	
 	return Resource::getElemParamStr( elem, elemIdx, param );
+}
+
+
+void *ShaderResource::mapStream( int elem, int elemIdx, int stream, bool read, bool write )
+{
+	if ( read )
+	{
+		if( elem == ShaderResData::ShaderElem && stream == ShaderResData::ShaderBinaryStream &&
+		    elemIdx < getElemCount( elem ) )
+		{
+			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
+			if (!rdi->getCaps().binaryShaders)
+			{
+				Modules::log().writeError( "Binary shaders are not supported by render backend!" );
+				return nullptr;
+			}
+
+			uint32 bufSize = 2 * 1024 * 1024;
+			_mappedData = Modules::renderer().useScratchBuf( bufSize, 0 ); // 2 mb should be enough for most cases
+																		   // additional checks are done during dumping
+			if ( !createBinaryShaderStream( _mappedData, bufSize ) )
+			{
+				// allocate a bigger buffer and try again
+				bufSize = 8 * 1024 * 1024;
+				_mappedData = Modules::renderer().useScratchBuf( bufSize, 0 );
+				if ( !createBinaryShaderStream( _mappedData, bufSize ) )
+				{
+					Modules::log().writeDebugInfo( "Please fix maximum buffer size for binary shaders!" );
+					return nullptr;
+				}
+			}
+
+			_binaryShaderSize = bufSize;
+			return _mappedData;
+		}
+	}
+
+	return Resource::mapStream( elem, elemIdx, stream, read, write );
+}
+
+
+void ShaderResource::unmapStream()
+{
+	if( _mappedData != nullptr )
+	{
+		_mappedData = nullptr;
+		return;
+	}
+
+	Resource::unmapStream();
 }
 
 }  // namespace

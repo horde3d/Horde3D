@@ -421,7 +421,11 @@ struct H3DShaderRes
 		SampDefTexResI,
 		UnifNameStr,
 		UnifSizeI,
-		UnifDefValueF4
+		UnifDefValueF4,
+        ShaderElem,
+        ShaderTypeI,
+		ShaderBinaryStream,
+		ShaderBinarySizeI
 	};
 };
 

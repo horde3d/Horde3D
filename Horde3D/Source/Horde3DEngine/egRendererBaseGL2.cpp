@@ -278,6 +278,7 @@ void RenderDeviceGL2::initRDIFuncs()
 	_delegate_createShader.bind< RenderDeviceGL2, &RenderDeviceGL2::createShader >( this );
 	_delegate_destroyShader.bind< RenderDeviceGL2, &RenderDeviceGL2::destroyShader >( this );
 	_delegate_bindShader.bind< RenderDeviceGL2, &RenderDeviceGL2::bindShader >( this );
+	_delegate_getShaderBinary.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderBinary >( this );
 	_delegate_getShaderConstLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderConstLoc >( this );
 	_delegate_getShaderSamplerLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderSamplerLoc >( this );
 	_delegate_getShaderBufferLoc.bind< RenderDeviceGL2, &RenderDeviceGL2::getShaderBufferLoc >( this );
@@ -342,6 +343,10 @@ bool RenderDeviceGL2::init()
 	Modules::log().writeInfo( "Initializing GL2 backend using OpenGL driver '%s' by '%s' on '%s'",
 	                          version, vendor, renderer );
 	
+    // Save renderer name and version (used for binary shaders)
+    _rendererName = std::string( renderer );
+    _rendererVersion = std::string( version );
+    
 	// Init extensions
 	if( !initOpenGLExtensions(true) )
 	{	
@@ -406,6 +411,7 @@ bool RenderDeviceGL2::init()
 	_caps.texETC2 = false;
 	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
 	_caps.texASTC = false;
+    _caps.binaryShaders = false;
 
 	// Init states before creating test render buffer, to
 	// ensure binding the current FBO again
@@ -1019,16 +1025,15 @@ bool RenderDeviceGL2::linkShaderProgram( uint32 programObj )
 }
 
 
-uint32 RenderDeviceGL2::createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-                                      const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc )
+uint32 RenderDeviceGL2::createShader( const struct RDIShaderCreateParams &shaderParams )
 {
-	H3D_UNUSED_VAR( geometryShaderSrc );
-	H3D_UNUSED_VAR( tessControlShaderSrc );
-	H3D_UNUSED_VAR( tessEvaluationShaderSrc );
-	H3D_UNUSED_VAR( computeShaderSrc );
-
+    if ( shaderParams.type == RDIShaderType::SHADERTYPE_BINARY_DEVICE ||
+		 shaderParams.type == RDIShaderType::SHADERTYPE_BINARY_SPIRV )
+        return 0;
+    
 	// Compile and link shader
-	uint32 programObj = createShaderProgram( vertexShaderSrc, fragmentShaderSrc );
+	uint32 programObj = createShaderProgram( ( const char * ) shaderParams.vertexShaderData,
+											 ( const char * ) shaderParams.fragmentShaderData );
 	if( programObj == 0 ) return 0;
 	if( !linkShaderProgram( programObj ) ) return 0;
 	
@@ -1104,6 +1109,18 @@ void RenderDeviceGL2::bindShader( uint32 shaderId )
 	_curShaderId = shaderId;
 	_pendingMask |= PM_GEOMETRY;
 } 
+
+
+bool RenderDeviceGL2::getShaderBinary( uint32 shaderId, uint8 *&shaderData, uint32 *shaderFormat, uint32 *shaderSize )
+{
+	H3D_UNUSED_VAR( shaderId );
+	H3D_UNUSED_VAR( shaderData );
+	H3D_UNUSED_VAR( shaderFormat );
+	H3D_UNUSED_VAR( shaderSize );
+
+	// Unsupported on OpenGL 2
+	return false;
+}
 
 
 int RenderDeviceGL2::getShaderConstLoc( uint32 shaderId, const char *name )

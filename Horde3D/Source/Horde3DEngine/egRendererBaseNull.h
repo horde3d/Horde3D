@@ -10,29 +10,29 @@
 //
 // *************************************************************************************************
 
-#ifndef _egRendererBaseGLES3_H_
-#define _egRendererBaseGLES3_H_
+#ifndef _egRendererBaseNull_H_
+#define _egRendererBaseNull_H_
 
 #include "egRendererBase.h"
-#include <string>
-#include <vector>
+#include <string.h>
 
+#include <chrono>
 
 namespace Horde3D {
-namespace RDI_GLES3 {
+namespace RDI_Null {
 
-const uint32 MaxNumVertexLayouts = 32;
-
+const uint32 MaxNumVertexLayouts = 64;
+const uint32 MaxComputeImages = 8;
 
 // =================================================================================================
 // GPUTimer
 // =================================================================================================
 
-class GPUTimerGLES3 : public GPUTimer
+class GPUTimerNull : public GPUTimer
 {
 public:
-	GPUTimerGLES3();
-	~GPUTimerGLES3();
+	GPUTimerNull();
+	~GPUTimerNull();
 	
 	void beginQuery( uint32 frameID );
 	void endQuery();
@@ -42,10 +42,11 @@ public:
 //	float getTimeMS() const { return _time; }
 
 private:
-	std::vector < uint32 >  _queryPool;
-	uint32                  _numQueries;
+	
+    std::chrono::time_point< std::chrono::steady_clock > _t0, _t1;
+    
 	uint32                  _queryFrame;
-//	float                   _time;
+	float                   _time;
 	bool                    _activeQuery;
 };
 
@@ -58,45 +59,45 @@ private:
 // Buffers
 // ---------------------------------------------------------
 
-struct RDIBufferGLES3
+struct RDIBufferNull
 {
 	uint32  type;
 	uint32  glObj;
 	uint32  size;
 	int		geometryRefCount;
 
-	RDIBufferGLES3() : type( 0 ), glObj( 0 ), size( 0 ), geometryRefCount( 0 ) {}
+	RDIBufferNull() : type( 0 ), glObj( 0 ), size( 0 ), geometryRefCount( 0 ) {}
 };
 
-struct RDIVertBufSlotGLES3
+struct RDIVertBufSlotNull
 {
 	uint32  vbObj;
 	uint32  offset;
 	uint32  stride;
 
-	RDIVertBufSlotGLES3() : vbObj( 0 ), offset( 0 ), stride( 0 ) {}
-	RDIVertBufSlotGLES3( uint32 vbObj, uint32 offset, uint32 stride ) :
+	RDIVertBufSlotNull() : vbObj( 0 ), offset( 0 ), stride( 0 ) {}
+	RDIVertBufSlotNull( uint32 vbObj, uint32 offset, uint32 stride ) :
 		vbObj( vbObj ), offset( offset ), stride( stride ) {}
 };
 
-struct RDIGeometryInfoGLES3
+struct RDIGeometryInfoNull
 {
-	std::vector< RDIVertBufSlotGLES3 > vertexBufInfo;
+	std::vector< RDIVertBufSlotNull > vertexBufInfo;
 	uint32 vao;
 	uint32 indexBuf;
 	uint32 layout;
 	bool indexBuf32Bit;
 	bool atrribsBinded;
 
-	RDIGeometryInfoGLES3() : vao( 0 ), indexBuf( 0 ), layout( 0 ), indexBuf32Bit( false ), atrribsBinded( false ) {}
+	RDIGeometryInfoNull() : vao( 0 ), indexBuf( 0 ), layout( 0 ), indexBuf32Bit( false ), atrribsBinded( false ) {}
 };
 
-struct RDIShaderStorageGLES3
+struct RDIShaderStorageNull
 {
 	uint32 	oglObject;
 	uint8 	slot;
 
-	RDIShaderStorageGLES3( uint8 targetSlot, uint32 glObj ) : oglObject( glObj ), slot( targetSlot )
+	RDIShaderStorageNull( uint8 targetSlot, uint32 glObj ) : oglObject( glObj ), slot( targetSlot )
 	{
 
 	}
@@ -106,7 +107,7 @@ struct RDIShaderStorageGLES3
 // Textures
 // ---------------------------------------------------------
 
-struct RDITextureGLES3
+struct RDITextureNull
 {
 	uint32                glObj;
 	uint32                glFmt;
@@ -117,39 +118,57 @@ struct RDITextureGLES3
 	uint32                samplerState;
 	bool                  sRGB;
 	bool                  hasMips, genMips;
+
+	RDITextureNull() : glObj( 0 ), glFmt( 0 ), type( 0 ), format( TextureFormats::Unknown ), width( 0 ), height( 0 ),
+					  depth( 0 ), memSize( 0 ), samplerState( 0 ), sRGB( false ), hasMips( false ), genMips( false )
+	{
+
+	}
 };
 
-struct RDITexSlotGLES3
+struct RDITexSlotNull
 {
 	uint32  texObj;
 	uint32  samplerState;
 
-	RDITexSlotGLES3() : texObj( 0 ), samplerState( 0 ) {}
-	RDITexSlotGLES3( uint32 texObj, uint32 samplerState ) :
+	RDITexSlotNull() : texObj( 0 ), samplerState( 0 ) {}
+	RDITexSlotNull( uint32 texObj, uint32 samplerState ) :
 		texObj( texObj ), samplerState( samplerState ) {}
 };
 
-struct RDITextureBufferGLES3
+struct RDITextureBufferNull
 {
 	uint32  bufObj;
 	uint32  glFmt;
 	uint32	glTexID;
+
+	RDITextureBufferNull() : bufObj( 0 ), glFmt( 0 ), glTexID( 0 ) {}
 };
 
 // ---------------------------------------------------------
 // Shaders
 // ---------------------------------------------------------
 
-struct RDIInputLayoutGLES3
+struct RDIInputLayoutNull 
 {
 	bool  valid;
 	int8  attribIndices[16];
+
+	RDIInputLayoutNull() : valid( false )
+	{
+		memset( attribIndices, 0, sizeof( attribIndices ) );
+	}
 };
 
-struct RDIShaderGLES3
+struct RDIShaderNull 
 {
-	uint32          oglProgramObj;
-	RDIInputLayoutGLES3  inputLayouts[MaxNumVertexLayouts];
+	uint32				oglProgramObj;
+	RDIInputLayoutNull	inputLayouts[MaxNumVertexLayouts];
+
+	RDIShaderNull() : oglProgramObj( 0 )
+	{
+		
+	}
 };
 
 
@@ -157,7 +176,7 @@ struct RDIShaderGLES3
 // Render buffers
 // ---------------------------------------------------------
 
-struct RDIRenderBufferGLES3
+struct RDIRenderBufferNull 
 {
 	static const uint32 MaxColorAttachmentCount = 4;
 
@@ -168,7 +187,7 @@ struct RDIRenderBufferGLES3
 	uint32  depthTex, colTexs[MaxColorAttachmentCount];
 	uint32  depthBuf, colBufs[MaxColorAttachmentCount];  // Used for multisampling
 
-	RDIRenderBufferGLES3() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), depthTex( 0 ), depthBuf( 0 ), samples( 0 )
+	RDIRenderBufferNull() : fbo( 0 ), fboMS( 0 ), width( 0 ), height( 0 ), samples( 0 ), depthTex( 0 ), depthBuf( 0 )
 	{
 		for( uint32 i = 0; i < MaxColorAttachmentCount; ++i ) colTexs[i] = colBufs[i] = 0;
 	}
@@ -177,18 +196,19 @@ struct RDIRenderBufferGLES3
 // =================================================================================================
 
 
-class RenderDeviceGLES3 : public RenderDeviceInterface
+class RenderDeviceNull : public RenderDeviceInterface
 {
 public:
 
-	RenderDeviceGLES3();
-	~RenderDeviceGLES3();
+	RenderDeviceNull();
+	~RenderDeviceNull();
 	
 	void initStates();
 	bool init();
 	
 	bool enableDebugOutput();
 	bool disableDebugOutput();
+
 // -----------------------------------------------------------------------------
 // Resources
 // -----------------------------------------------------------------------------
@@ -202,14 +222,14 @@ public:
 	void finishCreatingGeometry( uint32 geoObj );
 	void setGeomVertexParams( uint32 geoObj, uint32 vbo, uint32 vbSlot, uint32 offset, uint32 stride );
 	void setGeomIndexParams( uint32 geoObj, uint32 indBuf, RDIIndexFormat format );
-	void destroyGeometry( uint32 &geoObj, bool destroyBindedBuffers );
+	void destroyGeometry(uint32 &geoObj, bool destroyBindedBuffers );
 
 	uint32 createVertexBuffer( uint32 size, const void *data );
 	uint32 createIndexBuffer( uint32 size, const void *data );
 	uint32 createTextureBuffer( TextureFormats::List format, uint32 bufSize, const void *data );
-	uint32 createShaderStorageBuffer( uint32 size, const void *data );	
-	void destroyBuffer( uint32 &bufObj );
-	void destroyTextureBuffer( uint32 &bufObj );
+	uint32 createShaderStorageBuffer( uint32 size, const void *data );
+	void destroyBuffer(uint32 &bufObj );
+	void destroyTextureBuffer( uint32& bufObj );
 	void updateBufferData( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, void *data );
 	void *mapBuffer( uint32 geoObj, uint32 bufObj, uint32 offset, uint32 size, RDIBufferMappingTypes mapType );
 	void unmapBuffer( uint32 geoObj, uint32 bufObj );
@@ -227,10 +247,10 @@ public:
 	void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
-	uint32 createShader( const struct RDIShaderCreateParams &shaderParams );
-	void destroyShader( uint32 &shaderId );
+	uint32 createShader( const struct RDIShaderCreateParams &shaderParameters );
+	void destroyShader(uint32 &shaderId );
 	void bindShader( uint32 shaderId );
-	bool getShaderBinary( uint32 shaderId, uint8 *&shaderData, uint32 *shaderFormat, uint32 *shaderSize );
+	bool getShaderBinary( uint32 shaderId, uint8 *&data, uint32 *format, uint32 *binarySize );
 	std::string getShaderLog() const { return _shaderLog; }
 	int getShaderConstLoc( uint32 shaderId, const char *name );
 	int getShaderSamplerLoc( uint32 shaderId, const char *name );
@@ -244,7 +264,7 @@ public:
 	// Renderbuffers
 	uint32 createRenderBuffer( uint32 width, uint32 height, TextureFormats::List format,
 	                           bool depth, uint32 numColBufs, uint32 samples, uint32 maxMipLevel );
-	void destroyRenderBuffer( uint32 &rbObj );
+	void destroyRenderBuffer(uint32 &rbObj );
 	uint32 getRenderBufferTex( uint32 rbObj, uint32 bufIndex );
 	void setRenderBuffer( uint32 rbObj );
 	bool getRenderBufferData( uint32 rbObj, int bufIndex, int *width, int *height,
@@ -261,7 +281,7 @@ public:
 	// Render Device dependent GPU Timer
 	GPUTimer *createGPUTimer()
 	{
-		return new GPUTimerGLES3(); 
+		return new GPUTimerNull(); 
 	}
 
 // -----------------------------------------------------------------------------
@@ -283,9 +303,14 @@ public:
 // -----------------------------------------------------------------------------
 
 	// WARNING: Modifying internal states may lead to unexpected behavior and/or crashes
-	RDIBufferGLES3 &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
-	RDITextureGLES3 &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
-	RDIRenderBufferGLES3 &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+	RDIBufferNull &getBuffer( uint32 bufObj ) { return _buffers.getRef( bufObj ); }
+	RDITextureNull &getTexture( uint32 texObj ) { return _textures.getRef( texObj ); }
+	RDIRenderBufferNull &getRenderBuffer( uint32 rbObj ) { return _rendBufs.getRef( rbObj ); }
+
+// -----------------------------------------------------------------------------
+// Null backend specific
+// -----------------------------------------------------------------------------
+    void setCaps( const DeviceCaps &caps ) { _caps = caps; }
 
 //	friend class Renderer;
 
@@ -303,14 +328,13 @@ protected:
 
 protected:
 
-	uint32 createShaderProgram( const struct RDIShaderCreateParams &shaderParams );
-	uint32 compileShader( RDIShaderType sourceType, int shaderType, uint8 *data, uint32 dataSize );
+	uint32 createShaderProgram( const struct RDIShaderCreateParams &shaderParameters );
 	bool linkShaderProgram( uint32 programObj );
 	void resolveRenderBuffer( uint32 rbObj );
 
 	void checkError();
-	bool applyVertexLayout( RDIGeometryInfoGLES3 &geo );
-	void applySamplerState( RDITextureGLES3 &tex );
+	bool applyVertexLayout( RDIGeometryInfoNull &geo );
+	void applySamplerState( RDITextureNull &tex );
 	void applyRenderStates();
 
 	inline uint32 createBuffer( uint32 type, uint32 size, const void *data );
@@ -320,30 +344,29 @@ protected:
 	bool isCompressedTextureFormat( TextureFormats::List fmt );
 
 	void initRDIFuncs();
-
 protected:
 
-	RDIVertexLayout		              _vertexLayouts[MaxNumVertexLayouts];
-	RDIObjects< RDIBufferGLES3 >        _buffers;
-	RDIObjects< RDITextureGLES3 >       _textures;
-	RDIObjects< RDITextureBufferGLES3 > _textureBuffs;
-	RDIObjects< RDIShaderGLES3 >        _shaders;
-	RDIObjects< RDIRenderBufferGLES3 >  _rendBufs;
-	RDIObjects< RDIGeometryInfoGLES3 >  _vaos;
-	std::vector< RDIShaderStorageGLES3 >  _storageBufs;
+	RDIVertexLayout                    _vertexLayouts[MaxNumVertexLayouts];
+	RDIObjects< RDIBufferNull >         _buffers;
+	RDIObjects< RDITextureNull >        _textures;
+	RDIObjects< RDITextureBufferNull >  _textureBuffs;
+	RDIObjects< RDIShaderNull >         _shaders;
+	RDIObjects< RDIRenderBufferNull >   _rendBufs;
+	std::vector< RDIShaderStorageNull > _storageBufs;
+    RDIObjects< RDIGeometryInfoNull >	_geometryInfo;
 
-//	uint32                _prevShaderId, _curShaderId;
-// 	uint32                _curVertLayout, _newVertLayout;
-// 	uint32                _curIndexBuf, _newIndexBuf;
- 	uint32                _indexFormat;
- 	uint32                _activeVertexAttribsMask;
- 	uint32                _drawType;
 
-	uint16				  _lastTessPatchVertsValue;
-	uint16				  _maxComputeBufferAttachments;
+ 	uint32                             _indexFormat;
+ 	uint32                             _activeVertexAttribsMask;
+
+	uint32                             _lastTessPatchVertsValue;
+	uint32                             _maxComputeBufferAttachments;
+
+	bool                               _doubleBuffered;
 };
 
-} // namespace RDI_GLES3
+} // namespace RDI_Null
 } // namespace Horde3D
 
-#endif // _egRendererBaseGLES3_H_
+#endif // _egRendererBaseNull_H_
+
