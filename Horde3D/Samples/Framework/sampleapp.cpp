@@ -147,7 +147,7 @@ bool SampleApplication::init()
 	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) 
 	{
 	 _backend->logMessage( LogMessageLevel::Error, "Unable to create default GL context and window" );
-		h3dutDumpMessages();
+
 #if defined( H3D_USE_GL4 ) && defined ( H3D_USE_GL2 )
 	// Fallback to OpenGL2 backend
 	_backend->logMessage( LogMessageLevel::Info, "Trying OpenGL2 context" );
@@ -165,11 +165,12 @@ bool SampleApplication::init()
 		if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) 
 		{
 		    _backend->logMessage( LogMessageLevel::Error, "Unable to create OpenGL2 context and window" );
-				    h3dutDumpMessages();
+		    h3dutDumpMessages();
 
 		    return false;
 		}
 #else
+		h3dutDumpMessages();
 		return false;
 
 #endif
@@ -202,6 +203,7 @@ bool SampleApplication::init()
             return false;
         }
 #else
+		h3dutDumpMessages();
 		return false;
 #endif
 	}
@@ -209,8 +211,8 @@ bool SampleApplication::init()
 	// Samples require overlays extension in order to display information
 	if ( !h3dCheckExtension( "Overlays" ) )
 	{
-        _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
-
+       		 _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
+		h3dutDumpMessages();
 		return false;
 	}
 
@@ -228,7 +230,7 @@ bool SampleApplication::init()
 	// Init resources
 	if ( !initResources() )
 	{
-        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
+        	_backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
 
 		h3dutDumpMessages();
 		return false;
