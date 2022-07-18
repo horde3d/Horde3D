@@ -142,9 +142,39 @@ bool SampleApplication::init()
 	auto params = setupInitParameters( defaultRenderInterface() );
 	if ( !_backend->init( params ) ) return false;
 
+	// create default GL context and window
 	auto winParams = setupWindowParameters();
-	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) return false;
+	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) 
+	{
+	 _backend->logMessage( LogMessageLevel::Error, "Unable to create default GL context and window" );
 
+#if defined( H3D_USE_GL4 ) && defined ( H3D_USE_GL2 )
+	// Fallback to OpenGL2 backend
+	_backend->logMessage( LogMessageLevel::Info, "Trying OpenGL2 context" );
+
+	    release();
+	    _backend->release();
+
+
+	    _renderInterface = H3DRenderDevice::OpenGL2;
+	    params = setupInitParameters( _renderInterface );
+
+		if ( !_backend->init( params ) ) return false;
+
+		 winParams = setupWindowParameters();
+		if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) 
+		{
+		    _backend->logMessage( LogMessageLevel::Error, "Unable to create OpenGL2 context and window" );
+		    h3dutDumpMessages();
+
+		    return false;
+		}
+#else
+		h3dutDumpMessages();
+		return false;
+
+#endif
+	}
 	// Initialize engine
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
@@ -173,6 +203,7 @@ bool SampleApplication::init()
             return false;
         }
 #else
+		h3dutDumpMessages();
 		return false;
 #endif
 	}
@@ -180,8 +211,8 @@ bool SampleApplication::init()
 	// Samples require overlays extension in order to display information
 	if ( !h3dCheckExtension( "Overlays" ) )
 	{
-        _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
-
+       		 _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
+		h3dutDumpMessages();
 		return false;
 	}
 
@@ -199,7 +230,7 @@ bool SampleApplication::init()
 	// Init resources
 	if ( !initResources() )
 	{
-        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
+        	_backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
 
 		h3dutDumpMessages();
 		return false;
