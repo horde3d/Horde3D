@@ -384,8 +384,7 @@ bool RenderDeviceGL2::init()
 	}
 	if ( !glExt::ARB_texture_rg )
 	{
-		Modules::log().writeError( "Extension ARB_texture_rg not supported" );
-		failed = true;
+		Modules::log().writeWarning( "Extension ARB_texture_rg not supported" );		
 	}
 	
 	if( failed )
