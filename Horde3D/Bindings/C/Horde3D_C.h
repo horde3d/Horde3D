@@ -69,7 +69,7 @@ typedef int H3DNode;
 const H3DNode H3DRootNode = 1;
 
 /* Group: Enumerations */
-//struct H3DRenderDevice{
+
 	/* Enum: H3DRenderDevice
 	The available engine Renderer backends.
 
@@ -85,7 +85,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DRenderDevice;
 
 
-//struct H3DOptions{
 	/* Enum: H3DOptions
 			The available engine option parameters.
 		
@@ -132,7 +131,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DOptions;
 
 
-//struct H3DStats{
 	/* typedef enum: H3DStats
 			The available engine statistic parameters.
 		
@@ -170,7 +168,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DStats;
 
 
-//struct H3DDeviceCapabilities{
 	/* typedef enum: H3DDeviceCapabilities
 	The available GPU capabilities.
 
@@ -194,9 +191,9 @@ const H3DNode H3DRootNode = 1;
 		H3D_DeviceCapabilities_TextureCompressionBPTC,
 		H3D_DeviceCapabilities_TextureCompressionASTC
 	}H3DDeviceCapabilities;
-//};
 
-//struct H3DResTypes{
+
+
 	/* typedef enum: H3DResTypes
 			The available resource types.
 		
@@ -227,7 +224,7 @@ const H3DNode H3DRootNode = 1;
 		H3D_ResTypes_ComputeBuffer
 	}H3DResTypes;
 
-// struct H3DResFlags{
+
 	/* typedef enum: H3DResFlags
 			The available flags used when adding a resource.
 			
@@ -255,7 +252,6 @@ const H3DNode H3DRootNode = 1;
 
 
 
-// struct H3DFormats{
 	/* typedef enum: H3DFormats
 			The available resource stream formats.
 			
@@ -320,7 +316,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DFormats;
 
 
-//struct H3DGeoRes{
 	/* typedef enum: H3DGeoRes
 			The available Geometry resource accessors.
 		
@@ -347,8 +342,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DGeoRes;
 
 
-//struct H3DAnimRes
-
 	/* typedef enum: H3DAnimRes
 			The available Animation resource accessors.	  
 		
@@ -361,7 +354,7 @@ const H3DNode H3DRootNode = 1;
 		H3D_AnimRes_EntFrameCountI
 	}H3DAnimRes;
 
-//struct H3DMatRes {
+
 	/* typedef enum: H3DMatRes
 			The available Material resource accessors.
 
@@ -391,7 +384,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DMatRes;
 
 
-//struct H3DShaderRes {
 	/* typedef enum: H3DShaderRes
 			The available Shader resource accessors.
 
@@ -423,7 +415,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DShaderRes;
 
 
-//struct H3DTexRes {
 	/* typedef enum: H3DTexRes
 			The available Texture resource accessors.
 
@@ -453,7 +444,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DTexRes;
 
 
-//struct H3DPartEffRes {
 	/* typedef enum: H3DPartEffRes
 			The available ParticleEffect resource accessors.
 
@@ -490,7 +480,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DPartEffRes;
 
 
-//struct H3DPipeRes {
 	/* typedef enum: H3DPipeRes
 			The available Pipeline resource accessors.
 
@@ -506,7 +495,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DPipeRes;
 
 
-//struct H3DComputeBufRes {
 	/* typedef enum: H3DComputeBufRes
 	The available ComputeBuffer resource accessors.
 
@@ -534,7 +522,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DComputeBufRes;
 
 
-//struct H3DNodeTypes {
 	/*	typedef enum: H3DNodeTypes
 			The available scene node types.
 		
@@ -562,7 +549,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DNodeTypes;
 
 
-//struct H3DNodeFlags {
 	/*	typedef enum: H3DNodeFlags
 			The available scene node flags.
 
@@ -581,7 +567,6 @@ const H3DNode H3DRootNode = 1;
 	}H3DNodeFlags;
 
 
-//struct H3DNodeParams {
 	/*	typedef enum: H3DNodeParams
 			The available scene node parameters.
 
@@ -597,7 +582,6 @@ const H3DNode H3DRootNode = 1;
 
 
 
-//struct H3DModel  {
 	/*	typedef enum: H3DModel
 			The available Model node parameters
 
@@ -624,7 +608,7 @@ const H3DNode H3DRootNode = 1;
 		H3D_Model_AnimCountI
 	}H3DModel;
 
-//struct H3DMeshPrimType  {
+
 	/*	typedef enum: H3DMeshParams
 			The available Mesh node primitive types.
 
@@ -642,7 +626,7 @@ const H3DNode H3DRootNode = 1;
 	}H3DMeshPrimType;
 
 
-//struct H3DMesh {
+
 	/*	typedef enum: H3DMesh
 			The available Mesh node parameters.
 		
@@ -665,7 +649,7 @@ const H3DNode H3DRootNode = 1;
 	}H3DMesh;
 
 
-//struct H3DJoint {
+
 	/*	typedef enum: H3DJoint
 			The available Joint node parameters.
 
@@ -677,7 +661,7 @@ const H3DNode H3DRootNode = 1;
 	}H3DJoint;
 
 
-//struct H3DLight {
+
 	/*	typedef enum: H3DLight
 			The available Light node parameters.
 		
@@ -707,7 +691,7 @@ const H3DNode H3DRootNode = 1;
 	}H3DLight;
 
 
-//struct H3DCamera {
+
 	/*	typedef enum: H3DCamera
 			The available Camera node parameters.
 		
@@ -747,7 +731,7 @@ const H3DNode H3DRootNode = 1;
 	}H3DCamera;
 
 
-//struct H3DEmitter {
+
 	/*	typedef enum: H3DEmitter
 			The available Emitter node parameters.
 		
@@ -773,7 +757,7 @@ const H3DNode H3DRootNode = 1;
 	}H3DEmitter;
 
 
-//struct H3DComputeNode {
+
 	/*	typedef enum: H3DComputeNode
 			The available compute node parameters.
 
@@ -795,7 +779,7 @@ const H3DNode H3DRootNode = 1;
 	}H3DComputeNode;
 
 
-//struct H3DModelUpdateFlags {
+
 	/*	typedef enum: H3DModelUpdateFlags
 			The available flags for h3dUpdateModel.
 		
