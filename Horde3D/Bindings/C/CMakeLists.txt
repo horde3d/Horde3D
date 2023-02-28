@@ -1,5 +1,3 @@
-#To automatically install 
-# uncomment the add_subdirectory(C) in CMAkeLists.txt in parent directory
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
