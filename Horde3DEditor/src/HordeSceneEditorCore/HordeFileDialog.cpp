@@ -43,7 +43,7 @@ HordeFileDialog::HordeFileDialog(H3DResTypes::List type, const QString& resource
 m_type(type), DefaultRepoPath( qApp->property("DefaultRepoDir").toString() ), m_sceneResourcePath(resourcePath)
 {
 	setupUi(this);
-	m_xmlView->setTabStopWidth(12);
+	m_xmlView->setTabStopDistance(12);
 	m_xmlView->setWordWrapMode(QTextOption::NoWrap);
 
 	switch(type)
@@ -243,7 +243,7 @@ void HordeFileDialog::initPipelineView()
 void HordeFileDialog::populateList(const QString& path, const QDir& baseDir, const QString& filter, bool repo)
 {
 	// get all files in the given directory
-	QFileInfoList files = QDir(path).entryInfoList(filter.split(';', QString::SkipEmptyParts), QDir::Files | QDir::Readable);
+	QFileInfoList files = QDir(path).entryInfoList(filter.split(';', Qt::SkipEmptyParts), QDir::Files | QDir::Readable);
 	m_fileList->blockSignals(true);
 	foreach(QFileInfo file, files)
 	{

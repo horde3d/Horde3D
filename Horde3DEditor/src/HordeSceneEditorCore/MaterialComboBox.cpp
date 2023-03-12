@@ -46,7 +46,7 @@ void MaterialComboBox::init(const QString& resourcePath )
 		addMaterials(resourcePath, resourcePath);
 	addItem(tr("Clone/Import from Repository"), QVariant((int) QVariant::UserType));	
 	QHordeSceneEditorSettings settings;	
-	setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundColorRole );
+	setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );
 	if (count() == 1)
 		setCurrentIndex(-1);
 	blockSignals(false);
@@ -94,10 +94,10 @@ void MaterialComboBox::currentChanged(int index)
 				blockSignals(true);
 				removeItem(index);
 				addItem(newMaterial);
-				addItem(tr("Clone/Import from Repository"), QVariant(QVariant::UserType));				
+				addItem(tr("Clone/Import from Repository"), QVariant(QVariant::UserType));
 				blockSignals(false);
 				QHordeSceneEditorSettings settings;	
-				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundColorRole );
+				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );
 				index2 = findText(newMaterial);				
 			}
 			setCurrentIndex(index2);

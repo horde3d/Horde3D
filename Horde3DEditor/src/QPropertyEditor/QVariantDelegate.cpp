@@ -31,6 +31,13 @@
 #include <QAbstractItemView>
 #include <QSignalMapper>
 
+#include <QtGlobal>
+#if QT_VERSION >= 0x060000
+    #include "QRegExp.h"
+#else
+    #include <QtCore/QRegExp>
+#endif
+
 
 QVariantDelegate::QVariantDelegate(QObject* parent) : QItemDelegate(parent)
 {
@@ -48,13 +55,13 @@ QWidget *QVariantDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 {
 	QWidget* editor = 0;
 	Property* p = static_cast<Property*>(index.internalPointer());
-	switch(p->value().type())
+	switch(p->value().typeId())
 	{
-	case QVariant::Color:
-	case QVariant::Int:
+	case QMetaType::QColor:
+	case QMetaType::Int:
 	case QMetaType::Float:	
-	case QVariant::Double:	
-    case QVariant::UserType:
+	case QMetaType::Double:
+    case QMetaType::User:
 		editor = p->createEditor(parent, option);
 		if (editor)	
 		{
@@ -78,13 +85,13 @@ void QVariantDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
     editor->blockSignals(true);
 	QVariant data = index.model()->data(index, Qt::EditRole);	
 	
-	switch(data.type())
+	switch(data.typeId())
 	{
-	case QVariant::Color:		 		
-	case QMetaType::Double:
+	case QMetaType::QColor:
+	case QMetaType::Int:
 	case QMetaType::Float:
-	case QVariant::UserType:
-	case QVariant::Int:
+	case QMetaType::Double:
+    case QMetaType::User:
 		if (static_cast<Property*>(index.internalPointer())->setEditorData(editor, data)) // if editor couldn't be recognized use default
 			break; 
 	default:
@@ -98,14 +105,14 @@ void QVariantDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
 void QVariantDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
 {	
 	QVariant data = index.model()->data(index, Qt::EditRole);	
-    unsigned int type = data.type();
+    unsigned int type = data.typeId();
     switch(type)
 	{
-	case QVariant::Color:		
+	case QMetaType::QColor:
+	case QMetaType::Int:
+	case QMetaType::Float:
 	case QMetaType::Double:
-	case QMetaType::Float:				
-	case QVariant::UserType: 
-	case QVariant::Int:
+    case QMetaType::User:
         break;
 	default:        
 		QItemDelegate::setModelData(editor, model, index);

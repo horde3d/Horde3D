@@ -51,7 +51,7 @@ class HordeFileDialog : public QDialog, protected Ui_HordeFileDialog
 {
 	Q_OBJECT
 public:
-	HordeFileDialog(H3DResTypes::List type, const QString& resourcePath, QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	HordeFileDialog(H3DResTypes::List type, const QString& resourcePath, QWidget* parent = 0, Qt::WindowFlags flags = Qt::Widget);
 	virtual ~HordeFileDialog();
 
 	QString fileName();

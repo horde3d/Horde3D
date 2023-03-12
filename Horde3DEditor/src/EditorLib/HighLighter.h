@@ -30,6 +30,14 @@
 #include <QtCore/QHash>
 #include <QtGui/QTextFormat>
 #include <QtCore/QStringList>
+
+#include <QtGlobal>
+#if QT_VERSION >= 0x060000
+    #include "QRegExp.h"
+#else
+    #include <QtCore/QRegExp>
+#endif
+
 class QTextDocument;
 
 /**

@@ -7,6 +7,7 @@
 #include "SceneFile.h"
 
 #include <QCameraNode.h>
+#include <QtWidgets/QMessageBox>
 
 HordeModelDialog::HordeModelDialog(const QString& targetPath, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : HordeFileDialog(H3DResTypes::SceneGraph, targetPath, parent, flags),
 m_glWidget(0), m_glParentOriginal(0), m_oldCamera(0), m_envRes(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_viewCam(0)

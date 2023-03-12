@@ -37,7 +37,7 @@ class SettingsDialog : public QDialog, protected Ui_SettingsDialog
 {
 	Q_OBJECT
 public:
-	SettingsDialog(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	SettingsDialog(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~SettingsDialog();
 
 private slots:

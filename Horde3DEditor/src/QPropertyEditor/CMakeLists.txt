@@ -19,6 +19,14 @@ SET(QT_USE_QTXML TRUE)
 
 if( Qt6_FOUND )
 	INCLUDE_DIRECTORIES(../../include ${QT_INCLUDES} ${Qt6Widgets_INCLUDE_DIRS} ${Qt6Core_INCLUDE_DIRS} )
+
+	SET(QPropertyEditor_SOURCESR
+		QRegExp.cpp
+	)
+
+	SET(QPropertyEditor_HEADERS
+		QRegExp.h
+	)
 else()
 	INCLUDE_DIRECTORIES(../../include ${QT_INCLUDES} ${Qt5Widgets_INCLUDE_DIRS} ${Qt5Core_INCLUDE_DIRS} )
 endif()

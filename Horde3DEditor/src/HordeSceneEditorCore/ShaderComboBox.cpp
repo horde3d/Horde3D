@@ -77,7 +77,7 @@ void ShaderComboBox::currentChanged(int index)
 				addItem(tr("Import from Repository"), QVariant(QVariant::UserType));
 				blockSignals(false);
 				QHordeSceneEditorSettings settings;	
-				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundColorRole );
+				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );
 				index2 = findText(newShader);				
 			}
 			setCurrentIndex(index2);

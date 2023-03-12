@@ -491,7 +491,7 @@ void HordeSceneEditor::saveSceneAs()
 	if (fileName.isEmpty())
 		return;
 
-	m_sceneFile->saveAs(fileName);	
+	m_sceneFile->saveAs( QFileInfo( fileName ) );
 	setWindowTitle(m_sceneFile->sceneFileName()+"[*]");
 	setWindowModified(false);
 	updateFileSystemWatcher();
@@ -830,7 +830,7 @@ void HordeSceneEditor::fileChanged(const QString& path)
 		// Mark it invalid
 		h3dUnloadResource(resource);
 		QListWidgetItem* item = new QListWidgetItem(tr("Reloading resource: %1").arg(path), m_logWidget);
-		item->setTextColor(QColor("#22CC22"));		
+		item->setForeground(QColor("#22CC22"));
 		// Reload it again
 		h3dutLoadResourcesFromDisk(".");
 		// If it's a pipeline check if we have to update the pipeline view

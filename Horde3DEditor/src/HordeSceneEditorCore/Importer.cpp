@@ -358,7 +358,7 @@ void Importer::importShaderFile(const QFileInfo& shader, const QString& targetFi
 	const QStringList includedFiles = shaderData.includeFiles();
 	for (int i=0; i<includedFiles.count(); ++i)
 	{		
-		target = includedFiles.at(i);
+		target = QFileInfo( includedFiles.at(i) );
 		if (!target.absoluteDir().exists())
 			m_targetResourcePath.mkpath(target.absolutePath());
 		QFileInfo source(m_sourceResourcePath,includedFiles.at(i) );
@@ -371,7 +371,7 @@ void Importer::importShaderFile(const QFileInfo& shader, const QString& targetFi
 	const QStringList textureFiles = shaderData.textureFiles();
 	for (int i=0; i<textureFiles.count(); ++i)
 	{		
-		target = textureFiles.at(i);
+		target = QFileInfo( textureFiles.at(i) );
 		if (!target.absoluteDir().exists())
 			m_targetResourcePath.mkpath(target.absolutePath());
 		QFileInfo source(m_sourceResourcePath,textureFiles.at(i) );

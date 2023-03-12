@@ -97,7 +97,7 @@ class HordeSceneEditor : public QMainWindow, protected Ui_HordeSceneEditor
 	friend class PlugInManager;
 
 public:
-    HordeSceneEditor(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+    HordeSceneEditor(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~HordeSceneEditor();
 
 	GLWidget* glContext() {return m_glWidget;}

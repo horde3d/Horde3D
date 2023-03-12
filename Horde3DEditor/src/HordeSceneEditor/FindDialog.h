@@ -40,7 +40,7 @@ signals:
 	void find(const QString&);
 
 private:
-	FindDialog(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	FindDialog(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	
 	static FindDialog* m_instance;
 

@@ -23,7 +23,12 @@
 #include "Vec3fProperty.h"
 #include "CustomTypes.h"
 
-#include <QtCore/QRegExp>
+#include <QtGlobal>
+#if QT_VERSION >= 0x060000
+    #include "../EditorLib/QRegExp.h"
+#else
+    #include <QtCore/QRegExp>
+#endif
 
 Vec3fProperty::Vec3fProperty(const QString& name /*= QString()*/, QObject* propertyObject /*= 0*/, QObject* parent /*= 0*/) : Property(name, propertyObject, parent)
 {
@@ -51,7 +56,7 @@ QVariant Vec3fProperty::value(int role) const
 
 void Vec3fProperty::setValue(const QVariant& value)
 {
-	if (value.type() == QVariant::String)
+	if ( value.typeId() == QMetaType::QString )
 	{
 		QString v = value.toString();				
 		QRegExp rx("([+-]?([0-9]*[\\.])?[0-9]+(e[+-]?[0-9]+)?)");

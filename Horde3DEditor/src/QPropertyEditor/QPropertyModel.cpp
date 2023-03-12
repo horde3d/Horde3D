@@ -181,7 +181,8 @@ void QPropertyModel::addItem(QObject *propertyObject)
         for (int i=0; i<count; ++i)
         {
             QMetaProperty property = metaObject->property(i);
-            if( property.isUser() && property.isScriptable(propertyObject) ) // Hide Qt specific properties
+//            if( property.isUser() && property.isScriptable(propertyObject) ) // Hide Qt specific properties
+            if( property.isUser() && property.isScriptable() ) // Hide Qt specific properties
             {
                 PropertyPair pair(metaObject, property);
                 int index = propertyMap.indexOf(pair);

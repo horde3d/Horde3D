@@ -33,7 +33,7 @@ public:
 	static int question(QWidget* parent, const QString& title, const QString& text, const QDialogButtonBox::StandardButton& button1,  const QDialogButtonBox::StandardButton& button2,  const QDialogButtonBox::StandardButton& button3 = QDialogButtonBox::NoButton);
 
 private:
-	QOneTimeDialog(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	QOneTimeDialog(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~QOneTimeDialog();
 
 	QDialogButtonBox::StandardButton	m_button;

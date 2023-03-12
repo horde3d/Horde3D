@@ -96,10 +96,13 @@ void ColladaImporter::importFiles()
 	QFileInfo converter(settings.value("Converter", QApplication::applicationDirPath()+QDir::separator()+"ColladaConv.exe").toString());	
 	if (!converter.exists())
 	{
+		QString path;
 #ifdef _WIN32
-		converter = QFileDialog::getOpenFileName(this, tr("Select collada converter"), QDir::currentPath(), tr("Executables (*.exe)"));
+		path = QFileDialog::getOpenFileName(this, tr("Select collada converter"), QDir::currentPath(), tr("Executables (*.exe)"));
+		converter = QFileInfo( path );
 #else
-		converter = QFileDialog::getOpenFileName(this, tr("Select collada converter"), QDir::currentPath(), tr("Executables (*)"));
+		path = QFileDialog::getOpenFileName(this, tr("Select collada converter"), QDir::currentPath(), tr("Executables (*)"));
+		converter = QFileInfo( path );
 #endif
 		if (!converter.exists())
 			return;

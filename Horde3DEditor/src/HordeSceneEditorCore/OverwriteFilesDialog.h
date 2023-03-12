@@ -33,7 +33,7 @@ class OverwriteFilesDialog : public QDialog, protected Ui_OverwriteFilesDialog
 {
 	Q_OBJECT
 public:
-	OverwriteFilesDialog(const QList<CopyJob>& filesToOverwrite, QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	OverwriteFilesDialog(const QList<CopyJob>& filesToOverwrite, QWidget* parent = 0, Qt::WindowFlags flags = Qt::Widget);
 	virtual ~OverwriteFilesDialog();
 
 	int numFilesToOverwrite() { return m_fileList->count(); }

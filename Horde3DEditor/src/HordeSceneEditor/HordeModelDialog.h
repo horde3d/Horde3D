@@ -11,7 +11,7 @@ class HordeModelDialog : public HordeFileDialog
 {
 	Q_OBJECT
 public:
-	HordeModelDialog(const QString& targetPath, QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	HordeModelDialog(const QString& targetPath, QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~HordeModelDialog();
 
 		/**
