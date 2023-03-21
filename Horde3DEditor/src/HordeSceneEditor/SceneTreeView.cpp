@@ -27,7 +27,7 @@
 #include "HordeSceneEditor.h"
 #include "PlugInManager.h"
 #include "AttachmentPlugIn.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "CustomTypes.h"
 
 #include <QtCore/QFile>
@@ -42,6 +42,12 @@
 #include <QAction>
 #include <QMenu>
 #include <QUndoStack>
+#include <QDropEvent>
+#include <QContextMenuEvent>
+#include <QMouseEvent>
+#include <QCloseEvent>
+
+
 
 #include <QXmlTree/QXmlTreeUndoCommands.h>
 

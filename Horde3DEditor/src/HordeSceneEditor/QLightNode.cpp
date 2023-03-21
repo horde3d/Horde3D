@@ -29,7 +29,7 @@
 #include <QXmlTree/QXmlNodePropertyCommand.h>
 #include "HordeSceneEditor.h"
 #include "AttachmentPlugIn.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "SceneTreeModel.h"
 #include "PlugInManager.h"
 

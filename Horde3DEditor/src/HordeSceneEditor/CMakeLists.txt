@@ -10,7 +10,7 @@ SET(Horde3DEditor_SOURCES
     ColladaImporter.cpp
     ExtraTreeView.cpp
     FindDialog.cpp
-    GLWidget.cpp
+    OpenGLWidget.cpp
     HordeModelDialog.cpp
     HordeSceneEditor.cpp
     ImgLabel.cpp
@@ -70,7 +70,7 @@ SET(Horde3DEditor_HEADERS
     ColladaImporter.h
     ExtraTreeView.h
     FindDialog.h
-    GLWidget.h
+    OpenGLWidget.h
     HordeModelDialog.h
     HordeSceneEditor.h
     ImgLabel.h
@@ -160,10 +160,10 @@ ADD_DEFINITIONS(${QT_DEFINITIONS})
 IF( APPLE )
 set(MACOSX_BUNDLE_INFO_STRING "${PROJECT_NAME}")
 set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.horde3d.${PROJECT_NAME}")
-set(MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version 0.10.2")
+set(MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version 0.11.0")
 set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})
-set(MACOSX_BUNDLE_SHORT_VERSION_STRING 0.10.2)
-set(MACOSX_BUNDLE_BUNDLE_VERSION 0.10.2)
+set(MACOSX_BUNDLE_SHORT_VERSION_STRING 0.11.0)
+set(MACOSX_BUNDLE_BUNDLE_VERSION 0.11.0)
 set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2023. All Rights Reserved.")
 
 ADD_EXECUTABLE(Horde3DEditor

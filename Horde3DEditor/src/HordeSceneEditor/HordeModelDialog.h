@@ -3,7 +3,7 @@
 
 #include <HordeFileDialog.h>
 
-class GLWidget;
+class OpenGLWidget;
 class HordeSceneEditor;
 class QCameraNode;
 
@@ -38,7 +38,7 @@ private:
 	void loadModel(const QString& fileName, bool repoFile);
     void releaseModel(bool releaseUnused = true);
 
-	GLWidget*				m_glWidget;
+	OpenGLWidget*			m_glWidget;
 	QPushButton*			m_importButton;
 	HordeSceneEditor*       m_editorInstance;
 	QWidget*                m_glParentOriginal;

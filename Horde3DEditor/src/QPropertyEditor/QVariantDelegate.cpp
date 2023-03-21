@@ -42,10 +42,9 @@
 QVariantDelegate::QVariantDelegate(QObject* parent) : QItemDelegate(parent)
 {
 	m_finishedMapper = new QSignalMapper(this);
-	connect(m_finishedMapper, SIGNAL(mapped(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-	connect(m_finishedMapper, SIGNAL(mapped(QWidget*)), this, SIGNAL(closeEditor(QWidget*)));
+	connect(m_finishedMapper, &QSignalMapper::mappedObject, this, &QVariantDelegate::onEditorFinished);
+//	connect(m_finishedMapper, SIGNAL(mappedObject(QWidget*)), this, SIGNAL(closeEditor(QWidget*)));
 }
-
 
 QVariantDelegate::~QVariantDelegate()
 {
@@ -65,9 +64,9 @@ QWidget *QVariantDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 		editor = p->createEditor(parent, option);
 		if (editor)	
 		{
-			if (editor->metaObject()->indexOfSignal("editFinished()") != -1)
+			if (editor->metaObject()->indexOfSignal("editingFinished()") != -1)
 			{
-				connect(editor, SIGNAL(editFinished()), m_finishedMapper, SLOT(map()));
+				connect(editor, SIGNAL(editingFinished()), m_finishedMapper, SLOT(map()));
 				m_finishedMapper->setMapping(editor, editor);
 			}
 			break; // if no editor could be created take default case
@@ -100,6 +99,13 @@ void QVariantDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
 	}
     editor->blockSignals(false);
 	m_finishedMapper->blockSignals(false);    
+}
+
+void QVariantDelegate::onEditorFinished( QObject *obj )
+{
+	QWidget *editor = static_cast< QWidget * >( obj );
+	emit commitData( editor );
+	emit closeEditor( editor );
 }
 
 void QVariantDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const

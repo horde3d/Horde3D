@@ -26,7 +26,7 @@
 #include <QtCore/QFileInfo>
 #include <QMessageBox>
 #include <QCompleter>
-#include <QDirModel>
+#include <QFileSystemModel>
 
 SceneFilePage::SceneFilePage(QWidget* parent /*= 0*/) : QWizardPage(parent)
 {
@@ -41,7 +41,7 @@ SceneFilePage::SceneFilePage(QWidget* parent /*= 0*/) : QWizardPage(parent)
 	registerField("scenepath*", m_scenePath);
 	registerField("scenegraphfile*", m_sceneGraphFile );
 	QCompleter *completer = new QCompleter(m_scenePath);
-	completer->setModel(new QDirModel(completer));
+	completer->setModel(new QFileSystemModel(completer));
 	m_scenePath->setCompleter(completer);
 	connect(m_setScenePath, SIGNAL(clicked()), this, SLOT(setScenePath()));
 }

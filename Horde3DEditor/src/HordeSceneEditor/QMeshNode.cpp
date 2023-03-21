@@ -24,7 +24,7 @@
 
 #include <QXmlTree/QXmlNodePropertyCommand.h>
 #include "HordeSceneEditor.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "AttachmentPlugIn.h"
 #include "SceneTreeModel.h"
 #include "PlugInManager.h"

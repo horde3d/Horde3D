@@ -41,7 +41,7 @@ public:
 	virtual ~SettingsDialog();
 
 private slots:
-	void setPath(QWidget* path);
+	void setPath(QObject* path);
 	void restart() {m_restart = true;}
 	void saveSettings();
 	void setShaderEditor();

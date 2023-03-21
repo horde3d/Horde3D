@@ -3,7 +3,7 @@
 #include "QHordeSceneEditorSettings.h"
 #include "HordeSceneEditor.h"
 #include "ColladaImporter.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "SceneFile.h"
 
 #include <QCameraNode.h>
@@ -33,9 +33,9 @@ HordeModelDialog::~HordeModelDialog()
 {
 	if( m_glWidget )
 	{
-		m_glWidget->parentWidget()->setParent(m_glParentOriginal);
-		if( m_glParentOriginal->layout() )
-			m_glParentOriginal->layout()->addWidget(m_glWidget->parentWidget());
+		// m_glWidget->parentWidget()->setParent(m_glParentOriginal);
+		// if( m_glParentOriginal->layout() )
+		// 	m_glParentOriginal->layout()->addWidget(m_glWidget->parentWidget());
 		if( m_oldCamera )
 			m_editorInstance->setCamera(m_oldCamera);
 		m_editorInstance->removeCamera(m_viewCam);
@@ -119,7 +119,7 @@ void HordeModelDialog::initModelViewer()
          * dummy widget, instead of the QGLWidget. This will side-step the issue altogether, and
          * is what we recommend for users that need this kind of functionality.
          */
-        m_glParentOriginal = m_glWidget->parentWidget()->parentWidget();
+//        m_glParentOriginal = m_glWidget->parentWidget()->parentWidget();
 
 		QDomElement node = m_oldCamera->xmlNode().cloneNode().toElement();
 		m_viewCam = new QCameraNode( node, 0, 0, 0 );
@@ -146,8 +146,8 @@ void HordeModelDialog::initModelViewer()
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 1.0f );
 		// Remove user reference, as the light handles the reference itself now
 		if( lightMaterial ) h3dRemoveResource( lightMaterial );
-		m_glWidget->parentWidget()->setParent(m_glFrame);
-		m_glFrame->layout()->addWidget(m_glWidget->parentWidget());
+		// m_glWidget->parentWidget()->setParent(m_glFrame);
+		// m_glFrame->layout()->addWidget(m_glWidget->parentWidget());
 		m_glWidget->setNavigationSpeed(10.0);
 		m_editorInstance->setCamera(m_viewCam);
 	}
