@@ -68,9 +68,6 @@ OpenGLWidget::OpenGLWidget(QLabel* fpsLabel, QWidget* parent, Qt::WindowFlags fl
     m_wheelTimer->setSingleShot(true);
     connect(m_wheelTimer, SIGNAL(timeout()), this, SLOT(stopWheelMove()));
     loadButtonConfig();
-
-    // force init gl via resize event
-//    resize( 100, 100 );
 }
 
 OpenGLWidget::~OpenGLWidget()
@@ -120,22 +117,29 @@ void OpenGLWidget::setFullScreen(bool fullscreen, OpenGLWidget* widget /*= 0*/)
      * dummy widget, instead of the QOpenGLWidget. This will side-step the issue altogether, and
      * is what we recommend for users that need this kind of functionality.
      */
-    // if( fullscreen)
-    // {
-    //     m_parentWidget = parentWidget()->parentWidget();
-    //     parentWidget()->setParent(0);
-    //     parentWidget()->showFullScreen();
-    //     setFocus(Qt::ActiveWindowFocusReason);
-    //     setGeometry( QGuiApplication::primaryScreen()->geometry() );
-    // }
-    // else
-    // {
-    //     parentWidget()->showNormal();
-    //     parentWidget()->setParent(m_parentWidget);
-    //     if( m_parentWidget->layout() )
-    //         m_parentWidget->layout()->addWidget(parentWidget());
-    //     emit fullscreenActive(false);
-    // }
+    if( fullscreen)
+    {
+        m_parentWidget = m_containerWidget->parentWidget();
+        m_containerWidget->setParent(0);
+        m_containerWidget->showFullScreen();
+        m_containerWidget->setFocus(Qt::ActiveWindowFocusReason);
+        setGeometry( QGuiApplication::primaryScreen()->geometry() );
+    }
+    else
+    {
+        m_containerWidget->showNormal();
+        m_containerWidget->setParent(m_parentWidget);
+        if( m_parentWidget->layout() )
+            m_parentWidget->layout()->addWidget( m_containerWidget );
+        emit fullscreenActive(false);
+    }
+}
+
+bool OpenGLWidget::underMouse()
+{
+    QPoint mousePos = QCursor::pos();
+
+    return frameGeometry().contains( mousePos );
 }
 
 void OpenGLWidget::setTransformationMode(int mode)
@@ -151,15 +155,23 @@ void OpenGLWidget::setTransformationMode(int mode)
         return;
     }
 
-    // if(!underMouse()) // Set mouse cursor if transformation mode was set by toolbar icon
-    //     QCursor::setPos(mapToGlobal(frameGeometry().center()));
+    if(!underMouse()) // Set mouse cursor if transformation mode was set by toolbar icon
+    //    QCursor::setPos( frameGeometry().center() );
+        QCursor::setPos(mapToGlobal(frameGeometry().center()));
 
     // Store mouse position when transformation mode was changed
     m_x = mapFromGlobal(QCursor::pos()).x();
     m_y = height() - mapFromGlobal(QCursor::pos()).y();
 
+    // Store mouse position when transformation mode was changed
+    const qreal scale = devicePixelRatio(); // support scaled display
+
+    // m_x = mapFromGlobal(QCursor::pos()).x();
+    // m_y = mapFromGlobal(QCursor::pos()).y();// * scale;
+
     m_transformationMode = mode;        // Set mode
     m_limitToAxis = 0;		// Reset Axis limitation
+//    setMouseGrabEnabled( mode != None );
     // setMouseTracking(mode != None); // Enable mouse tracking if we have a transformation mode
     // setFocus(); 			// Ensure Widget focus
 }
@@ -173,6 +185,7 @@ void OpenGLWidget::resetMode(bool accept)
         emit transformationMode(m_transformationMode);
         setCursor(Qt::ArrowCursor);
 //        setMouseTracking(false);
+        setMouseGrabEnabled( false );
     }
 }
 
@@ -189,21 +202,15 @@ void OpenGLWidget::setCurrentNode(QXmlTreeNode* node)
 
 void OpenGLWidget::initializeGL()
 {
-     if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL2) ) == false)
+     if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL4) ) == false)
          QMessageBox::warning(nullptr, tr("Error"), tr("Error initializing Horde3D!"));
-//
-    // if( ( m_initialized = h3dInit( (H3DRenderDevice::List) 256 ) == false) )
-    //     QMessageBox::warning(this, tr("Error"), tr("Error initializing Horde3D!"));
-
-//    m_initialized = h3dInit( (H3DRenderDevice::List) 256 );
-    // if( m_initialized == false )
-    //     QMessageBox::warning(this, tr("Error"), tr("Error initializing Horde3D!"));
-
 }
 
 void OpenGLWidget::resizeGL(int width, int height)
 {
-    emit resized(width, height);
+    const qreal scale = devicePixelRatio(); // support scaled display
+
+    emit resized(width * scale, height * scale);
 }
 
 
@@ -213,7 +220,7 @@ void OpenGLWidget::paintGL()
     static int fps = 0;
     if( m_glClear )
     {
-        glClearColor( 1.0f, 1.0f, 0.0f, 1.0f );
+//        glClearColor( 1.0f, 1.0f, 0.0f, 1.0f );
         glClear( GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT );
     }
 
@@ -264,10 +271,12 @@ void OpenGLWidget::paintGL()
 
     renderEditorInfo();
 
+    // for some reason flushing is now required for opengl window
+    glFlush();
+
     // Update Log if we are not the fullscreen widget
     updateLog();
 }
-
 
 
 void OpenGLWidget::wheelEvent(QWheelEvent* event)
@@ -329,9 +338,10 @@ void OpenGLWidget::keyPressEvent(QKeyEvent* event)
         m_right = true;
         break;
     case Qt::Key_Escape:
-        /*if (parentWidget()->isFullScreen() )
+        if (m_containerWidget->isFullScreen() )
             setFullScreen(false);
-        */resetMode(false);
+
+        resetMode(false);
         break;
     case Qt::Key_Return:
         resetMode(true);
@@ -433,8 +443,12 @@ void OpenGLWidget::mousePressEvent ( QMouseEvent * event )
     else if (event->buttons() == m_selectButton)
     {
         // Normalize viewport coordinates
-        float normalized_x( float(event->pos().x()) / width() );
-        float normalized_y( float((height() - event->pos().y())) / height() );
+        const qreal scale = devicePixelRatio(); // support scaled display
+        float scaledWidth = width() * scale;
+        float scaledHeight = height() * scale;
+
+        float normalized_x( float(event->pos().x()) / scaledWidth );
+        float normalized_y( float((height() - event->pos().y())) / scaledHeight );
         // Select node under the mouse cursor
         H3DNode node = h3dutPickNode(m_activeCameraID, normalized_x, normalized_y);
         // If it's a mesh node select it's parent model node
@@ -462,8 +476,12 @@ void OpenGLWidget::mouseDoubleClickEvent(QMouseEvent* event)
     if (event->button() == m_selectButton)
     {
         // Normalize viewport coordinates
-        float normalized_x( float(event->pos().x()) / width() );
-        float normalized_y( float((height() - event->pos().y())) / height() );
+        const qreal scale = devicePixelRatio(); // support scaled display
+        float scaledWidth = width() * scale;
+        float scaledHeight = height() * scale;
+
+        float normalized_x( float(event->pos().x()) / scaledWidth );
+        float normalized_y( float((height() - event->pos().y())) / scaledHeight );
         // Select mesh node under mouse cursor
         H3DNode node = h3dutPickNode(m_activeCameraID, normalized_x, normalized_y);
         if (m_currentNode && m_currentNode->property("ID").toInt() == node)
@@ -593,12 +611,15 @@ void OpenGLWidget::translateObject(int x, int y)
     h3dGetNodeTransMats(camera, 0, &cameraTrans);
     if ( !cameraTrans ) return;
 
+    const qreal scale = devicePixelRatio(); // support scaled display
+    float scaledWidth = width() * scale;
+    float scaledHeight = height() * scale;
 
     const float camScale = QVec3f(cameraTrans[0], cameraTrans[1], cameraTrans[2]).length();
     const float frustumHeight = h3dGetNodeParamF(camera, H3DCamera::TopPlaneF, 0) - h3dGetNodeParamF(camera, H3DCamera::BottomPlaneF, 0);
     const float frustumWidth  = h3dGetNodeParamF(camera, H3DCamera::RightPlaneF, 0) - h3dGetNodeParamF(camera, H3DCamera::LeftPlaneF, 0);
-    float diffX = (x - m_x) * frustumWidth * camScale / width();
-    float diffY = (y - m_y) * frustumHeight * camScale / height();
+    float diffX = (x - m_x) * frustumWidth * camScale / scaledWidth;
+    float diffY = (y - m_y) * frustumHeight * camScale / scaledHeight;
 
     if ( camera == m_currentNode->property("ID").toInt() )
     {
@@ -1027,9 +1048,13 @@ void OpenGLWidget::drawViewportLine(const QPoint& start, const QPoint& end)
     GLdouble modelview[16];					// Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
     glGetDoublev(GL_MODELVIEW_MATRIX, modelview);		// Retrieve The Modelview Matrix
 
+    const qreal scale = devicePixelRatio(); // support scaled display
+    float scaledWidth = width() * scale;
+    float scaledHeight = height() * scale;
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, width(), 0, height(), -1, 1);
+    glOrtho(0, scaledWidth, 0, scaledHeight, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glPointSize(5);
@@ -1058,9 +1083,13 @@ void OpenGLWidget::drawViewportCircle(float x, float y, float radius)
     GLdouble modelview[16];					// Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
     glGetDoublev(GL_MODELVIEW_MATRIX, modelview);		// Retrieve The Modelview Matrix
 
+    const qreal scale = devicePixelRatio(); // support scaled display
+    float scaledWidth = width() * scale;
+    float scaledHeight = height() * scale;
+
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(0, width(), 0, height(), -1, 1);
+    glOrtho(0, scaledWidth, 0, scaledHeight, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 

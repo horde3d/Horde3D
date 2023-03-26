@@ -65,6 +65,7 @@ public:
 
 	bool isInitialized() {return m_initialized;}
 
+	QWidget *getContainerWidget() { return m_containerWidget; }
 	void setContainerWidget( QWidget *widget ) { m_containerWidget = widget; }
 	/**
 	 * Reloads the mouse button settings
@@ -205,6 +206,13 @@ private slots:
 
 private:
 
+
+	/**
+	 * @brief Check whether the mouse cursor is over the opengl window
+	 *
+	 * @return bool true if cursor is over opengl window, false otherwise
+	 */
+	bool underMouse();
 
 	/**
 	 * Remembers the transformation of the currently set camera
