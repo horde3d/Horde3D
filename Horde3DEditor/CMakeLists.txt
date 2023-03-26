@@ -4,9 +4,9 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
-find_package(Qt6 COMPONENTS Widgets Gui Core Xml OpenGL OpenGLWidgets)
+find_package(Qt6 COMPONENTS Widgets Gui Core Xml OpenGL)
 if( Qt6_FOUND )
-    SET(QT_LIBRARIES "Qt6::Widgets;Qt6::Gui;Qt6::Core;Qt6::Xml;Qt6::OpenGL;Qt6::OpenGLWidgets")
+    SET(QT_LIBRARIES "Qt6::Widgets;Qt6::Gui;Qt6::Core;Qt6::Xml;Qt6::OpenGL")
     FUNCTION(QT4_ADD_RESOURCES)
     ENDFUNCTION(QT4_ADD_RESOURCES)
 
