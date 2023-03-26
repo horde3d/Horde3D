@@ -328,8 +328,9 @@ void HordeSceneEditor::sceneCreated()
 		loadScreen.showMessage(tr("Opening Scene"), Qt::AlignLeft, Qt::white);
 		QApplication::processEvents();
 		// set pipeline.xml
-		loadScreen.showMessage(tr("Creating OpenGL Context"), Qt::AlignLeft, Qt::white);        
-		m_glFrame->setVisible( true );	
+		loadScreen.showMessage(tr("Creating OpenGL Context"), Qt::AlignLeft, Qt::white);
+
+		m_glFrame->setVisible( true );
 		m_glWidget = new OpenGLWidget(m_fpsLabel, m_glFrame, (Qt::WindowFlags) 0);
 		connect(m_actionFullscreen, SIGNAL(toggled(bool)), m_glWidget, SLOT(setFullScreen(bool)));
 		connect(m_actionDebugView, SIGNAL(triggered(bool)), m_glWidget, SLOT(enableDebugView(bool)));
@@ -348,6 +349,7 @@ void HordeSceneEditor::sceneCreated()
 		connect(m_glWidget, SIGNAL(resized(int, int)), m_cameraToolBar, SLOT(viewportResized(int,int)));
 		connect(m_sceneTreeWidget, SIGNAL(currentNodeChanged(QXmlTreeNode*)), m_glWidget, SLOT(setCurrentNode(QXmlTreeNode*)));
 		connect(m_sceneTreeWidget, SIGNAL(nodeAboutToChange()), m_glWidget, SLOT(resetMode()));
+
 		// ensure initialization of Horde3D before we start loading resources
 		QWidget *containerWidget = QWidget::createWindowContainer( m_glWidget );
 		m_glWidget->setContainerWidget( containerWidget );
@@ -413,12 +415,14 @@ void HordeSceneEditor::sceneCreated()
 			connect(m_renderTimer, SIGNAL(timeout()), m_glWidget, SLOT(update()));
 			m_renderTimer->start(m_miscToolBar->m_fpsSettings->value() > 0 ? 1000/m_miscToolBar->m_fpsSettings->value() : 0);
 //			m_glWidget->setFocus(Qt::ActiveWindowFocusReason);
+
 			containerWidget->setFocus( Qt::ActiveWindowFocusReason );
 			m_cameraToolBar->setActiveCamera(m_sceneFile->activeCam());
 
 			// Hacky workaround for rendering bug in empty scenes (probably some initialization issues in case no geometry is drawn)
 			m_glWidget->enableDebugView( true );
 			m_glWidget->update();
+			QApplication::processEvents();
 			m_glWidget->enableDebugView( false );
 		}
 		else
@@ -542,9 +546,18 @@ bool HordeSceneEditor::closeScene()
 	// delete the scene file instance
 	delete m_sceneFile;
 	m_sceneFile = 0;
+
 	// delete the gl context
-	delete m_glWidget;
-	m_glWidget = 0;
+	QWidget *containerWidget = m_glWidget->getContainerWidget();
+	if ( containerWidget )
+	{
+		m_glFrame->layout()->removeWidget( containerWidget );
+		delete containerWidget;
+		containerWidget = nullptr;
+	}
+
+	m_glWidget = nullptr;
+
 	// update the actions and menus to avoid invalid operations on not existing scene
 	updateMenus();
 	// reset window title
@@ -676,7 +689,7 @@ void HordeSceneEditor::updateMenus()
 	m_sceneTreeWidget->m_extraTreeView->setEnabled( !m_menuExtras->actions().isEmpty() );
 	settings.endGroup();
 
-	QApplication::processEvents();
+//	QApplication::processEvents();
 }
 
 
