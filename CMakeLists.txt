@@ -77,6 +77,10 @@ option(HORDE3D_USE_GL4 "Add OpenGL 4 render backend. Turns off ES3 render backen
 option(HORDE3D_USE_GLES3 "Add OpenGL ES 3 render backend. Turns off desktop GL backends." OFF)
 option(HORDE3D_USE_NULL "Add Null render backend. Used for testing. Can work with other render backends." OFF)
 
+if(HORDE3D_USE_NULL)
+    set(USE_NULL TRUE)
+endif(HORDE3D_USE_NULL)
+
 # Tests always enable Null render backend
 if(HORDE3D_BUILD_TESTS)
     set(USE_NULL TRUE)
