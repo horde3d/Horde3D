@@ -6,6 +6,25 @@
 class OpenGLWidget;
 class HordeSceneEditor;
 class QCameraNode;
+class QTimer;
+class ImageDrawer;
+
+class ImageDrawer : public QWidget
+{
+	Q_OBJECT
+public:
+
+	ImageDrawer( OpenGLWidget *glWidget, QWidget *parent = nullptr );
+	~ImageDrawer() = default;
+
+protected:
+
+	void paintEvent(QPaintEvent * event) override;
+
+private:
+
+	OpenGLWidget *_glWidget;
+};
 
 class HordeModelDialog : public HordeFileDialog
 {
@@ -38,7 +57,9 @@ private:
 	void loadModel(const QString& fileName, bool repoFile);
     void releaseModel(bool releaseUnused = true);
 
+	ImageDrawer *			m_modelPreview;
 	OpenGLWidget*			m_glWidget;
+	QTimer *				m_renderTimer;
 	QPushButton*			m_importButton;
 	HordeSceneEditor*       m_editorInstance;
 	QWidget*                m_glParentOriginal;

@@ -69,6 +69,9 @@
 #include <Horde3D.h>
 #include <Horde3DUtils.h>
 
+#include <thread>
+#include <chrono>
+
 HordeSceneEditor::HordeSceneEditor(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : QMainWindow(parent, flags), 
 m_sceneFile(0), m_glWidget(0)
 {
@@ -416,8 +419,8 @@ void HordeSceneEditor::sceneCreated()
 			m_renderTimer->start(m_miscToolBar->m_fpsSettings->value() > 0 ? 1000/m_miscToolBar->m_fpsSettings->value() : 0);
 //			m_glWidget->setFocus(Qt::ActiveWindowFocusReason);
 
-			containerWidget->setFocus( Qt::ActiveWindowFocusReason );
-			m_cameraToolBar->setActiveCamera(m_sceneFile->activeCam());
+			containerWidget->setFocus();
+				m_cameraToolBar->setActiveCamera(m_sceneFile->activeCam());
 
 			// Hacky workaround for rendering bug in empty scenes (probably some initialization issues in case no geometry is drawn)
 			m_glWidget->enableDebugView( true );
