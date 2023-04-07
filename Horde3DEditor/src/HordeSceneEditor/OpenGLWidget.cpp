@@ -122,7 +122,7 @@ void OpenGLWidget::setFullScreen(bool fullscreen, OpenGLWidget* widget /*= 0*/)
         m_parentWidget = m_containerWidget->parentWidget();
         m_containerWidget->setParent(0);
         m_containerWidget->showFullScreen();
-        m_containerWidget->setFocus(Qt::ActiveWindowFocusReason);
+        m_containerWidget->setFocus();
         setGeometry( QGuiApplication::primaryScreen()->geometry() );
     }
     else
@@ -131,6 +131,8 @@ void OpenGLWidget::setFullScreen(bool fullscreen, OpenGLWidget* widget /*= 0*/)
         m_containerWidget->setParent(m_parentWidget);
         if( m_parentWidget->layout() )
             m_parentWidget->layout()->addWidget( m_containerWidget );
+
+        m_containerWidget->setFocus();
         emit fullscreenActive(false);
     }
 }
