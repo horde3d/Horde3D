@@ -126,6 +126,7 @@ public slots:
 	 */
 	void setAABBEnabled(bool enabled) {if (enabled) m_debugInfo |= DRAW_BOUNDING_BOX; else m_debugInfo &= 0xFFFF ^ DRAW_BOUNDING_BOX;}
 
+	bool selectButtonPressed() { return m_selectButtonPressed; }
 signals:
 	/**
 	 * sends a status bar event
@@ -278,6 +279,7 @@ private:
 	QTimer*			m_wheelTimer;
 
 	bool			m_forward, m_backward, m_left, m_right, m_up, m_down;
+	bool			m_selectButtonPressed;
 
 	/// Limiting object movement by mouse to one axis
 	int				m_limitToAxis;

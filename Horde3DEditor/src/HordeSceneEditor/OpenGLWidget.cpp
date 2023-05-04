@@ -37,6 +37,8 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QWheelEvent>
+#include <QOpenGLFunctions_3_1>
+#include <QOpenGLVersionFunctionsFactory>
 
 #include <math.h>
 #ifdef __APPLE__
@@ -47,11 +49,13 @@
 
 #include <limits>
 
+#include "im3d/im3d_h3d.h"
 
 #include <Horde3D.h>
 #include <Horde3DUtils.h>
 #include <EditorLib/QRegExp.h>
 
+static QOpenGLFunctions_3_1 *glf = nullptr;
 
 OpenGLWidget::OpenGLWidget(QLabel* fpsLabel, QWidget* parent, Qt::WindowFlags flags) : QOpenGLWindow(NoPartialUpdate, nullptr),
     m_fpsLabel(fpsLabel), m_transformationMode(0), m_collisionCheck(false), m_navSpeed(5), m_fps(30.0), m_parentWidget(0),
@@ -204,8 +208,14 @@ void OpenGLWidget::setCurrentNode(QXmlTreeNode* node)
 
 void OpenGLWidget::initializeGL()
 {
-     if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL4) ) == false)
-         QMessageBox::warning(nullptr, tr("Error"), tr("Error initializing Horde3D!"));
+    if( ( m_initialized = h3dInit(H3DRenderDevice::OpenGL4) ) == false)
+        QMessageBox::warning(nullptr, tr("Error"), tr("Error initializing Horde3D!"));
+
+    glf = QOpenGLVersionFunctionsFactory::get<QOpenGLFunctions_3_1>( context() );
+    if ( !glf ) return;
+
+    if ( !Im3d_Init( glf, this ) )
+        QMessageBox::warning(nullptr, tr("Error"), tr("Failed to initialize Im3D!"));
 }
 
 void OpenGLWidget::resizeGL(int width, int height)
@@ -242,6 +252,12 @@ void OpenGLWidget::paintGL()
             initTime = QTime::currentTime();
         }
     }
+
+    Im3d_NewFrame( glf, m_activeCameraID );
+
+    Im3d::Context& ctx = Im3d::GetContext();
+    Im3d::AppData& ad  = Im3d::GetAppData();
+
     float x = 0.0f, y = 0.0f, z = 0.0f;
     if (m_fps > 0.0f)
     {
@@ -271,7 +287,29 @@ void OpenGLWidget::paintGL()
         h3dFinalizeFrame();
     }
 
-    renderEditorInfo();
+    if ( m_debugInfo & DRAW_GRID )
+    {
+        static int gridSize = 200;
+        const float gridHalf = (float)gridSize * 0.5f;
+        Im3d::SetAlpha(1.0f);
+        Im3d::SetSize(1.0f);
+        Im3d::BeginLines();
+            for (int x = 0; x <= gridSize; ++x)
+            {
+                Im3d::Vertex(-gridHalf, 0.0f, (float)x - gridHalf, Im3d::Color(0.5f, 0.5f, 0.5f));
+                Im3d::Vertex( gridHalf, 0.0f, (float)x - gridHalf, Im3d::Color(1.0f, 0.5f, 0.5f));
+            }
+            for (int z = 0; z <= gridSize; ++z)
+            {
+                Im3d::Vertex((float)z - gridHalf, 0.0f, -gridHalf,  Im3d::Color(0.5f, 0.5f, 0.5f));
+                Im3d::Vertex((float)z - gridHalf, 0.0f,  gridHalf,  Im3d::Color(0.0f, 0.0f, 1.0f));
+            }
+        Im3d::End();
+    }
+
+    // renderEditorInfo();
+
+    Im3d_EndFrame( glf, m_activeCameraID );
 
     // for some reason flushing is now required for opengl window
     glFlush();
@@ -419,6 +457,8 @@ void OpenGLWidget::keyReleaseEvent(QKeyEvent* event)
 
 void OpenGLWidget::mousePressEvent ( QMouseEvent * event )
 {
+    if ( event->buttons() == m_selectButton ) m_selectButtonPressed = true;
+
     // if we have a transformation pending, return ( should never be the case, since mouseReleaseEvent should reset m_transformationMode ? )
     if ( m_transformationMode != None )
     {
@@ -508,6 +548,8 @@ void OpenGLWidget::mouseReleaseEvent(QMouseEvent* event)
     else // Reset cursor state
         setCursor(Qt::ArrowCursor);
     m_limitToAxis = 0;
+
+    if ( event->button() == m_selectButton ) m_selectButtonPressed = false;
     event->accept();
 }
 
@@ -901,9 +943,9 @@ void OpenGLWidget::renderEditorInfo()
     QMatrix4f transMat( camera );
     glLoadMatrixf( transMat.inverted().x );
 
-    glEnable(GL_DEPTH_TEST);
-    if (m_debugInfo & DRAW_GRID)
-        drawBaseGrid(camera[12], camera[13], camera[14]);
+    // glEnable(GL_DEPTH_TEST);
+    // if (m_debugInfo & DRAW_GRID)
+    //     drawBaseGrid(camera[12], camera[13], camera[14]);
 
     glDisable(GL_DEPTH_TEST);
 

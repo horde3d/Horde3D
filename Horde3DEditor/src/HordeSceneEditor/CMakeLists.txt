@@ -60,6 +60,8 @@ SET(Horde3DEditor_SOURCES
     SceneTreeWidget.cpp
     SceneWizard.cpp
     SettingsDialog.cpp
+    im3d/im3d.cpp
+    im3d/im3d_h3d.cpp
     )
 
 
@@ -119,6 +121,8 @@ SET(Horde3DEditor_HEADERS
     SettingsDialog.h
     SceneWizard.h
     LuaBindingsHorde.h
+    im3d/im3d.h
+    im3d/im3d_h3d.h
     )
 
 SET(Horde3DEditor_RESOURCES
