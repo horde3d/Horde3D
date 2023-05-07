@@ -310,10 +310,10 @@ void Im3d_NewFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
     // In case of an invalid camera (e.g. pipeline not set) return
     if ( !camera ) return;
 
-	Im3d::Mat4 vm( camera[ 0 ], camera[ 1 ], camera[ 2 ], camera[ 3 ],
-				   camera[ 4 ], camera[ 5 ], camera[ 6 ], camera[ 7 ],
-				   camera[ 8 ], camera[ 9 ], camera[ 10 ], camera[ 11 ],
-				   camera[ 12 ], camera[ 13 ], camera[ 14 ], camera[ 15 ] );
+	Im3d::Mat4 vm( camera[ 0 ], camera[ 4 ], camera[ 8 ], camera[ 12 ],
+				   camera[ 1 ], camera[ 5 ], camera[ 9 ], camera[ 13 ],
+				   camera[ 2 ], camera[ 6 ], camera[ 10 ], camera[ 14 ],
+				   camera[ 3 ], camera[ 7 ], camera[ 11 ], camera[ 15 ] );
 
 	// calculate direction`
 	Im3d::Mat4 m = vm;
@@ -324,10 +324,10 @@ void Im3d_NewFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
     // ... and projection matrix
     float projMat[16];
     h3dGetCameraProjMat( h3d_camera, projMat );
-	Im3d::Mat4 pm( projMat[ 0 ], projMat[ 1 ], projMat[ 2 ], projMat[ 3 ],
-				   projMat[ 4 ], projMat[ 5 ], projMat[ 6 ], projMat[ 7 ],
-				   projMat[ 8 ], projMat[ 9 ], projMat[ 10 ], projMat[ 11 ],
-				   projMat[ 12 ], projMat[ 13 ], projMat[ 14 ], projMat[ 15 ] );
+	Im3d::Mat4 pm( projMat[ 0 ], projMat[ 4 ], projMat[ 8 ], projMat[ 12 ],
+				   projMat[ 1 ], projMat[ 5 ], projMat[ 9 ], projMat[ 13 ],
+				   projMat[ 2 ], projMat[ 6 ], projMat[ 10 ], projMat[ 14 ],
+				   projMat[ 3 ], projMat[ 7 ], projMat[ 11 ], projMat[ 15 ] );
 
 	float cameraFieldOfView = atanf( frustTop / frustNear ) * 360.0f / 3.1415926;
 
@@ -461,17 +461,17 @@ void Im3d_EndFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
 		h3dGetCameraProjMat( h3d_camera, projMat );
 		h3dGetNodeTransMats( h3d_camera, nullptr, &viewMat );
 
-		Im3d::Mat4 vm( viewMat[ 0 ], viewMat[ 1 ], viewMat[ 2 ], viewMat[ 3 ],
-				   viewMat[ 4 ], viewMat[ 5 ], viewMat[ 6 ], viewMat[ 7 ],
-				   viewMat[ 8 ], viewMat[ 9 ], viewMat[ 10 ], viewMat[ 11 ],
-				   viewMat[ 12 ], viewMat[ 13 ], viewMat[ 14 ], viewMat[ 15 ] );
+		Im3d::Mat4 vm( viewMat[ 0 ], viewMat[ 4 ], viewMat[ 8 ], viewMat[ 12 ],
+				   viewMat[ 1 ], viewMat[ 5 ], viewMat[ 9 ], viewMat[ 13 ],
+				   viewMat[ 2 ], viewMat[ 6 ], viewMat[ 10 ], viewMat[ 14 ],
+				   viewMat[ 3 ], viewMat[ 7 ], viewMat[ 11 ], viewMat[ 15 ] );
 
 		vm = Im3d::Inverse( vm );
 
-		Im3d::Mat4 pm( projMat[ 0 ], projMat[ 1 ], projMat[ 2 ], projMat[ 3 ],
-				   projMat[ 4 ], projMat[ 5 ], projMat[ 6 ], projMat[ 7 ],
-				   projMat[ 8 ], projMat[ 9 ], projMat[ 10 ], projMat[ 11 ],
-				   projMat[ 12 ], projMat[ 13 ], projMat[ 14 ], projMat[ 15 ] );
+		Im3d::Mat4 pm( projMat[ 0 ], projMat[ 4 ], projMat[ 8 ], projMat[ 12 ],
+				   projMat[ 1 ], projMat[ 5 ], projMat[ 9 ], projMat[ 13 ],
+				   projMat[ 2 ], projMat[ 6 ], projMat[ 10 ], projMat[ 14 ],
+				   projMat[ 3 ], projMat[ 7 ], projMat[ 11 ], projMat[ 15 ] );
 
 		Im3d::Mat4 viewProj = pm * vm;
 
