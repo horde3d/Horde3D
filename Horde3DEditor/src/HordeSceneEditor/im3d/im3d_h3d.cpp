@@ -34,6 +34,7 @@ static GLuint g_Im3dUniformBuffer;
 static GLuint g_Im3dShaderPoints;
 static GLuint g_Im3dShaderLines;
 static GLuint g_Im3dShaderTriangles;
+static GLint g_Im3dUniformBufferMaxSize;
 static OpenGLWidget *g_view;
 
 using namespace Im3d;
@@ -171,6 +172,9 @@ bool Im3d_Init( QOpenGLFunctions_3_1 *glf, OpenGLWidget *view )
  // OpenGL uniform buffers require 16 byte alignment for structs - set IM3D_VERTEX_ALIGNMENT in im3d_config.h
 	IM3D_ASSERT(sizeof(Im3d::VertexData) % 16 == 0);
 
+	glGetIntegerv( GL_MAX_UNIFORM_BLOCK_SIZE, &g_Im3dUniformBufferMaxSize );
+	if ( g_Im3dUniformBufferMaxSize <= 0 ) return false;
+
 	{	GLuint vs = LoadCompileShader(glf, GL_VERTEX_SHADER,   ":/Shaders/im3d/im3d.glsl", "VERTEX_SHADER\0POINTS\0");
 		GLuint fs = LoadCompileShader(glf, GL_FRAGMENT_SHADER, ":/Shaders/im3d/im3d.glsl", "FRAGMENT_SHADER\0POINTS\0");
 		if (vs && fs)
@@ -295,7 +299,7 @@ void Im3d_NewFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
 	float frustNear = h3dGetNodeParamF( h3d_camera, H3DCamera::NearPlaneF, 0 );
 
 	// Normalize viewport coordinates
-	// const qreal scale = g_view->devicePixelRatio(); // support scaled display
+
 	// float scaledWidth = g_view->width() * scale;
 	// float scaledHeight = g_view->height() * scale;
  //
@@ -345,7 +349,8 @@ void Im3d_NewFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
 		;
 
  // World space cursor ray from mouse position; for VR this might be the position/orientation of the HMD or a tracked controller.
-	QPoint p = g_view->mapFromGlobal( QCursor::pos() );
+	const qreal display_scale = g_view->devicePixelRatio(); // support scaled display
+	QPoint p = g_view->mapFromGlobal( QCursor::pos() ) * display_scale;
 	Vec2 cursorPos = Vec2( p.x(), p.y() );
 	cursorPos = (cursorPos / ad.m_viewportSize) * 2.0f - 1.0f;
 	cursorPos.y = -cursorPos.y; // window origin is top-left, ndc is bottom-left
@@ -479,7 +484,7 @@ void Im3d_EndFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
 		glf->glUniformMatrix4fv( glf->glGetUniformLocation(sh, "uViewProjMatrix"), 1, false, (const GLfloat*) &viewProj.m[ 0 ] );
 
 	 // Uniform buffers have a size limit; split the vertex data into several passes.
-		const int kMaxBufferSize = 64 * 1024; // assuming 64kb here but the application should check the implementation limit
+		const int kMaxBufferSize = g_Im3dUniformBufferMaxSize; //64 * 1024; // assuming 64kb here but the application should check the implementation limit
 	 	const int kPrimsPerPass = kMaxBufferSize / (sizeof (Im3d::VertexData) * primVertexCount);
 
 		int remainingPrimCount = drawList.m_vertexCount / primVertexCount;
@@ -500,4 +505,8 @@ void Im3d_EndFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
 			remainingPrimCount -= passPrimCount;
 		}
 	}
+
+	// Disable used states
+	glf->glDisable(GL_BLEND);
+	glf->glDisable(GL_PROGRAM_POINT_SIZE);
 }
