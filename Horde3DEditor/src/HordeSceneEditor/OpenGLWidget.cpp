@@ -289,25 +289,10 @@ void OpenGLWidget::paintGL()
 
     if ( m_debugInfo & DRAW_GRID )
     {
-        static int gridSize = 200;
-        const float gridHalf = (float)gridSize * 0.5f;
-        Im3d::SetAlpha(1.0f);
-        Im3d::SetSize(1.0f);
-        Im3d::BeginLines();
-            for (int x = 0; x <= gridSize; ++x)
-            {
-                Im3d::Vertex(-gridHalf, 0.0f, (float)x - gridHalf, Im3d::Color(0.5f, 0.5f, 0.5f));
-                Im3d::Vertex( gridHalf, 0.0f, (float)x - gridHalf, Im3d::Color(1.0f, 0.5f, 0.5f));
-            }
-            for (int z = 0; z <= gridSize; ++z)
-            {
-                Im3d::Vertex((float)z - gridHalf, 0.0f, -gridHalf,  Im3d::Color(0.5f, 0.5f, 0.5f));
-                Im3d::Vertex((float)z - gridHalf, 0.0f,  gridHalf,  Im3d::Color(0.0f, 0.0f, 1.0f));
-            }
-        Im3d::End();
+
     }
 
-    // renderEditorInfo();
+    renderEditorInfo();
 
     Im3d_EndFrame( glf, m_activeCameraID );
 
@@ -934,23 +919,22 @@ void OpenGLWidget::renderEditorInfo()
     h3dGetCameraProjMat( m_activeCameraID, projMat );
 
     // Save OpenGL States
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_BLEND);
-    glMatrixMode( GL_PROJECTION );
-    glLoadMatrixf( projMat );
-    glMatrixMode( GL_MODELVIEW );
-    QMatrix4f transMat( camera );
-    glLoadMatrixf( transMat.inverted().x );
+    // glPushAttrib(GL_ALL_ATTRIB_BITS);
+    // glDisable(GL_LIGHTING);
+    // glDisable(GL_BLEND);
+    // glMatrixMode( GL_PROJECTION );
+    // glLoadMatrixf( projMat );
+    // glMatrixMode( GL_MODELVIEW );
+    // QMatrix4f transMat( camera );
+    // glLoadMatrixf( transMat.inverted().x );
 
     // glEnable(GL_DEPTH_TEST);
-    // if (m_debugInfo & DRAW_GRID)
-    //     drawBaseGrid(camera[12], camera[13], camera[14]);
+    if (m_debugInfo & DRAW_GRID)
+        drawBaseGrid(camera[12], camera[13], camera[14]);
 
-    glDisable(GL_DEPTH_TEST);
+    // glDisable(GL_DEPTH_TEST);
 
     if (m_currentNode != 0 && m_currentNode->property("ID").toInt() != m_activeCameraID )
-
     {
         QVariant transProp = m_currentNode->property("__AbsoluteTransformation");
         if( !transProp.isValid() ) return;
@@ -958,78 +942,102 @@ void OpenGLWidget::renderEditorInfo()
         // Get the currently active scene node transformation
         QMatrix4f nodeTrans = transProp.value<QMatrix4f>();
 
-        drawGizmo(nodeTrans.x, camera);
-
-        // Get Center of Gravity of selected node
-        double cogX, cogY, cogZ;
-        getViewportProjection(0, 0, 0, cogX, cogY, cogZ, nodeTrans.x);
-
-        if (m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
+        if ( m_transformationMode == MoveObject )
         {
-            // Draw line between Center of Gravity and Mouse Position
-            glColor3f(1.0f, 1.0f, 1.0f);
-            QPoint mousePosition = mapFromGlobal(QCursor::pos());
-            mousePosition.setY(height() - mousePosition.y());
-            drawViewportLine(mousePosition, QPoint(cogX, cogY));
-            if (m_transformationMode == RotateObject)
-            {
-                glEnable(GL_LINE_STIPPLE);
-                glLineStipple(1, 0xFF00);
-                glColor3f(0.6f, 0.6f, 0.6f);
-                drawViewportCircle(cogX, cogY, QVec3f(mousePosition.x() - cogX, mousePosition.y() - cogY, 0).length());
-                glDisable(GL_LINE_STIPPLE);
-            }
+			Im3d::GetContext().m_gizmoMode = Im3d::GizmoMode_Translation;
+        }
+        else if ( m_transformationMode == RotateObject )
+        {
+            Im3d::GetContext().m_gizmoMode = Im3d::GizmoMode_Rotation;
+        }
+        else if ( m_transformationMode == ScaleObject )
+        {
+            Im3d::GetContext().m_gizmoMode = Im3d::GizmoMode_Scale;
         }
 
+        static Im3d::Mat4 transform;
+        memcpy( &transform.m, &nodeTrans.x, sizeof( float ) * 16 );
+
+		// The ID passed to Gizmo() should be unique during a frame - to create gizmos in a loop use PushId()/PopId().
+        if ( Im3d::Gizmo( "GizmoUnified", transform ) )
+        {
+			 // if Gizmo() returns true, the transform was modified
+				// switch (Im3d::GetContext().m_gizmoMode)
+            m_gizmoSelection = 1;
+        }
+
+        // drawGizmo(nodeTrans.x, camera);
+        // Get Center of Gravity of selected node
+        double cogX, cogY, cogZ;
+        // getViewportProjection(0, 0, 0, cogX, cogY, cogZ, nodeTrans.x);
+
+        // if (m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
+        // {
+        //     // Draw line between Center of Gravity and Mouse Position
+        //     glColor3f(1.0f, 1.0f, 1.0f);
+        //     QPoint mousePosition = mapFromGlobal(QCursor::pos());
+        //     mousePosition.setY(height() - mousePosition.y());
+        //     drawViewportLine(mousePosition, QPoint(cogX, cogY));
+        //     if (m_transformationMode == RotateObject)
+        //     {
+        //         glEnable(GL_LINE_STIPPLE);
+        //         glLineStipple(1, 0xFF00);
+        //         glColor3f(0.6f, 0.6f, 0.6f);
+        //         drawViewportCircle(cogX, cogY, QVec3f(mousePosition.x() - cogX, mousePosition.y() - cogY, 0).length());
+        //         glDisable(GL_LINE_STIPPLE);
+        //     }
+        // }
+
         // Use depth buffer (if not disabled by the pipeline config)
-        glEnable(GL_DEPTH_TEST);
+        // glEnable(GL_DEPTH_TEST);
 
         double axisVpX = 0, axisVpY = 0, axisVpZ = 0;
         // Draw axis information
-        switch (m_limitToAxis)
-        {
-        case X:
-            drawAxis(QVec3f(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14]), QVec3f(1, 0, 0), QVec3f(1, 0, 0));
-            getViewportProjection(nodeTrans.x[12] + 1, nodeTrans.x[13], nodeTrans.x[14], axisVpX, axisVpY, axisVpZ);
-            break;
-        case Y:
-            drawAxis(QVec3f(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14]), QVec3f(0, 1, 0), QVec3f(0, 1, 0));
-            getViewportProjection(nodeTrans.x[12], nodeTrans.x[13] + 1, nodeTrans.x[14], axisVpX, axisVpY, axisVpZ);
-            break;
-        case Z:
-            drawAxis(QVec3f(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14]), QVec3f(0, 0, 1), QVec3f(0, 0, 1));
-            getViewportProjection(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14] + 1, axisVpX, axisVpY, axisVpZ);
-            break;
-        case Local_X:
-            drawAxis(QVec3f(0, 0, 0), QVec3f(1, 0, 0), QVec3f(1, 0, 0), nodeTrans.x);
-            getViewportProjection(1, 0, 0, axisVpX, axisVpY, axisVpZ, nodeTrans.x);
-            break;
-        case Local_Y:
-            drawAxis(QVec3f(0, 0, 0), QVec3f(0, 1, 0), QVec3f(0, 1, 0), nodeTrans.x);
-            getViewportProjection(0, 1, 0, axisVpX, axisVpY, axisVpZ, nodeTrans.x);
-            break;
-        case Local_Z:
-            drawAxis(QVec3f(0, 0, 0), QVec3f(0, 0, 1), QVec3f(0, 0, 1), nodeTrans.x);
-            getViewportProjection(0, 0, 1, axisVpX, axisVpY, axisVpZ, nodeTrans.x);
-            break;
-        }
-        if (m_limitToAxis == 0)
-        {
-            m_axisVpX = 1;
-            m_axisVpY = 1;
-        }
-        else
-        {
-            m_axisVpX = (axisVpX - cogX);
-            m_axisVpY = (axisVpY - cogY);
-            float norm = sqrt(m_axisVpX * m_axisVpX + m_axisVpY * m_axisVpY);
-            m_axisVpX /= norm;
-            m_axisVpY /= norm;
-        }
+        // switch (m_limitToAxis)
+        // {
+        // case X:
+        //     drawAxis(QVec3f(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14]), QVec3f(1, 0, 0), QVec3f(1, 0, 0));
+        //     getViewportProjection(nodeTrans.x[12] + 1, nodeTrans.x[13], nodeTrans.x[14], axisVpX, axisVpY, axisVpZ);
+        //     break;
+        // case Y:
+        //     drawAxis(QVec3f(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14]), QVec3f(0, 1, 0), QVec3f(0, 1, 0));
+        //     getViewportProjection(nodeTrans.x[12], nodeTrans.x[13] + 1, nodeTrans.x[14], axisVpX, axisVpY, axisVpZ);
+        //     break;
+        // case Z:
+        //     drawAxis(QVec3f(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14]), QVec3f(0, 0, 1), QVec3f(0, 0, 1));
+        //     getViewportProjection(nodeTrans.x[12], nodeTrans.x[13], nodeTrans.x[14] + 1, axisVpX, axisVpY, axisVpZ);
+        //     break;
+        // case Local_X:
+        //     drawAxis(QVec3f(0, 0, 0), QVec3f(1, 0, 0), QVec3f(1, 0, 0), nodeTrans.x);
+        //     getViewportProjection(1, 0, 0, axisVpX, axisVpY, axisVpZ, nodeTrans.x);
+        //     break;
+        // case Local_Y:
+        //     drawAxis(QVec3f(0, 0, 0), QVec3f(0, 1, 0), QVec3f(0, 1, 0), nodeTrans.x);
+        //     getViewportProjection(0, 1, 0, axisVpX, axisVpY, axisVpZ, nodeTrans.x);
+        //     break;
+        // case Local_Z:
+        //     drawAxis(QVec3f(0, 0, 0), QVec3f(0, 0, 1), QVec3f(0, 0, 1), nodeTrans.x);
+        //     getViewportProjection(0, 0, 1, axisVpX, axisVpY, axisVpZ, nodeTrans.x);
+        //     break;
+        // }
+        // if (m_limitToAxis == 0)
+        // {
+        //     m_axisVpX = 1;
+        //     m_axisVpY = 1;
+        // }
+        // else
+        // {
+        //     m_axisVpX = (axisVpX - cogX);
+        //     m_axisVpY = (axisVpY - cogY);
+        //     float norm = sqrt(m_axisVpX * m_axisVpX + m_axisVpY * m_axisVpY);
+        //     m_axisVpX /= norm;
+        //     m_axisVpY /= norm;
+        // }
+
         if (m_debugInfo & DRAW_BOUNDING_BOX)
             drawBoundingBox( m_currentNode->property("ID").toInt() );
     }
-    glPopAttrib(); // Restore old OpenGL States
+//    glPopAttrib(); // Restore old OpenGL States
 }
 
 void OpenGLWidget::drawAxis(const QVec3f& start, const QVec3f& dir, const QVec3f& color, const float* modelView /*= 0*/)
@@ -1059,27 +1067,27 @@ void OpenGLWidget::drawBoundingBox(unsigned int hordeID)
         // Draw AABB of selected object
         float minX, minY, minZ, maxX, maxY, maxZ;
         h3dGetNodeAABB(hordeID, &minX, &minY, &minZ, &maxX, &maxY, &maxZ);
-        glColor3f(0.7f, 0.7f, 0.7f);
-        glBegin(GL_LINE_STRIP);
-        glVertex3f(minX, minY, minZ);
-        glVertex3f(maxX, minY, minZ);
-        glVertex3f(maxX, maxY, minZ);
-        glVertex3f(minX, maxY, minZ);
-        glVertex3f(minX, minY, minZ);
-        glVertex3f(minX, minY, maxZ);
-        glVertex3f(maxX, minY, maxZ);
-        glVertex3f(maxX, maxY, maxZ);
-        glVertex3f(minX, maxY, maxZ);
-        glVertex3f(minX, minY, maxZ);
-        glEnd();
-        glBegin(GL_LINES);
-        glVertex3f(minX, maxY, minZ);
-        glVertex3f(minX, maxY, maxZ);
-        glVertex3f(maxX, minY, minZ);
-        glVertex3f(maxX, minY, maxZ);
-        glVertex3f(maxX, maxY, minZ);
-        glVertex3f(maxX, maxY, maxZ);
-        glEnd();
+        Im3d::SetColor( 0.7f, 0.7f, 0.7f );
+        Im3d::BeginLineStrip();
+        Im3d::Vertex(minX, minY, minZ);
+        Im3d::Vertex(maxX, minY, minZ);
+        Im3d::Vertex(maxX, maxY, minZ);
+        Im3d::Vertex(minX, maxY, minZ);
+        Im3d::Vertex(minX, minY, minZ);
+        Im3d::Vertex(minX, minY, maxZ);
+        Im3d::Vertex(maxX, minY, maxZ);
+        Im3d::Vertex(maxX, maxY, maxZ);
+        Im3d::Vertex(minX, maxY, maxZ);
+        Im3d::Vertex(minX, minY, maxZ);
+        Im3d::End();
+        Im3d::BeginLines();
+        Im3d::Vertex(minX, maxY, minZ);
+        Im3d::Vertex(minX, maxY, maxZ);
+        Im3d::Vertex(maxX, minY, minZ);
+        Im3d::Vertex(maxX, minY, maxZ);
+        Im3d::Vertex(maxX, maxY, minZ);
+        Im3d::Vertex(maxX, maxY, maxZ);
+        Im3d::End();
     }
 }
 
@@ -1297,38 +1305,28 @@ void OpenGLWidget::drawGizmo(const float* nodeTransform, const float* cam)
 
 void OpenGLWidget::drawBaseGrid(const float camX, const float camY, const float camZ)
 {
-    float farPlane = h3dGetNodeParamF(m_activeCameraID, H3DCamera::FarPlaneF, 0);
-    if (abs(camY) > farPlane)
-        return;
+    static int gridSize = 200;
+    const float gridHalf = (float)gridSize * 0.5f;
+    Im3d::SetAlpha(1.0f);
+    Im3d::SetSize(1.0f);
+    Im3d::BeginLines();
 
-    // TODO adjust grid scale based on length of the backprojection of a unit vector
-
-    int numSteps = (int(farPlane) / m_gridScale) >> 1;
-    //int numSteps = 60;
-    int offsetX = (int(camX) / m_gridScale) * m_gridScale;
-    int offsetZ = (int(camZ) / m_gridScale) * m_gridScale;
-    glBegin(GL_LINES);
-    for (int i=-numSteps; i<=numSteps; ++i)
-    {
-        int x = i*m_gridScale + offsetX;
-        if( x == 0 ) glColor3f(0.3f, 0.3f, 0.8f);
-        else if(x % 10 == 0) glColor3f(0.4f, 0.4f, 0.4f);
-        else glColor3f(0.2f, 0.2f, 0.2f);
-
-        glVertex3i(x, 0, -numSteps * m_gridScale + offsetZ);
-        glVertex3i(x, 0, +numSteps * m_gridScale + offsetZ);
-    }
-    for (int i=-numSteps; i<=numSteps; ++i)
-    {
-        int z = i * m_gridScale + offsetZ;
-        if( z == 0 ) glColor3f(0.8f, 0.3f, 0.3f);
-        else if(z % 10 == 0) glColor3f(0.4f, 0.4f, 0.4f);
-        else glColor3f(0.2f, 0.2f, 0.2f);
-
-        glVertex3i(-numSteps * m_gridScale + offsetX, 0, z);
-        glVertex3i(+numSteps * m_gridScale + offsetX, 0, z);
-    }
-    glEnd();
+    Im3d::Color color;
+        for (int x = 0; x <= gridSize; ++x)
+        {
+            if ( x == (int) gridHalf ) color = Im3d::Color( 0.3f, 0.3f, 0.9f );
+            else color = Im3d::Color(0.5f, 0.5f, 0.5f);
+            Im3d::Vertex(-gridHalf, 0.0f, (float)x - gridHalf, color /*Im3d::Color(0.5f, 0.5f, 0.5f)*/);
+            Im3d::Vertex( gridHalf, 0.0f, (float)x - gridHalf, color /*Im3d::Color(1.0f, 0.5f, 0.5f)*/);
+        }
+        for (int z = 0; z <= gridSize; ++z)
+        {
+            if( z == (int) gridHalf ) color = Im3d::Color(0.9f, 0.3f, 0.3f);
+            else color = Im3d::Color(0.5f, 0.5f, 0.5f);
+            Im3d::Vertex((float)z - gridHalf, 0.0f, -gridHalf, color /*Im3d::Color(0.5f, 0.5f, 0.5f)*/);
+            Im3d::Vertex((float)z - gridHalf, 0.0f,  gridHalf, color /*Im3d::Color(0.0f, 0.0f, 1.0f)*/);
+        }
+    Im3d::End();
 }
 
 
