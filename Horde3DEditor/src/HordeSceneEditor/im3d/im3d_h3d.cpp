@@ -373,6 +373,7 @@ void Im3d_NewFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
 	}
 	ad.m_cursorRayOrigin = rayOrigin;
 	ad.m_cursorRayDirection = rayDirection;
+	ad.m_flipGizmoWhenBehind = false;
 
  // Set cull frustum planes. This is only required if IM3D_CULL_GIZMOS or IM3D_CULL_PRIMTIIVES is enable via im3d_config.h, or if any of the IsVisible() functions are called.
 //	ad.setCullFrustum(g_Example->m_camViewProj, true);
