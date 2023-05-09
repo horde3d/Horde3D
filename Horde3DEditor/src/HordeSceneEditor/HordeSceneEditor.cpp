@@ -345,6 +345,7 @@ void HordeSceneEditor::sceneCreated()
 		connect(m_glWidget, SIGNAL(moveObject(const float, const float, const float)), m_nodeWidget, SLOT(moveObject(const float, const float, const float)));
 		connect(m_glWidget, SIGNAL(rotateObject(const float, const float, const float)), m_nodeWidget, SLOT(rotateObject(const float, const float, const float)));
 		connect(m_glWidget, SIGNAL(scaleObject(const float, const float, const float)), m_nodeWidget, SLOT(scaleObject(const float, const float, const float)));
+		connect(m_glWidget, SIGNAL(transformObject(const QMatrix4f)), m_nodeWidget, SLOT(transformObject(const QMatrix4f)));
 		connect(m_glWidget, SIGNAL(logMessages(const QList<QListWidgetItem*>&)), this, SLOT(updateLog(const QList<QListWidgetItem*>&)));
 		connect(m_glWidget, SIGNAL(statusMessage(const QString&, int)), m_statusBar, SLOT(showMessage(const QString&, int)));
 		connect(m_glWidget, SIGNAL(nodeSelected(int)), m_sceneTreeWidget, SLOT(selectNode(int)));

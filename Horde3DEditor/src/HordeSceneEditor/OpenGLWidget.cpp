@@ -442,8 +442,6 @@ void OpenGLWidget::keyReleaseEvent(QKeyEvent* event)
 
 void OpenGLWidget::mousePressEvent ( QMouseEvent * event )
 {
-    if ( event->buttons() == m_selectButton ) m_selectButtonPressed = true;
-
     // if we have a transformation pending, return ( should never be the case, since mouseReleaseEvent should reset m_transformationMode ? )
     if ( m_transformationMode != None )
     {
@@ -456,6 +454,7 @@ void OpenGLWidget::mousePressEvent ( QMouseEvent * event )
         //setTransformationMode(MoveObject);
         emit transformationMode(MoveObject);
         m_limitToAxis = m_gizmoSelection;
+        m_selectButtonPressed = true;
         event->accept();
         return;
     }
@@ -475,7 +474,8 @@ void OpenGLWidget::mousePressEvent ( QMouseEvent * event )
         float scaledHeight = height() * scale;
 
         float normalized_x( float(event->pos().x()) / scaledWidth );
-        float normalized_y( float((height() - event->pos().y())) / scaledHeight );
+        float normalized_y( float((scaledHeight - event->pos().y())) / scaledHeight );
+
         // Select node under the mouse cursor
         H3DNode node = h3dutPickNode(m_activeCameraID, normalized_x, normalized_y);
         // If it's a mesh node select it's parent model node
@@ -507,8 +507,9 @@ void OpenGLWidget::mouseDoubleClickEvent(QMouseEvent* event)
         float scaledWidth = width() * scale;
         float scaledHeight = height() * scale;
 
-        float normalized_x( float(event->pos().x()) / scaledWidth );
-        float normalized_y( float((height() - event->pos().y())) / scaledHeight );
+        float normalized_x( float(event->pos().x() * scale) / scaledWidth );
+        float normalized_y( float( (scaledHeight - (event->pos().y() * scale)) ) / scaledHeight );
+
         // Select mesh node under mouse cursor
         H3DNode node = h3dutPickNode(m_activeCameraID, normalized_x, normalized_y);
         if (m_currentNode && m_currentNode->property("ID").toInt() == node)
@@ -534,7 +535,7 @@ void OpenGLWidget::mouseReleaseEvent(QMouseEvent* event)
         setCursor(Qt::ArrowCursor);
     m_limitToAxis = 0;
 
-    if ( event->button() == m_selectButton ) m_selectButtonPressed = false;
+    m_selectButtonPressed = false;
     event->accept();
 }
 
@@ -557,10 +558,10 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent* event)
     else if( m_currentNode )
     {
         // Move object
-        if (m_transformationMode == MoveObject)
-            translateObject(event->position().x(), (height() - event->position().y()));
+        // if (m_transformationMode == MoveObject)
+        //     translateObject(event->position().x(), (height() - event->position().y()));
         // Rotate Object
-        else if (m_transformationMode == RotateObject)
+        /*else*/ if (m_transformationMode == RotateObject)
             rotateObject(event->position().x(), height() - event->position().y());
         // Scale Object
         else if (m_transformationMode == ScaleObject)
@@ -955,16 +956,22 @@ void OpenGLWidget::renderEditorInfo()
             Im3d::GetContext().m_gizmoMode = Im3d::GizmoMode_Scale;
         }
 
-        static Im3d::Mat4 transform;
+        Im3d::Mat4 transform;
         memcpy( &transform.m, &nodeTrans.x, sizeof( float ) * 16 );
 
 		// The ID passed to Gizmo() should be unique during a frame - to create gizmos in a loop use PushId()/PopId().
         if ( Im3d::Gizmo( "GizmoUnified", transform ) )
         {
-			 // if Gizmo() returns true, the transform was modified
-				// switch (Im3d::GetContext().m_gizmoMode)
+            m_gizmoSelection = 1;
+            memcpy( &nodeTrans.x, &transform.m, sizeof( float ) * 16 );
+            emit transformObject( nodeTrans );
+        }
+
+        if ( Im3d::GetHotId() == Im3d::MakeId( "GizmoUnified" ) )
+        {
             m_gizmoSelection = 1;
         }
+        else m_gizmoSelection = 0;
 
         // drawGizmo(nodeTrans.x, camera);
         // Get Center of Gravity of selected node

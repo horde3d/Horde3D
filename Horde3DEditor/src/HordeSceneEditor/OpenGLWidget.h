@@ -23,6 +23,7 @@
 // ****************************************************************************************
 
 #include <QtOpenGL/QOpenGLWindow>
+#include "CustomTypes.h"
 
 class QLabel;
 class QTimer;
@@ -150,6 +151,11 @@ signals:
 	 * Notifies connected widgets that the mouse has been used to scale an object
 	 */
 	void scaleObject(const float x, const float y, const float z);
+
+	/**
+	 * Notifies connected widgets that the object has been transformed
+	 */
+	void transformObject( const QMatrix4f matrix );
 
 	/**
 	 * Indicates the current transformation mode

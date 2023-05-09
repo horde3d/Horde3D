@@ -157,8 +157,6 @@ void NodeWidget::rotateObject(const float rx, const float ry, const float rz)
 	}
 }
 
-
-
 void NodeWidget::scaleObject(const float sx, const float sy, const float sz)
 {	
 	if( !m_currentNode || !m_currentNode->property("Scale").isValid() ) return;
@@ -175,7 +173,7 @@ void NodeWidget::scaleObject(const float sx, const float sy, const float sz)
 				QMatrix4f::RotMat(rot.toRad() ) * 
 				QMatrix4f::ScaleMat( scale ) ) );
 		m_sx = scale.X; m_sy = scale.Y; m_sz = scale.Z;
-	}	
+	}
 	else if (sx == 0 && sy == 0 && sz == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
 		m_currentNode->setProperty("Scale", QVariant::fromValue(QVec3f(m_sx, m_sy, m_sz)));		
 	else // Update transformation settings without applying it to the xml data		
@@ -190,4 +188,19 @@ void NodeWidget::scaleObject(const float sx, const float sy, const float sz)
 			  QMatrix4f::RotMat( QVec3f(m_rx, m_ry, m_rz).toRad() ) * 
 			  QMatrix4f::ScaleMat( m_sx, m_sy, m_sz ) ) );
 	}
+}
+
+void NodeWidget::transformObject(const QMatrix4f m)
+{
+	if( !m_currentNode ) return;
+
+	m_currentNode->setProperty("__RelativeTransformation", QVariant::fromValue( m ) );
+
+	QVec3f ts = m.getTranslation();
+	QVec3f rt = m.getRotation();
+	QVec3f sc = m.getScale();
+
+	m_tx = ts.X; m_ty = ts.Y; m_tz = ts.Z;
+	m_rx = rt.X; m_ry = rt.Y; m_rz = rt.Z;
+	m_sx = sc.X; m_sy = sc.Y; m_sz = sc.Z;
 }
