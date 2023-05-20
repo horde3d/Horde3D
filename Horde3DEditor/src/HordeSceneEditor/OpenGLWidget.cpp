@@ -446,13 +446,17 @@ void OpenGLWidget::mousePressEvent ( QMouseEvent * event )
     if ( m_transformationMode != None )
     {
         event->accept();
+        m_selectButtonPressed = true;
         return;
     }
     // if we currently are not in a transformation mode and left button pressed, check for GIZMO selection
     if (event->button() == Qt::LeftButton && m_gizmoSelection != 0)
     {
         //setTransformationMode(MoveObject);
-        emit transformationMode(MoveObject);
+        if ( m_transformationMode == MoveObject ) emit transformationMode(MoveObject);
+        else if ( m_transformationMode == RotateObject ) emit transformationMode(RotateObject);
+        else if ( m_transformationMode == ScaleObject ) emit transformationMode(ScaleObject);
+
         m_limitToAxis = m_gizmoSelection;
         m_selectButtonPressed = true;
         event->accept();
@@ -561,11 +565,11 @@ void OpenGLWidget::mouseMoveEvent(QMouseEvent* event)
         // if (m_transformationMode == MoveObject)
         //     translateObject(event->position().x(), (height() - event->position().y()));
         // Rotate Object
-        /*else*/ if (m_transformationMode == RotateObject)
-            rotateObject(event->position().x(), height() - event->position().y());
-        // Scale Object
-        else if (m_transformationMode == ScaleObject)
-            scaleObject(event->position().x(), height() - event->position().y());
+        // else if (m_transformationMode == RotateObject)
+        //     rotateObject(event->position().x(), height() - event->position().y());
+        // // Scale Object
+        // else if (m_transformationMode == ScaleObject)
+        //     scaleObject(event->position().x(), height() - event->position().y());
     }
     event->accept();
 }

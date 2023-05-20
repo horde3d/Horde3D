@@ -142,7 +142,10 @@ void NodeWidget::rotateObject(const float rx, const float ry, const float rz)
 		m_rx = rot.X; m_ry = rot.Y; m_rz = rot.Z;
 	}	
 	else if (rx == 0 && ry == 0 && rz == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
-		m_currentNode->setProperty("Rotation", QVariant::fromValue(QVec3f(m_rx, m_ry, m_rz)));		
+	{
+		m_currentNode->setProperty("Rotation", QVariant::fromValue(QVec3f(m_rx, m_ry, m_rz)));
+		m_rx = m_ry = m_rz = 0;
+	}
 	else // Update transformation settings without applying it to the xml data		
 	{		
 		QVec3f rot(m_currentNode->property("Rotation").value<QVec3f>());
@@ -201,6 +204,6 @@ void NodeWidget::transformObject(const QMatrix4f m)
 	QVec3f sc = m.getScale();
 
 	m_tx = ts.X; m_ty = ts.Y; m_tz = ts.Z;
-	m_rx = rt.X; m_ry = rt.Y; m_rz = rt.Z;
+	m_rx = m_rx + rt.X; m_ry = m_ry + rt.Y; m_rz = m_rz + rt.Z;
 	m_sx = sc.X; m_sy = sc.Y; m_sz = sc.Z;
 }
