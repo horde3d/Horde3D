@@ -91,7 +91,10 @@ void NodeWidget::moveObject(const float x, const float y, const float z)
 		m_tx = pos.X; m_ty = pos.Y; m_tz = pos.Z;
 	}
 	else if (x == 0 && y == 0 && z == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
+	{
 		m_currentNode->setProperty("Position", QVariant::fromValue(QVec3f(m_tx, m_ty, m_tz)));
+		updateObject( m_currentNode );
+	}
 	else
 	{
 		const float* mat = 0;					
@@ -143,8 +146,9 @@ void NodeWidget::rotateObject(const float rx, const float ry, const float rz)
 	}	
 	else if (rx == 0 && ry == 0 && rz == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
 	{
-		m_currentNode->setProperty("Rotation", QVariant::fromValue(QVec3f(m_rx, m_ry, m_rz)));
+		m_currentNode->setProperty("Rotation", QVariant::fromValue( QVec3f( m_rx, m_ry, m_rz ) ));
 		m_rx = m_ry = m_rz = 0;
+		updateObject( m_currentNode );
 	}
 	else // Update transformation settings without applying it to the xml data		
 	{		
@@ -178,7 +182,10 @@ void NodeWidget::scaleObject(const float sx, const float sy, const float sz)
 		m_sx = scale.X; m_sy = scale.Y; m_sz = scale.Z;
 	}
 	else if (sx == 0 && sy == 0 && sz == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
-		m_currentNode->setProperty("Scale", QVariant::fromValue(QVec3f(m_sx, m_sy, m_sz)));		
+	{
+		m_currentNode->setProperty("Scale", QVariant::fromValue(QVec3f(m_sx, m_sy, m_sz)));
+		updateObject( m_currentNode );
+	}
 	else // Update transformation settings without applying it to the xml data		
 	{		
 		QVec3f scale(m_currentNode->property("Scale").value<QVec3f>());
@@ -203,7 +210,10 @@ void NodeWidget::transformObject(const QMatrix4f m)
 	QVec3f rt = m.getRotation();
 	QVec3f sc = m.getScale();
 
+	rt *= 180.0f / 3.1415926f;
+
 	m_tx = ts.X; m_ty = ts.Y; m_tz = ts.Z;
-	m_rx = m_rx + rt.X; m_ry = m_ry + rt.Y; m_rz = m_rz + rt.Z;
+	// m_rx = m_rx + rt.X; m_ry = m_ry + rt.Y; m_rz = m_rz + rt.Z;
+	m_rx = rt.X; m_ry = rt.Y; m_rz = rt.Z;
 	m_sx = sc.X; m_sy = sc.Y; m_sz = sc.Z;
 }
