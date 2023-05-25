@@ -453,9 +453,9 @@ void OpenGLWidget::mousePressEvent ( QMouseEvent * event )
     if (event->button() == Qt::LeftButton && m_gizmoSelection != 0)
     {
         //setTransformationMode(MoveObject);
-        if ( m_transformationMode == MoveObject ) emit transformationMode(MoveObject);
-        else if ( m_transformationMode == RotateObject ) emit transformationMode(RotateObject);
-        else if ( m_transformationMode == ScaleObject ) emit transformationMode(ScaleObject);
+        if ( m_gizmoSelection == MoveObject ) emit transformationMode(MoveObject);
+        else if ( m_gizmoSelection == RotateObject ) emit transformationMode(RotateObject);
+        else if ( m_gizmoSelection == ScaleObject ) emit transformationMode(ScaleObject);
 
         m_limitToAxis = m_gizmoSelection;
         m_selectButtonPressed = true;
@@ -947,6 +947,7 @@ void OpenGLWidget::renderEditorInfo()
         // Get the currently active scene node transformation
         QMatrix4f nodeTrans = transProp.value<QMatrix4f>();
 
+        // select gizmo based on transformation mode
         if ( m_transformationMode == MoveObject )
         {
 			Im3d::GetContext().m_gizmoMode = Im3d::GizmoMode_Translation;
@@ -966,14 +967,17 @@ void OpenGLWidget::renderEditorInfo()
 		// The ID passed to Gizmo() should be unique during a frame - to create gizmos in a loop use PushId()/PopId().
         if ( Im3d::Gizmo( "GizmoUnified", transform ) )
         {
-            m_gizmoSelection = 1;
+            m_gizmoSelection = m_transformationMode;
             memcpy( &nodeTrans.x, &transform.m, sizeof( float ) * 16 );
             emit transformObject( nodeTrans );
         }
 
         if ( Im3d::GetHotId() == Im3d::MakeId( "GizmoUnified" ) )
         {
-            m_gizmoSelection = 1;
+            // save transformationMode in gizmo selection for further use in mouse press/move
+            if ( Im3d::GetContext().m_gizmoMode == Im3d::GizmoMode_Translation ) m_gizmoSelection = MoveObject;
+            else if ( Im3d::GetContext().m_gizmoMode == Im3d::GizmoMode_Rotation ) m_gizmoSelection = RotateObject;
+            else if ( Im3d::GetContext().m_gizmoMode == Im3d::GizmoMode_Scale ) m_gizmoSelection = ScaleObject;
         }
         else m_gizmoSelection = 0;
 
