@@ -1323,7 +1323,8 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 				std::string token;
 				while(std::getline(iss, token, ' '))
 				{
-					outf << value++ << "=\"" << token << "\" ";
+					if(token.length() > 0)
+						outf << value++ << "=\"" << token << "\" ";
 				}				
 				outf << "/>\n";						
 			}
@@ -1336,7 +1337,8 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 				std::string token;
 				while(std::getline(iss, token, ' ') && value < 'd' )
 				{
-					outf << value++ << "=\"" << token << "\" ";
+					if(token.length() > 0)
+						outf << value++ << "=\"" << token << "\" ";
 				}				
 				outf << "d=\"" << material.effect->shininess << "\" ";
 				outf << "/>\n";
