@@ -11,6 +11,9 @@ if( Qt6_FOUND )
     ENDFUNCTION(QT4_ADD_RESOURCES)
 
     set(CMAKE_CXX_STANDARD 17) # Qt6 requires c++ 17
+    if(MSVC)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive- /Zc:__cplusplus")
+    endif(MSVC)
 else()
     find_package(Qt5 COMPONENTS Widgets Gui Core Xml OpenGL)
     if( Qt5_FOUND )
