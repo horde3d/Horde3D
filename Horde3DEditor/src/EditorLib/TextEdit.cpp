@@ -209,7 +209,7 @@ void TextEdit::keyPressEvent(QKeyEvent *e)
 	bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;
 	QString completionPrefix = textUnderCursor();
 
-	if (!isShortcut && (hasModifier || e->text().isEmpty()|| completionPrefix.length() < 1	|| eow.contains(e->text().right(1)))) 
+	if (!isShortcut && (hasModifier || e->text().isEmpty() || completionPrefix.length() < 1	|| eow.contains(e->text().right(1)))) 
 	{
 		m_completer->popup()->hide();
 		return;
@@ -228,19 +228,37 @@ void TextEdit::keyPressEvent(QKeyEvent *e)
 
 QString TextEdit::textUnderCursor() const
 {
+	static QString eow("~!@#$%^&*()_+{}|:\"<>?,/;'[]\\-=\\n"); // end of word
+
 	QTextCursor tc(textCursor());
 	tc.select(QTextCursor::WordUnderCursor);
 	QString word(tc.selectedText());
+
 	// check if there is a dot connection
-	tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 1);	
+	tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, 1);
 	tc.select(QTextCursor::WordUnderCursor);
 	QString previous(tc.selectedText());
-	if( previous == "." )
+	QString prevResult;
+
+	int count = 1;
+	while (!previous.isEmpty() && !eow.contains(previous))
 	{
-		tc.movePosition( QTextCursor::Left, QTextCursor::KeepAnchor, 2 );
-		tc.select( QTextCursor::WordUnderCursor );
+		if (prevResult == previous) break;
+		else prevResult = previous;
+
+		if (previous == ".")
+		{
+			tc.movePosition(QTextCursor::Left, QTextCursor::KeepAnchor, 2);
+			tc.select(QTextCursor::WordUnderCursor);
+			previous = tc.selectedText();
+			return previous + "." + word;
+		}
+
+		count++;
+		tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor, count);
+		tc.select(QTextCursor::WordUnderCursor);
 		previous = tc.selectedText();
-		return previous + "." + word;
 	}
+	
 	return word;
 }
