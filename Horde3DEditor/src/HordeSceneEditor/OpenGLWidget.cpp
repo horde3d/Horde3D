@@ -61,7 +61,7 @@ OpenGLWidget::OpenGLWidget(QLabel* fpsLabel, QWidget* parent, Qt::WindowFlags fl
     m_fpsLabel(fpsLabel), m_transformationMode(0), m_collisionCheck(false), m_navSpeed(5), m_fps(30.0), m_parentWidget(0),
     m_forward(false), m_backward(false), m_left(false), m_right(false), m_up(false), m_down(false),
     m_limitToAxis(0), m_axisVpX(1), m_axisVpY(1), m_gizmoSelection(0), m_debugInfo(0), m_gridScale(1),
-    m_currentNode(0), m_attachmentPlugIn(0), m_activeCameraID(0), m_initialized(false)
+    m_currentNode(0), m_attachmentPlugIn(0), m_activeCameraID(0), m_initialized(false), m_useLocalTransform( false )
 {
     // setFocusPolicy(Qt::ClickFocus);
     // setAttribute(Qt::WA_DeleteOnClose);
@@ -372,42 +372,46 @@ void OpenGLWidget::keyPressEvent(QKeyEvent* event)
         resetMode(true);
         break;
     case Qt::Key_X:
-        if (m_transformationMode == MoveObject || m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
+	case Qt::Key_Y:
+	case Qt::Key_Z:
+//        if (m_transformationMode == MoveObject || m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
         {
-            switch( m_limitToAxis )
-            {
-            case Local_X: m_limitToAxis = 0; break;
-            case X: m_limitToAxis = Local_X; break;
-            default: m_limitToAxis = X; break;
-            }
-            applyChanges(false);
-        }
-        break;
-    case Qt::Key_Y:
-        if (m_transformationMode == MoveObject || m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
-        {
-            switch( m_limitToAxis )
-            {
-            case Local_Y: m_limitToAxis = 0; break;
-            case Y: m_limitToAxis = Local_Y; break;
-            default: m_limitToAxis = Y; break;
+            m_useLocalTransform = !m_useLocalTransform;
 
-            }
-            applyChanges(false);
+//             switch( m_limitToAxis )
+//             {
+//             case Local_X: m_limitToAxis = 0; break;
+//             case X: m_limitToAxis = Local_X; break;
+//             default: m_limitToAxis = X; break;
+//             }
+            //applyChanges(false);
         }
         break;
-    case Qt::Key_Z:
-        if (m_transformationMode == MoveObject || m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
-        {
-            switch( m_limitToAxis )
-            {
-            case Local_Z: m_limitToAxis = 0; break;
-            case Z: m_limitToAxis = Local_Z; break;
-            default: m_limitToAxis = Z; break;
-            }
-            applyChanges(false);
-        }
-        break;
+//     case Qt::Key_Y:
+//         if (m_transformationMode == MoveObject || m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
+//         {
+//             switch( m_limitToAxis )
+//             {
+//             case Local_Y: m_limitToAxis = 0; break;
+//             case Y: m_limitToAxis = Local_Y; break;
+//             default: m_limitToAxis = Y; break;
+// 
+//             }
+//             applyChanges(false);
+//         }
+//         break;
+//     case Qt::Key_Z:
+//         if (m_transformationMode == MoveObject || m_transformationMode == RotateObject || m_transformationMode == ScaleObject)
+//         {
+//             switch( m_limitToAxis )
+//             {
+//             case Local_Z: m_limitToAxis = 0; break;
+//             case Z: m_limitToAxis = Local_Z; break;
+//             default: m_limitToAxis = Z; break;
+//             }
+//             applyChanges(false);
+//         }
+//         break;
     };
     event->accept();
 }
@@ -538,6 +542,7 @@ void OpenGLWidget::mouseReleaseEvent(QMouseEvent* event)
     else // Reset cursor state
         setCursor(Qt::ArrowCursor);
     m_limitToAxis = 0;
+//    m_useLocalTransform = false;
 
     m_selectButtonPressed = false;
     event->accept();
@@ -961,6 +966,8 @@ void OpenGLWidget::renderEditorInfo()
             Im3d::GetContext().m_gizmoMode = Im3d::GizmoMode_Scale;
         }
 
+        Im3d::GetContext().m_gizmoLocal = m_useLocalTransform;
+
         Im3d::Mat4 transform;
         memcpy( &transform.m, &nodeTrans.x, sizeof( float ) * 16 );
 
@@ -983,7 +990,7 @@ void OpenGLWidget::renderEditorInfo()
 
         // drawGizmo(nodeTrans.x, camera);
         // Get Center of Gravity of selected node
-        double cogX, cogY, cogZ;
+//        double cogX, cogY, cogZ;
         // getViewportProjection(0, 0, 0, cogX, cogY, cogZ, nodeTrans.x);
 
         // if (m_transformationMode == RotateObject || m_transformationMode == ScaleObject)

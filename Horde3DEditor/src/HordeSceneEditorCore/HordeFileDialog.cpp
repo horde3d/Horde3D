@@ -116,7 +116,7 @@ void HordeFileDialog::accept()
 		{				
 			if ( target.exists() && 
 				QMessageBox::question(this, tr("Overwrite?"), tr("Do you want to overwrite the existing file\n%1").arg(target.absoluteFilePath()), 
-				QMessageBox::Yes | QMessageBox::Default, QMessageBox::No | QMessageBox::Escape) == QMessageBox::No)
+				QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes ) == QMessageBox::No)
 			{
 				return;
 			}

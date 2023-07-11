@@ -289,6 +289,7 @@ private:
 
 	/// Limiting object movement by mouse to one axis
 	int				m_limitToAxis;
+	bool			m_useLocalTransform;
 	float			m_axisVpX, m_axisVpY;
 
 	int				m_gizmoSelection;
@@ -306,8 +307,8 @@ private:
 
 	int				m_activeCameraID;
 
-	bool			m_initialized;
-
 	int				m_cameraMoveButton, m_selectButton, m_resetSelectButton;
+
+	bool			m_initialized;
 };
 

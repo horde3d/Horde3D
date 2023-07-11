@@ -76,9 +76,8 @@ bool SceneFilePage::validatePage()
 	if (!path.exists())
 	{
 		int result = QMessageBox::question(this, tr("Create directory?"), tr("The directory %1 does not exist!\n\nCreate it?").arg(path.absolutePath()), 
-			QMessageBox::Yes | QMessageBox::Default,
-			QMessageBox::No,
-			QMessageBox::Cancel | QMessageBox::Escape);
+			QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel,
+			QMessageBox::No);
 		switch (result)
 		{
 		case QMessageBox::Cancel:
@@ -97,7 +96,7 @@ bool SceneFilePage::validatePage()
 			this, 
 			tr("Overwrite?"), 
 			tr("There is already a scene file with the name %1\nin %2\n\nShould the wizard overwrite it?").arg(m_sceneFile->text()).arg(m_scenePath->text()),
-			QMessageBox::Ok, QMessageBox::Cancel | QMessageBox::Cancel | QMessageBox::Default) != QMessageBox::Ok)
+			QMessageBox::Ok | QMessageBox::Cancel, QMessageBox::Ok ) != QMessageBox::Ok)
 			return false;
 	}
 	QDir::setCurrent(m_scenePath->text());	

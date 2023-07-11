@@ -322,7 +322,7 @@ void SceneTreeView::dropEvent(QDropEvent* event)
 		setCursor(Qt::BusyCursor);
 		QModelIndexList sources = selectionModel()->selectedRows();
 		// Get target node, that the selected nodes should use as parent
-		QSceneNode* target = static_cast<QSceneNode*>(indexAt(event->pos()).internalPointer()); 
+		QSceneNode* target = static_cast<QSceneNode*>(indexAt(event->position().toPoint()).internalPointer()); 
 		if ( !target ) 
 			target = static_cast<QSceneNode*>(m_activeModels.last()->rootNode());
 		if ( !sources.empty() )

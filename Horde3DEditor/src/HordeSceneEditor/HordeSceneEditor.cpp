@@ -516,7 +516,7 @@ bool HordeSceneEditor::closeScene()
 			this, 
 			tr("Save changes?"), 
 			tr("The file has been changed! Save changes?"), 
-			QMessageBox::Yes | QMessageBox::Default, QMessageBox::No, QMessageBox::Cancel | QMessageBox::Escape);
+			QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes );
 		switch (result)
 		{
 		case QMessageBox::Yes:
@@ -577,7 +577,7 @@ void HordeSceneEditor::cleanScene()
 		tr("Cleaning scene will first save the current scene and then remove ALL files below the scene file directory" 
 		   "\n\"%1\"\n"
 		   "not referenced by the scene file!\n\nDo you really want to clean the scene?").arg(QFileInfo(m_sceneFile->absoluteSceneFilePath()).absolutePath()), 
-		QMessageBox::Yes | QMessageBox::Default , QMessageBox::No | QMessageBox::Escape) != QMessageBox::Yes)
+		QMessageBox::Yes | QMessageBox::No , QMessageBox::Yes ) != QMessageBox::Yes)
 		return;
 	QApplication::setOverrideCursor(Qt::BusyCursor);
 	saveScene();

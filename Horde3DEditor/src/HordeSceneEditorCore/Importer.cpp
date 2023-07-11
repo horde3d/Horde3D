@@ -137,7 +137,7 @@ void Importer::importPipeline(const QFileInfo& pipeline, const QString& targetFi
 	{
 		if (!customData.isEmpty())
 		{
-			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing pipeline\n%1").arg(target.absoluteFilePath()), QMessageBox::Yes | QMessageBox::Default, QMessageBox::No, QMessageBox::Cancel | QMessageBox::Escape) != QMessageBox::Yes)
+			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing pipeline\n%1").arg(target.absoluteFilePath()), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes ) != QMessageBox::Yes)
 				return;
 		}
 		else if (!m_filesToOverwrite.contains(job) && !m_alreadyCopied.contains(job))
@@ -254,7 +254,7 @@ void Importer::importMaterialFile(const QFileInfo& materialFile, const QString& 
 	{				
 		if (!customData.isEmpty())
 		{
-			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing material\n%1").arg(target.absoluteFilePath()), QMessageBox::Yes | QMessageBox::Default, QMessageBox::No, QMessageBox::Cancel | QMessageBox::Escape) != QMessageBox::Yes)
+			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing material\n%1").arg(target.absoluteFilePath()), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes ) != QMessageBox::Yes)
 				return;
 		}
 		else if ( !m_filesToOverwrite.contains(job) && !m_alreadyCopied.contains(job) )
@@ -332,7 +332,7 @@ void Importer::importShaderFile(const QFileInfo& shader, const QString& targetFi
 	{			
 		if (!customData.isEmpty())
 		{
-			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing shader\n%1").arg(shader.absoluteFilePath()), QMessageBox::Yes | QMessageBox::Default, QMessageBox::No, QMessageBox::Cancel | QMessageBox::Escape) != QMessageBox::Yes)
+			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing shader\n%1").arg(shader.absoluteFilePath()), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes ) != QMessageBox::Yes)
 				return;
 		}
 		else
@@ -430,7 +430,7 @@ void Importer::importEffectFile(const QFileInfo& effectFile, const QString& targ
 	{
 		if (!customData.isEmpty())
 		{
-			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing effect\n%1").arg(effectFile.absoluteFilePath()), QMessageBox::Yes | QMessageBox::Default, QMessageBox::No, QMessageBox::Cancel | QMessageBox::Escape) != QMessageBox::Yes)
+			if (QMessageBox::question(0, QObject::tr("Overwrite file?"), QObject::tr("Do you want to overwrite the existing effect\n%1").arg(effectFile.absoluteFilePath()), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes ) != QMessageBox::Yes)
 				return;
 			QFile targetFile(target.absoluteFilePath());
 			if (!targetFile.open(QIODevice::WriteOnly | QIODevice::Truncate))
