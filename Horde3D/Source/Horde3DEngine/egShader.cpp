@@ -1558,7 +1558,7 @@ void ShaderResource::compileContexts()
             if ( !_binaryShader )
                 combinationsCompileStatus &= compileCombination( context, context.shaderCombs[j] );
             else
-                combinationsCompileStatus &= compileBinaryCombination( context, context.shaderCombs[j], i, j );
+                combinationsCompileStatus &= compileBinaryCombination( context, context.shaderCombs[j], (uint32) i, (uint32) j );
 		}
 
 		context.compiled = combinationsCompileStatus;
@@ -1674,7 +1674,7 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 
 	// add fx section
 	// samplers
-	d = pushElemU16( _samplers.size() );
+	d = pushElemU16( (uint16) _samplers.size() );
 	for( ShaderSampler &s : _samplers )
 	{
 		// type
@@ -1688,8 +1688,8 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 		// id
 		if ( s.id.size() <= 255 )
 		{
-			d = pushElemU16( s.id.size() );
-			d = pushElemChar( s.id.c_str(), s.id.size() );
+			d = pushElemU16( (uint16) s.id.size() );
+			d = pushElemChar( s.id.c_str(), (uint32) s.id.size() );
 		}
 		else
 		{
@@ -1701,8 +1701,8 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 		auto &samplerTexName = s.defTex.getPtr()->getName();
 		if ( samplerTexName.size() <= 255 )
 		{
-			d = pushElemU16( samplerTexName.size() );
-			d = pushElemChar( samplerTexName.c_str(), samplerTexName.size() );
+			d = pushElemU16( (uint16) samplerTexName.size() );
+			d = pushElemChar( samplerTexName.c_str(), (uint32) samplerTexName.size() );
 		}
 		else
 		{
@@ -1738,7 +1738,7 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 	}
 
 	// uniforms
-	d = pushElemU16( _uniforms.size() );
+	d = pushElemU16( (uint16) _uniforms.size() );
 	for( ShaderUniform &u : _uniforms )
 	{
 		// type
@@ -1750,8 +1750,8 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 		// id
 		if ( u.id.size() <= 255 )
 		{
-			d = pushElemU16( u.id.size() );
-			d = pushElemChar( u.id.c_str(), u.id.size() );
+			d = pushElemU16( (uint16) u.id.size() );
+			d = pushElemChar( u.id.c_str(), (uint32) u.id.size() );
 		}
 		else
 		{
@@ -1773,14 +1773,14 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 	}
 
 	// buffers
-	d = pushElemU16( _buffers.size() );
+	d = pushElemU16( (uint16) _buffers.size() );
 	for( ShaderBuffer &b : _buffers )
 	{
 		// id
 		if ( b.id.size() <= 255 )
 		{
-			d = pushElemU16( b.id.size() );
-			d = pushElemChar( b.id.c_str(), b.id.size() );
+			d = pushElemU16( (uint16) b.id.size() );
+			d = pushElemChar( b.id.c_str(), (uint32) b.id.size() );
 		}
 		else
 		{
@@ -1796,14 +1796,14 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 	// contexts
 	uint32 totalShaderCombs = 0;
 
-	d = pushElemU16( _contexts.size() );
+	d = pushElemU16( (uint16) _contexts.size() );
 	for ( ShaderContext &ctx : _contexts )
 	{
 		// id
 		if ( ctx.id.size() <= 255 )
 		{
-			d = pushElemU16( ctx.id.size() );
-			d = pushElemChar( ctx.id.c_str(), ctx.id.size() );
+			d = pushElemU16( (uint16) ctx.id.size() );
+			d = pushElemChar( ctx.id.c_str(), (uint32) ctx.id.size() );
 		}
 		else
 		{
@@ -1860,8 +1860,8 @@ bool ShaderResource::createBinaryShaderStream( uint8 *&data, uint32 &dataSize )
 		d = pushElemU32( ctx.flagMask );
 
 		// number of shader combinations
-		d = pushElemU16( ctx.shaderCombs.size() );
-		totalShaderCombs += ctx.shaderCombs.size();
+		d = pushElemU16( (uint16) ctx.shaderCombs.size() );
+		totalShaderCombs += (uint32) ctx.shaderCombs.size();
 	}
 
 	// shader combinations
