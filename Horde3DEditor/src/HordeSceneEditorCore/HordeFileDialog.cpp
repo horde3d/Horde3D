@@ -224,7 +224,7 @@ void HordeFileDialog::initEffectView()
 {
 	QHordeSceneEditorSettings settings(this);
 	settings.beginGroup("Repository");
-	m_currentFilter = "*.effect.xml";
+	m_currentFilter = "*.particle.xml";
 	populateList(m_sceneResourcePath.absolutePath(), m_sceneResourcePath.absolutePath(), m_currentFilter, false);
 	populateList( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString(), QDir( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString() ), m_currentFilter, true);
 	m_stackedWidget->setCurrentWidget(m_xmlView);
