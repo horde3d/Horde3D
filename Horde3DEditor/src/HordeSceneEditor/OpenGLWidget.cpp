@@ -1062,25 +1062,25 @@ void OpenGLWidget::renderEditorInfo()
 //    glPopAttrib(); // Restore old OpenGL States
 }
 
-void OpenGLWidget::drawAxis(const QVec3f& start, const QVec3f& dir, const QVec3f& color, const float* modelView /*= 0*/)
-{
-    glMatrixMode(GL_MODELVIEW);
-    if( modelView )
-    {
-        glPushMatrix();
-        glMultMatrixf(modelView);
-    }
-    glLineWidth(1.0);
-    glColor3f(color.X, color.Y, color.Z);
-    glBegin(GL_LINES);
-    glVertex3f( start.X, start.Y, start.Z );
-    glVertex3f( start.X + dir.X * INT_MAX, start.Y + dir.Y * INT_MAX, start.Z + dir.Z * INT_MAX );
-    glVertex3f( start.X, start.Y, start.Z );
-    glVertex3f( start.X - dir.X * INT_MAX, start.Y - dir.Y * INT_MAX, start.Z - dir.Z * INT_MAX );
-    glEnd();
-    if( modelView )
-        glPopMatrix();
-}
+// void OpenGLWidget::drawAxis(const QVec3f& start, const QVec3f& dir, const QVec3f& color, const float* modelView /*= 0*/)
+// {
+//     glMatrixMode(GL_MODELVIEW);
+//     if( modelView )
+//     {
+//         glPushMatrix();
+//         glMultMatrixf(modelView);
+//     }
+//     glLineWidth(1.0);
+//     glColor3f(color.X, color.Y, color.Z);
+//     glBegin(GL_LINES);
+//     glVertex3f( start.X, start.Y, start.Z );
+//     glVertex3f( start.X + dir.X * INT_MAX, start.Y + dir.Y * INT_MAX, start.Z + dir.Z * INT_MAX );
+//     glVertex3f( start.X, start.Y, start.Z );
+//     glVertex3f( start.X - dir.X * INT_MAX, start.Y - dir.Y * INT_MAX, start.Z - dir.Z * INT_MAX );
+//     glEnd();
+//     if( modelView )
+//         glPopMatrix();
+// }
 
 void OpenGLWidget::drawBoundingBox(unsigned int hordeID)
 {
@@ -1113,217 +1113,217 @@ void OpenGLWidget::drawBoundingBox(unsigned int hordeID)
     }
 }
 
-void OpenGLWidget::drawViewportLine(const QPoint& start, const QPoint& end)
-{
-    // Save current projection matrix
-    GLdouble projection[16];							// Where The 16 Doubles Of The Projection Matrix Are To Be Stored
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);	// Retrieve The Projection Matrix
-    // Save current modelview matrix
-    GLdouble modelview[16];					// Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);		// Retrieve The Modelview Matrix
+// void OpenGLWidget::drawViewportLine(const QPoint& start, const QPoint& end)
+// {
+//     // Save current projection matrix
+//     GLdouble projection[16];							// Where The 16 Doubles Of The Projection Matrix Are To Be Stored
+//     glGetDoublev(GL_PROJECTION_MATRIX, projection);	// Retrieve The Projection Matrix
+//     // Save current modelview matrix
+//     GLdouble modelview[16];					// Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
+//     glGetDoublev(GL_MODELVIEW_MATRIX, modelview);		// Retrieve The Modelview Matrix
+// 
+//     const qreal scale = devicePixelRatio(); // support scaled display
+//     float scaledWidth = width() * scale;
+//     float scaledHeight = height() * scale;
+// 
+//     glMatrixMode(GL_PROJECTION);
+//     glLoadIdentity();
+//     glOrtho(0, scaledWidth, 0, scaledHeight, -1, 1);
+//     glMatrixMode(GL_MODELVIEW);
+//     glLoadIdentity();
+//     glPointSize(5);
+//     glBegin(GL_POINTS);
+//     glVertex2f(start.x(), start.y());
+//     glVertex2d(end.x(), end.y());
+//     glEnd();
+//     glBegin(GL_LINES);
+//     glVertex2f(start.x(), start.y());
+//     glVertex2d(end.x(), end.y());
+//     glEnd();
+// 
+//     // Restore old projection and modelview stack
+//     glMatrixMode(GL_PROJECTION);
+//     glLoadMatrixd(projection);
+//     glMatrixMode(GL_MODELVIEW);
+//     glLoadMatrixd(modelview);
+// }
 
-    const qreal scale = devicePixelRatio(); // support scaled display
-    float scaledWidth = width() * scale;
-    float scaledHeight = height() * scale;
+// void OpenGLWidget::drawViewportCircle(float x, float y, float radius)
+// {
+//     // Save current projection matrix
+//     GLdouble projection[16];							// Where The 16 Doubles Of The Projection Matrix Are To Be Stored
+//     glGetDoublev(GL_PROJECTION_MATRIX, projection);	// Retrieve The Projection Matrix
+//     // Save current modelview matrix
+//     GLdouble modelview[16];					// Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
+//     glGetDoublev(GL_MODELVIEW_MATRIX, modelview);		// Retrieve The Modelview Matrix
+// 
+//     const qreal scale = devicePixelRatio(); // support scaled display
+//     float scaledWidth = width() * scale;
+//     float scaledHeight = height() * scale;
+// 
+//     glMatrixMode(GL_PROJECTION);
+//     glLoadIdentity();
+//     glOrtho(0, scaledWidth, 0, scaledHeight, -1, 1);
+//     glMatrixMode(GL_MODELVIEW);
+//     glLoadIdentity();
+// 
+//     glLineWidth(1);
+//     glBegin(GL_LINE_LOOP);
+//     float degInRad = 0;
+//     for (int i=0; i<360; ++i)
+//     {
+//         degInRad = i * 3.141592f/180.0f;
+//         glVertex2f(cos(degInRad)*radius + x,sin(degInRad)*radius + y);
+//     }
+//     glEnd();
+// 
+//     // Restore old projection and modelview stack
+//     glMatrixMode(GL_PROJECTION);
+//     glLoadMatrixd(projection);
+//     glMatrixMode(GL_MODELVIEW);
+//     glLoadMatrixd(modelview);
+// }
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, scaledWidth, 0, scaledHeight, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glPointSize(5);
-    glBegin(GL_POINTS);
-    glVertex2f(start.x(), start.y());
-    glVertex2d(end.x(), end.y());
-    glEnd();
-    glBegin(GL_LINES);
-    glVertex2f(start.x(), start.y());
-    glVertex2d(end.x(), end.y());
-    glEnd();
+// void OpenGLWidget::glGizmo()
+// {
+//     glShadeModel(GL_SMOOTH);
+//     // x-axis
+//     glColor3f( 1, 0, 0);
+//     glPushMatrix ();
+//     glLoadName(8);
+//     glRotatef ((GLfloat) 90.0, (GLfloat)0.0, (GLfloat)1.0, (GLfloat)0.0);
+//     GLUquadricObj *quadObj = gluNewQuadric ();
+//     gluQuadricDrawStyle (quadObj, GLU_FILL);
+//     gluQuadricNormals (quadObj, GLU_SMOOTH);
+//     gluCylinder (quadObj, 0.250, 0.250, 3.75, 8, 2);
+//     gluDeleteQuadric(quadObj);
+//     glTranslatef ((GLfloat)0.0, (GLfloat)0.0, (GLfloat)3.5);
+//     quadObj = gluNewQuadric ();
+//     gluQuadricDrawStyle (quadObj, GLU_FILL);
+//     gluQuadricNormals (quadObj, GLU_SMOOTH);
+//     gluCylinder(quadObj, 0.5, 0.0, 3, 10, 6);
+//     gluDeleteQuadric(quadObj);
+//     glPopMatrix ();
+// 
+//     //// y-axis
+//     glColor3f( 0, 1, 0);
+//     glPushMatrix ();
+//     glLoadName(16);
+//     glRotatef ((GLfloat) -90.0, (GLfloat)1.0, (GLfloat)0.0, (GLfloat)0.0);
+//     quadObj = gluNewQuadric ();
+//     gluQuadricDrawStyle (quadObj, GLU_FILL);
+//     gluQuadricNormals (quadObj, GLU_SMOOTH);
+//     gluCylinder (quadObj, 0.250, 0.250, 3.75, 8, 2);
+//     gluDeleteQuadric(quadObj);
+//     glTranslatef ((GLfloat)0.0, (GLfloat)0.0, (GLfloat)3.5);
+//     quadObj = gluNewQuadric ();
+//     gluQuadricDrawStyle (quadObj, GLU_FILL);
+//     gluQuadricNormals (quadObj, GLU_SMOOTH);
+//     gluCylinder(quadObj, 0.5, 0.0, 3, 10, 6);
+//     gluDeleteQuadric(quadObj);
+//     glPopMatrix ();
+// 
+//     //// z-axis
+//     glColor3f( 0, 0, 1);
+//     glPushMatrix ();
+//     glLoadName(32);
+//     //glRotatef ((GLfloat) -90.0, (GLfloat)0.0, (GLfloat)0.0, (GLfloat)1.0);
+//     quadObj = gluNewQuadric ();
+//     gluQuadricDrawStyle (quadObj, GLU_FILL);
+//     gluQuadricNormals (quadObj, GLU_SMOOTH);
+//     gluCylinder (quadObj, 0.250, 0.250, 3.75, 8, 2);
+//     gluDeleteQuadric(quadObj);
+//     glTranslatef ((GLfloat)0.0, (GLfloat)0.0, (GLfloat)3.5);
+//     quadObj = gluNewQuadric ();
+//     gluQuadricDrawStyle (quadObj, GLU_FILL);
+//     gluQuadricNormals (quadObj, GLU_SMOOTH);
+//     gluCylinder(quadObj, 0.5, 0.0, 3, 10, 6);
+//     gluDeleteQuadric(quadObj);
+//     glPopMatrix ();
+// }
 
-    // Restore old projection and modelview stack
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixd(projection);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixd(modelview);
-}
-
-void OpenGLWidget::drawViewportCircle(float x, float y, float radius)
-{
-    // Save current projection matrix
-    GLdouble projection[16];							// Where The 16 Doubles Of The Projection Matrix Are To Be Stored
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);	// Retrieve The Projection Matrix
-    // Save current modelview matrix
-    GLdouble modelview[16];					// Where The 16 Doubles Of The Modelview Matrix Are To Be Stored
-    glGetDoublev(GL_MODELVIEW_MATRIX, modelview);		// Retrieve The Modelview Matrix
-
-    const qreal scale = devicePixelRatio(); // support scaled display
-    float scaledWidth = width() * scale;
-    float scaledHeight = height() * scale;
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(0, scaledWidth, 0, scaledHeight, -1, 1);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-
-    glLineWidth(1);
-    glBegin(GL_LINE_LOOP);
-    float degInRad = 0;
-    for (int i=0; i<360; ++i)
-    {
-        degInRad = i * 3.141592f/180.0f;
-        glVertex2f(cos(degInRad)*radius + x,sin(degInRad)*radius + y);
-    }
-    glEnd();
-
-    // Restore old projection and modelview stack
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixd(projection);
-    glMatrixMode(GL_MODELVIEW);
-    glLoadMatrixd(modelview);
-}
-
-void OpenGLWidget::glGizmo()
-{
-    glShadeModel(GL_SMOOTH);
-    // x-axis
-    glColor3f( 1, 0, 0);
-    glPushMatrix ();
-    glLoadName(8);
-    glRotatef ((GLfloat) 90.0, (GLfloat)0.0, (GLfloat)1.0, (GLfloat)0.0);
-    GLUquadricObj *quadObj = gluNewQuadric ();
-    gluQuadricDrawStyle (quadObj, GLU_FILL);
-    gluQuadricNormals (quadObj, GLU_SMOOTH);
-    gluCylinder (quadObj, 0.250, 0.250, 3.75, 8, 2);
-    gluDeleteQuadric(quadObj);
-    glTranslatef ((GLfloat)0.0, (GLfloat)0.0, (GLfloat)3.5);
-    quadObj = gluNewQuadric ();
-    gluQuadricDrawStyle (quadObj, GLU_FILL);
-    gluQuadricNormals (quadObj, GLU_SMOOTH);
-    gluCylinder(quadObj, 0.5, 0.0, 3, 10, 6);
-    gluDeleteQuadric(quadObj);
-    glPopMatrix ();
-
-    //// y-axis
-    glColor3f( 0, 1, 0);
-    glPushMatrix ();
-    glLoadName(16);
-    glRotatef ((GLfloat) -90.0, (GLfloat)1.0, (GLfloat)0.0, (GLfloat)0.0);
-    quadObj = gluNewQuadric ();
-    gluQuadricDrawStyle (quadObj, GLU_FILL);
-    gluQuadricNormals (quadObj, GLU_SMOOTH);
-    gluCylinder (quadObj, 0.250, 0.250, 3.75, 8, 2);
-    gluDeleteQuadric(quadObj);
-    glTranslatef ((GLfloat)0.0, (GLfloat)0.0, (GLfloat)3.5);
-    quadObj = gluNewQuadric ();
-    gluQuadricDrawStyle (quadObj, GLU_FILL);
-    gluQuadricNormals (quadObj, GLU_SMOOTH);
-    gluCylinder(quadObj, 0.5, 0.0, 3, 10, 6);
-    gluDeleteQuadric(quadObj);
-    glPopMatrix ();
-
-    //// z-axis
-    glColor3f( 0, 0, 1);
-    glPushMatrix ();
-    glLoadName(32);
-    //glRotatef ((GLfloat) -90.0, (GLfloat)0.0, (GLfloat)0.0, (GLfloat)1.0);
-    quadObj = gluNewQuadric ();
-    gluQuadricDrawStyle (quadObj, GLU_FILL);
-    gluQuadricNormals (quadObj, GLU_SMOOTH);
-    gluCylinder (quadObj, 0.250, 0.250, 3.75, 8, 2);
-    gluDeleteQuadric(quadObj);
-    glTranslatef ((GLfloat)0.0, (GLfloat)0.0, (GLfloat)3.5);
-    quadObj = gluNewQuadric ();
-    gluQuadricDrawStyle (quadObj, GLU_FILL);
-    gluQuadricNormals (quadObj, GLU_SMOOTH);
-    gluCylinder(quadObj, 0.5, 0.0, 3, 10, 6);
-    gluDeleteQuadric(quadObj);
-    glPopMatrix ();
-}
-
-void OpenGLWidget::drawGizmo(const float* nodeTransform, const float* cam)
-{
-    // Save current projection matrix
-    GLdouble projection[16];							// Where The 16 Doubles Of The Projection Matrix Are To Be Stored
-    glGetDoublev(GL_PROJECTION_MATRIX, projection);	// Retrieve The Projection Matrix
-
-
-    // Set model view matrix of selected node
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glMultMatrixf(nodeTransform);	// Load scene node matrix
-
-    glPushMatrix(); // Push matrix before applying the scaling for the gizmo
-
-    // Calculate scale for gizmo with constant size
-    QVec3f camScale = QMatrix4f(cam).getScale();
-    QVec3f nodeScale = QMatrix4f(nodeTransform).getScale();
-
-    //const float frustumHeight = h3dGetNodeParamF(m_activeCameraID, H3DCamera::TopPlane) - h3dGetNodeParamF(m_activeCameraID, H3DCamera::BottomPlane);
-    const float frustumWidth  = h3dGetNodeParamF(m_activeCameraID, H3DCamera::RightPlaneF, 0) - h3dGetNodeParamF(m_activeCameraID, H3DCamera::LeftPlaneF, 0);
-    // first calculate scale depending on the viewing frustum and viewport settings (10 is a constant factor to make the gizmo big enough and is not
-    // part of the formula
-    float scale = 10 * frustumWidth * camScale.X / width();
-
-    // If we have an perspective projection
-    if( h3dGetNodeParamI( m_activeCameraID, H3DCamera::OrthoI ) == 0 )
-    {
-        // Take node distance and nearPlane distance into account
-        const float nearPlane = h3dGetNodeParamF(m_activeCameraID, H3DCamera::NearPlaneF, 0);
-        const float distance = QVec3f(nodeTransform[12] - cam[12], nodeTransform[13] - cam[13], nodeTransform[14] - cam[14]).length(); // Calculate distance between scene node and camera
-        scale *= distance / nearPlane;
-    }
-    // finally remove any scale part of the current modelview matrix
-    glScalef(scale / nodeScale.X, scale / nodeScale.Y, scale / nodeScale.Z);
-
-    // Draw Gizmo
-    glGizmo();
-
-    // Check for Gizmo Selection
-    GLint viewport[4];
-    glGetIntegerv(GL_VIEWPORT,viewport); 	// Get viewport settings for gluPickMatrix
-    QPoint cursorPos = mapFromGlobal(QCursor::pos()); // Retrieve mouse cursor position
-
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPickMatrix(cursorPos.x() ,viewport[3]-cursorPos.y(), 1, 1, viewport); // Use Pickmatrix to render only the scene under the mouse cursor
-    glMultMatrixd(projection);
-    glMatrixMode(GL_MODELVIEW);
-
-    GLuint selectBuf[512];
-    glSelectBuffer (512, selectBuf);
-    glRenderMode (GL_SELECT);
-    glInitNames();
-    glPushName(0);
-    glGizmo();	// Render Gizmo to retrieve the glName hits
-    glFlush();
-    GLint hits = glRenderMode (GL_RENDER);
-    glPopMatrix(); // Remove scale for Gizmo from stack
-    GLuint names, *ptr = selectBuf;
-    float minAxisZ = float(INT_MAX);
-    int axis = 0;
-    for (int i = 0; i < hits; ++i) /*  for each hit  */
-    {
-        names = *ptr++;	// Get number of names for this hit
-        float z = float(*ptr)/0x7fffffff; // Get nearest Z Value
-        ptr += 2; // Skip z2
-        if (z < minAxisZ && names > 0)
-        {
-            minAxisZ = z;
-            axis = *ptr; // Set selected axis
-        }
-        ptr += names;
-    }
-    m_gizmoSelection = axis;
-
-    glPopMatrix(); // Restore old model view matrix (Only Camera Transformation applied)
-
-    // Restore old projection matrix
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixd(projection);
-    glMatrixMode(GL_MODELVIEW);
-}
+// void OpenGLWidget::drawGizmo(const float* nodeTransform, const float* cam)
+// {
+//     // Save current projection matrix
+//     GLdouble projection[16];							// Where The 16 Doubles Of The Projection Matrix Are To Be Stored
+//     glGetDoublev(GL_PROJECTION_MATRIX, projection);	// Retrieve The Projection Matrix
+// 
+// 
+//     // Set model view matrix of selected node
+//     glMatrixMode(GL_MODELVIEW);
+//     glPushMatrix();
+//     glMultMatrixf(nodeTransform);	// Load scene node matrix
+// 
+//     glPushMatrix(); // Push matrix before applying the scaling for the gizmo
+// 
+//     // Calculate scale for gizmo with constant size
+//     QVec3f camScale = QMatrix4f(cam).getScale();
+//     QVec3f nodeScale = QMatrix4f(nodeTransform).getScale();
+// 
+//     //const float frustumHeight = h3dGetNodeParamF(m_activeCameraID, H3DCamera::TopPlane) - h3dGetNodeParamF(m_activeCameraID, H3DCamera::BottomPlane);
+//     const float frustumWidth  = h3dGetNodeParamF(m_activeCameraID, H3DCamera::RightPlaneF, 0) - h3dGetNodeParamF(m_activeCameraID, H3DCamera::LeftPlaneF, 0);
+//     // first calculate scale depending on the viewing frustum and viewport settings (10 is a constant factor to make the gizmo big enough and is not
+//     // part of the formula
+//     float scale = 10 * frustumWidth * camScale.X / width();
+// 
+//     // If we have an perspective projection
+//     if( h3dGetNodeParamI( m_activeCameraID, H3DCamera::OrthoI ) == 0 )
+//     {
+//         // Take node distance and nearPlane distance into account
+//         const float nearPlane = h3dGetNodeParamF(m_activeCameraID, H3DCamera::NearPlaneF, 0);
+//         const float distance = QVec3f(nodeTransform[12] - cam[12], nodeTransform[13] - cam[13], nodeTransform[14] - cam[14]).length(); // Calculate distance between scene node and camera
+//         scale *= distance / nearPlane;
+//     }
+//     // finally remove any scale part of the current modelview matrix
+//     glScalef(scale / nodeScale.X, scale / nodeScale.Y, scale / nodeScale.Z);
+// 
+//     // Draw Gizmo
+//     glGizmo();
+// 
+//     // Check for Gizmo Selection
+//     GLint viewport[4];
+//     glGetIntegerv(GL_VIEWPORT,viewport); 	// Get viewport settings for gluPickMatrix
+//     QPoint cursorPos = mapFromGlobal(QCursor::pos()); // Retrieve mouse cursor position
+// 
+//     glMatrixMode(GL_PROJECTION);
+//     glLoadIdentity();
+//     gluPickMatrix(cursorPos.x() ,viewport[3]-cursorPos.y(), 1, 1, viewport); // Use Pickmatrix to render only the scene under the mouse cursor
+//     glMultMatrixd(projection);
+//     glMatrixMode(GL_MODELVIEW);
+// 
+//     GLuint selectBuf[512];
+//     glSelectBuffer (512, selectBuf);
+//     glRenderMode (GL_SELECT);
+//     glInitNames();
+//     glPushName(0);
+//     glGizmo();	// Render Gizmo to retrieve the glName hits
+//     glFlush();
+//     GLint hits = glRenderMode (GL_RENDER);
+//     glPopMatrix(); // Remove scale for Gizmo from stack
+//     GLuint names, *ptr = selectBuf;
+//     float minAxisZ = float(INT_MAX);
+//     int axis = 0;
+//     for (int i = 0; i < hits; ++i) /*  for each hit  */
+//     {
+//         names = *ptr++;	// Get number of names for this hit
+//         float z = float(*ptr)/0x7fffffff; // Get nearest Z Value
+//         ptr += 2; // Skip z2
+//         if (z < minAxisZ && names > 0)
+//         {
+//             minAxisZ = z;
+//             axis = *ptr; // Set selected axis
+//         }
+//         ptr += names;
+//     }
+//     m_gizmoSelection = axis;
+// 
+//     glPopMatrix(); // Restore old model view matrix (Only Camera Transformation applied)
+// 
+//     // Restore old projection matrix
+//     glMatrixMode(GL_PROJECTION);
+//     glLoadMatrixd(projection);
+//     glMatrixMode(GL_MODELVIEW);
+// }
 
 void OpenGLWidget::drawBaseGrid(const float camX, const float camY, const float camZ)
 {
