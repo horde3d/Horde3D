@@ -25,6 +25,10 @@
 #include <QtCore/QDir>
 #include "HordeFileDialog.h"
 
+// as QVariant was changed in Qt6 and cannot be constructed empty anymore
+// create a special variant with int hash
+#define IMPORT_HASH 467678 
+
 EffectComboBox::EffectComboBox(QWidget* parent /*= 0*/) : QComboBox(parent)
 {	
 	connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(currentChanged(int)));	
@@ -41,7 +45,7 @@ void EffectComboBox::init(const QString& resourcePath)
 	m_resourcePath = resourcePath;
 	blockSignals(true);
 	addEffects(resourcePath, resourcePath);
-	addItem(tr("Import from Repository"), QVariant((int) QVariant::UserType));
+	addItem(tr("Import from Repository"), QVariant::fromValue( IMPORT_HASH ) );
 	if (count() == 1)
 		setCurrentIndex(-1);
 	blockSignals(false);
@@ -67,7 +71,9 @@ void EffectComboBox::setEffect(Effect effect)
 
 void EffectComboBox::currentChanged(int index)
 {
-	if (itemData(index).isValid() && itemData(index) == QVariant((int)QVariant::UserType))
+	int type = itemData(index).typeId();
+	if ( itemData(index).isValid() && itemData(index).typeId() == QMetaType::Int 
+		 && itemData(index).toInt() == IMPORT_HASH )
 	{
 		QString newEffect = HordeFileDialog::getResourceFile( H3DResTypes::ParticleEffect, m_resourcePath, this, tr("Select effect to import"));
 		if (!newEffect.isEmpty())
@@ -76,7 +82,7 @@ void EffectComboBox::currentChanged(int index)
 			{
 				removeItem(index);
 				addItem(newEffect);
-				addItem(tr("Import from Repository"), QVariant(QVariant::UserType));
+				addItem(tr("Import from Repository"), QVariant::fromValue( IMPORT_HASH ));
 			}
 			setCurrentIndex(findText(newEffect));
 			return;

@@ -45,6 +45,8 @@ QSceneNode* QEmitterNode::loadNode(const QDomElement& xmlNode, int row, SceneTre
 
 QEmitterNode::QEmitterNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode) : QSceneNode(xmlNode, row, model, parentNode)
 {
+	m_supportsMaterials = true; // notify other parts that node supports materials
+
 	setObjectName("Emitter");
 	QEmitterNode::addRepresentation();	
 }
@@ -146,7 +148,10 @@ void QEmitterNode::setMaterial(const Material& material)
 		h3dSetNodeParamI(m_hordeID, H3DEmitter::MatResI, m_matResource);
 	}
 	else if (material != QEmitterNode::material())
+	{
 		m_model->undoStack()->push(new QXmlNodePropertyCommand("Set Material", this, "Material", QVariant::fromValue(material), EmitterMaterialID));
+		emit materialChanged(material.FileName);
+	}
 }
 
 Effect QEmitterNode::effect() const

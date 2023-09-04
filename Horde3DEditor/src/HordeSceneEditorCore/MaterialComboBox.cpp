@@ -26,6 +26,10 @@
 #include "HordeFileDialog.h"
 #include "QHordeSceneEditorSettings.h"
 
+// as QVariant was changed in Qt6 and cannot be constructed empty anymore
+// create a special variant with int hash
+#define IMPORT_HASH 467678 
+
 MaterialComboBox::MaterialComboBox(QWidget* parent /*= 0*/) : QComboBox(parent)
 {	
 	connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(currentChanged(int)));	
@@ -44,7 +48,7 @@ void MaterialComboBox::init(const QString& resourcePath )
 	blockSignals(true);
 	if (!resourcePath.isEmpty())
 		addMaterials(resourcePath, resourcePath);
-	addItem(tr("Clone/Import from Repository"), QVariant((int) QVariant::UserType));	
+	addItem( tr("Clone/Import from Repository"), QVariant::fromValue( IMPORT_HASH ) );	
 	QHordeSceneEditorSettings settings;	
 	setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );
 	if (count() == 1)
@@ -83,7 +87,8 @@ void MaterialComboBox::setMaterial(Material material)
 
 void MaterialComboBox::currentChanged(int index)
 {
-	if (itemData(index).isValid() && itemData(index) == QVariant((int)QVariant::UserType))
+	if (itemData(index).isValid() && itemData(index).typeId() == QMetaType::Int 
+		&& itemData(index).toInt() == IMPORT_HASH  )
 	{
 		QString newMaterial = HordeFileDialog::getResourceFile( H3DResTypes::Material, m_resourcePath, this, tr("Select material to clone/import"));
 		if (!newMaterial.isEmpty())
@@ -94,7 +99,7 @@ void MaterialComboBox::currentChanged(int index)
 				blockSignals(true);
 				removeItem(index);
 				addItem(newMaterial);
-				addItem(tr("Clone/Import from Repository"), QVariant(QVariant::UserType));
+				addItem(tr("Clone/Import from Repository"), QVariant::fromValue( IMPORT_HASH ));
 				blockSignals(false);
 				QHordeSceneEditorSettings settings;	
 				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );

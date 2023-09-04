@@ -27,6 +27,10 @@
 #include <Horde3D.h>
 #include <Horde3DUtils.h>
 
+// as QVariant was changed in Qt6 and cannot be constructed empty anymore
+// create a special variant with int hash
+#define IMPORT_HASH 467678 
+
 PipelineComboBox::PipelineComboBox(QWidget* parent /*= 0*/) : QComboBox(parent)
 {
 	connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(currentChanged(int)));
@@ -43,7 +47,7 @@ void PipelineComboBox::init( const QString& resourcePath )
 	m_resourcePath = resourcePath;
 	blockSignals(true);
 	addPipeline(resourcePath);
-	addItem(tr("Import from Repository"), QVariant((int) QVariant::UserType));
+	addItem( tr("Import from Repository"), QVariant::fromValue( IMPORT_HASH ) );
 	if (count() == 1)
 		setCurrentIndex(-1);
 	blockSignals(false);
@@ -66,7 +70,8 @@ void PipelineComboBox::setPipeline(Pipeline pipeline)
 
 void PipelineComboBox::currentChanged(int index)
 {
-	if (itemData(index).isValid() && itemData(index) == QVariant((int)QVariant::UserType))
+	if ( itemData(index).isValid() && itemData(index).typeId() == QMetaType::Int 
+		 && itemData(index).toInt() == IMPORT_HASH )
 	{		
 		QString newPipeline = HordeFileDialog::getResourceFile( H3DResTypes::Pipeline, m_resourcePath, this, tr("Select pipeline to import"));
 		if (!newPipeline.isEmpty())
@@ -75,7 +80,7 @@ void PipelineComboBox::currentChanged(int index)
 			{
 				removeItem(index);
 				addItem(newPipeline);
-				addItem(tr("Import from Repository"), QVariant(QVariant::UserType));
+				addItem(tr("Import from Repository"), QVariant::fromValue( IMPORT_HASH ));
 			}
 			setCurrentIndex(findText(newPipeline));
 			return;

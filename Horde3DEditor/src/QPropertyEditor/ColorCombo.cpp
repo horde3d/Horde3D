@@ -34,7 +34,9 @@ ColorCombo::ColorCombo(QWidget* parent /*= 0*/) : QComboBox(parent)
 		insertItem(i, colorNames[i]);
 		setItemData(i, color, Qt::DecorationRole);
 	}
-	addItem(tr("Custom"), QVariant((int)QVariant::UserType));
+
+	QMetaType type(QMetaType::User);
+	addItem(tr("Custom"), QVariant( type ));
 	connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(currentChanged(int)));
 }
 
@@ -63,7 +65,7 @@ void ColorCombo::setColor(QColor color)
 
 void ColorCombo::currentChanged(int index)
 {
-	if (itemData(index).isValid() && itemData(index) == QVariant((int)QVariant::UserType))
+	if (itemData(index).isValid() && itemData(index).typeId() == QMetaType::User /*QVariant((int)QVariant::UserType)*/ )
 	{
 		QColor color = QColorDialog::getColor(m_init, this);
 		if (color.isValid())

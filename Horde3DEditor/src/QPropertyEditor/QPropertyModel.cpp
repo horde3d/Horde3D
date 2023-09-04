@@ -242,7 +242,7 @@ void QPropertyModel::addItem(QObject *propertyObject)
             {
                 QMetaProperty property(pair.Property);
                 Property* p = 0;
-                if( property.type() == QVariant::UserType && !m_userCallbacks.isEmpty() )
+                if( property.typeId() >= QMetaType::User && !m_userCallbacks.isEmpty() )
                 {
                     QList<QPropertyEditorWidget::UserTypeCB>::iterator iter = m_userCallbacks.begin();
                     while( p == 0 && iter != m_userCallbacks.end() )
@@ -365,7 +365,7 @@ void QPropertyModel::addDynamicProperties( Property* parent, QObject* propertyOb
     {
         QVariant v = propertyObject->property(dynProp);
         Property* p = 0;
-        if( v.type() == QVariant::UserType && !m_userCallbacks.isEmpty() )
+        if( v.typeId() >= QMetaType::User && !m_userCallbacks.isEmpty() )
         {
             QList<QPropertyEditorWidget::UserTypeCB>::iterator iter = m_userCallbacks.begin();
             while( p == 0 && iter != m_userCallbacks.end() )
