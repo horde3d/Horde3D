@@ -23,6 +23,8 @@
 #include "NodeWidget.h"
 #include "CustomTypes.h"
 #include "QMeshNode.h"
+#include "QLightNode.h"
+#include "QEmitterNode.h"
 
 #include <QXmlTree/QXmlTreeNode.h>
 #include <QLayout>
@@ -44,17 +46,24 @@ void NodeWidget::setCurrentNode(QXmlTreeNode* node)
 	// Set Only if this not already the current object
 	if (node != m_currentNode)	
 	{	
-		if( m_currentNode && qobject_cast<QMeshNode*>( m_currentNode) )
+		if ( m_currentNode && qobject_cast<QSceneNode*>(m_currentNode)->supportsMaterials() )
+		{
 			disconnect( m_currentNode, SIGNAL( materialChanged(const QString&) ), this, SIGNAL( materialChanged(const QString&) ) );
+		}
 		setObject(node);
-		if( node && qobject_cast<QMeshNode*>( node) )
+		if( node && qobject_cast<QSceneNode*>( node )->supportsMaterials() )
 		{
 			connect( node, SIGNAL( materialChanged(const QString&) ), this, SIGNAL( materialChanged(const QString&) ) );
 		}
 		emit materialChanged(node ? node->xmlNode().attribute("material") : QString());		
 	}
 	else // Update the property view 
+	{
+		if (node && qobject_cast<QSceneNode*>(node)->supportsMaterials())
+			emit materialChanged(node ? node->xmlNode().attribute("material") : QString());
+
 		updateObject(node);
+	}
 
 	// If this is a scene node, save the current transformation to handle manipulations of the transformation
 	if( node && node->property("Position").isValid() )
