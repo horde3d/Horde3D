@@ -74,7 +74,7 @@
 
 // Internal config/debugging.
 #define IM3D_RELATIVE_SNAP 0  // Snap relative to the gizmo stored position/rotation/scale (else snap is absolute).
-#define IM3D_GIZMO_DEBUG   1  // Draw debug bounds for gizmo intersections.
+#define IM3D_GIZMO_DEBUG   0  // Draw debug bounds for gizmo intersections.
 
 using namespace Im3d;
 
