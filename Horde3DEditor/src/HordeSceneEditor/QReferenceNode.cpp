@@ -24,7 +24,7 @@
 #include "SceneTreeModel.h"
 
 #include "HordeSceneEditor.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "AttachmentPlugIn.h"
 #include "PlugInManager.h"
 

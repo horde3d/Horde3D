@@ -24,7 +24,7 @@
 
 #include <QXmlTree/QXmlNodePropertyCommand.h>
 #include "HordeSceneEditor.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "AttachmentPlugIn.h"
 #include "SceneTreeModel.h"
 #include "PlugInManager.h"
@@ -47,6 +47,8 @@ QSceneNode* QMeshNode::loadNode(const QDomElement& xmlNode, int row, SceneTreeMo
 QMeshNode::QMeshNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode) : 
     QSceneNode(xmlNode, row, model, parentNode), m_materialResID(0)
 {
+	m_supportsMaterials = true; // notify other parts that node supports materials
+
 	setObjectName("Mesh");
 	QMeshNode::addRepresentation();
 }

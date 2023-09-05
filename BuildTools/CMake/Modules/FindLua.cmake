@@ -43,7 +43,7 @@ unset(_lua_append_versions)
 
 # this is a function only to have all the variables inside go away automatically
 function(_lua_set_version_vars)
-    set(LUA_VERSIONS5 5.3 5.2 5.1 5.0)
+    set(LUA_VERSIONS5 5.4 5.3 5.2 5.1 5.0)
 
     if (Lua_FIND_VERSION_EXACT)
         if (Lua_FIND_VERSION_COUNT GREATER 1)
@@ -203,6 +203,7 @@ IF(NOT LUA_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_LUA)
         LOG_BUILD 1
         LOG_TEST 1
         LOG_INSTALL 1
+        DOWNLOAD_EXTRACT_TIMESTAMP 1
     )
     MESSAGE(STATUS "External LUA project done")
 

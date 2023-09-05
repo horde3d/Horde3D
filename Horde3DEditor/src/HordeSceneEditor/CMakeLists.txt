@@ -10,7 +10,7 @@ SET(Horde3DEditor_SOURCES
     ColladaImporter.cpp
     ExtraTreeView.cpp
     FindDialog.cpp
-    GLWidget.cpp
+    OpenGLWidget.cpp
     HordeModelDialog.cpp
     HordeSceneEditor.cpp
     ImgLabel.cpp
@@ -60,6 +60,8 @@ SET(Horde3DEditor_SOURCES
     SceneTreeWidget.cpp
     SceneWizard.cpp
     SettingsDialog.cpp
+    im3d/im3d.cpp
+    im3d/im3d_h3d.cpp
     )
 
 
@@ -70,7 +72,7 @@ SET(Horde3DEditor_HEADERS
     ColladaImporter.h
     ExtraTreeView.h
     FindDialog.h
-    GLWidget.h
+    OpenGLWidget.h
     HordeModelDialog.h
     HordeSceneEditor.h
     ImgLabel.h
@@ -119,6 +121,8 @@ SET(Horde3DEditor_HEADERS
     SettingsDialog.h
     SceneWizard.h
     LuaBindingsHorde.h
+    im3d/im3d.h
+    im3d/im3d_h3d.h
     )
 
 SET(Horde3DEditor_RESOURCES
@@ -160,11 +164,11 @@ ADD_DEFINITIONS(${QT_DEFINITIONS})
 IF( APPLE )
 set(MACOSX_BUNDLE_INFO_STRING "${PROJECT_NAME}")
 set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.horde3d.${PROJECT_NAME}")
-set(MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version 0.10.1")
+set(MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version 0.11.0")
 set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})
-set(MACOSX_BUNDLE_SHORT_VERSION_STRING 0.10.1)
-set(MACOSX_BUNDLE_BUNDLE_VERSION 0.10.1)
-set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2020. All Rights Reserved.")
+set(MACOSX_BUNDLE_SHORT_VERSION_STRING 0.11.0)
+set(MACOSX_BUNDLE_BUNDLE_VERSION 0.11.0)
+set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2023. All Rights Reserved.")
 
 ADD_EXECUTABLE(Horde3DEditor
     MACOSX_BUNDLE

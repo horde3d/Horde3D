@@ -53,9 +53,9 @@ QImageIOPlugin::Capabilities QPsdPlugin::capabilities(QIODevice *device, const Q
     if (format == "psd" || format == "psd")
         return Capabilities(CanRead /*| CanWrite*/);
     if (!format.isEmpty())
-        return 0;
+        return (QImageIOPlugin::Capabilities) 0;
     if (!device->isOpen())
-        return 0;
+        return (QImageIOPlugin::Capabilities) 0;
 
     Capabilities cap;
     if (device->isReadable() && QPsdHandler::canRead(device))
@@ -67,7 +67,7 @@ QImageIOPlugin::Capabilities QPsdPlugin::capabilities(QIODevice *device, const Q
 
 QImageIOHandler *QPsdPlugin::create(QIODevice *device, const QByteArray &format) const
 {
-    QImageIOHandler *handler = new QPsdHandler;
+    QImageIOHandler *handler = (QImageIOHandler *) new QPsdHandler;
     handler->setDevice(device);
     handler->setFormat(format);
     return handler;

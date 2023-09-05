@@ -36,7 +36,7 @@ class MiscToolBar : public QWidget, protected Ui_MiscToolBar
 	friend class HordeSceneEditor;
 
 public:
-	MiscToolBar(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	MiscToolBar(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~MiscToolBar();
 
 

@@ -27,7 +27,7 @@
 #include "HordeSceneEditor.h"
 #include "PlugInManager.h"
 #include "AttachmentPlugIn.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "CustomTypes.h"
 
 #include <QtCore/QFile>
@@ -42,6 +42,12 @@
 #include <QAction>
 #include <QMenu>
 #include <QUndoStack>
+#include <QDropEvent>
+#include <QContextMenuEvent>
+#include <QMouseEvent>
+#include <QCloseEvent>
+
+
 
 #include <QXmlTree/QXmlTreeUndoCommands.h>
 
@@ -316,7 +322,7 @@ void SceneTreeView::dropEvent(QDropEvent* event)
 		setCursor(Qt::BusyCursor);
 		QModelIndexList sources = selectionModel()->selectedRows();
 		// Get target node, that the selected nodes should use as parent
-		QSceneNode* target = static_cast<QSceneNode*>(indexAt(event->pos()).internalPointer()); 
+		QSceneNode* target = static_cast<QSceneNode*>(indexAt(event->position().toPoint()).internalPointer()); 
 		if ( !target ) 
 			target = static_cast<QSceneNode*>(m_activeModels.last()->rootNode());
 		if ( !sources.empty() )

@@ -181,7 +181,8 @@ void QPropertyModel::addItem(QObject *propertyObject)
         for (int i=0; i<count; ++i)
         {
             QMetaProperty property = metaObject->property(i);
-            if( property.isUser() && property.isScriptable(propertyObject) ) // Hide Qt specific properties
+//            if( property.isUser() && property.isScriptable(propertyObject) ) // Hide Qt specific properties
+            if( property.isUser() && property.isScriptable() ) // Hide Qt specific properties
             {
                 PropertyPair pair(metaObject, property);
                 int index = propertyMap.indexOf(pair);
@@ -241,7 +242,7 @@ void QPropertyModel::addItem(QObject *propertyObject)
             {
                 QMetaProperty property(pair.Property);
                 Property* p = 0;
-                if( property.type() == QVariant::UserType && !m_userCallbacks.isEmpty() )
+                if( property.typeId() >= QMetaType::User && !m_userCallbacks.isEmpty() )
                 {
                     QList<QPropertyEditorWidget::UserTypeCB>::iterator iter = m_userCallbacks.begin();
                     while( p == 0 && iter != m_userCallbacks.end() )
@@ -364,7 +365,7 @@ void QPropertyModel::addDynamicProperties( Property* parent, QObject* propertyOb
     {
         QVariant v = propertyObject->property(dynProp);
         Property* p = 0;
-        if( v.type() == QVariant::UserType && !m_userCallbacks.isEmpty() )
+        if( v.typeId() >= QMetaType::User && !m_userCallbacks.isEmpty() )
         {
             QList<QPropertyEditorWidget::UserTypeCB>::iterator iter = m_userCallbacks.begin();
             while( p == 0 && iter != m_userCallbacks.end() )
@@ -381,10 +382,16 @@ void QPropertyModel::addDynamicProperties( Property* parent, QObject* propertyOb
 
 void QPropertyModel::clear()
 {
-    beginRemoveRows(QModelIndex(), 0, rowCount());
-    delete m_rootItem;
-	m_rootItem = new Property("Root",0, this);   
-    endRemoveRows();
+    auto rows = rowCount();
+    if ( rows )
+    {
+        beginRemoveRows(QModelIndex(), 0, rows - 1);
+
+        delete m_rootItem;
+        m_rootItem = new Property("Root",0, this);   
+        
+        endRemoveRows();
+    }
 }
 
 void QPropertyModel::registerCustomPropertyCB(QPropertyEditorWidget::UserTypeCB callback)

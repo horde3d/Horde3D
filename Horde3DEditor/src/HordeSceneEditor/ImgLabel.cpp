@@ -36,17 +36,17 @@ ImgLabel::~ImgLabel()
 
 void ImgLabel::mouseMoveEvent(QMouseEvent *event)
 {
-	if (pixmap())
+	if (!pixmap().isNull())
 	{
-		int x = event->pos().x() * pixmap()->width() / width();
-		int y = event->pos().y() * pixmap()->height() / height();
-		emit currentPixel(x, pixmap()->height() - 1 - y);
+		int x = event->pos().x() * pixmap().width() / width();
+		int y = event->pos().y() * pixmap().height() / height();
+		emit currentPixel(x, pixmap().height() - 1 - y);
 	}
 }
 
 void ImgLabel::wheelEvent(QWheelEvent* event)
 {
-	if (event->delta() < 0)
+	if (event->pixelDelta().y() < 0)
 		emit zoomOut();
 	else
 		emit zoomIn();

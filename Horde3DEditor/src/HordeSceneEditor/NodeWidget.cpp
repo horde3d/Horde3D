@@ -23,6 +23,8 @@
 #include "NodeWidget.h"
 #include "CustomTypes.h"
 #include "QMeshNode.h"
+#include "QLightNode.h"
+#include "QEmitterNode.h"
 
 #include <QXmlTree/QXmlTreeNode.h>
 #include <QLayout>
@@ -44,17 +46,24 @@ void NodeWidget::setCurrentNode(QXmlTreeNode* node)
 	// Set Only if this not already the current object
 	if (node != m_currentNode)	
 	{	
-		if( m_currentNode && qobject_cast<QMeshNode*>( m_currentNode) )
+		if ( m_currentNode && qobject_cast<QSceneNode*>(m_currentNode)->supportsMaterials() )
+		{
 			disconnect( m_currentNode, SIGNAL( materialChanged(const QString&) ), this, SIGNAL( materialChanged(const QString&) ) );
+		}
 		setObject(node);
-		if( node && qobject_cast<QMeshNode*>( node) )
+		if( node && qobject_cast<QSceneNode*>( node )->supportsMaterials() )
 		{
 			connect( node, SIGNAL( materialChanged(const QString&) ), this, SIGNAL( materialChanged(const QString&) ) );
 		}
 		emit materialChanged(node ? node->xmlNode().attribute("material") : QString());		
 	}
 	else // Update the property view 
+	{
+		if (node && qobject_cast<QSceneNode*>(node)->supportsMaterials())
+			emit materialChanged(node ? node->xmlNode().attribute("material") : QString());
+
 		updateObject(node);
+	}
 
 	// If this is a scene node, save the current transformation to handle manipulations of the transformation
 	if( node && node->property("Position").isValid() )
@@ -91,7 +100,10 @@ void NodeWidget::moveObject(const float x, const float y, const float z)
 		m_tx = pos.X; m_ty = pos.Y; m_tz = pos.Z;
 	}
 	else if (x == 0 && y == 0 && z == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
+	{
 		m_currentNode->setProperty("Position", QVariant::fromValue(QVec3f(m_tx, m_ty, m_tz)));
+		updateObject( m_currentNode );
+	}
 	else
 	{
 		const float* mat = 0;					
@@ -142,7 +154,11 @@ void NodeWidget::rotateObject(const float rx, const float ry, const float rz)
 		m_rx = rot.X; m_ry = rot.Y; m_rz = rot.Z;
 	}	
 	else if (rx == 0 && ry == 0 && rz == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
-		m_currentNode->setProperty("Rotation", QVariant::fromValue(QVec3f(m_rx, m_ry, m_rz)));		
+	{
+		m_currentNode->setProperty("Rotation", QVariant::fromValue( QVec3f( m_rx, m_ry, m_rz ) ));
+		m_rx = m_ry = m_rz = 0;
+		updateObject( m_currentNode );
+	}
 	else // Update transformation settings without applying it to the xml data		
 	{		
 		QVec3f rot(m_currentNode->property("Rotation").value<QVec3f>());
@@ -156,8 +172,6 @@ void NodeWidget::rotateObject(const float rx, const float ry, const float rz)
 			  QMatrix4f::ScaleMat( m_sx, m_sy, m_sz ) ) );
 	}
 }
-
-
 
 void NodeWidget::scaleObject(const float sx, const float sy, const float sz)
 {	
@@ -175,9 +189,12 @@ void NodeWidget::scaleObject(const float sx, const float sy, const float sz)
 				QMatrix4f::RotMat(rot.toRad() ) * 
 				QMatrix4f::ScaleMat( scale ) ) );
 		m_sx = scale.X; m_sy = scale.Y; m_sz = scale.Z;
-	}	
+	}
 	else if (sx == 0 && sy == 0 && sz == 0) // apply it to the xml data if the movement is zero in every direction (acknowledge command)
-		m_currentNode->setProperty("Scale", QVariant::fromValue(QVec3f(m_sx, m_sy, m_sz)));		
+	{
+		m_currentNode->setProperty("Scale", QVariant::fromValue(QVec3f(m_sx, m_sy, m_sz)));
+		updateObject( m_currentNode );
+	}
 	else // Update transformation settings without applying it to the xml data		
 	{		
 		QVec3f scale(m_currentNode->property("Scale").value<QVec3f>());
@@ -190,4 +207,22 @@ void NodeWidget::scaleObject(const float sx, const float sy, const float sz)
 			  QMatrix4f::RotMat( QVec3f(m_rx, m_ry, m_rz).toRad() ) * 
 			  QMatrix4f::ScaleMat( m_sx, m_sy, m_sz ) ) );
 	}
+}
+
+void NodeWidget::transformObject(const QMatrix4f m)
+{
+	if( !m_currentNode ) return;
+
+	m_currentNode->setProperty("__RelativeTransformation", QVariant::fromValue( m ) );
+
+	QVec3f ts = m.getTranslation();
+	QVec3f rt = m.getRotation();
+	QVec3f sc = m.getScale();
+
+	rt *= 180.0f / 3.1415926f;
+
+	m_tx = ts.X; m_ty = ts.Y; m_tz = ts.Z;
+	// m_rx = m_rx + rt.X; m_ry = m_ry + rt.Y; m_rz = m_rz + rt.Z;
+	m_rx = rt.X; m_ry = rt.Y; m_rz = rt.Z;
+	m_sx = sc.X; m_sy = sc.Y; m_sz = sc.Z;
 }

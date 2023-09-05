@@ -256,14 +256,14 @@ QFileInfoList SceneFile::findReferences(const QDomElement& node) const
 			QStringList textures = shaderData.textureFiles();
 			for( int i = textures.size() - 1; i >= 0; --i )
 			{
-				if( !references.contains( textures[i] ) )
-					references.append( textures[i] );
+				if( !references.contains( QFileInfo( textures[i] ) ) )
+					references.append( QFileInfo( textures[i] ) );
 			}
 			QStringList codeFiles = shaderData.includeFiles();
 			for( int i = codeFiles.size() - 1; i >= 0; --i )
 			{
-				if( !references.contains( codeFiles[i] ) )
-					references.append( codeFiles[i] );
+				if( !references.contains( QFileInfo( codeFiles[i] ) ) )
+					references.append( QFileInfo( codeFiles[i] ) );
 			}
 		}
 	}	

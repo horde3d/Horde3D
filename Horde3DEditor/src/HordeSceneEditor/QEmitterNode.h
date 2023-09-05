@@ -75,6 +75,9 @@ public:
 	float delay() const;
 	void setDelay(float value);
 
+signals:
+	void materialChanged(const QString& materialFile);
+
 protected:
 	void timerEvent(QTimerEvent* event);
 	

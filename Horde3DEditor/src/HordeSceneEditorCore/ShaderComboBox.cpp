@@ -26,6 +26,10 @@
 #include "HordeFileDialog.h"
 #include "QHordeSceneEditorSettings.h"
 
+// as QVariant was changed in Qt6 and cannot be constructed empty anymore
+// create a special variant with int hash
+#define IMPORT_HASH 467678 
+
 ShaderComboBox::ShaderComboBox(QWidget* parent /*= 0*/) : QComboBox(parent)
 {
 	connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(currentChanged(int)));
@@ -42,7 +46,7 @@ void ShaderComboBox::init( const QString& resourcePath )
 	m_resourcePath = resourcePath;
 	blockSignals(true);
 	addShader(resourcePath);
-	addItem(tr("Import from Repository"), QVariant((int) QVariant::UserType));
+	addItem( tr("Import from Repository"), QVariant::fromValue( IMPORT_HASH ) );
 	if (count() == 1)
 		setCurrentIndex(-1);
 	blockSignals(false);
@@ -63,7 +67,8 @@ void ShaderComboBox::setShader(Shader shader)
 
 void ShaderComboBox::currentChanged(int index)
 {
-	if (itemData(index).isValid() && itemData(index) == QVariant((int)QVariant::UserType))
+	if ( itemData(index).isValid() && itemData(index).typeId() == QMetaType::Int 
+		 && itemData(index).toInt() == IMPORT_HASH )
 	{		
 		QString newShader = HordeFileDialog::getResourceFile( H3DResTypes::Shader, m_resourcePath, this, tr("Select shader to import"));
 		if (!newShader.isEmpty())
@@ -74,10 +79,10 @@ void ShaderComboBox::currentChanged(int index)
 				blockSignals(true);
 				removeItem(index);
 				addItem(newShader);
-				addItem(tr("Import from Repository"), QVariant(QVariant::UserType));
+				addItem(tr("Import from Repository"), QVariant::fromValue( IMPORT_HASH ));
 				blockSignals(false);
 				QHordeSceneEditorSettings settings;	
-				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundColorRole );
+				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );
 				index2 = findText(newShader);				
 			}
 			setCurrentIndex(index2);

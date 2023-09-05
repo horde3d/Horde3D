@@ -43,7 +43,7 @@ HordeFileDialog::HordeFileDialog(H3DResTypes::List type, const QString& resource
 m_type(type), DefaultRepoPath( qApp->property("DefaultRepoDir").toString() ), m_sceneResourcePath(resourcePath)
 {
 	setupUi(this);
-	m_xmlView->setTabStopWidth(12);
+	m_xmlView->setTabStopDistance(12);
 	m_xmlView->setWordWrapMode(QTextOption::NoWrap);
 
 	switch(type)
@@ -116,7 +116,7 @@ void HordeFileDialog::accept()
 		{				
 			if ( target.exists() && 
 				QMessageBox::question(this, tr("Overwrite?"), tr("Do you want to overwrite the existing file\n%1").arg(target.absoluteFilePath()), 
-				QMessageBox::Yes | QMessageBox::Default, QMessageBox::No | QMessageBox::Escape) == QMessageBox::No)
+				QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes ) == QMessageBox::No)
 			{
 				return;
 			}
@@ -224,7 +224,7 @@ void HordeFileDialog::initEffectView()
 {
 	QHordeSceneEditorSettings settings(this);
 	settings.beginGroup("Repository");
-	m_currentFilter = "*.effect.xml";
+	m_currentFilter = "*.particle.xml";
 	populateList(m_sceneResourcePath.absolutePath(), m_sceneResourcePath.absolutePath(), m_currentFilter, false);
 	populateList( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString(), QDir( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString() ), m_currentFilter, true);
 	m_stackedWidget->setCurrentWidget(m_xmlView);
@@ -243,7 +243,7 @@ void HordeFileDialog::initPipelineView()
 void HordeFileDialog::populateList(const QString& path, const QDir& baseDir, const QString& filter, bool repo)
 {
 	// get all files in the given directory
-	QFileInfoList files = QDir(path).entryInfoList(filter.split(';', QString::SkipEmptyParts), QDir::Files | QDir::Readable);
+	QFileInfoList files = QDir(path).entryInfoList(filter.split(';', Qt::SkipEmptyParts), QDir::Files | QDir::Readable);
 	m_fileList->blockSignals(true);
 	foreach(QFileInfo file, files)
 	{

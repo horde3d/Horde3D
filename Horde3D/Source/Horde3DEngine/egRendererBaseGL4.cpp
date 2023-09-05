@@ -1119,7 +1119,6 @@ uint32 RenderDeviceGL4::createShaderProgram( const struct RDIShaderCreateParams 
 	int infologLength = 0;
 	int charsWritten = 0;
 	char *infoLog = 0x0;
-	int status;
 
 	_shaderLog = "";
     

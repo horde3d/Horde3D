@@ -64,19 +64,19 @@ bool Property::isReadOnly()
 QWidget* Property::createEditor(QWidget *parent, const QStyleOptionViewItem& /*option*/)
 {
 	QWidget* editor = 0;
-	switch(value().type())
+	switch(value().typeId())
 	{
-	case QVariant::Color:
+	case QMetaType::QColor:
 		editor = new ColorCombo(parent);
 		break;
-	case QVariant::Int:
+	case QMetaType::Int:
 		editor = new QSpinBox(parent);
 		editor->setProperty("minimum", -INT_MAX);
 		editor->setProperty("maximum", INT_MAX);
 		connect(editor, SIGNAL(valueChanged(int)), this, SLOT(setValue(int)));
 		break;
 	case QMetaType::Float:	
-	case QVariant::Double:	
+	case QMetaType::Double:	
 		editor = new QDoubleSpinBox(parent);
 		editor->setProperty("minimum", -INT_MAX);
 		editor->setProperty("maximum", INT_MAX);
@@ -90,18 +90,18 @@ QWidget* Property::createEditor(QWidget *parent, const QStyleOptionViewItem& /*o
 
 bool Property::setEditorData(QWidget *editor, const QVariant &data)
 {
-	switch(value().type())
+	switch(value().typeId())
 	{
-	case QVariant::Color:
+	case QMetaType::QColor:
 		static_cast<ColorCombo*>(editor)->setColor(data.value<QColor>());
 		return true;;
-	case QVariant::Int:
+	case QMetaType::Int:
 		editor->blockSignals(true);
 		static_cast<QSpinBox*>(editor)->setValue(data.toInt());
 		editor->blockSignals(false);
 		return true;			
 	case QMetaType::Float:	
-	case QVariant::Double:	
+	case QMetaType::Double:	
 		editor->blockSignals(true);
 		static_cast<QDoubleSpinBox*>(editor)->setValue(data.toDouble());
 		editor->blockSignals(false);
@@ -114,14 +114,14 @@ bool Property::setEditorData(QWidget *editor, const QVariant &data)
 
 QVariant Property::editorData(QWidget *editor)
 {
-	switch(value().type())
+	switch(value().typeId())
 	{
-	case QVariant::Color:
+	case QMetaType::QColor:
 		return QVariant::fromValue(static_cast<ColorCombo*>(editor)->color());
-	case QVariant::Int:
+	case QMetaType::Int:
 		return QVariant(static_cast<QSpinBox*>(editor)->value());
 	case QMetaType::Float:	
-	case QVariant::Double:	
+	case QMetaType::Double:	
 		return QVariant(static_cast<QDoubleSpinBox*>(editor)->value());
 		break;			
 	default:

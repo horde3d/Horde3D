@@ -31,7 +31,7 @@
 
 #include "PlugInManager.h"
 
-class GLWidget;
+class OpenGLWidget;
 class SceneFile;
 class QXmlTreeNode;
 class QCameraNode;
@@ -97,10 +97,10 @@ class HordeSceneEditor : public QMainWindow, protected Ui_HordeSceneEditor
 	friend class PlugInManager;
 
 public:
-    HordeSceneEditor(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+    HordeSceneEditor(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~HordeSceneEditor();
 
-	GLWidget* glContext() {return m_glWidget;}
+	OpenGLWidget* glContext() {return m_glWidget;}
 
 	SceneFile* currentScene() {return m_sceneFile;}
 
@@ -178,7 +178,7 @@ private:
 	QFileSystemWatcher*	m_fileSystemWatcher;
 	QFileSystemWatcher*	m_styleSystemWatcher;
 
-	GLWidget*			m_glWidget;
+	OpenGLWidget*		m_glWidget;
 	QLabel*				m_fpsLabel;
 
 	QTimer*				m_renderTimer;

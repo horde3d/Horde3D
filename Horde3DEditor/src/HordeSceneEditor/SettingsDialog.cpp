@@ -46,7 +46,7 @@ SettingsDialog::SettingsDialog(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*
 	case Qt::RightButton:
 		m_selectButton->setCurrentIndex(1);
 		break;
-	case Qt::MidButton:
+	case Qt::MiddleButton:
 		m_selectButton->setCurrentIndex(2);
 		break;
 	}
@@ -58,11 +58,11 @@ SettingsDialog::SettingsDialog(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*
 	case Qt::RightButton:
 		m_cameraMoveButton->setCurrentIndex(1);
 		break;
-	case Qt::MidButton:
+	case Qt::MiddleButton:
 		m_cameraMoveButton->setCurrentIndex(2);
 		break;
 	}
-	switch(settings.value("ResetSelectButton", Qt::MidButton).toInt())
+	switch(settings.value("ResetSelectButton", Qt::MiddleButton).toInt())
 	{
 	case Qt::LeftButton:
 		m_resetSelectButton->setCurrentIndex(0);
@@ -70,7 +70,7 @@ SettingsDialog::SettingsDialog(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*
 	case Qt::RightButton:
 		m_resetSelectButton->setCurrentIndex(1);
 		break;
-	case Qt::MidButton:
+	case Qt::MiddleButton:
 		m_resetSelectButton->setCurrentIndex(2);
 		break;
 	}
@@ -103,7 +103,7 @@ SettingsDialog::SettingsDialog(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*
 	m_mapper->setMapping(m_setPluginPath, m_plugInPath);
 	connect(m_setRepositoryPath, SIGNAL(clicked()), m_mapper, SLOT(map()));
 	m_mapper->setMapping(m_setRepositoryPath, m_repositoryPath);
-	connect(m_mapper, SIGNAL(mapped(QWidget*)), this, SLOT(setPath(QWidget*)));
+	connect(m_mapper, &QSignalMapper::mappedObject, this, &SettingsDialog::setPath);
 	connect(m_setShaderEditor, SIGNAL(clicked()), this, SLOT(setShaderEditor()));
 	connect(m_plugInPath, SIGNAL(textChanged(const QString&)), this, SLOT(restart()));
 	connect(m_repositoryPath, SIGNAL(textChanged(const QString&)), this, SLOT(restart()));
@@ -116,7 +116,7 @@ SettingsDialog::~SettingsDialog()
 
 }
 
-void SettingsDialog::setPath(QWidget* path)
+void SettingsDialog::setPath(QObject* path)
 {
 	QLineEdit* edit = qobject_cast<QLineEdit*>(path);
 	Q_ASSERT(edit != 0);
@@ -157,7 +157,7 @@ void SettingsDialog::saveSettings()
 		settings.setValue("ResetSelectButton", Qt::RightButton);
 		break;
 	case 2:
-		settings.setValue("ResetSelectButton", Qt::MidButton);
+		settings.setValue("ResetSelectButton", Qt::MiddleButton);
 		break;
 	}
 	switch(m_cameraMoveButton->currentIndex())
@@ -169,7 +169,7 @@ void SettingsDialog::saveSettings()
 		settings.setValue("CameraMoveButton", Qt::RightButton);
 		break;
 	case 2:
-		settings.setValue("CameraMoveButton", Qt::MidButton);
+		settings.setValue("CameraMoveButton", Qt::MiddleButton);
 		break;
 	}
 	switch(m_selectButton->currentIndex())
@@ -181,7 +181,7 @@ void SettingsDialog::saveSettings()
 		settings.setValue("SelectButton", Qt::RightButton);
 		break;
 	case 2:
-		settings.setValue("SelectButton", Qt::MidButton);
+		settings.setValue("SelectButton", Qt::MiddleButton);
 		break;
 	}
 	settings.endGroup();	

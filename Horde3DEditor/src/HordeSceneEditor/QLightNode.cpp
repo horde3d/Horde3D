@@ -29,7 +29,7 @@
 #include <QXmlTree/QXmlNodePropertyCommand.h>
 #include "HordeSceneEditor.h"
 #include "AttachmentPlugIn.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "SceneTreeModel.h"
 #include "PlugInManager.h"
 
@@ -47,6 +47,8 @@ QLightNode::QLightNode(const QDomElement& xmlNode, int row, SceneTreeModel* mode
 	QSceneNode(xmlNode, row, model, parentNode), m_resourceID(0), 
                 m_debugID(0), m_debugResourceMat(0), m_debugResourceGeo(0)
 {
+	m_supportsMaterials = true; // notify other parts that node supports materials
+
 	setObjectName(tr("Light"));
 	addRepresentation();
 }
@@ -347,18 +349,21 @@ void QLightNode::setMaterial(const Material& material)
 			h3dRemoveResource(m_resourceID);
 			m_resourceID = 0;
 		}
-		if ( material.FileName.isEmpty() )
+		if (material.FileName.isEmpty())
 			m_xmlNode.removeAttribute("material");
 		else
 		{
 			m_xmlNode.setAttribute("material", material.FileName);
-			m_resourceID = h3dAddResource( H3DResTypes::Material, qPrintable(material.FileName), 0 );
+			m_resourceID = h3dAddResource(H3DResTypes::Material, qPrintable(material.FileName), 0);
 			h3dutLoadResourcesFromDisk(".");
 		}
 		h3dSetNodeParamI(m_hordeID, H3DLight::MatResI, m_resourceID);
 	}
 	else if (material != QLightNode::material())
+	{
 		m_model->undoStack()->push(new QXmlNodePropertyCommand("Set Material", this, "Material", QVariant::fromValue(material), LightMaterialID));
+		emit materialChanged(material.FileName);
+	}
 }
 
 

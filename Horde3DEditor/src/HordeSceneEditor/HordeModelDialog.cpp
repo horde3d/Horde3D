@@ -3,16 +3,34 @@
 #include "QHordeSceneEditorSettings.h"
 #include "HordeSceneEditor.h"
 #include "ColladaImporter.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "SceneFile.h"
 
 #include <QCameraNode.h>
+#include <QtWidgets/QMessageBox>
+#include <QTimer>
+#include <QtGui/QPainter>
+#include <QtGui/QImage>
 
-HordeModelDialog::HordeModelDialog(const QString& targetPath, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : HordeFileDialog(H3DResTypes::SceneGraph, targetPath, parent, flags),
+ImageDrawer::ImageDrawer( OpenGLWidget *glWidget, QWidget* parent) : QWidget( parent ), _glWidget( glWidget )
+{
+}
+
+void ImageDrawer::paintEvent(QPaintEvent * event)
+{
+	QPainter painter( this );
+	painter.drawImage( this->geometry(), _glWidget->grabFramebuffer() );
+}
+
+HordeModelDialog::HordeModelDialog(const QString& targetPath, QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : HordeFileDialog(H3DResTypes::SceneGraph, targetPath, parent, flags), m_modelPreview( 0 ),
 m_glWidget(0), m_glParentOriginal(0), m_oldCamera(0), m_envRes(0), m_oldScene(0), m_newScene(0), m_currentModel(0), m_viewCam(0)
 {
     m_editorInstance = static_cast<HordeSceneEditor*>(qApp->property("SceneEditorInstance").value<void*>());
 	m_glFrame->setLayout(new QHBoxLayout());
+
+	m_renderTimer = new QTimer(this);
+	m_renderTimer->setTimerType(Qt::PreciseTimer);
+
 	initModelViewer();
     m_importButton = new QPushButton(tr("Import Collada File"), this);
 	m_importButton->setToolTip(tr("Let you import an existing collada file into the repository!"));
@@ -30,18 +48,23 @@ m_glWidget(0), m_glParentOriginal(0), m_oldCamera(0), m_envRes(0), m_oldScene(0)
 
 HordeModelDialog::~HordeModelDialog()
 {
-	if( m_glWidget )
+	m_renderTimer->stop();
+//	disconnect( m_glWidget, SLOT( update() ) );
+
+	if( m_modelPreview )
 	{
-		m_glWidget->parentWidget()->setParent(m_glParentOriginal);
-		if( m_glParentOriginal->layout() )
-			m_glParentOriginal->layout()->addWidget(m_glWidget->parentWidget());
+		m_modelPreview->deleteLater();
+
 		if( m_oldCamera )
 			m_editorInstance->setCamera(m_oldCamera);
 		m_editorInstance->removeCamera(m_viewCam);
+
 		delete m_viewCam;
 	}
 
-	if (m_newScene)		
+	delete m_renderTimer;
+
+	if (m_newScene)
 		h3dRemoveNode(m_newScene);
 	if (m_oldScene != 0)
 		h3dSetNodeFlags(m_oldScene, 0, true );
@@ -83,8 +106,11 @@ void HordeModelDialog::importCollada()
 	importDlg.exec();	
 	m_fileList->clear();
     if ( m_editorInstance->currentScene() )
+	{
 		// Add all files already existing in the current scene
 		populateList(m_sceneResourcePath.absolutePath(), m_sceneResourcePath.absolutePath(), m_currentFilter, false);
+	}
+
 	settings.beginGroup("Repository");
 	// Add all files existing in the repository
 	populateList( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString(), QDir( settings.value("repositoryDir", DefaultRepoPath.absolutePath()).toString() ), m_currentFilter, true);
@@ -108,17 +134,12 @@ void HordeModelDialog::initModelViewer()
 		// Add new scene for model view
 		m_newScene = h3dAddGroupNode(H3DRootNode, "ModelView");		
 
-        m_glWidget = m_editorInstance->glContext();
-        /*
-         *  Note that under Windows, the QGLContext belonging to a QGLWidget has to be
-         * recreated when the QGLWidget is reparented. This is necessary due to limitations
-         * on the Windows platform. This will most likely cause problems for users that have
-         * subclassed and installed their own QGLContext on a QGLWidget. It is possible to
-         * work around this issue by putting the QGLWidget inside a dummy widget and then reparenting the
-         * dummy widget, instead of the QGLWidget. This will side-step the issue altogether, and
-         * is what we recommend for users that need this kind of functionality.
-         */
-        m_glParentOriginal = m_glWidget->parentWidget()->parentWidget();
+		m_glWidget = m_editorInstance->glContext();
+
+		// create render timer for this preview widget
+		m_modelPreview = new ImageDrawer( m_glWidget );
+		connect(m_renderTimer, SIGNAL(timeout()), m_modelPreview, SLOT(update()));
+		m_renderTimer->start( 100 ); // 10 times/second
 
 		QDomElement node = m_oldCamera->xmlNode().cloneNode().toElement();
 		m_viewCam = new QCameraNode( node, 0, 0, 0 );
@@ -145,8 +166,9 @@ void HordeModelDialog::initModelViewer()
 		h3dSetNodeParamF( light, H3DLight::ColorF3, 2, 1.0f );
 		// Remove user reference, as the light handles the reference itself now
 		if( lightMaterial ) h3dRemoveResource( lightMaterial );
-		m_glWidget->parentWidget()->setParent(m_glFrame);
-		m_glFrame->layout()->addWidget(m_glWidget->parentWidget());
+
+		m_glFrame->layout()->addWidget( m_modelPreview );
+
 		m_glWidget->setNavigationSpeed(10.0);
 		m_editorInstance->setCamera(m_viewCam);
 	}
@@ -274,7 +296,7 @@ QString HordeModelDialog::getModelFile(const QString& targetPath, QWidget* paren
 void HordeModelDialog::accept()
 {
     // We don't release the unused resources, to allow reusing already loaded data without the need to reload it later
-   releaseModel(false);
+	releaseModel(false);
     HordeFileDialog::accept();
 }
 

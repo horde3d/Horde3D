@@ -585,7 +585,7 @@ bool ShaderParser::parseBinaryContextShaderCombs( char *&data, uint32 shaderComb
             data = elemcpy_le( combinationShaderData, (uint8*)( data ), combinationShaderSize );
             
             bin.combinationId = currentShaderComb;
-            bin.combinationShadersLeft = combinationShaderCount - combShader - 1;
+            bin.combinationShadersLeft = combinationShaderCount - (uint16) combShader - 1;
             bin.contextId = combinationContextId;
             bin.shaderType = combinationShaderType;
             bin.dataSize = combinationShaderSize;

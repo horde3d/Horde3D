@@ -35,7 +35,7 @@
 #include "QGroupNode.h"
 #include "QEmitterNode.h"
 
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 #include "MiscToolBar.h"
 #include "CameraToolBar.h"
 
@@ -62,11 +62,15 @@
 #include <QtCore/QUrl>
 #include <QtCore/QPluginLoader>
 #include <QtCore/QLibrary>
+#include <QtGui/QSurfaceFormat>
 
 #include "SceneFile.h"
 
 #include <Horde3D.h>
 #include <Horde3DUtils.h>
+
+#include <thread>
+#include <chrono>
 
 HordeSceneEditor::HordeSceneEditor(QWidget* parent /*= 0*/, Qt::WindowFlags flags /*= 0*/) : QMainWindow(parent, flags), 
 m_sceneFile(0), m_glWidget(0)
@@ -77,14 +81,6 @@ m_sceneFile(0), m_glWidget(0)
     qApp->setProperty("DefaultRepoDir", QDir(QApplication::applicationDirPath()+"/../../Content").absolutePath());
 
     setupUi(this);
-
-
-	// Set default GL Format
-	QGLFormat fmt;
-	fmt.setAlpha(true);
-	fmt.setDepth(true);
-	fmt.setDepthBufferSize(32);
-	QGLFormat::setDefaultFormat(fmt);
 
 	// Add FPS label to status bar
 	m_fpsLabel = new QLabel(this);
@@ -335,9 +331,10 @@ void HordeSceneEditor::sceneCreated()
 		loadScreen.showMessage(tr("Opening Scene"), Qt::AlignLeft, Qt::white);
 		QApplication::processEvents();
 		// set pipeline.xml
-		loadScreen.showMessage(tr("Creating OpenGL Context"), Qt::AlignLeft, Qt::white);        
-		m_glFrame->setVisible( true );	
-		m_glWidget = new GLWidget(m_fpsLabel, m_glFrame, 0);
+		loadScreen.showMessage(tr("Creating OpenGL Context"), Qt::AlignLeft, Qt::white);
+
+		m_glFrame->setVisible( true );
+		m_glWidget = new OpenGLWidget(m_fpsLabel, m_glFrame, (Qt::WindowFlags) 0);
 		connect(m_actionFullscreen, SIGNAL(toggled(bool)), m_glWidget, SLOT(setFullScreen(bool)));
 		connect(m_actionDebugView, SIGNAL(triggered(bool)), m_glWidget, SLOT(enableDebugView(bool)));
 		connect(m_actionRenderBB, SIGNAL(triggered(bool)), m_glWidget, SLOT(setAABBEnabled(bool)));
@@ -348,6 +345,7 @@ void HordeSceneEditor::sceneCreated()
 		connect(m_glWidget, SIGNAL(moveObject(const float, const float, const float)), m_nodeWidget, SLOT(moveObject(const float, const float, const float)));
 		connect(m_glWidget, SIGNAL(rotateObject(const float, const float, const float)), m_nodeWidget, SLOT(rotateObject(const float, const float, const float)));
 		connect(m_glWidget, SIGNAL(scaleObject(const float, const float, const float)), m_nodeWidget, SLOT(scaleObject(const float, const float, const float)));
+		connect(m_glWidget, SIGNAL(transformObject(const QMatrix4f)), m_nodeWidget, SLOT(transformObject(const QMatrix4f)));
 		connect(m_glWidget, SIGNAL(logMessages(const QList<QListWidgetItem*>&)), this, SLOT(updateLog(const QList<QListWidgetItem*>&)));
 		connect(m_glWidget, SIGNAL(statusMessage(const QString&, int)), m_statusBar, SLOT(showMessage(const QString&, int)));
 		connect(m_glWidget, SIGNAL(nodeSelected(int)), m_sceneTreeWidget, SLOT(selectNode(int)));
@@ -355,8 +353,15 @@ void HordeSceneEditor::sceneCreated()
 		connect(m_glWidget, SIGNAL(resized(int, int)), m_cameraToolBar, SLOT(viewportResized(int,int)));
 		connect(m_sceneTreeWidget, SIGNAL(currentNodeChanged(QXmlTreeNode*)), m_glWidget, SLOT(setCurrentNode(QXmlTreeNode*)));
 		connect(m_sceneTreeWidget, SIGNAL(nodeAboutToChange()), m_glWidget, SLOT(resetMode()));
+
 		// ensure initialization of Horde3D before we start loading resources
-		m_glWidget->show();
+		QWidget *containerWidget = QWidget::createWindowContainer( m_glWidget );
+		m_glWidget->setContainerWidget( containerWidget );
+		m_glFrame->layout()->addWidget( containerWidget );
+		containerWidget->show();
+		containerWidget->setVisible( true );
+		QApplication::processEvents();
+
 		if ( !m_glWidget->isInitialized() )
 		{
 			closeScene();
@@ -370,7 +375,6 @@ void HordeSceneEditor::sceneCreated()
 		m_glWidget->setBaseGridEnabled(m_actionRenderBaseGrid->isChecked());
 		// set collision check settings	
 		m_glWidget->setCollisionCheck(m_actionCollisionCheck->isChecked());
-		m_glFrame->layout()->addWidget(m_glWidget);	
 		setWindowTitle(m_sceneFile->absoluteSceneFilePath()+"[*]");
 		loadScreen.showMessage(tr("Setting pathes"), Qt::AlignLeft, Qt::white);
 		// set engine directories and options
@@ -412,13 +416,17 @@ void HordeSceneEditor::sceneCreated()
 			// enable lua bindings
 			m_luaWidget->setScene(m_sceneFile);
 			// update log after showing the scene tree (to ensure that all items have been loaded)		
-			connect(m_renderTimer, SIGNAL(timeout()), m_glWidget, SLOT(updateGL()));
+			connect(m_renderTimer, SIGNAL(timeout()), m_glWidget, SLOT(update()));
 			m_renderTimer->start(m_miscToolBar->m_fpsSettings->value() > 0 ? 1000/m_miscToolBar->m_fpsSettings->value() : 0);
-			m_glWidget->setFocus(Qt::ActiveWindowFocusReason);
-			m_cameraToolBar->setActiveCamera(m_sceneFile->activeCam());
+//			m_glWidget->setFocus(Qt::ActiveWindowFocusReason);
+
+			containerWidget->setFocus();
+				m_cameraToolBar->setActiveCamera(m_sceneFile->activeCam());
+
 			// Hacky workaround for rendering bug in empty scenes (probably some initialization issues in case no geometry is drawn)
-			m_glWidget->enableDebugView( true );	
-			m_glWidget->updateGL();
+			m_glWidget->enableDebugView( true );
+			m_glWidget->update();
+			QApplication::processEvents();
 			m_glWidget->enableDebugView( false );
 		}
 		else
@@ -491,7 +499,7 @@ void HordeSceneEditor::saveSceneAs()
 	if (fileName.isEmpty())
 		return;
 
-	m_sceneFile->saveAs(fileName);	
+	m_sceneFile->saveAs( QFileInfo( fileName ) );
 	setWindowTitle(m_sceneFile->sceneFileName()+"[*]");
 	setWindowModified(false);
 	updateFileSystemWatcher();
@@ -508,7 +516,7 @@ bool HordeSceneEditor::closeScene()
 			this, 
 			tr("Save changes?"), 
 			tr("The file has been changed! Save changes?"), 
-			QMessageBox::Yes | QMessageBox::Default, QMessageBox::No, QMessageBox::Cancel | QMessageBox::Escape);
+			QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel, QMessageBox::Yes );
 		switch (result)
 		{
 		case QMessageBox::Yes:
@@ -542,9 +550,18 @@ bool HordeSceneEditor::closeScene()
 	// delete the scene file instance
 	delete m_sceneFile;
 	m_sceneFile = 0;
+
 	// delete the gl context
-	delete m_glWidget;
-	m_glWidget = 0;
+	QWidget *containerWidget = m_glWidget->getContainerWidget();
+	if ( containerWidget )
+	{
+		m_glFrame->layout()->removeWidget( containerWidget );
+		delete containerWidget;
+		containerWidget = nullptr;
+	}
+
+	m_glWidget = nullptr;
+
 	// update the actions and menus to avoid invalid operations on not existing scene
 	updateMenus();
 	// reset window title
@@ -560,7 +577,7 @@ void HordeSceneEditor::cleanScene()
 		tr("Cleaning scene will first save the current scene and then remove ALL files below the scene file directory" 
 		   "\n\"%1\"\n"
 		   "not referenced by the scene file!\n\nDo you really want to clean the scene?").arg(QFileInfo(m_sceneFile->absoluteSceneFilePath()).absolutePath()), 
-		QMessageBox::Yes | QMessageBox::Default , QMessageBox::No | QMessageBox::Escape) != QMessageBox::Yes)
+		QMessageBox::Yes | QMessageBox::No , QMessageBox::Yes ) != QMessageBox::Yes)
 		return;
 	QApplication::setOverrideCursor(Qt::BusyCursor);
 	saveScene();
@@ -577,20 +594,20 @@ void HordeSceneEditor::updateLog(QListWidgetItem* item, bool scroll /* = true*/)
 	{
 	case 1:
 		item->setText(tr("Error: ") + item->text());
-		item->setTextColor(QColor("#EE1100"));	
+		item->setForeground(QColor("#EE1100"));
 		item->setHidden(!m_actionLogShowErrors->isChecked());
 		break;
 	case 2:
 		item->setText(tr("Warning: ") + item->text());
-		item->setTextColor(QColor("#FFCC00"));
+		item->setForeground(QColor("#FFCC00"));
 		item->setHidden(!m_actionLogShowWarnings->isChecked());
 		break;
 	case 3:
-		item->setTextColor(QColor("#C0C0C0"));
+		item->setForeground(QColor("#C0C0C0"));
 		item->setHidden(!m_actionLogShowInfo->isChecked());
 		break;
 	case 4:
-		item->setTextColor(QColor("#CC8080"));
+		item->setForeground(QColor("#CC8080"));
 		item->setHidden(!m_actionLogShowDebug->isChecked());
 		break;
 	}
@@ -666,7 +683,8 @@ void HordeSceneEditor::updateMenus()
 	m_menuScene->setEnabled(m_sceneFile != 0);
 	m_menuEdit->setEnabled(m_sceneFile != 0);
 	m_menuView->setEnabled(m_sceneFile != 0);
-	m_glFrame->setVisible( m_sceneFile != 0 );	
+	m_glFrame->setVisible( m_sceneFile != 0 );
+
 	m_cameraToolBarAction->setVisible(m_sceneFile!=0);
 	m_miscToolBarAction->setVisible(m_sceneFile!=0);
 	m_cameraToolBar->setEnabled(m_sceneFile!=0);
@@ -674,6 +692,8 @@ void HordeSceneEditor::updateMenus()
 	m_menuExtras->setEnabled( !m_menuExtras->actions().isEmpty() );
 	m_sceneTreeWidget->m_extraTreeView->setEnabled( !m_menuExtras->actions().isEmpty() );
 	settings.endGroup();
+
+//	QApplication::processEvents();
 }
 
 
@@ -755,7 +775,10 @@ void HordeSceneEditor::configure()
 			stack->setUndoLimit(limit);		
 		if( !m_styleSystemWatcher->files().empty() )
 			m_styleSystemWatcher->removePaths( m_styleSystemWatcher->files() );
-		QFileInfo style = QApplication::applicationDirPath()+QDir::separator()+"Styles"+QDir::separator()+settings.value("Style", "default.qss").toString();
+
+		QString stylePath = QApplication::applicationDirPath() + QDir::separator() + "Styles" + QDir::separator() + settings.value("Style", "default.qss").toString();
+		QFileInfo style = QFileInfo( stylePath );
+
 		if( style.exists() )
 			m_styleSystemWatcher->addPath( style.absoluteFilePath() );					
 		loadStyle( style.absoluteFilePath() );
@@ -830,7 +853,7 @@ void HordeSceneEditor::fileChanged(const QString& path)
 		// Mark it invalid
 		h3dUnloadResource(resource);
 		QListWidgetItem* item = new QListWidgetItem(tr("Reloading resource: %1").arg(path), m_logWidget);
-		item->setTextColor(QColor("#22CC22"));		
+		item->setForeground(QColor("#22CC22"));
 		// Reload it again
 		h3dutLoadResourcesFromDisk(".");
 		// If it's a pipeline check if we have to update the pipeline view
@@ -901,25 +924,25 @@ void HordeSceneEditor::setTransformationMode(int mode /*= -1*/)
 	case -1:
 		{					
 			if (m_actionMoveObject->isChecked())
-				m_glWidget->setTransformationMode(GLWidget::MoveObject);				
+				m_glWidget->setTransformationMode(OpenGLWidget::MoveObject);
 			else if (m_actionRotateObject->isChecked())
-				m_glWidget->setTransformationMode(GLWidget::RotateObject);
+				m_glWidget->setTransformationMode(OpenGLWidget::RotateObject);
 			else if (m_actionScaleObject->isChecked())
-				m_glWidget->setTransformationMode(GLWidget::ScaleObject);
+				m_glWidget->setTransformationMode(OpenGLWidget::ScaleObject);
 			else 
-				m_glWidget->setTransformationMode(GLWidget::None);			
+				m_glWidget->setTransformationMode(OpenGLWidget::None);
 		}
 		break;
-	case GLWidget::MoveObject:
+	case OpenGLWidget::MoveObject:
 		m_actionMoveObject->setChecked(true);
 		break;
-	case GLWidget::RotateObject:
+	case OpenGLWidget::RotateObject:
 		m_actionRotateObject->setChecked(true);
 		break;
-	case GLWidget::ScaleObject:
+	case OpenGLWidget::ScaleObject:
 		m_actionScaleObject->setChecked(true);
 		break;
-	case GLWidget::None:
+	case OpenGLWidget::None:
 		m_actionDummyMode->setChecked(true);
 		break;
 	}
