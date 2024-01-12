@@ -59,7 +59,7 @@ typedef enum { false, true } bool;
 /*	Constants: Predefined constants
 	H3DUTMaxStatMode  - Maximum stat mode number supported in showFrameStats
 */
-const int H3DUTMaxStatMode = 2;
+#define H3DUTMaxStatMode 2
 
 
 /*	Group: General functions */
