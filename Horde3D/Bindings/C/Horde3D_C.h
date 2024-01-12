@@ -66,7 +66,7 @@ typedef int H3DNode;
 /*	Constants: Predefined constants
 	H3DRootNode  - Scene root node handle
 */
-const H3DNode H3DRootNode = 1;
+#define H3DRootNode 1
 
 /* Group: Enumerations */
 
