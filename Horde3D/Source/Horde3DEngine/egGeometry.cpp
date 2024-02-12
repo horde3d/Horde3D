@@ -535,11 +535,30 @@ int GeometryResource::getElemParamI( int elem, int elemIdx, int param ) const
 			return _16BitIndices ? 1 : 0;
 		case GeometryResData::GeoVertexCountI:
 			return (int)_vertCount;
+		case GeometryResData::GeoMorphTargetCountI:
+			return (int)_morphTargets.size();
 		}
 		break;
 	}
 	
 	return Resource::getElemParamI( elem, elemIdx, param );
+}
+
+
+const char *GeometryResource::getElemParamStr( int elem, int elemIdx, int param ) const
+{
+	switch( elem )
+	{
+	case GeometryResData::GeometryElem:
+		switch( param )
+		{
+		case GeometryResData::GeoMorphTargetNameStr:
+			return elemIdx >= _morphTargets.size() ? "" : _morphTargets[ elemIdx ].name.c_str();
+		}
+		break;
+	}
+
+	return Resource::getElemParamStr( elem, elemIdx, param );
 }
 
 

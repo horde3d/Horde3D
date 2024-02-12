@@ -319,15 +319,17 @@ typedef int H3DNode;
 	/* typedef enum: H3DGeoRes
 			The available Geometry resource accessors.
 		
-		GeometryElem         - Base element
-		GeoIndexCountI       - Number of indices [read-only]
-		GeoVertexCountI      - Number of vertices [read-only]
-		GeoIndices16I        - Flag indicating whether index data is 16 or 32 bit [read-only]
-		GeoIndexStream       - Triangle index data (uint16 or uint32, depending on flag)
-		GeoVertPosStream     - Vertex position data (float x, y, z)
-		GeoVertTanStream     - Vertex tangent frame data (float nx, ny, nz, tx, ty, tz, tw)
-		GeoVertStaticStream  - Vertex static attribute data (float u0, v0,
-		                         float4 jointIndices, float4 jointWeights, float u1, v1)
+		GeometryElem         	- Base element
+		GeoIndexCountI       	- Number of indices [read-only]
+		GeoVertexCountI      	- Number of vertices [read-only]
+		GeoIndices16I        	- Flag indicating whether index data is 16 or 32 bit [read-only]
+		GeoIndexStream       	- Triangle index data (uint16 or uint32, depending on flag)
+		GeoVertPosStream     	- Vertex position data (float x, y, z)
+		GeoVertTanStream     	- Vertex tangent frame data (float nx, ny, nz, tx, ty, tz, tw)
+		GeoVertStaticStream  	- Vertex static attribute data (float u0, v0,
+		                          float4 jointIndices, float4 jointWeights, float u1, v1)
+		GeoMorphTargetCountI 	- Number of morph targets [read-only]
+		GeoMorphTargetNameStr	- Name of the requested morph target [read-only]
 	*/
 	typedef enum H3DGeoRes
 	{
@@ -338,7 +340,9 @@ typedef int H3DNode;
 		H3D_GeoRes_GeoIndexStream,
 		H3D_GeoRes_GeoVertPosStream,
 		H3D_GeoRes_GeoVertTanStream,
-		H3D_GeoRes_GeoVertStaticStream
+		H3D_GeoRes_GeoVertStaticStream,
+		H3D_GeoRes_GeoMorphTargetCountI,
+		H3D_GeoRes_GeoMorphTargetNameStr
 	}H3DGeoRes;
 
 

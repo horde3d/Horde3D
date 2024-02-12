@@ -36,7 +36,9 @@ struct GeometryResData
 		GeoIndexStream,
 		GeoVertPosStream,
 		GeoVertTanStream,
-		GeoVertStaticStream
+		GeoVertStaticStream,
+		GeoMorphTargetCountI,
+		GeoMorphTargetNameStr
 	};
 };
 
@@ -98,6 +100,8 @@ public:
 
 	int getElemCount( int elem ) const;
 	int getElemParamI( int elem, int elemIdx, int param ) const;
+	const char *getElemParamStr( int elem, int elemIdx, int param ) const override;
+
 	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
 	void unmapStream();
 
