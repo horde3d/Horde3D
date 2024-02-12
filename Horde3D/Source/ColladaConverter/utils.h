@@ -29,7 +29,8 @@ std::string extractFileName( const std::string &fullPath, bool extension );
 std::string extractFilePath( const std::string &fullPath );
 std::string cleanPath( const std::string &path );
 
-void log( const std::string &msg );
+void log( const std::string &msg, bool verboseMessage = false );
+void logSetVerbose( bool verbose );
 
 Matrix4f makeMatrix4f( float *floatArray16, bool y_up );
 

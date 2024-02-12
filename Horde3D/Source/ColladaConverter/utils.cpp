@@ -30,6 +30,7 @@ using namespace std;
 namespace Horde3D {
 namespace ColladaConverter {
 
+static bool logVerbose = false;
 
 void removeGate( string &s )
 {
@@ -116,14 +117,36 @@ string cleanPath( const string &path )
 }
 
 
-void log( const std::string &msg )
+void log( const std::string &msg, bool verboseMessage )
 {
-	cout << msg << endl;
-	
-#ifdef PLATFORM_WIN
-	OutputDebugString( msg.c_str() );
-	OutputDebugString( "\r\n" );
-#endif
+	if ( verboseMessage )
+	{
+		if ( logVerbose )
+		{
+			cout << msg << endl;
+
+		#ifdef PLATFORM_WIN
+			OutputDebugString( msg.c_str() );
+			OutputDebugString( "\r\n" );
+		#endif
+		}
+	}
+	else
+	{
+		cout << msg << endl;
+
+	#ifdef PLATFORM_WIN
+		OutputDebugString( msg.c_str() );
+		OutputDebugString( "\r\n" );
+	#endif
+	}
+}
+
+
+void logSetVerbose( bool verbose )
+{
+	logVerbose = verbose;
+
 }
 
 
