@@ -58,7 +58,7 @@ You need to have a C++11 compiler and [CMake 3.7+](http://www.cmake.org/) instal
 
 ### Build samples
 
-In order to build the samples you need [GLFW](http://www.glfw.org/download.html) *(>3.x)* or [SDL](https://www.libsdl.org/download-2.0.php) *(>=2.0.9)*.
+In order to build the samples you need [GLFW](http://www.glfw.org/download.html) *(>3.x)* or [SDL](https://github.com/libsdl-org/SDL/releases) *(>=2.0.10)*.
 
 By default, if not present on the system, a default version will be automatically downloaded, built and linked for you.
 
