@@ -1232,6 +1232,9 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 		outf << "\t<!-- Morph targets: ";
 		for( unsigned int i = 0; i < _morphTargets.size(); ++i )
 		{
+			char msg[1024];
+			sprintf( msg, "Added Morph target: '%s'",  _morphTargets[i].name);
+			log( msg, true );
 			outf << "\"" << _morphTargets[i].name << "\" ";
 		}
 		outf << "-->\n\n";
