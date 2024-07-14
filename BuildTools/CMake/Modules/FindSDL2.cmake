@@ -79,12 +79,33 @@ SET(SDL2_SEARCH_PATHS
 	${SDL2_PATH}
 )
 
+SET(SDL2_PATH_SUFFIXES
+	include/SDL2
+	include
+)
+
+IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten" )
+	# emscripten has a build-in SDL2
+	set(SDL2_SEARCH_PATHS
+		${EMSCRIPTEN_ROOT_PATH}/system/include
+	)
+
+	SET(SDL2_PATH_SUFFIXES
+		SDL
+	)
+ENDIF()
+
+message(STATUS "DEBUG: ${SDL2_SEARCH_PATHS}")
+
+
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
 	HINTS
 	$ENV{SDL2DIR}
-	PATH_SUFFIXES include/SDL2 include
+	PATH_SUFFIXES ${SDL2_PATH_SUFFIXES}
 	PATHS ${SDL2_SEARCH_PATHS}
 )
+
+message(STATUS "DEBUG: ${SDL2_INCLUDE_DIR}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8) 
 	set(PATH_SUFFIXES lib64 lib/x64 lib)
@@ -166,6 +187,13 @@ IF(SDL2_LIBRARY_TEMP)
 	SET(SDL2_LIBRARY_TEMP "${SDL2_LIBRARY_TEMP}" CACHE INTERNAL "")
 ENDIF(SDL2_LIBRARY_TEMP)
 
+
+IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten" )
+	# emscripten has a build-in SDL2. So just point to 'sdl2'
+	IF(NOT SDL2_LIBRARY)
+		SET(SDL2_LIBRARY sdl2)
+	ENDIF ()
+ENDIF()
 
 IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	# Download SDL sources and build it ourselves
@@ -264,6 +292,11 @@ ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 	# SDL is built somewhere else, use the prebuilt library
 
 	INCLUDE(FindPackageHandleStandardArgs)
+
+
+	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten" )
+		# Emscripten has SDL2 included
+	ENDIF()
 
 	FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
 
