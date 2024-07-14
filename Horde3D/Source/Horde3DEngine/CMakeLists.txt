@@ -101,7 +101,7 @@ endif (USE_GLES3)
 if ( USE_NULL )
 
 	set( H3D_USE_NULL 1 )
-	
+
     list(APPEND HORDE3D_SOURCES "egRendererBaseNull.h")
 	list(APPEND HORDE3D_SOURCES "egRendererBaseNull.cpp")
 endif( USE_NULL )
@@ -205,4 +205,9 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 
 	target_link_libraries(Horde3D ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
 	target_link_libraries(Horde3D "-framework OpenGLES")
+endif()
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+	# just make sure the extension libs are linked
+	target_link_libraries(Horde3D ${HORDE3D_EXTENSION_LIBS})
 endif()

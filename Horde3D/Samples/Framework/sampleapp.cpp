@@ -25,6 +25,10 @@
 #include <chrono>
 #include <array>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include "utPlatform.h"
 #include "config.h"
 
@@ -513,7 +517,7 @@ int SampleApplication::run()
 #ifdef __EMSCRIPTEN__
 	const int simulate_infinite_loop = 1; // call the function repeatedly
 	const int fps = -1; // call the function as fast as the browser wants to render (typically 60fps)
-	emscripten_set_main_loop_arg( mainloop, this, fps, simulate_infinite_loop );
+	emscripten_set_main_loop_arg( mainLoop, this, fps, simulate_infinite_loop );
 #else
 	while ( _running )
 	{

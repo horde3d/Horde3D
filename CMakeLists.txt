@@ -19,7 +19,7 @@ check_function_exists(strncpy_s HAVE_STRNCPY_S)
 # To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
 
-# Specifies whether to build tests 
+# Specifies whether to build tests
 option(HORDE3D_BUILD_TESTS "Build Horde3D unit and integration tests" OFF)
 
 # Check the required windowing backend
@@ -55,7 +55,14 @@ if(HORDE3D_BUILD_EXAMPLES)
             set( HORDE3D_FORCE_DOWNLOAD_SDL OFF )
         endif()
 
-        find_package(SDL2)
+        IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten" )
+            add_definitions( "--use-port=sdl2" ) # With this flag emscripten itself will handle the rest, including include-directories and linking
+            add_link_options( "--use-port=sdl2" )
+            set(SDL2_FOUND TRUE)
+        ELSE()
+            find_package(SDL2)
+        ENDIF()
+
         IF(SDL2_FOUND)
             include_directories(${SDL2_INCLUDE_DIR})
         ENDIF(SDL2_FOUND)
