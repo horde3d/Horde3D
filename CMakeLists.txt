@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.14) # Native support for Android in CMAKE requi
 # Project details.
 project(Horde3D)
 
+set(CMAKE_VERBOSE_MAKEFILE on)
+
 set(CMAKE_CXX_STANDARD 11)
 
 SET(${PROJECT_NAME}_MAJOR_VERSION 2)
@@ -52,7 +54,14 @@ if(HORDE3D_BUILD_EXAMPLES)
             set( HORDE3D_FORCE_DOWNLOAD_SDL OFF )
         endif()
 
-        find_package(SDL2)
+        IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten" )
+            add_definitions( "--use-port=sdl2" ) # With this flag emscripten itself will handle the rest, including include-directories and linking
+            add_link_options( "--use-port=sdl2" )
+            set(SDL2_FOUND TRUE)
+        ELSE()
+            find_package(SDL2)
+        ENDIF()
+
         IF(SDL2_FOUND)
             include_directories(${SDL2_INCLUDE_DIR})
         ENDIF(SDL2_FOUND)

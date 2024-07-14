@@ -421,7 +421,9 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	{
 		// Currently force to landscape mode
 //		SDL_SetHint( SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight" );
+#ifdef SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH
 		SDL_SetHint( SDL_HINT_ANDROID_SEPARATE_MOUSE_AND_TOUCH, "1" );
+#endif
         SDL_SetHint( SDL_HINT_TOUCH_MOUSE_EVENTS, "0" );
 	}
 
