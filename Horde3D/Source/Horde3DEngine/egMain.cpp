@@ -121,6 +121,7 @@ H3D_IMPL void h3dRelease()
 }
 
 
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 H3D_IMPL void h3dCompute( int materialRes, const char *context, int groupX, int groupY, int groupZ )
 {
 	Resource *res = Modules::resMan().resolveResHandle( materialRes );
@@ -134,7 +135,7 @@ H3D_IMPL void h3dCompute( int materialRes, const char *context, int groupX, int 
 
 	Modules::renderer().dispatchCompute( ( MaterialResource * ) res, safeStr( context, 0 ), groupX, groupY, groupZ );
 }
-
+#endif
 
 H3D_IMPL void h3dRender( NodeHandle cameraNode )
 {

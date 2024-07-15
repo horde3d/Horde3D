@@ -151,6 +151,19 @@ IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
     set(HORDE3D_USE_GLES3 ON CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
 ENDIF()
 
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+    # WebGL Only support OpenGL ES
+    set(USE_GLES3 TRUE)
+    set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GLES3 ON CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
+
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    # add_definitions( "-sFULL_ES3" )
+    add_link_options( "-sFULL_ES3" )
+endif()
+
 IF(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup ")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)

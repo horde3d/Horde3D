@@ -1,10 +1,13 @@
 #!/bin/bash
-cd "$(dirname "$0")" || exit 1
+cd "$(dirname "$0")"
 source_dir=$(pwd)
-build_dir=/build
+build_dir="$1"
 
-mkdir "${build_dir}"
+if [ ! -z "${build_dir}" ]; then
+  rm -rdf "${build_dir}/*"
+fi
+
 cd "${build_dir}" || exit 1
 emcmake cmake "${source_dir}"
 
-emmake make Knight
+emmake make -j4 Knight
