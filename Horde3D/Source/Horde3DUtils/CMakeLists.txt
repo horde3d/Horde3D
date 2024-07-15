@@ -3,7 +3,7 @@ include_directories(../Shared)
 include_directories(../../Bindings/C++)
 
 # For all platforms except iOS, engine is built as shared library
-if (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+if (${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
 	add_library(Horde3DUtils STATIC
 		main.cpp
 		../../Bindings/C++/Horde3DUtils.h

@@ -922,6 +922,7 @@ H3D_API bool h3dInit( H3DRenderDevice::List deviceType );
 */
 H3D_API void h3dRelease();
 
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 /* Function: h3dCompute
 		Asynchronous processing of arbitrary data on GPU.
 
@@ -942,6 +943,7 @@ H3D_API void h3dRelease();
 		nothing
 */
 H3D_API void h3dCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
+#endif
 
 /* Function: h3dRender
 		Main rendering function.

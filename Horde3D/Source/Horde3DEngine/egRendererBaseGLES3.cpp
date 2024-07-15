@@ -1423,7 +1423,8 @@ int RenderDeviceGLES3::getShaderSamplerLoc( uint32 shaderId, const char *name )
 
 int RenderDeviceGLES3::getShaderBufferLoc( uint32 shaderId, const char *name )
 {
-	if ( _caps.computeShaders )
+#ifndef __EMSCRIPTEN__
+    if ( _caps.computeShaders )
 	{
 		RDIShaderGLES3 &shader = _shaders.getRef( shaderId );
 		int idx = glGetProgramResourceIndex( shader.oglProgramObj, GL_SHADER_STORAGE_BLOCK, name );
@@ -1440,6 +1441,11 @@ int RenderDeviceGLES3::getShaderBufferLoc( uint32 shaderId, const char *name )
 
 		return -1;
 	}
+#else
+    Modules::log().writeError( "Shader storage buffers are not supported on this device." );
+
+    return -1;
+#endif
 }
 
 
@@ -1501,10 +1507,14 @@ const char *RenderDeviceGLES3::getDefaultFSCode()
 
 void RenderDeviceGLES3::runComputeShader( uint32 shaderId, uint32 xDim, uint32 yDim, uint32 zDim )
 {
-	bindShader( shaderId );
+#ifndef __EMSCRIPTEN__
+    bindShader( shaderId );
 
 	if ( commitStates( ~PM_GEOMETRY ) )
 		glDispatchCompute( xDim, yDim, zDim );
+#else
+    Modules::log().writeError( "runComputeShader failed. Computer shaders are not supported on WebGL" );
+#endif
 }
 
 // =================================================================================================
@@ -2331,11 +2341,13 @@ bool RenderDeviceGLES3::commitStates( uint32 filter )
 		}
 
 		// Place memory barriers
+#ifndef __EMSCRIPTEN__
 		if ( mask & PM_BARRIER )
 		{
 			if ( _memBarriers != NotSet ) glMemoryBarrier( memoryBarrierType[ ( uint32 ) _memBarriers - 1 ] );
 			_pendingMask &= ~PM_BARRIER;
 		}
+#endif
 
 		// Bind storage buffers
 		if ( mask & PM_COMPUTE )

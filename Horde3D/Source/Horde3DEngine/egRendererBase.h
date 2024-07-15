@@ -925,8 +925,11 @@ public:
 	      _pendingMask |= PM_TEXTURES; }
 // 	void setTextureBuffer( uint32 bufObj )
 // 	{	_curTextureBuf = bufObj; _pendingMask |= PM_TEXTUREBUFFER; }
+
+#ifndef __EMSCRIPTEN__ // 'glMemoryBarrier' not available under emscripten
 	void setMemoryBarrier( RDIDrawBarriers barrier )
 	{	_memBarriers = barrier; _pendingMask |= PM_BARRIER; }
+#endif
 	void setStorageBuffer( uint8 slot, uint32 bufObj )
 	{	_delegate_setStorageBuffer.invoke( slot, bufObj ); }
 
@@ -1023,7 +1026,9 @@ protected:
 		PM_SCISSOR       = 0x00000010,
 		PM_RENDERSTATES  = 0x00000020,
 		PM_GEOMETRY		 = 0x00000040,
+#ifndef __EMSCRIPTEN__ // 'glMemoryBarrier' not available under emscripten
 		PM_BARRIER		 = 0x00000080,
+#endif
 		PM_COMPUTE		 = 0x00000100
 	};
 
