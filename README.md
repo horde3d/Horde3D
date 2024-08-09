@@ -160,7 +160,7 @@ __On linux__, the whole process should look like this (once emscripten is activa
 mkdir build
 cd build
 emcmake cmake ../
-emmake make -j4 Knight
+emmake make -j4
 ```
 
 #### Result
