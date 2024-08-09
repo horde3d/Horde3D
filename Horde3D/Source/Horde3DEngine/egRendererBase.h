@@ -1026,9 +1026,7 @@ protected:
 		PM_SCISSOR       = 0x00000010,
 		PM_RENDERSTATES  = 0x00000020,
 		PM_GEOMETRY		 = 0x00000040,
-#ifndef __EMSCRIPTEN__ // 'glMemoryBarrier' not available under emscripten
 		PM_BARRIER		 = 0x00000080,
-#endif
 		PM_COMPUTE		 = 0x00000100
 	};
 

@@ -36,6 +36,11 @@ elseif(HORDE3D_USE_SDL)
     endif()
 endif()
 
+# embed assets when building for web
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+    target_compile_definitions(SampleFramework PRIVATE -DEXAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER="${PROJECT_SOURCE_DIR}/Horde3D/Binaries/Content")
+endif()
+
 # Sample framework should see generated config to get supported renderers
 include_directories( ${CMAKE_BINARY_DIR} )
 

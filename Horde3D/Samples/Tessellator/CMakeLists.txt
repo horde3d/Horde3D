@@ -60,7 +60,18 @@ elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
                                     "-framework CoreMotion" "-framework CoreVideo" "-framework Foundation"
                                     "-framework GameController" "-framework QuartzCore" "-framework UiKit"
                                     "-framework Metal" "-framework OpenGLES")
-    
+
+elseif( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+    add_executable(Tessellator
+            app.cpp
+            main.cpp
+    )
+    # note: When using Horde3D for you own project, it would be advised to also save the value "${PROJECT_BINARY_DIR}/Binaries/Content" somewhere in a definition.
+    #   For example: 'add_definitions(-DHORDE3D_CONTENT_FOLDER="${PROJECT_BINARY_DIR}/Binaries/Content")'.
+    #   So that you can just call 'h3dutLoadResourcesFromDisk(HORDE3D_CONTENT_FOLDER)' in your cpp file.
+    # The 'Framework' library project, that these examples depend on, does this as well with 'EXAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER'.
+    target_link_options(Tessellator PRIVATE --preload-file "${PROJECT_SOURCE_DIR}/Horde3D/Binaries/Content") # do not use '${PROJECT_BINARY_DIR}/Binaries/Content'. The contents does not exist when embedding it appears.
+
 else()
     # Desktop platforms
     add_executable(Tessellator WIN32 MACOSX_BUNDLE
