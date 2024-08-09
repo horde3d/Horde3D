@@ -64,7 +64,11 @@ std::string extractResourcePath( char *fullPath )
 #else
     const unsigned int nbRfind = 1;
 #endif
-   
+
+#ifdef PLATFORM_EMSCRIPTEN
+    return EXAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER;
+#endif
+
 #if defined( PLATFORM_ANDROID ) || defined( PLATFORM_IOS )
     // Android: Currently all assets are inside the apk in assets/Content folder. SDL searches in assets folder automatically.
     // IOS: Content folder should be at the top of the bundle

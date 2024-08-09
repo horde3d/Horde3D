@@ -154,14 +154,20 @@ ENDIF()
 
 if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
     # WebGL Only support OpenGL ES
+    set(HORDE3D_EMSCRIPTEN_STACK_SIZE 524288 CACHE STRING "emscripten stack size (-sSTACKSIZE=...)")
+    if(NOT HORDE3D_EMSCRIPTEN_STACK_SIZE)
+        set(HORDE3D_EMSCRIPTEN_STACK_SIZE 524288)
+    endif()
+
     set(USE_GLES3 TRUE)
     set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
     set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
     set(HORDE3D_USE_GLES3 ON CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
 
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
-    # add_definitions( "-sFULL_ES3" )
-    add_link_options( "-sFULL_ES3" )
+
+    add_link_options( -sFULL_ES3 )
+    add_link_options( -sSTACK_SIZE=${HORDE3D_EMSCRIPTEN_STACK_SIZE} )
 endif()
 
 IF(MSVC)
