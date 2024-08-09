@@ -465,7 +465,13 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	}
 
 	_ctx = SDL_GL_CreateContext( _wnd );
-	if ( !_ctx ) return nullptr;
+	if ( !_ctx )
+	{
+		std::stringstream msg;
+		msg << "'SDL_GL_CreateContext' failed. error: " << SDL_GetError() << std::endl;
+		logMessage( LogMessageLevel::Error, msg.str().c_str() );
+		return nullptr;
+	}
 
 	// Enable/Disable vertical synchronization
 	if ( SDL_GL_SetSwapInterval( params.swapInterval ) < 0 )
