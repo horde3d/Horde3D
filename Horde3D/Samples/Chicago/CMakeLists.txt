@@ -69,11 +69,7 @@ elseif( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
 			crowd.cpp
 			main.cpp
 	)
-	# note: When using Horde3D for you own project, it would be advised to also save the value "${PROJECT_BINARY_DIR}/Binaries/Content" somewhere in a definition.
-	#   For example: 'add_definitions(-DHORDE3D_CONTENT_FOLDER="${PROJECT_BINARY_DIR}/Binaries/Content")'.
-	#   So that you can just call 'h3dutLoadResourcesFromDisk(HORDE3D_CONTENT_FOLDER)' in your cpp file.
-	# The 'Framework' library project, that these examples depend on, does this as well with 'EXAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER'.
-	target_link_options(Chicago PRIVATE --preload-file "${PROJECT_SOURCE_DIR}/Horde3D/Binaries/Content") # do not use '${PROJECT_BINARY_DIR}/Binaries/Content'. The contents does not exist when embedding it appears.
+	target_link_options(Chicago PRIVATE --preload-file "${SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER}") # do not use '${PROJECT_BINARY_DIR}/Binaries/Content'. The contents does not exist when embedding
 
 else()
 	# Desktop platforms

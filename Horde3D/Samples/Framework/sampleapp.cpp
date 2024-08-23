@@ -68,7 +68,7 @@ std::string extractResourcePath( char *fullPath )
 #endif
 
 #ifdef PLATFORM_EMSCRIPTEN
-    return EXAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER;
+    return SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER;
 #endif
 
 #if defined( PLATFORM_ANDROID ) || defined( PLATFORM_IOS )

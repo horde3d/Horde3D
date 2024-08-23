@@ -157,6 +157,10 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
 
     add_link_options( -sFULL_ES3 )
     add_link_options( -sSTACK_SIZE=${HORDE3D_EMSCRIPTEN_STACK_SIZE} )
+
+    if(HORDE3D_BUILD_EXAMPLES)
+        set (SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER "${HORDE3D_OUTPUT_PATH_PREFIX}/Content")
+    endif(HORDE3D_BUILD_EXAMPLES)
 endif()
 
 IF(MSVC)

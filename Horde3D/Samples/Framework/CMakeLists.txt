@@ -38,7 +38,7 @@ endif()
 
 # embed assets when building for web
 if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
-    target_compile_definitions(SampleFramework PRIVATE -DEXAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER="${PROJECT_SOURCE_DIR}/Horde3D/Binaries/Content")
+    target_compile_definitions(SampleFramework PRIVATE -DSAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER="${SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER}")
 endif()
 
 # Sample framework should see generated config to get supported renderers

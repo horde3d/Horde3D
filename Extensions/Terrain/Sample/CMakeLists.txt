@@ -67,6 +67,14 @@ elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 									"-framework GameController" "-framework QuartzCore" "-framework UiKit"
 									"-framework Metal" "-framework OpenGLES")
 
+elseif( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+	add_executable(Terrain MACOSX_BUNDLE
+			app.cpp
+			main.cpp
+	)
+
+	target_link_options(Terrain PRIVATE --preload-file "${SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER}") # do not use '${PROJECT_BINARY_DIR}/Binaries/Content'. The contents does not exist when embedding
+
 else()
 	# Desktop platforms
     add_executable(Terrain WIN32 MACOSX_BUNDLE
