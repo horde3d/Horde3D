@@ -144,7 +144,11 @@ Double click on this certificate. "Organizational Unit" is the Team ID.
 Please note that **ParticleVortex** and **Tessellator** sample will not run on iOS as OpenGL ES 3.2 is not available. 
 
 ### Building for Web
-Before we go into this, a warning needs to be given: Currently compute shaders are not supported on the Web platform. It is correct that the 'ParticleVortex' example will not build, which is due to this limitation
+Before we go into this, There are some limitations one needs to be aware of: 
+ - WebGL does not support compute shaders.
+ - WebGL only supports versions up to OpenGL ES 3.0.
+
+As result of the above limitations, the samples **ParticleVortex** (compute + GLES 3.2) and **Tessellator** (GLES 3.2) are disabled when building for web.  
 
 To build for web, you will need [Emscripten](https://emscripten.org/). It is similar to how you build for Windows or Linux. 
 However, instead of using CMake, we will use emcmake ( supplied by emscripten ) 
