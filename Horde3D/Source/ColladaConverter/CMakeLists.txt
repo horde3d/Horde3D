@@ -1,7 +1,7 @@
 include_directories(../Shared)
 
 # Do not build collada converter for ios or android
-if( (NOT ${CMAKE_SYSTEM_NAME} MATCHES "iOS") AND (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android") )
+if( (NOT ${CMAKE_SYSTEM_NAME} MATCHES "iOS") AND (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Android") AND (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten"))
 add_executable(ColladaConv 
 	converter.h
 	daeCommon.h

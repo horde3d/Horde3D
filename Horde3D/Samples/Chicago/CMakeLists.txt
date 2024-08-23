@@ -63,6 +63,14 @@ elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 									"-framework GameController" "-framework QuartzCore" "-framework UiKit"
 									"-framework Metal" "-framework OpenGLES")
 
+elseif( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+	add_executable(Chicago
+			app.cpp
+			crowd.cpp
+			main.cpp
+	)
+	target_link_options(Chicago PRIVATE --preload-file "${SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER}") # do not use '${PROJECT_BINARY_DIR}/Binaries/Content'. The contents does not exist when embedding
+
 else()
 	# Desktop platforms
 	add_executable(Chicago WIN32 MACOSX_BUNDLE

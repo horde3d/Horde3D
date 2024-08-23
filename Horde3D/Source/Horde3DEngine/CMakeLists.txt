@@ -101,7 +101,7 @@ endif (USE_GLES3)
 if ( USE_NULL )
 
 	set( H3D_USE_NULL 1 )
-	
+
     list(APPEND HORDE3D_SOURCES "egRendererBaseNull.h")
 	list(APPEND HORDE3D_SOURCES "egRendererBaseNull.cpp")
 endif( USE_NULL )
@@ -110,14 +110,14 @@ endif( USE_NULL )
 configure_file( config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
 # For all platforms except iOS, engine is built as shared library
-if (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+if (${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
 	add_library(Horde3D STATIC ${HORDE3D_SOURCES} )
-else(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+else(${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
 # Other platforms
 	add_library(Horde3D SHARED
 		${HORDE3D_SOURCES}
 		)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+endif(${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
 
 option(RAPIDXML_NO_EXCEPTIONS "Disabling rapidxml exceptions will terminating application on xml parsing error" ON)
 if (RAPIDXML_NO_EXCEPTIONS)
@@ -205,4 +205,9 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 
 	target_link_libraries(Horde3D ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
 	target_link_libraries(Horde3D "-framework OpenGLES")
+endif()
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+	# just make sure the extension libs are linked
+	target_link_libraries(Horde3D ${HORDE3D_EXTENSION_LIBS})
 endif()

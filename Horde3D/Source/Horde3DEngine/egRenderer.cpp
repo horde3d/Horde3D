@@ -1754,6 +1754,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 	}
 }
 
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 void Renderer::dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z )
 {
 	if ( !setMaterial( materialRes, context ) ) return;
@@ -1767,6 +1768,7 @@ void Renderer::dispatchCompute( MaterialResource *materialRes, const std::string
 
 	timer->endQuery();
 }
+#endif
 
 // =================================================================================================
 // Scene Node Rendering Functions
@@ -2150,7 +2152,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );	
 }
 
-
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 								   bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
 								   int occSet )
@@ -2250,6 +2252,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 
 	timer->endQuery();
 }
+#endif
 
 // =================================================================================================
 // Main Rendering Functions

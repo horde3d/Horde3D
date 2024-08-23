@@ -60,7 +60,7 @@ elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
                                     "-framework CoreMotion" "-framework CoreVideo" "-framework Foundation"
                                     "-framework GameController" "-framework QuartzCore" "-framework UiKit"
                                     "-framework Metal" "-framework OpenGLES")
-    
+
 else()
     # Desktop platforms
     add_executable(Tessellator WIN32 MACOSX_BUNDLE

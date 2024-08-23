@@ -143,6 +143,37 @@ Double click on this certificate. "Organizational Unit" is the Team ID.
 
 Please note that **ParticleVortex** and **Tessellator** sample will not run on iOS as OpenGL ES 3.2 is not available. 
 
+### Building for Web
+Before we go into this, There are some limitations one needs to be aware of: 
+ - WebGL does not support compute shaders.
+ - WebGL only supports versions up to OpenGL ES 3.0.
+
+As result of the above limitations, the samples **ParticleVortex** (compute + GLES 3.2) and **Tessellator** (GLES 3.2) are disabled when building for web.  
+
+To build for web, you will need [Emscripten](https://emscripten.org/). It is similar to how you build for Windows or Linux. 
+However, instead of using CMake, we will use emcmake ( supplied by emscripten ) 
+
+Follow the following steps to build the examples for web.
+- Follow the installation guide by emscripten. and make sure you have 'activated' the emscripten environment.
+- Make a new directory in the root directory, and call it 'build'
+- In the 'build' folder, run ```emcmake``` with the arguments: ```cmake ../```
+- Now that the project has been configured, run ```emmake``` with the arguments: ```make``` to start the build
+
+__On linux__, the whole process should look like this (once emscripten is activated)
+``` bash
+mkdir build
+cd build
+emcmake cmake ../
+emmake make -j4
+```
+
+#### Result
+In the folder ```build/Binaries/Emscripten/Release```, you should now see the html files of all examples. If you have python3 installed, you can test them by going to that folder, and launch  
+```bash
+python3 -m http.server 9000
+``` 
+Then open your browser, and navigate to [http://localhost:9000](http://localhost:9000). Click on any .html file, to see the result
+
 ### Build Horde3D scene editor
 
 There is also a scene editor available for Horde3D. To enabling build of the editor, first make sure you have the Qt 4.8 or any newer Qt 5.x SDK installed. To enable creating makefiles
