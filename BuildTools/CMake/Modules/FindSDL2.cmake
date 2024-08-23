@@ -68,36 +68,36 @@
 #message("<FindSDL2.cmake>")
 
 SET(SDL2_SEARCH_PATHS
-		~/Library/Frameworks
-		/Library/Frameworks
-		/usr/local
-		/usr
-		/sw # Fink
-		/opt/local # DarwinPorts
-		/opt/csw # Blastwave
-		/opt
-		${SDL2_PATH}
+	~/Library/Frameworks
+	/Library/Frameworks
+	/usr/local
+	/usr
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
+	${SDL2_PATH}
 )
 
 FIND_PATH(SDL2_INCLUDE_DIR SDL.h
-		HINTS
-		$ENV{SDL2DIR}
-		PATH_SUFFIXES include/SDL2 include
-		PATHS ${SDL2_SEARCH_PATHS}
+	HINTS
+	$ENV{SDL2DIR}
+	PATH_SUFFIXES include/SDL2 include
+	PATHS ${SDL2_SEARCH_PATHS}
 )
 
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8) 
 	set(PATH_SUFFIXES lib64 lib/x64 lib)
-else()
+else() 
 	set(PATH_SUFFIXES lib/x86 lib)
-endif()
+endif() 
 
 FIND_LIBRARY(SDL2_LIBRARY_TEMP
-		NAMES SDL2
-		HINTS
-		$ENV{SDL2DIR}
-		PATH_SUFFIXES ${PATH_SUFFIXES}
-		PATHS ${SDL2_SEARCH_PATHS}
+	NAMES SDL2
+	HINTS
+	$ENV{SDL2DIR}
+	PATH_SUFFIXES ${PATH_SUFFIXES}
+	PATHS ${SDL2_SEARCH_PATHS}
 )
 
 IF(NOT SDL2_BUILDING_LIBRARY)
@@ -107,11 +107,11 @@ IF(NOT SDL2_BUILDING_LIBRARY)
 		# seem to provide SDL2main for compatibility even though they don't
 		# necessarily need it.
 		FIND_LIBRARY(SDL2MAIN_LIBRARY
-				NAMES SDL2main
-				HINTS
-				$ENV{SDL2DIR}
-				PATH_SUFFIXES ${PATH_SUFFIXES}
-				PATHS ${SDL2_SEARCH_PATHS}
+			NAMES SDL2main
+			HINTS
+			$ENV{SDL2DIR}
+			PATH_SUFFIXES ${PATH_SUFFIXES}
+			PATHS ${SDL2_SEARCH_PATHS}
 		)
 	ENDIF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
 ENDIF(NOT SDL2_BUILDING_LIBRARY)
@@ -171,60 +171,60 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	# Download SDL sources and build it ourselves
 
 	# If not found, try to build with local sources.
-	# It uses CMake's "ExternalProject_Add" target.
-	MESSAGE(STATUS "Preparing external SDL project")
-	INCLUDE(ExternalProject)
+    # It uses CMake's "ExternalProject_Add" target.
+    MESSAGE(STATUS "Preparing external SDL project")
+    INCLUDE(ExternalProject)
 
 	INCLUDE(ExternalProject)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-				URL https://www.libsdl.org/release/SDL2-2.0.9.zip
-				CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DANDROID_ABI=${ANDROID_ABI} -DANDROID_DL_LIBRARY=${ANDROID_DL_LIBRARY}
-				LOG_DOWNLOAD 1
-				LOG_UPDATE 1
-				LOG_CONFIGURE 1
-				LOG_BUILD 1
-				LOG_TEST 1
-				LOG_INSTALL 1
+		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DANDROID_ABI=${ANDROID_ABI} -DANDROID_DL_LIBRARY=${ANDROID_DL_LIBRARY}
+		LOG_DOWNLOAD 1
+		LOG_UPDATE 1
+		LOG_CONFIGURE 1
+		LOG_BUILD 1
+		LOG_TEST 1
+		LOG_INSTALL 1
 		)
 
 		MESSAGE(STATUS "External SDL project done")
 	elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-				URL https://www.libsdl.org/release/SDL2-2.0.9.zip
-				CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_OSX_ARCHITEXTURES=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH} -DCMAKE_FRAMEWORK_PATH=${CMAKE_FRAMEWORK_PATH}
-				LOG_DOWNLOAD 1
-				LOG_UPDATE 1
-				LOG_CONFIGURE 1
-				LOG_BUILD 1
-				LOG_TEST 1
-				LOG_INSTALL 1
+		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_OSX_ARCHITEXTURES=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH} -DCMAKE_FRAMEWORK_PATH=${CMAKE_FRAMEWORK_PATH}
+		LOG_DOWNLOAD 1
+		LOG_UPDATE 1
+		LOG_CONFIGURE 1
+		LOG_BUILD 1
+		LOG_TEST 1
+		LOG_INSTALL 1
 		)
 
 		MESSAGE(STATUS "External SDL project done")
 	else() # other platforms
 		ExternalProject_Add(project_sdl
-				URL https://www.libsdl.org/release/SDL2-2.0.9.zip
-				CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
-				LOG_DOWNLOAD 1
-				LOG_UPDATE 1
-				LOG_CONFIGURE 1
-				LOG_BUILD 1
-				LOG_TEST 1
-				LOG_INSTALL 1
+			URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+			CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
+			LOG_DOWNLOAD 1
+			LOG_UPDATE 1
+			LOG_CONFIGURE 1
+			LOG_BUILD 1
+			LOG_TEST 1
+			LOG_INSTALL 1
 		)
 		MESSAGE(STATUS "External SDL project done")
 	endif()
 
 	ExternalProject_Get_Property(project_sdl install_dir)
-	SET(SDL2_INCLUDE_DIR
-			${install_dir}/include/SDL2
-	)
-
-	IF(MSVC)
-		SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
+    SET(SDL2_INCLUDE_DIR
+        ${install_dir}/include/SDL2
+    )
+    
+    IF(MSVC)
+       SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
 	ELSE(MSVC)
 		IF (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
 			SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.so )
@@ -234,15 +234,15 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 			# Mac
 			SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.dylib )
 		ENDIF()
-	ENDIF(MSVC)
+    ENDIF(MSVC)
 
-	add_library(SDL2_LIBRARY SHARED IMPORTED)
-	set_property(TARGET SDL2_LIBRARY PROPERTY IMPORTED_LOCATION  ${SDL_LIBRARY_PATH} )
-	#    add_custom_command(OUTPUT ${SDL_LIBRARY_PATH} VERBATIM COMMAND ${CMAKE_COMMAND} -E echo "Building GLFW" DEPENDS project_glfw)
-	#   add_custom_target(SDL_LIBRARY_EXTERN DEPENDS ${SDL_LIBRARY_PATH} project_glfw)
-	add_dependencies(SDL2_LIBRARY project_sdl)
-	#    add_dependencies(SDL_LIBRARY SDL_LIBRARY_EXTERN)
-	set(SDL2_LIBRARY ${SDL_LIBRARY_PATH} ${CMAKE_THREAD_LIBS_INIT})
+    add_library(SDL2_LIBRARY SHARED IMPORTED)
+    set_property(TARGET SDL2_LIBRARY PROPERTY IMPORTED_LOCATION  ${SDL_LIBRARY_PATH} )
+#    add_custom_command(OUTPUT ${SDL_LIBRARY_PATH} VERBATIM COMMAND ${CMAKE_COMMAND} -E echo "Building GLFW" DEPENDS project_glfw)
+#   add_custom_target(SDL_LIBRARY_EXTERN DEPENDS ${SDL_LIBRARY_PATH} project_glfw)
+    add_dependencies(SDL2_LIBRARY project_sdl)
+#    add_dependencies(SDL_LIBRARY SDL_LIBRARY_EXTERN)
+    set(SDL2_LIBRARY ${SDL_LIBRARY_PATH} ${CMAKE_THREAD_LIBS_INIT})
 
 	# Copy library to binaries folder
 	if(MSVC)
@@ -271,7 +271,7 @@ ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 
 	# Copy sdl lib to output folder, where other binaries reside
 	IF(MSVC)
-
+		
 		MESSAGE("${SDL_LIB_PATH}")
 
 		file(COPY ${SDL_LIB_PATH}/SDL2.dll DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
@@ -280,10 +280,10 @@ ELSE(HORDE3D_FORCE_DOWNLOAD_SDL)
 
 	# For android make sdl library path available for other projects (used for samples in android build)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
-		#		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+#		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
 		MESSAGE("${SDL_LIB_PATH}")
 
-		#	file(COPY ${SDL_LIB_PATH}/libSDL2.so DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+	#	file(COPY ${SDL_LIB_PATH}/libSDL2.so DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}) 
 	ENDIF()
 
 	# IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
