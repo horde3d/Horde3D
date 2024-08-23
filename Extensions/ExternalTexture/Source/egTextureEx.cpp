@@ -18,6 +18,7 @@
 
 #include "egRendererBaseGL2.h"
 #include "egRendererBaseGL4.h"
+#include "egRendererBaseGLES3.h"
 
 namespace  Horde3DExternalTexture {
 
@@ -69,6 +70,12 @@ uint32 TextureResourceEx::getGLTexID()
 		RDI_GL4::RDITextureGL4& tex = rdi->getTexture( _texObject );
 		return tex.glObj;
 	}
+    case RenderBackendType::OpenGLES3:
+    {
+        RDI_GLES3::RenderDeviceGLES3 *rdi = ( RDI_GLES3::RenderDeviceGLES3 * ) Modules::renderer().getRenderDevice();
+        RDI_GLES3::RDITextureGLES3& tex = rdi->getTexture( _texObject );
+        return tex.glObj;
+    }
 	default:
 		Modules::log().writeError("Render backend not supported");
 		return 0;
