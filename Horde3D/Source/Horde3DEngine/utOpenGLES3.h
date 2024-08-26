@@ -85,7 +85,7 @@ bool initOpenGLExtensions();
 //#include <GLES2/gl2ext.h>
 #elif defined(PLATFORM_LINUX)
 #include "GLES3/gl3platform.h"
-#define GL_GLEXT_PROTOTYPES
+//#define GL_GLEXT_PROTOTYPES
 #include <GLES3/gl31.h>
 #elif defined(PLATFORM_IOS)
 #import <OpenGLES/ES3/gl.h>

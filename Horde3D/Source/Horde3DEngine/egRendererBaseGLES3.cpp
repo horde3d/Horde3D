@@ -390,6 +390,7 @@ bool RenderDeviceGLES3::init()
 	if( !initOpenGLExtensions() )
 	{	
 		Modules::log().writeError( "Could not find all required OpenGL function entry points" );
+		failed = true;
 	}
 
 	// Check that OpenGL ES 3.0 is available
