@@ -280,6 +280,8 @@ void SceneTreeView::addNode()
 void SceneTreeView::addAttachmentNode()
 {
 	QSceneNode* node = static_cast<QSceneNode*>(currentIndex().internalPointer());
+	if (!node) return;
+
 	if( node->xmlNode().firstChildElement("Attachment").isNull() )
 	{
         m_editorInstance->pluginManager()->attachmentPlugIn()->createNodeAttachment();
