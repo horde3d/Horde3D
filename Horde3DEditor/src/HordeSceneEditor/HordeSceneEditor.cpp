@@ -877,7 +877,11 @@ void HordeSceneEditor::togglePasteAction()
 	if (mime->hasFormat("text/plain"))
 	{
 		QDomDocument dom("Paste");
-		m_actionPaste->setEnabled(dom.setContent(mime->data("text/plain")));				
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+		m_actionPaste->setEnabled(dom.setContent(mime->data("text/plain")));	
+#else
+		m_actionPaste->setEnabled((bool) dom.setContent(mime->data("text/plain")));
+#endif
 	}
 	else
 		m_actionPaste->setEnabled(false);

@@ -179,7 +179,11 @@ bool SceneTreeModel::dropMimeData(const QMimeData *mime, Qt::DropAction action, 
          return false;
 
 	QDomDocument dom("Paste");
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
 	return dom.setContent(mime->data("application/xml"));
+#else
+	return (bool) dom.setContent(mime->data("application/xml"));
+#endif
 	// Don't add it, since we want to use the view's undo redo mechanism
 	//if (dom.setContent(mime->data("application/xml")))
 	//{
