@@ -176,12 +176,30 @@ Then open your browser, and navigate to [http://localhost:9000](http://localhost
 
 ### Build Horde3D scene editor
 
-There is also a scene editor available for Horde3D. To enabling build of the editor, first make sure you have the Qt 4.8 or any newer Qt 5.x SDK installed. To enable creating makefiles
-for the editor via cmake set the HORDE3D_BUILD_EDITOR flag to ON (default is OFF).
+There is also a scene editor available for Horde3D. To enabling build of the editor, first make sure you have the Qt 5.15 or any newer Qt 6.x SDK installed. 
+On Windows, install Qt via Qt online installer from qt.io. On Linux, Qt is usually preinstalled. If not, use your distribution package system to install qt.
+To enable creating makefiles for the editor via cmake set the HORDE3D_BUILD_EDITOR flag to ON (default is OFF).
 
     cmake -DHORDE3D_BUILD_EDITOR=ON
 
+CMake may not find Qt distribution files and configuration may fail. Usually, Qt5_DIR or Qt6_DIR are not found. 
+On Windows: in cmake gui select Qt6_DIR, go to your Qt installation directory -> lib/cmake/Qt6. Click Configure button. Configuration may also fail for several other components, like QtCoreTools or QtGuiTools. In this case, 
+select folders with the same name in lib/cmake/ until all the libraries are found.
+On Linux: usually found automatically. If not, use the same algorithm as for Windows. Usually, Qt cmake files are located in **/usr/lib/x86_64-linux-gnu/cmake**. 
+Console example:
+
+    cmake -DHORDE3D_BUILD_EDITOR=ON -DQt6_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6 -B build
+
 As the editor needs Lua as a dependency you can either make sure the Lua development files can be found by cmake, or Lua will be automatically downloaded by CMake.
+
+On Windows, you usually generate Visual Studio solution. Open the solution file, select build type (Debug by default) and click "Rebuild solution". 
+**Note**: Editor is not set to be executed and/or debugged by default. You will have to set **Horde3DEditor** project as executable by clicking right mouse button on it - "Set as start up project".
+
+On Linux, either makefiles or ninja build files are used. Ninja builds faster than make (may be up to two-three times). After generating cmake cache, do the following:
+
+    cmake --build build
+	
+where **build** is the build directory you've chosen during cmake configuration.
 
 ## What's next
 
