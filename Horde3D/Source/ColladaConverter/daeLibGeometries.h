@@ -261,6 +261,10 @@ struct DaeTriGroup
 		Vec3f v;
 		
 		DaeSource *source = normSource;
+
+		if (source->floatArray.size() == 0)
+			return v;
+		
 		if( source != 0x0 && normIndex >= 0 )
 		{
 			// Assume the float buffer has at least 3 values per element
