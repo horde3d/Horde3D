@@ -20,6 +20,7 @@
 #endif
 #if defined(__MINGW32__)
 	#include <math.h>
+	#include <cstdint>
 #endif
 
 // Detect platform
