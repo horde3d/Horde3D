@@ -307,6 +307,23 @@ H3D_API void h3dutGetScreenshotParam( int *width,  int *height );
 */
 H3D_API bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len );
 
+
+/* Function: h3dutCreateBinaryShader
+		Saves shader to a binary file.
+
+	Details:
+		The user must provide a valid shader resource and filename string. 
+		The binary shader is saved to the filename specified.
+		Lastly, the shader resource is unmapped.
+		
+
+	Parameters:
+		shaderResource: Resouce ID of Shader type.
+		filename: Char string pointer of the filename.
+
+	Returns:
+		true if binary file is saved correctly, false if writing failed.
+*/
 H3D_API bool h3dutCreateBinaryShader( H3DRes shaderResource, const char *filename );
 
 

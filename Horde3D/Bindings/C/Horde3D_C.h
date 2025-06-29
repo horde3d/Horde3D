@@ -319,15 +319,15 @@ typedef int H3DNode;
 	/* typedef enum: H3DGeoRes
 			The available Geometry resource accessors.
 		
-		GeometryElem         	- Base element
-		GeoIndexCountI       	- Number of indices [read-only]
-		GeoVertexCountI      	- Number of vertices [read-only]
-		GeoIndices16I        	- Flag indicating whether index data is 16 or 32 bit [read-only]
-		GeoIndexStream       	- Triangle index data (uint16 or uint32, depending on flag)
-		GeoVertPosStream     	- Vertex position data (float x, y, z)
-		GeoVertTanStream     	- Vertex tangent frame data (float nx, ny, nz, tx, ty, tz, tw)
-		GeoVertStaticStream  	- Vertex static attribute data (float u0, v0,
-		                          float4 jointIndices, float4 jointWeights, float u1, v1)
+		GeometryElem         - Base element
+		GeoIndexCountI       - Number of indices [read-only]
+		GeoVertexCountI      - Number of vertices [read-only]
+		GeoIndices16I        - Flag indicating whether index data is 16 or 32 bit [read-only]
+		GeoIndexStream       - Triangle index data (uint16 or uint32, depending on flag)
+		GeoVertPosStream     - Vertex position data (float x, y, z)
+		GeoVertTanStream     - Vertex tangent frame data (float nx, ny, nz, tx, ty, tz, tw)
+		GeoVertStaticStream  - Vertex static attribute data (float u0, v0,
+		                         float4 jointIndices, float4 jointWeights, float u1, v1)
 		GeoMorphTargetCountI 	- Number of morph targets [read-only]
 		GeoMorphTargetNameStr	- Name of the requested morph target [read-only]
 	*/
@@ -412,10 +412,10 @@ typedef int H3DNode;
 		H3D_ShaderRes_UnifNameStr,
 		H3D_ShaderRes_UnifSizeI,
 		H3D_ShaderRes_UnifDefValueF4,
-		ShaderElem,
-        ShaderTypeI,
-		ShaderBinaryStream,
-		ShaderBinarySizeI
+		H3D_ShaderRes_ShaderElem,
+		H3D_ShaderRes_ShaderTypeI,
+		H3D_ShaderRes_ShaderBinaryStream,
+		H3D_ShaderRes_ShaderBinarySizeI
 	}H3DShaderRes;
 
 
@@ -902,7 +902,11 @@ H3D_API void h3dRelease();
 	Returns:
 		nothing
 */
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 H3D_API void h3dCompute( H3DRes materialRes, const char *context, int groupX, int groupY, int groupZ );
+#else
+	#error "Compute shaders are not supported under emscripten!"
+#endif
 
 /* Function: h3dRender
 		Main rendering function.
