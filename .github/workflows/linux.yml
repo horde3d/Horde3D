@@ -34,7 +34,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
+          echo "installing openGL Libs"
           sudo apt install -y libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
+          echo "installing X11 libs"
+          sudo apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
 
       # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
       - name: Install GCC 4.9
