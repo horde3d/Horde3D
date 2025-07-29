@@ -30,10 +30,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install \ 
+            libgl1-mesa-dev \
+            libegl1-mesa-dev \
+            libglu1-mesa-dev \
+            libgegl-dev \
+            libxext-dev \
+
       # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
       - name: Install GCC 4.9
         run: |
-          sudo apt update
           sudo apt install libatomic1 libc6-dev libgomp1 libitm1 libmpc3
           # https://launchpad.net/ubuntu/xenial/amd64/g++-4.9/4.9.3-13ubuntu2
           wget --no-verbose \
