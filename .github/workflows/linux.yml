@@ -13,6 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         cxx: [ g++-4.9, g++-11, clang++-3.6, clang++-11 ]
         build_type: [ Debug, Release ]
@@ -33,17 +34,12 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt update
-          sudo apt install \ 
-            libgl1-mesa-dev \
-            libegl1-mesa-dev \
-            libglu1-mesa-dev \
-            libgegl-dev \
-            libxext-dev \
+          sudo apt install -y libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
 
       # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
       - name: Install GCC 4.9
         run: |
-          sudo apt install libatomic1 libc6-dev libgomp1 libitm1 libmpc3
+          sudo apt install -y libatomic1 libc6-dev libgomp1 libitm1 libmpc3
           # https://launchpad.net/ubuntu/xenial/amd64/g++-4.9/4.9.3-13ubuntu2
           wget --no-verbose \
             http://launchpadlibrarian.net/230069137/libmpfr4_3.1.3-2_amd64.deb \
