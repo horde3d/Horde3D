@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     strategy:
-      # fail-fast: false     TODO: UNCOMMENT LATER WHEN YOU HAVE 1 JOB SUCCEEDING
+      fail-fast: false
       matrix:
         cxx: [ g++-4.9, g++-11, clang++-3.6, clang++-11 ]
         build_type: [ Debug, Release ]
@@ -27,6 +27,8 @@ jobs:
             build_type: Debug
             std: 23
             install: sudo apt install g++-13
+          - cxx: clang++-11
+            install: sudo apt install clang-11
 
     steps:
       - uses: actions/checkout@v4
