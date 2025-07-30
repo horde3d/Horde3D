@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     strategy:
-      fail-fast: false
+      # fail-fast: false     TODO: UNCOMMENT LATER WHEN YOU HAVE 1 JOB SUCCEEDING
       matrix:
         cxx: [ g++-4.9, g++-11, clang++-3.6, clang++-11 ]
         build_type: [ Debug, Release ]
@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt update
           echo "installing openGL Libs"
-          sudo apt install -y libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
+          sudo apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
           echo "installing X11 libs"
           sudo apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
 
