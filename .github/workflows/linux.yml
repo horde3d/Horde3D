@@ -117,12 +117,9 @@ jobs:
           # GitHub Actions caching proxy is at times unreliable
           # see https://github.com/actions/runner-images/issues/7048.
           mirrors=/etc/apt/mirrors.txt
-          printf 'http://azure.archive.ubuntu.com/ubuntu\tpriority:1\n' | \
-            sudo tee $mirrors
+          printf 'http://azure.archive.ubuntu.com/ubuntu\tpriority:1\n' | sudo tee $mirrors
           curl http://mirrors.ubuntu.com/mirrors.txt | sudo tee --append $mirrors
-          sudo sed -i \
-            "s~http://azure.archive.ubuntu.com/ubuntu/~mirror+file:$mirrors~" \
-            /etc/apt/sources.list
+          sudo sed -i "s~http://azure.archive.ubuntu.com/ubuntu/~mirror+file:$mirrors~" /etc/apt/sources.list
       - name: Create build environment
         run: |
           sudo apt update
@@ -137,11 +134,10 @@ jobs:
         run: |
           cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
                 -DCMAKE_CXX_STANDARD=${{matrix.std}} \
-                -DCMAKE_CXX_VISIBILITY_PRESET=hidden \
-                -DHORDE3D_BUILD_TESTS:BOOL=Yes \
-                ${{matrix.fuzz}} ${{matrix.shared}} $GITHUB_WORKSPACE
+                -DHORDE3D_BUILD_TESTS=Yes \
+                -DHORDE3D_BUILD_EXAMPLES=Yes \
+                $GITHUB_WORKSPACE
       - name: Build
         working-directory: ${{runner.workspace}}/build
         run: |
-          threads=`nproc`
-          cmake --build . --config ${{matrix.build_type}} --parallel $threads
+          make all -j"$(nproc)"
