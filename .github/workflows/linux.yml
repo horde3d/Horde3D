@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cxx: [ g++-4.9, g++-11, clang++-3.6, clang++-11 ]
+        cxx: [ g++-4.9, g++-11, g++-15, clang++-3.6, clang++-11 ]
         build_type: [ Debug, Release ]
         std: [ 11 ]
         include:
@@ -43,6 +43,7 @@ jobs:
 
       # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
       - name: Install GCC 4.9
+        if: ${{ matrix.cxx == 'g++-4.9' }}
         run: |
           sudo apt install -y libatomic1 libc6-dev libgomp1 libitm1 libmpc3
           # https://launchpad.net/ubuntu/xenial/amd64/g++-4.9/4.9.3-13ubuntu2
@@ -70,9 +71,9 @@ jobs:
             cpp-4.9_4.9.3-13ubuntu2_amd64.deb \
             gcc-4.9_4.9.3-13ubuntu2_amd64.deb \
             g++-4.9_4.9.3-13ubuntu2_amd64.deb
-        if: ${{ matrix.cxx == 'g++-4.9' }}
 
       - name: Install Clang 3.6
+        if: ${{ matrix.cxx == 'clang++-3.6' }}
         run: |
           sudo apt update
           sudo apt install libtinfo5
@@ -105,12 +106,13 @@ jobs:
             libclang1-3.6_3.6.2-3ubuntu2_amd64.deb \
             gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
             clang-3.6_3.6.2-3ubuntu2_amd64.deb
-        if: ${{ matrix.cxx == 'clang++-3.6' }}
 
       - name: Add repositories for newer GCC
+        if: ${{ matrix.cxx == 'g++-13' ||
+                matrix.cxx == 'g++-14' ||
+                matrix.cxx == 'g++-15' }}
         run: |
           sudo apt-add-repository ppa:ubuntu-toolchain-r/test
-        if: ${{ matrix.cxx == 'g++-13' }}
 
       - name: Add Ubuntu mirrors
         run: |
@@ -120,12 +122,14 @@ jobs:
           printf 'http://azure.archive.ubuntu.com/ubuntu\tpriority:1\n' | sudo tee $mirrors
           curl http://mirrors.ubuntu.com/mirrors.txt | sudo tee --append $mirrors
           sudo sed -i "s~http://azure.archive.ubuntu.com/ubuntu/~mirror+file:$mirrors~" /etc/apt/sources.list
+
       - name: Create build environment
         run: |
           sudo apt update
           ${{matrix.install}}
           sudo apt install locales-all
           cmake -E make_directory ${{runner.workspace}}/build
+
       - name: Configure
         working-directory: ${{runner.workspace}}/build
         env:
@@ -137,6 +141,7 @@ jobs:
                 -DHORDE3D_BUILD_TESTS=Yes \
                 -DHORDE3D_BUILD_EXAMPLES=Yes \
                 $GITHUB_WORKSPACE
+
       - name: Build
         working-directory: ${{runner.workspace}}/build
         run: |

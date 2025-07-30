@@ -1,3 +1,5 @@
+[![linux](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/linux.yml/badge.svg)](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/linux.yml)
+
 # Horde3D
 
 Horde3D is a 3D rendering engine written in C++ with an effort being as lightweight and conceptually clean as possible.
