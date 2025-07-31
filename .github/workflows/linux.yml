@@ -50,23 +50,16 @@ jobs:
           echo "CC=clang-${compiler_version}" >> $GITHUB_ENV
           echo "CXX=clang++-${compiler_version}" >> $GITHUB_ENV
 
-      - name: Create build environment
-        run: |
-          cmake -E make_directory ${{runner.workspace}}/build
-
       - name: Configure
-        working-directory: ${{runner.workspace}}/build
-        env:
-          CXX: ${{matrix.cxx}}
-          CXXFLAGS: ${{matrix.cxxflags}}
         run: |
-          cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-                -DCMAKE_CXX_STANDARD=${{matrix.std}} \
+          mkdir -p build && cd build
+          cmake .. \
+                -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
                 -DHORDE3D_BUILD_TESTS=Yes \
                 -DHORDE3D_BUILD_EXAMPLES=Yes \
-                $GITHUB_WORKSPACE
+                
 
       - name: Build
-        working-directory: ${{runner.workspace}}/build
         run: |
+          cd build
           make all -j"$(nproc)"
