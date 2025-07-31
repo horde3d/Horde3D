@@ -115,8 +115,7 @@ jobs:
           set -ex          
           apt-get update
           apt-get install -y libc++-${{ matrix.config.version }}-dev libc++abi-${{ matrix.config.version }}-dev
-          [[ "${{ matrix.config.version }}" -ge 12 ]] && apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev
-          scripts/ci_setup_clang.sh "${{ matrix.config.version }}"
+          if [[ ${{ matrix.config.version }} -ge 12 ]]; then apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev; fi
           echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV          
           echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
           echo "CXX=clang++-${{ matrix.config.version }}" >> $GITHUB_ENV
