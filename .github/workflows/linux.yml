@@ -16,16 +16,16 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { compiler: gcc,   version: 4.9,  use_container: false } # old container not compatible with 'actions/checkout@v4'
-          - { compiler: gcc,   version: 11,   use_container: true  }
-          - { compiler: gcc,   version: 12,   use_container: true  }
-          - { compiler: gcc,   version: 13,   use_container: true  }
-          - { compiler: gcc,   version: 15,   use_container: true  }
-          - { compiler: clang, version: 3.6,  use_container: false } # old container not compatible with 'actions/checkout@v4'
-          - { compiler: clang, version: 11,   use_container: true  }
-          - { compiler: clang, version: 12,   use_container: true  }
-          - { compiler: clang, version: 15,   use_container: true  }
-          - { compiler: clang, version: 20,   use_container: true  }
+          - { compiler: gcc,   version: 4.9,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
+          - { compiler: gcc,   version: 11,   cppstd: 11, use_container: true  }
+          - { compiler: gcc,   version: 12,   cppstd: 20, use_container: true  }
+          - { compiler: gcc,   version: 13,   cppstd: 11, use_container: true  }
+          - { compiler: gcc,   version: 15,   cppstd: 11, use_container: true  }
+          - { compiler: clang, version: 3.6,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
+          - { compiler: clang, version: 11,   cppstd: 11, use_container: true  }
+          - { compiler: clang, version: 12,   cppstd: 11, use_container: true  }
+          - { compiler: clang, version: 15,   cppstd: 17, use_container: true  }
+          - { compiler: clang, version: 20,   cppstd: 20, use_container: true  }
         build_type: [ Debug, Release ]
 
     container:
@@ -136,6 +136,7 @@ jobs:
           mkdir -p build && cd build
           cmake .. \
                 -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+                -DCMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} \
                 -DHORDE3D_BUILD_TESTS=Yes \
                 -DHORDE3D_BUILD_EXAMPLES=Yes \
                 
