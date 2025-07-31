@@ -120,6 +120,12 @@ jobs:
           echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
           echo "CXX=clang++-${{ matrix.config.version }}" >> $GITHUB_ENV
 
+      - name: Install libunwind
+        if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container && fromJSON(matrix.config.version) >= 12 }}
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev
+
       - name: Configure
         run: |
           mkdir -p build && cd build
