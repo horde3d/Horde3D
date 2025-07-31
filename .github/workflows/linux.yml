@@ -30,15 +30,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup environment
+        run: echo "SUDO=${{ matrix.config.use_container && '' || 'sudo' }}" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: |
-          apt update
+          $SUDO apt update
           echo "installing dev libs"
-          apt install -y cmake
+          $SUDO apt install -y cmake
           echo "installing openGL Libs"
-          apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
+          $SUDO apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
           echo "installing X11 libs"
-          apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
+          $SUDO apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
 
       # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
       - name: Install GCC 4.9
@@ -109,12 +112,11 @@ jobs:
       - name: Setup Compiler
         if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container }}
         run: |
-          compiler_version=$(echo "${{ matrix.cxx }}" | cut -d'-' -f2)
-          echo "compiler_version=${compiler_version}"
-          scripts/ci_setup_clang.sh "${compiler_version}"
+          echo "compiler_version=${{ matrix.config.version }}"
+          scripts/ci_setup_clang.sh "${{ matrix.config.version }}"
           echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV          
-          echo "CC=clang-${compiler_version}" >> $GITHUB_ENV
-          echo "CXX=clang++-${compiler_version}" >> $GITHUB_ENV
+          echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
+          echo "CXX=clang++-${{ matrix.config.version }}" >> $GITHUB_ENV
 
       - name: Configure
         run: |
