@@ -32,11 +32,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt update
+          apt update
           echo "installing openGL Libs"
-          sudo apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
+          apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
           echo "installing X11 libs"
-          sudo apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
+          apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
 
       - name: Setup Compiler
         if: startsWith(matrix.cxx, 'clang')
