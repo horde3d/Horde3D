@@ -1,0 +1,39 @@
+name: windows
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { generator: "Visual Studio 17 2022",   cppstd: 11 }
+          - { generator: "Visual Studio 17 2022",   cppstd: 17 }
+          - { generator: "Visual Studio 17 2022",   cppstd: 20 }
+        build_type: [ Debug, Release ]
+
+    name: "${{ matrix.config.generator}} (C++${{ matrix.config.cppstd }} ${{ matrix.build_type }})"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          mkdir build
+          cd build
+          cmake -G "${{ matrix.config.generator }}"  -A x64 `
+            -D CMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -D HORDE3D_BUILD_TESTS=Yes `
+            -D HORDE3D_BUILD_EXAMPLES=Yes `
+            -D CMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} ..
+      - name: Build
+        shell: pwsh
+        run: |
+          cd build
+          cmake --build  . --parallel --config ${{ matrix.build_type }}
