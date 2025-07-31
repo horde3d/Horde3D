@@ -16,17 +16,17 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { compiler: gcc,   version: 4.9 }
-          - { compiler: gcc,   version: 11 }
-          - { compiler: gcc,   version: 15 }
-          - { compiler: clang, version: 3.6 }
-          - { compiler: clang, version: 11 }
+          - { compiler: gcc,   version: 4.9,  use_container: false } # old container not compatible with 'actions/checkout@v4'
+          - { compiler: gcc,   version: 11,   use_container: true  }
+          - { compiler: gcc,   version: 15,   use_container: true  }
+          - { compiler: clang, version: 3.6,  use_container: false } # old container not compatible with 'actions/checkout@v4'
+          - { compiler: clang, version: 11,   use_container: true  }
         build_type: [ Debug, Release ]
 
     container:
-      image: ${{ matrix.config.compiler == 'clang' && 'teeks99/clang-ubuntu' || matrix.config.compiler }}:${{ matrix.config.version }}
+      image: ${{ matrix.config.use_container && (matrix.config.compiler == 'clang' && format('teeks99/clang-ubuntu:{0}', matrix.config.version) || format('{0}:{1}', matrix.config.compiler, matrix.config.version)) || '' }}
 
-    name: "${{ matrix.config.compiler}} ${{ matrix.config.version }} (C++${{ matrix.config.cppstd }} ${{ matrix.config.build_type }} ${{ matrix.config.asan == 'ON' && 'ASAN' || '' }}${{ matrix.config.tsan == 'ON' && 'TSAN' || '' }})"
+    name: "${{ matrix.config.compiler}} ${{ matrix.config.version }} (C++${{ matrix.config.cppstd }} ${{ matrix.build_type }} ${{ matrix.config.asan == 'ON' && 'ASAN' || '' }}${{ matrix.config.tsan == 'ON' && 'TSAN' || '' }})"
     steps:
       - uses: actions/checkout@v4
 
@@ -40,8 +40,74 @@ jobs:
           echo "installing X11 libs"
           apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
 
+      # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
+      - name: Install GCC 4.9
+        if: ${{ matrix.config.compiler == 'gcc' && matrix.config.version == '4.9' }}
+        run: |
+          sudo apt install -y libatomic1 libc6-dev libgomp1 libitm1 libmpc3
+          # https://launchpad.net/ubuntu/xenial/amd64/g++-4.9/4.9.3-13ubuntu2
+          wget --no-verbose \
+            http://launchpadlibrarian.net/230069137/libmpfr4_3.1.3-2_amd64.deb \
+            http://launchpadlibrarian.net/253728424/libasan1_4.9.3-13ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/445346135/libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/445346112/libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/253728426/libgcc-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/253728432/libstdc++-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/253728314/gcc-4.9-base_4.9.3-13ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/445345919/gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/253728399/cpp-4.9_4.9.3-13ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/253728404/gcc-4.9_4.9.3-13ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/253728401/g++-4.9_4.9.3-13ubuntu2_amd64.deb
+          sudo dpkg -i \
+            libmpfr4_3.1.3-2_amd64.deb \
+            libasan1_4.9.3-13ubuntu2_amd64.deb \
+            libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libgcc-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+            libstdc++-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+            gcc-4.9-base_4.9.3-13ubuntu2_amd64.deb \
+            gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            cpp-4.9_4.9.3-13ubuntu2_amd64.deb \
+            gcc-4.9_4.9.3-13ubuntu2_amd64.deb \
+            g++-4.9_4.9.3-13ubuntu2_amd64.deb
+
+      - name: Install Clang 3.6
+        if: ${{ matrix.config.compiler == 'clang' && matrix.config.version == '3.6' }}
+        run: |
+          sudo apt update
+          sudo apt install libtinfo5
+          # https://code.launchpad.net/ubuntu/xenial/amd64/clang-3.6/1:3.6.2-3ubuntu2
+          wget --no-verbose \
+            http://launchpadlibrarian.net/230019046/libffi6_3.2.1-4_amd64.deb \
+            http://launchpadlibrarian.net/445346109/libasan2_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/445346135/libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/445346112/libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/445346128/libmpx0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/445346113/libgcc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/445346131/libstdc++-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/445346022/libobjc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/254405108/libllvm3.6v5_3.6.2-3ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/254405097/libclang-common-3.6-dev_3.6.2-3ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/254405101/libclang1-3.6_3.6.2-3ubuntu2_amd64.deb \
+            http://launchpadlibrarian.net/445345919/gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            http://launchpadlibrarian.net/254405091/clang-3.6_3.6.2-3ubuntu2_amd64.deb
+          sudo dpkg -i \
+            libffi6_3.2.1-4_amd64.deb \
+            libasan2_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libmpx0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libgcc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libstdc++-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libobjc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            libllvm3.6v5_3.6.2-3ubuntu2_amd64.deb \
+            libclang-common-3.6-dev_3.6.2-3ubuntu2_amd64.deb \
+            libclang1-3.6_3.6.2-3ubuntu2_amd64.deb \
+            gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+            clang-3.6_3.6.2-3ubuntu2_amd64.deb
+
       - name: Setup Compiler
-        if: startsWith(matrix.cxx, 'clang')
+        if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container }}
         run: |
           compiler_version=$(echo "${{ matrix.cxx }}" | cut -d'-' -f2)
           echo "compiler_version=${compiler_version}"
