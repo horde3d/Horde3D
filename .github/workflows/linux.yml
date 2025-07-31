@@ -20,7 +20,7 @@ jobs:
           - { compiler: gcc,   version: 11,   use_container: true  }
           - { compiler: gcc,   version: 15,   use_container: true  }
           - { compiler: clang, version: 3.6,  use_container: false } # old container not compatible with 'actions/checkout@v4'
-          - { compiler: clang, version: 11,   use_container: true  }
+          - { compiler: clang, version: 12,   use_container: true  }
         build_type: [ Debug, Release ]
 
     container:
@@ -113,6 +113,20 @@ jobs:
         if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container }}
         run: |
           echo "compiler_version=${{ matrix.config.version }}"
+          scripts/ci_setup_clang.sh "${{ matrix.config.version }}"
+          echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV          
+          echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
+          echo "CXX=clang++-${{ matrix.config.version }}" >> $GITHUB_ENV
+
+      - name: Setup Compiler
+        if: matrix.config.compiler == 'clang'
+        run: |
+          pwd
+          echo "--"
+          ls
+          echo "--"
+          ls scripts 
+          echo "--"
           scripts/ci_setup_clang.sh "${{ matrix.config.version }}"
           echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV          
           echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
