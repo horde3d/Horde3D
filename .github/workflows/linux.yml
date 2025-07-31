@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +27,10 @@ jobs:
             build_type: Debug
             std: 23
             install: sudo apt install g++-13
+          - cxx: g++-15
+            compiler_source:
+              repo: https://gcc.gnu.org/git/gcc.git
+              branch: releases/gcc-15.1.0
           - cxx: clang++-11
             install: sudo apt install clang-11
 
@@ -35,6 +39,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          sudo apt-add-repository ppa:ubuntu-toolchain-r/test
           sudo apt update
           echo "installing openGL Libs"
           sudo apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
@@ -107,13 +112,6 @@ jobs:
             gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
             clang-3.6_3.6.2-3ubuntu2_amd64.deb
 
-      - name: Add repositories for newer GCC
-        if: ${{ matrix.cxx == 'g++-13' ||
-                matrix.cxx == 'g++-14' ||
-                matrix.cxx == 'g++-15' }}
-        run: |
-          sudo apt-add-repository ppa:ubuntu-toolchain-r/test
-
       - name: Add Ubuntu mirrors
         run: |
           # GitHub Actions caching proxy is at times unreliable
@@ -123,11 +121,40 @@ jobs:
           curl http://mirrors.ubuntu.com/mirrors.txt | sudo tee --append $mirrors
           sudo sed -i "s~http://azure.archive.ubuntu.com/ubuntu/~mirror+file:$mirrors~" /etc/apt/sources.list
 
-      - name: Create build environment
+
+      - name: Build compiler
+        if: ${{ matrix.compiler_source.repo != '' }}
+        run: |
+          set -e
+          sudo apt update
+          sudo apt install -y locales-all build-essential git make gawk flex bison libgmp-dev libmpfr-dev libmpc-dev python3 binutils perl libisl-dev libzstd-dev tar gzip bzip2 curl checkinstall
+          mkdir -p /tmp/gcc
+          cd /tmp/gcc
+          git clone -b ${{ matrix.compiler_source.branch }} --depth 1 ${{ matrix.compiler_source.repo }} gcc-source      
+          cd gcc-source
+          ./contrib/download_prerequisites
+          mkdir ../gcc-build
+          cd ../gcc-build
+          ../gcc-source/configure --prefix=/opt/${{ matrix.cxx }} --disable-multilib --enable-languages=c,c++
+          make -j"$(nproc)"
+          cd ..
+          gccversion=$(git -C gcc-source describe --exact-match --tags | sed -r "s/.*gcc.//")
+          sudo checkinstall --pkgname=gcc${gccversion} --install=no --fstrans=no --pkgversion=${gccversion} --default
+          sudo make install
+          echo "/opt/${{ matrix.cxx }}/bin" >> $GITHUB_PATH
+          echo "LD_LIBRARY_PATH=/opt/${{ matrix.cxx }}/lib64:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          echo "CC=/opt/${{ matrix.cxx }}/bin/gcc" >> $GITHUB_ENV
+          echo "CXX=/opt/${{ matrix.cxx }}/bin/g++" >> $GITHUB_ENV
+
+      - name: Install compiler
+        if: ${{ matrix.compiler_source.repo == '' }}
         run: |
           sudo apt update
           ${{matrix.install}}
           sudo apt install locales-all
+
+      - name: Create build environment
+        run: |
           cmake -E make_directory ${{runner.workspace}}/build
 
       - name: Configure
