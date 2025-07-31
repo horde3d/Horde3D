@@ -33,6 +33,8 @@ jobs:
       - name: Install dependencies
         run: |
           apt update
+          echo "installing dev libs"
+          apt install -y cmake
           echo "installing openGL Libs"
           apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
           echo "installing X11 libs"
