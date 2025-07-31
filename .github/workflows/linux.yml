@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup environment
-        run: echo "SUDO=${{ matrix.config.use_container && '' || 'sudo' }}" >> $GITHUB_ENV
+        run: echo "SUDO=$(if [ ${{ matrix.config.use_container }} = true ]; then echo ''; else echo 'sudo'; fi)" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: |
