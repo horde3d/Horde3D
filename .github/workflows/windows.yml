@@ -46,6 +46,7 @@ jobs:
       run:
         shell: msys2 {0}
     strategy:
+      fail-fast: false
       matrix:
         sys: [ mingw64, ucrt64 ]
     steps:
