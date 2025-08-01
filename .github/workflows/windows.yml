@@ -31,6 +31,7 @@ jobs:
             -D CMAKE_BUILD_TYPE=${{ matrix.build_type }} `
             -D HORDE3D_BUILD_TESTS=Yes `
             -D HORDE3D_BUILD_EXAMPLES=Yes `
+            -D CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=Yes `
             -D CMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} ..
       - name: Build
         shell: pwsh
@@ -63,6 +64,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Debug \
             -DHORDE3D_BUILD_TESTS=Yes \
             -DHORDE3D_BUILD_EXAMPLES=Yes \
+            -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=Yes \
             -DCMAKE_CXX_STANDARD=${{ matrix.config.cppstd }}
         env: { LDFLAGS: -fuse-ld=lld }
       - name: Build
