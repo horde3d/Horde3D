@@ -12,14 +12,14 @@ jobs:
       fail-fast: false
       matrix:
         config:
-#          - { compiler: gcc,   version: 4.9,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
+          - { compiler: gcc,   version: 4.9,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
           - { compiler: gcc,   version: 11,   cppstd: 11, use_container: true  }
-#          - { compiler: gcc,   version: 13,   cppstd: 20, use_container: true  }
-#          - { compiler: gcc,   version: 15,   cppstd: 11, use_container: true  }
-#          - { compiler: clang, version: 3.6,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
+          - { compiler: gcc,   version: 13,   cppstd: 20, use_container: true  }
+          - { compiler: gcc,   version: 15,   cppstd: 11, use_container: true  }
+          - { compiler: clang, version: 3.6,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
           - { compiler: clang, version: 11,   cppstd: 11, use_container: true  }
-#          - { compiler: clang, version: 15,   cppstd: 17, use_container: true  }
-#          - { compiler: clang, version: 20,   cppstd: 20, use_container: true  }
+          - { compiler: clang, version: 15,   cppstd: 17, use_container: true  }
+          - { compiler: clang, version: 20,   cppstd: 20, use_container: true  }
         build_type: [ Debug, Release ]
 
     container:
@@ -111,11 +111,11 @@ jobs:
       - name: Setup Compiler
         if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container }}
         run: |
-          set -ex          
+          set -ex
           apt-get update
           apt-get install -y libc++-${{ matrix.config.version }}-dev libc++abi-${{ matrix.config.version }}-dev
           if [[ ${{ matrix.config.version }} -ge 12 ]]; then apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev; fi
-          echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV          
+          echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV
           echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
           echo "CXX=clang++-${{ matrix.config.version }}" >> $GITHUB_ENV
 

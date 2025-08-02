@@ -8,7 +8,8 @@
 # GLFW_INCLUDE_DIR, where to find glfw3.h
 #=============================================================================
 
-FIND_PATH(GLFW_INCLUDE_DIR glfw3.h
+FIND_PATH(GLFW_INCLUDE_DIR
+    NAMES glfw3.h GLFW/glfw3.h
 	HINTS
 	$ENV{GLFWDIR}
 	PATH_SUFFIXES include/GL include
@@ -17,6 +18,8 @@ FIND_PATH(GLFW_INCLUDE_DIR glfw3.h
 	/Library/Frameworks
 	/usr/local/include/GLFW
 	/usr/include/GLFW
+    /mingw64/include # mingw64
+    /include # ucrt64
 	/sw # Fink
 	/opt/local # DarwinPorts
 	/opt/csw # Blastwave

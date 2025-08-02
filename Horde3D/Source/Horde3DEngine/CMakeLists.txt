@@ -109,15 +109,8 @@ endif( USE_NULL )
 # Add renderers, specified during build, in the config.h file
 configure_file( config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
-# For all platforms except iOS, engine is built as shared library
-if (${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
-	add_library(Horde3D STATIC ${HORDE3D_SOURCES} )
-else(${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
-# Other platforms
-	add_library(Horde3D SHARED
-		${HORDE3D_SOURCES}
-		)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "iOS" OR ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+# 'BUILD_SHARED_LIBS=Yes/No' will decide if it should be static or shared
+add_library(Horde3D ${HORDE3D_SOURCES} )
 
 option(RAPIDXML_NO_EXCEPTIONS "Disabling rapidxml exceptions will terminating application on xml parsing error" ON)
 if (RAPIDXML_NO_EXCEPTIONS)
