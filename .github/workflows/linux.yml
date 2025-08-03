@@ -147,15 +147,16 @@ jobs:
       matrix:
         config:
           - { ndk: "28.0.13004108", cmake: "3.18.1", abi: "arm64-v8a"  }
+        build_type: [ Debug, Release ]
 
     container:
       image: runmymind/docker-android-sdk:ubuntu-standalone-20250802
 
     env:
-      ANDROID_NDK_HOME: ${{ format('/opt/android-sdk-linux/ndk/{0}', matrix.config.ndk) }}
+      ANDROID_NDK_HOME: /opt/android-sdk-linux/ndk/${{ matrix.config.ndk }}
       ANDROID_HOME: /opt/android-sdk-linux
 
-    name: "Android (${{ matrix.config.abi }})"
+    name: "android (${{ matrix.config.abi }} ${{ matrix.build_type }})"
     steps:
       - uses: actions/checkout@v4
 
@@ -180,7 +181,7 @@ jobs:
             -DANDROID_PLATFORM=android-24 \
             -DHORDE3D_FORCE_DOWNLOAD_SDL=Yes \
             -DHORDE3D_USE_GLES3=Yes \
-            -DCMAKE_BUILD_TYPE=Debug
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
       - name: Build
         run: |
