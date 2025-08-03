@@ -172,8 +172,8 @@ jobs:
             -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
             -DCMAKE_ANDROID_NDK=${ANDROID_HOME}/ndk/${{ matrix.config.ndk }} \
             -DCMAKE_MAKE_PROGRAM=${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/ninja \
-            -DCMAKE_SYSTEM_VERSION=25 \
-            -DANDROID_PLATFORM=android-25 \
+            -DCMAKE_SYSTEM_VERSION=24 \
+            -DANDROID_PLATFORM=android-24 \
             -DHORDE3D_FORCE_DOWNLOAD_SDL=Yes \
             -DHORDE3D_USE_GLES3=Yes \
             -DCMAKE_BUILD_TYPE=Debug
