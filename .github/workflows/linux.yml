@@ -163,6 +163,8 @@ jobs:
         run: |
           sdkmanager --install "cmake;${{ matrix.config.cmake }}"
           sdkmanager --install "ndk;${{ matrix.config.ndk }}"
+          sdkmanager --install "platforms;android-26"
+          sdkmanager --install "build-tools;30.0.3"
 
       - name: Configure with CMake
         run: |
