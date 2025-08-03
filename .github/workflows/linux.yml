@@ -149,7 +149,7 @@ jobs:
           - { ndk: "28.0.13004108", cmake: "3.18.1" }
 
     container:
-      image: androidsdk/android-31
+      image: runmymind/docker-android-sdk:ubuntu-standalone-20250802
 
     env:
       ANDROID_NDK_HOME: ${{ format('/opt/android-sdk-linux/ndk/{0}', matrix.config.ndk) }}
@@ -168,6 +168,7 @@ jobs:
         run: |
           ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake -G Ninja -B build-android \
             -DCMAKE_TOOLCHAIN_FILE=${ANDROID_HOME}/ndk/${{ matrix.config.ndk }}/build/cmake/android.toolchain.cmake \
+            -DANDROID_SDK_ROOT_PATH="${ANDROID_HOME}" \
             -DCMAKE_SYSTEM_NAME=Android \
             -DANDROID_ABI=arm64-v8a \
             -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
@@ -179,15 +180,10 @@ jobs:
             -DHORDE3D_USE_GLES3=Yes \
             -DCMAKE_BUILD_TYPE=Debug
 
-      - name: Copy licenses
-        run: |
-          mkdir -p build-android/Android/Terrain
-          cp -r ${ANDROID_HOME}/licenses/ build-android/Android/Terrain || true
-
       - name: Build
         run: |
           ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --target Terrain
 
-      - name: Show output APK (debug)
+      - name: Show output APK's
         run: |
-          find . -name "*-debug.apk" || echo "APK not found"
+          find ./Binaries | grep [.]apk
