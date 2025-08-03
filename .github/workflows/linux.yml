@@ -149,7 +149,7 @@ jobs:
           - { ndk: "28.0.13004108", cmake: "3.18.1" }
 
     container:
-      image: androidsdk/android-30
+      image: androidsdk/android-31
 
     env:
       ANDROID_NDK_HOME: ${{ format('/opt/android-sdk-linux/ndk/{0}', matrix.config.ndk) }}
@@ -157,7 +157,7 @@ jobs:
 
     name: "Android (ndk ${{ matrix.config.ndk }})"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Dependencies
         run: |
