@@ -155,8 +155,9 @@ jobs:
       ANDROID_NDK_HOME: ${{ format('/opt/android-sdk-linux/ndk/{0}', matrix.config.ndk) }}
       ANDROID_HOME: /opt/android-sdk-linux
 
+    name: "Android (ndk ${{ matrix.config.ndk }})"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Install Dependencies
         run: |
