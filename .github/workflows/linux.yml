@@ -182,13 +182,8 @@ jobs:
 
       - name: Build
         run: |
-          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --target Terrain
+          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android
 
       - name: Show output APK's
         run: |
-          echo "--"
-          ls ./ || true
-          echo "--"
-          ls ./build-android/ || true
-          echo "--"
           find ./build-android/Binaries | grep [.]apk
