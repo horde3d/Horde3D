@@ -146,7 +146,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - { ndk: "28.0.13004108", cmake: "3.18.1" }
+          - { ndk: "28.0.13004108", cmake: "3.18.1", abi: "arm64-v8a"  }
 
     container:
       image: runmymind/docker-android-sdk:ubuntu-standalone-20250802
@@ -155,7 +155,7 @@ jobs:
       ANDROID_NDK_HOME: ${{ format('/opt/android-sdk-linux/ndk/{0}', matrix.config.ndk) }}
       ANDROID_HOME: /opt/android-sdk-linux
 
-    name: "Android (ndk ${{ matrix.config.ndk.split('.')[0] }}.${{ matrix.config.ndk.split('.')[1] }})"
+    name: "Android (${{ matrix.config.abi }})"
     steps:
       - uses: actions/checkout@v4
 
@@ -170,8 +170,8 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=${ANDROID_HOME}/ndk/${{ matrix.config.ndk }}/build/cmake/android.toolchain.cmake \
             -DANDROID_SDK_ROOT_PATH="${ANDROID_HOME}" \
             -DCMAKE_SYSTEM_NAME=Android \
-            -DANDROID_ABI=arm64-v8a \
-            -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
+            -DANDROID_ABI=${{ matrix.config.abi }} \
+            -DCMAKE_ANDROID_ARCH_ABI=${{ matrix.config.abi }} \
             -DCMAKE_ANDROID_NDK=${ANDROID_HOME}/ndk/${{ matrix.config.ndk }} \
             -DCMAKE_MAKE_PROGRAM=${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/ninja \
             -DCMAKE_SYSTEM_VERSION=24 \
