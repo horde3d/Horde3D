@@ -155,7 +155,7 @@ jobs:
       ANDROID_NDK_HOME: ${{ format('/opt/android-sdk-linux/ndk/{0}', matrix.config.ndk) }}
       ANDROID_HOME: /opt/android-sdk-linux
 
-    name: "Android (ndk ${{ matrix.config.ndk }})"
+    name: "Android (ndk ${{ matrix.config.ndk.split('.')[0] }}.${{ matrix.config.ndk.split('.')[1] }})"
     steps:
       - uses: actions/checkout@v4
 
@@ -186,4 +186,9 @@ jobs:
 
       - name: Show output APK's
         run: |
-          find ./Binaries | grep [.]apk
+          echo "--"
+          ls ./ || true
+          echo "--"
+          ls ./build-android/ || true
+          echo "--"
+          find ./build-android/Binaries | grep [.]apk
