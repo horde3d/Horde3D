@@ -190,12 +190,12 @@ jobs:
       # Build .apk's in debug mode is allowed though, so that call is actually being done in the next step.
       - name: Build libs
         run: |
-          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --target libHorde3D.so
-          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --target libHorde3DUtils.so
+          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --parallel $(nproc) --target libHorde3D.so
+          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --parallel $(nproc) --target libHorde3DUtils.so
 
       - name: Build all sample apk's
         if: ${{ matrix.build_type == 'Debug' }}
         run: |
-          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android
+          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --parallel $(nproc)
           find ./build-android/Binaries | grep [.]apk 
 
