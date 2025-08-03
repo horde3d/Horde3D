@@ -55,6 +55,8 @@ jobs:
             -DCMAKE_OSX_ARCHITECTURES=${{ matrix.config.abi }} \
             -DHORDE3D_BUILD_TESTS=No \
             -DHORDE3D_BUILD_EXAMPLES=Yes \
+            -DHORDE3D_FORCE_DOWNLOAD_SDL=Yes \
+            -DHORDE3D_USE_GLES3=Yes \
             -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
 
       - name: Build
