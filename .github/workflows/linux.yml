@@ -183,10 +183,20 @@ jobs:
             -DHORDE3D_USE_GLES3=Yes \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-      - name: Build
+      # you could just call ".../cmake --build build-android" and just build all.
+      # But in release mode, you may encounter an error that tells you that the Google Play requires the app to target at least API X or higher.
+      # We just want to check if it builds at all in release mode. We don't intent to publish the sample apk's to the play store.
+      # Maintaining the gradle is maybe something for the user.
+      # Build .apk's in debug mode is allowed though, so that call is actually being done in the next step.
+      - name: Build libs
+        run: |
+          for lib in $("${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake" --build build-android --target help | sed "s/[:].*//" | grep [.]so); do \
+                       "${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake" --build build-android --target ${lib}; \
+          done
+
+      - name: Build all sample apk's
+        if: ${{ matrix.build_type == 'Debug' }}
         run: |
           ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android
+          find ./build-android/Binaries | grep [.]apk 
 
-      - name: Show output APK's
-        run: |
-          find ./build-android/Binaries | grep [.]apk
