@@ -21,6 +21,7 @@
 #if defined(__MINGW32__)
 	#include <math.h>
 #endif
+#include <cinttypes>
 
 // Detect platform
 #if defined( WINCE )

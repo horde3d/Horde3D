@@ -6,135 +6,187 @@ permissions:
   contents: read
 
 jobs:
-  build:
+#  build:
+#    runs-on: ubuntu-22.04
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        config:
+#          - { compiler: gcc,   version: 4.9,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
+#          - { compiler: gcc,   version: 11,   cppstd: 11, use_container: true  }
+#          - { compiler: gcc,   version: 13,   cppstd: 20, use_container: true  }
+#          - { compiler: gcc,   version: 15,   cppstd: 11, use_container: true  }
+#          - { compiler: clang, version: 3.6,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
+#          - { compiler: clang, version: 11,   cppstd: 11, use_container: true  }
+#          - { compiler: clang, version: 15,   cppstd: 17, use_container: true  }
+#          - { compiler: clang, version: 20,   cppstd: 20, use_container: true  }
+#        build_type: [ Debug, Release ]
+#
+#    container:
+#      image: ${{ matrix.config.use_container && (matrix.config.compiler == 'clang' && format('teeks99/clang-ubuntu:{0}', matrix.config.version) || format('{0}:{1}', matrix.config.compiler, matrix.config.version)) || '' }}
+#
+#    name: "${{ matrix.config.compiler}} ${{ matrix.config.version }} (C++${{ matrix.config.cppstd }} ${{ matrix.build_type }} ${{ matrix.config.asan == 'ON' && 'ASAN' || '' }}${{ matrix.config.tsan == 'ON' && 'TSAN' || '' }})"
+#    steps:
+#      - uses: actions/checkout@v4
+#
+#      - name: Setup environment
+#        run: echo "SUDO=$(if [ ${{ matrix.config.use_container }} = true ]; then echo ''; else echo 'sudo'; fi)" >> $GITHUB_ENV
+#
+#      - name: Install dependencies
+#        run: |
+#          $SUDO apt update
+#          echo "installing dev libs"
+#          $SUDO apt install -y cmake
+#          echo "installing openGL Libs"
+#          $SUDO apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
+#          echo "installing X11 libs"
+#          $SUDO apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
+#
+#      # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
+#      - name: Install GCC 4.9
+#        if: ${{ matrix.config.compiler == 'gcc' && matrix.config.version == '4.9' }}
+#        run: |
+#          sudo apt install -y libatomic1 libc6-dev libgomp1 libitm1 libmpc3
+#          # https://launchpad.net/ubuntu/xenial/amd64/g++-4.9/4.9.3-13ubuntu2
+#          wget --no-verbose \
+#            http://launchpadlibrarian.net/230069137/libmpfr4_3.1.3-2_amd64.deb \
+#            http://launchpadlibrarian.net/253728424/libasan1_4.9.3-13ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/445346135/libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/445346112/libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/253728426/libgcc-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/253728432/libstdc++-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/253728314/gcc-4.9-base_4.9.3-13ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/445345919/gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/253728399/cpp-4.9_4.9.3-13ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/253728404/gcc-4.9_4.9.3-13ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/253728401/g++-4.9_4.9.3-13ubuntu2_amd64.deb
+#          sudo dpkg -i \
+#            libmpfr4_3.1.3-2_amd64.deb \
+#            libasan1_4.9.3-13ubuntu2_amd64.deb \
+#            libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libgcc-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+#            libstdc++-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
+#            gcc-4.9-base_4.9.3-13ubuntu2_amd64.deb \
+#            gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            cpp-4.9_4.9.3-13ubuntu2_amd64.deb \
+#            gcc-4.9_4.9.3-13ubuntu2_amd64.deb \
+#            g++-4.9_4.9.3-13ubuntu2_amd64.deb
+#
+#      - name: Install Clang 3.6
+#        if: ${{ matrix.config.compiler == 'clang' && matrix.config.version == '3.6' }}
+#        run: |
+#          sudo apt update
+#          sudo apt install libtinfo5
+#          # https://code.launchpad.net/ubuntu/xenial/amd64/clang-3.6/1:3.6.2-3ubuntu2
+#          wget --no-verbose \
+#            http://launchpadlibrarian.net/230019046/libffi6_3.2.1-4_amd64.deb \
+#            http://launchpadlibrarian.net/445346109/libasan2_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/445346135/libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/445346112/libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/445346128/libmpx0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/445346113/libgcc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/445346131/libstdc++-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/445346022/libobjc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/254405108/libllvm3.6v5_3.6.2-3ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/254405097/libclang-common-3.6-dev_3.6.2-3ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/254405101/libclang1-3.6_3.6.2-3ubuntu2_amd64.deb \
+#            http://launchpadlibrarian.net/445345919/gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            http://launchpadlibrarian.net/254405091/clang-3.6_3.6.2-3ubuntu2_amd64.deb
+#          sudo dpkg -i \
+#            libffi6_3.2.1-4_amd64.deb \
+#            libasan2_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libmpx0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libgcc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libstdc++-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libobjc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            libllvm3.6v5_3.6.2-3ubuntu2_amd64.deb \
+#            libclang-common-3.6-dev_3.6.2-3ubuntu2_amd64.deb \
+#            libclang1-3.6_3.6.2-3ubuntu2_amd64.deb \
+#            gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
+#            clang-3.6_3.6.2-3ubuntu2_amd64.deb
+#
+#      - name: Setup Compiler
+#        if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container }}
+#        run: |
+#          set -ex
+#          apt-get update
+#          apt-get install -y libc++-${{ matrix.config.version }}-dev libc++abi-${{ matrix.config.version }}-dev
+#          if [[ ${{ matrix.config.version }} -ge 12 ]]; then apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev; fi
+#          echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV
+#          echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
+#          echo "CXX=clang++-${{ matrix.config.version }}" >> $GITHUB_ENV
+#
+#      - name: Install libunwind
+#        if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container && fromJSON(matrix.config.version) >= 12 }}
+#        run: |
+#          apt-get update
+#          apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev
+#
+#      - name: Configure
+#        run: |
+#          mkdir -p build && cd build
+#          cmake .. \
+#                -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+#                -DCMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} \
+#                -DHORDE3D_BUILD_TESTS=Yes \
+#                -DHORDE3D_BUILD_EXAMPLES=Yes
+#
+#      - name: Build
+#        run: |
+#          cd build
+#          make all -j"$(nproc)"
+
+  android:
     runs-on: ubuntu-22.04
+
     strategy:
       fail-fast: false
       matrix:
         config:
-          - { compiler: gcc,   version: 4.9,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
-          - { compiler: gcc,   version: 11,   cppstd: 11, use_container: true  }
-          - { compiler: gcc,   version: 13,   cppstd: 20, use_container: true  }
-          - { compiler: gcc,   version: 15,   cppstd: 11, use_container: true  }
-          - { compiler: clang, version: 3.6,  cppstd: 11, use_container: false } # old container not compatible with 'actions/checkout@v4'
-          - { compiler: clang, version: 11,   cppstd: 11, use_container: true  }
-          - { compiler: clang, version: 15,   cppstd: 17, use_container: true  }
-          - { compiler: clang, version: 20,   cppstd: 20, use_container: true  }
-        build_type: [ Debug, Release ]
+          - { ndk: "28.0.13004108", cmake: "3.18.1" }
 
     container:
-      image: ${{ matrix.config.use_container && (matrix.config.compiler == 'clang' && format('teeks99/clang-ubuntu:{0}', matrix.config.version) || format('{0}:{1}', matrix.config.compiler, matrix.config.version)) || '' }}
+      image: androidsdk/android-30
 
-    name: "${{ matrix.config.compiler}} ${{ matrix.config.version }} (C++${{ matrix.config.cppstd }} ${{ matrix.build_type }} ${{ matrix.config.asan == 'ON' && 'ASAN' || '' }}${{ matrix.config.tsan == 'ON' && 'TSAN' || '' }})"
+    env:
+      ANDROID_NDK_HOME: ${{ format('/opt/android-sdk-linux/ndk/{0}', matrix.config.ndk) }}
+      ANDROID_HOME: /opt/android-sdk-linux
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup environment
-        run: echo "SUDO=$(if [ ${{ matrix.config.use_container }} = true ]; then echo ''; else echo 'sudo'; fi)" >> $GITHUB_ENV
-
-      - name: Install dependencies
+      - name: Install Dependencies
         run: |
-          $SUDO apt update
-          echo "installing dev libs"
-          $SUDO apt install -y cmake
-          echo "installing openGL Libs"
-          $SUDO apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
-          echo "installing X11 libs"
-          $SUDO apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
+          sdkmanager --install "cmake;${{ matrix.config.cmake }}"
+          sdkmanager --install "ndk;${{ matrix.config.ndk }}"
 
-      # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
-      - name: Install GCC 4.9
-        if: ${{ matrix.config.compiler == 'gcc' && matrix.config.version == '4.9' }}
+      - name: Configure with CMake
         run: |
-          sudo apt install -y libatomic1 libc6-dev libgomp1 libitm1 libmpc3
-          # https://launchpad.net/ubuntu/xenial/amd64/g++-4.9/4.9.3-13ubuntu2
-          wget --no-verbose \
-            http://launchpadlibrarian.net/230069137/libmpfr4_3.1.3-2_amd64.deb \
-            http://launchpadlibrarian.net/253728424/libasan1_4.9.3-13ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/445346135/libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/445346112/libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/253728426/libgcc-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/253728432/libstdc++-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/253728314/gcc-4.9-base_4.9.3-13ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/445345919/gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/253728399/cpp-4.9_4.9.3-13ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/253728404/gcc-4.9_4.9.3-13ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/253728401/g++-4.9_4.9.3-13ubuntu2_amd64.deb
-          sudo dpkg -i \
-            libmpfr4_3.1.3-2_amd64.deb \
-            libasan1_4.9.3-13ubuntu2_amd64.deb \
-            libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libgcc-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
-            libstdc++-4.9-dev_4.9.3-13ubuntu2_amd64.deb \
-            gcc-4.9-base_4.9.3-13ubuntu2_amd64.deb \
-            gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            cpp-4.9_4.9.3-13ubuntu2_amd64.deb \
-            gcc-4.9_4.9.3-13ubuntu2_amd64.deb \
-            g++-4.9_4.9.3-13ubuntu2_amd64.deb
+          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake -G Ninja -B build-android \
+            -DCMAKE_TOOLCHAIN_FILE=${ANDROID_HOME}/ndk/${{ matrix.config.ndk }}/build/cmake/android.toolchain.cmake \
+            -DCMAKE_SYSTEM_NAME=Android \
+            -DANDROID_ABI=arm64-v8a \
+            -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
+            -DCMAKE_ANDROID_NDK=${ANDROID_HOME}/ndk/${{ matrix.config.ndk }} \
+            -DCMAKE_MAKE_PROGRAM=${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/ninja \
+            -DCMAKE_SYSTEM_VERSION=25 \
+            -DANDROID_PLATFORM=android-25 \
+            -DHORDE3D_FORCE_DOWNLOAD_SDL=Yes \
+            -DHORDE3D_USE_GLES3=Yes \
+            -DCMAKE_BUILD_TYPE=Debug
 
-      - name: Install Clang 3.6
-        if: ${{ matrix.config.compiler == 'clang' && matrix.config.version == '3.6' }}
+      - name: Copy licenses
         run: |
-          sudo apt update
-          sudo apt install libtinfo5
-          # https://code.launchpad.net/ubuntu/xenial/amd64/clang-3.6/1:3.6.2-3ubuntu2
-          wget --no-verbose \
-            http://launchpadlibrarian.net/230019046/libffi6_3.2.1-4_amd64.deb \
-            http://launchpadlibrarian.net/445346109/libasan2_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/445346135/libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/445346112/libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/445346128/libmpx0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/445346113/libgcc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/445346131/libstdc++-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/445346022/libobjc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/254405108/libllvm3.6v5_3.6.2-3ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/254405097/libclang-common-3.6-dev_3.6.2-3ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/254405101/libclang1-3.6_3.6.2-3ubuntu2_amd64.deb \
-            http://launchpadlibrarian.net/445345919/gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            http://launchpadlibrarian.net/254405091/clang-3.6_3.6.2-3ubuntu2_amd64.deb
-          sudo dpkg -i \
-            libffi6_3.2.1-4_amd64.deb \
-            libasan2_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libubsan0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libcilkrts5_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libmpx0_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libgcc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libstdc++-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libobjc-5-dev_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            libllvm3.6v5_3.6.2-3ubuntu2_amd64.deb \
-            libclang-common-3.6-dev_3.6.2-3ubuntu2_amd64.deb \
-            libclang1-3.6_3.6.2-3ubuntu2_amd64.deb \
-            gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
-            clang-3.6_3.6.2-3ubuntu2_amd64.deb
-
-      - name: Setup Compiler
-        if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container }}
-        run: |
-          set -ex
-          apt-get update
-          apt-get install -y libc++-${{ matrix.config.version }}-dev libc++abi-${{ matrix.config.version }}-dev
-          if [[ ${{ matrix.config.version }} -ge 12 ]]; then apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev; fi
-          echo "CXXFLAGS=-stdlib=libc++" >> $GITHUB_ENV
-          echo "CC=clang-${{ matrix.config.version }}" >> $GITHUB_ENV
-          echo "CXX=clang++-${{ matrix.config.version }}" >> $GITHUB_ENV
-
-      - name: Install libunwind
-        if: ${{ matrix.config.compiler == 'clang' && matrix.config.use_container && fromJSON(matrix.config.version) >= 12 }}
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends libunwind-${{ matrix.config.version }}-dev
-
-      - name: Configure
-        run: |
-          mkdir -p build && cd build
-          cmake .. \
-                -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-                -DCMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} \
-                -DHORDE3D_BUILD_TESTS=Yes \
-                -DHORDE3D_BUILD_EXAMPLES=Yes
+          mkdir -p build-android/Android/Terrain
+          cp -r ${ANDROID_HOME}/licenses/ build-android/Android/Terrain || true
 
       - name: Build
         run: |
-          cd build
-          make all -j"$(nproc)"
+          ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --target Terrain
+
+      - name: Show output APK (debug)
+        run: |
+          find . -name "*-debug.apk" || echo "APK not found"

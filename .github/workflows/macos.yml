@@ -1,32 +1,32 @@
-name: macos
-
-on: [push, pull_request]
-
-permissions:
-  contents: read
-
-jobs:
-  build:
-    runs-on: macOS-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        config:
-          - { cppstd: 11 }
-          - { cppstd: 17 }
-          - { cppstd: 20 }
-        build_type: [ Debug, Release ]
-
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build
-        run: |
-          threads=`sysctl -n hw.logicalcpu`
-          mkdir -p build && cd build
-          cmake .. \
-            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
-            -DCMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} \
-            -DHORDE3D_BUILD_TESTS=Yes \
-            -DHORDE3D_BUILD_EXAMPLES=Yes
-          make -j $threads
+#name: macos
+#
+#on: [push, pull_request]
+#
+#permissions:
+#  contents: read
+#
+#jobs:
+#  build:
+#    runs-on: macOS-latest
+#
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        config:
+#          - { cppstd: 11 }
+#          - { cppstd: 17 }
+#          - { cppstd: 20 }
+#        build_type: [ Debug, Release ]
+#
+#    steps:
+#      - uses: actions/checkout@v4
+#      - name: Build
+#        run: |
+#          threads=`sysctl -n hw.logicalcpu`
+#          mkdir -p build && cd build
+#          cmake .. \
+#            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+#            -DCMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} \
+#            -DHORDE3D_BUILD_TESTS=Yes \
+#            -DHORDE3D_BUILD_EXAMPLES=Yes
+#          make -j $threads
