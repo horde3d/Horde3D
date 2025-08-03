@@ -157,7 +157,7 @@ jobs:
 
     name: "Android (ndk ${{ matrix.config.ndk }})"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
 
       - name: Install Dependencies
         run: |
