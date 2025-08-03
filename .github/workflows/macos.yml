@@ -30,3 +30,35 @@ jobs:
             -DHORDE3D_BUILD_TESTS=Yes \
             -DHORDE3D_BUILD_EXAMPLES=Yes
           make -j $threads
+          
+
+  ios:
+    runs-on: macOS-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { abi: "arm64" }
+        build_type: [ Debug ]
+
+    name: "ios (${{ matrix.config.abi }} ${{ matrix.build_type }})"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          mkdir -p build && cd build
+          cmake .. \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.config.abi }} \
+            -DHORDE3D_BUILD_TESTS=No \
+            -DHORDE3D_BUILD_EXAMPLES=Yes \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
+
+      - name: Build
+        run: |
+          cmake --build .
+          
+          
