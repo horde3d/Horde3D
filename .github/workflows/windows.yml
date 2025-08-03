@@ -1,80 +1,80 @@
-#name: windows
-#
-#on: [push, pull_request]
-#
-#permissions:
-#  contents: read
-#
-#jobs:
-#  build:
-#    runs-on: windows-latest
-#
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        config:
-#            # https://learn.microsoft.com/en-us/cpp/overview/compiler-versions?view=msvc-170
-#          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 11,  with_tests: No, shared_libs: Yes }
-#          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 17,  with_tests: No, shared_libs: Yes }
-#          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 20,  with_tests: No, shared_libs: Yes }
-#          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 17,  with_tests: Yes, shared_libs: No }  # tests build will fail with shared libs. ALL functions that are tested would need to be exported
-#        build_type: [ Debug, Release ]
-#
-#    name: "${{ matrix.config.generator_alias}} (C++${{ matrix.config.cppstd }} ${{ matrix.build_type }}${{ matrix.config.shared_libs == 'No' && ' Static' || '' }})"
-#    steps:
-#      - uses: actions/checkout@v4
-#
-#      - name: Configure
-#        shell: pwsh
-#        run: |
-#          mkdir build
-#          cd build
-#          cmake -G "${{ matrix.config.generator }}"  -A x64 `
-#            -D CMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-#            -D HORDE3D_BUILD_TESTS=${{ matrix.config.with_tests }} `
-#            -D HORDE3D_BUILD_EXAMPLES=Yes `
-#            -D BUILD_SHARED_LIBS=${{ matrix.config.shared_libs }} `
-#            -D CMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} ..
-#      - name: Build
-#        shell: pwsh
-#        run: |
-#          cd build
-#          $jobs = [System.Environment]::ProcessorCount
-#          cmake --build  . --parallel $jobs --config ${{ matrix.build_type }}
-#
-#  mingw:
-#    runs-on: windows-latest
-#    defaults:
-#      run:
-#        shell: msys2 {0}
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        config:
-#          - { sys: mingw64,  with_tests: No,  shared_libs: Yes }
-#          - { sys: mingw64,  with_tests: Yes, shared_libs: No }  # tests build will fail with shared libs. ALL functions that are tested would need to be exported
-#          - { sys: ucrt64,   with_tests: No,  shared_libs: Yes }
-#          - { sys: ucrt64,   with_tests: Yes, shared_libs: No }
-#          - { sys: clang64,  with_tests: No,  shared_libs: Yes }
-#          - { sys: clang64,  with_tests: Yes, shared_libs: No }
-#        build_type: [ Debug, Release ]
-#    name: "${{ matrix.config.sys}} (${{ matrix.build_type }}${{ matrix.config.shared_libs == 'Yes' && ' Static' || '' }})"
-#    steps:
-#      - uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
-#        with:
-#          release: false
-#          msystem: ${{matrix.config.sys}}
-#          pacboy: cc:p cmake:p glfw:p
-#      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
-#      - name: Configure
-#        run: |
-#          c++ --version
-#          cmake -B build \
-#            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-#            -DHORDE3D_BUILD_EXAMPLES=Yes \
-#            -DHORDE3D_BUILD_TESTS=${{matrix.config.with_tests}} \
-#            -DBUILD_SHARED_LIBS=${{matrix.config.shared_libs}}
-#      - name: Build
-#        run: |
-#          cd build
-#          cmake --build . --parallel $(nproc)
+name: windows
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+            # https://learn.microsoft.com/en-us/cpp/overview/compiler-versions?view=msvc-170
+          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 11,  with_tests: No, shared_libs: Yes }
+          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 17,  with_tests: No, shared_libs: Yes }
+          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 20,  with_tests: No, shared_libs: Yes }
+          - { generator: "Visual Studio 17 2022", generator_alias: "vs 2022",   cppstd: 17,  with_tests: Yes, shared_libs: No }  # tests build will fail with shared libs. ALL functions that are tested would need to be exported
+        build_type: [ Debug, Release ]
+
+    name: "${{ matrix.config.generator_alias}} (C++${{ matrix.config.cppstd }} ${{ matrix.build_type }}${{ matrix.config.shared_libs == 'No' && ' Static' || '' }})"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        shell: pwsh
+        run: |
+          mkdir build
+          cd build
+          cmake -G "${{ matrix.config.generator }}"  -A x64 `
+            -D CMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -D HORDE3D_BUILD_TESTS=${{ matrix.config.with_tests }} `
+            -D HORDE3D_BUILD_EXAMPLES=Yes `
+            -D BUILD_SHARED_LIBS=${{ matrix.config.shared_libs }} `
+            -D CMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} ..
+      - name: Build
+        shell: pwsh
+        run: |
+          cd build
+          $jobs = [System.Environment]::ProcessorCount
+          cmake --build  . --parallel $jobs --config ${{ matrix.build_type }}
+
+  mingw:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { sys: mingw64,  with_tests: No,  shared_libs: Yes }
+          - { sys: mingw64,  with_tests: Yes, shared_libs: No }  # tests build will fail with shared libs. ALL functions that are tested would need to be exported
+          - { sys: ucrt64,   with_tests: No,  shared_libs: Yes }
+          - { sys: ucrt64,   with_tests: Yes, shared_libs: No }
+          - { sys: clang64,  with_tests: No,  shared_libs: Yes }
+          - { sys: clang64,  with_tests: Yes, shared_libs: No }
+        build_type: [ Debug, Release ]
+    name: "${{ matrix.config.sys}} (${{ matrix.build_type }}${{ matrix.config.shared_libs == 'Yes' && ' Static' || '' }})"
+    steps:
+      - uses: msys2/setup-msys2@40677d36a502eb2cf0fb808cc9dec31bf6152638 # v2.28.0
+        with:
+          release: false
+          msystem: ${{matrix.config.sys}}
+          pacboy: cc:p cmake:p glfw:p
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0
+      - name: Configure
+        run: |
+          c++ --version
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DHORDE3D_BUILD_EXAMPLES=Yes \
+            -DHORDE3D_BUILD_TESTS=${{matrix.config.with_tests}} \
+            -DBUILD_SHARED_LIBS=${{matrix.config.shared_libs}}
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --parallel $(nproc)
