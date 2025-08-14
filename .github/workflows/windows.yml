@@ -35,12 +35,20 @@ jobs:
             -D HORDE3D_BUILD_EXAMPLES=Yes `
             -D BUILD_SHARED_LIBS=${{ matrix.config.shared_libs }} `
             -D CMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} ..
+
       - name: Build
         shell: pwsh
         run: |
           cd build
           $jobs = [System.Environment]::ProcessorCount
           cmake --build  . --parallel $jobs --config ${{ matrix.build_type }}
+
+      - name: Run tests
+        if: ${{ matrix.config.with_tests == 'Yes' }}
+        run: |
+          ls ./build/Binaries/Windows/${{matrix.build_type}}
+          cd ./build/Binaries/Windows/${{matrix.build_type}}
+          ./H3DUnitTests.exe --success
 
   mingw:
     runs-on: windows-latest
@@ -74,7 +82,15 @@ jobs:
             -DHORDE3D_BUILD_EXAMPLES=Yes \
             -DHORDE3D_BUILD_TESTS=${{matrix.config.with_tests}} \
             -DBUILD_SHARED_LIBS=${{matrix.config.shared_libs}}
+
       - name: Build
         run: |
           cd build
           cmake --build . --parallel $(nproc)
+
+      - name: Run tests
+        if: ${{ matrix.config.with_tests == 'Yes' }}
+        run: |
+          ls ./build/Binaries/Windows/${{matrix.build_type}}
+          cd ./build/Binaries/Windows/${{matrix.build_type}}
+          ./H3DUnitTests.exe --success

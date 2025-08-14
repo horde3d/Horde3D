@@ -139,6 +139,11 @@ jobs:
           cd build
           make all -j"$(nproc)"
 
+      - name: Run tests
+        run: |
+          cd build/Binaries/Linux/${{matrix.build_type}}
+          ./H3DUnitTests --success
+
   android:
     runs-on: ubuntu-22.04
 

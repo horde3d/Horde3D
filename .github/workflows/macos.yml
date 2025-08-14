@@ -35,7 +35,23 @@ jobs:
           threads=`sysctl -n hw.logicalcpu`
           cd build
           make -j $threads
-          
+
+      - name: Run tests
+        id: run_tests
+        run: |
+          cd build/Binaries/Darwin/${{matrix.build_type}}
+          ./H3DUnitTests.app/Contents/MacOS/H3DUnitTests --success
+          # open H3DUnitTests.app --args --success
+
+      - name: Print crashlog
+        if: ${{ failure() && steps.run_tests.conclusion == 'failure' }}
+        run: |
+          sleep 20 # it takes one or two seconds for the log to appear... using 20 just to make sure
+          cd ~/Library/Logs/DiagnosticReports
+          logfile="$(ls -t ./ | head -n 1)"
+          echo "log file: '${logfile}'"
+          cat "${logfile}"
+          exit 1
 
   ios:
     runs-on: macos-15
