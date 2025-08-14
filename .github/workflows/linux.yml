@@ -199,8 +199,17 @@ jobs:
           ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --parallel $(nproc) --target libHorde3DUtils.so
 
       - name: Build all sample apk's
+        id: build_sample_apks
         if: ${{ matrix.build_type == 'Debug' }}
         run: |
           ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --parallel $(nproc)
           find ./build-android/Binaries | grep [.]apk 
+
+      - name: Print logs if build failed
+        if: ${{ failure() && steps.build_sample_apks.conclusion == 'failure' }}
+        run: |
+          echo "Building sample apk's failed. Printing logs..."
+          cat ./build-android/project_sdl-prefix/src/project_sdl-stamp/project_sdl-build-*.log
+          exit 1
+          
 
