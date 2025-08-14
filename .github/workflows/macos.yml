@@ -20,9 +20,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Build
+      - name: Configure
         run: |
-          threads=`sysctl -n hw.logicalcpu`
           mkdir -p build && cd build
           cmake .. \
             -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
@@ -30,6 +29,11 @@ jobs:
             -DXCODE_ATTRIBUTE_ENABLE_BITCODE=No \
             -DHORDE3D_BUILD_TESTS=Yes \
             -DHORDE3D_BUILD_EXAMPLES=Yes
+
+      - name: Build
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cd build
           make -j $threads
           
 
@@ -98,5 +102,3 @@ jobs:
         run: |
           cd build
           xcodebuild -project Horde3D.xcodeproj -configuration Debug -sdk iphoneos build
-          
-          
