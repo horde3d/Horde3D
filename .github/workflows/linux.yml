@@ -214,4 +214,29 @@ jobs:
           cat ./build-android/project_sdl-prefix/src/project_sdl-stamp/project_sdl-build-*.log
           exit 1
           
+  emscripten:
+    runs-on: ubuntu-22.04
 
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ Debug, Release ]
+
+    container:
+      image: emscripten/emsdk:3.1.63
+
+    name: "emscripten (${{ matrix.build_type }})"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure with CMake
+        run: |
+          mkdir -p build && cd build
+          emcmake cmake .. \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
+
+      - name: Build
+        run: |
+          cd build
+          emmake make -j"$(nproc)"
+          find . | grep html
