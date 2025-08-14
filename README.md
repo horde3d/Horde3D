@@ -1,6 +1,6 @@
-[![linux](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/linux.yml/badge.svg)](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/linux.yml)
-[![macos](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/macos.yml/badge.svg)](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/macos.yml)
-[![windows](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/windows.yml/badge.svg)](https://github.com/JesseVanDis/Horde3D_Emscripten/actions/workflows/windows.yml)
+[![linux](https://github.com/horde3d/Horde3D/actions/workflows/linux.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/linux.yml)
+[![macos](https://github.com/horde3d/Horde3D/actions/workflows/macos.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/macos.yml)
+[![windows](https://github.com/horde3d/Horde3D/actions/workflows/windows.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/windows.yml)
 
 # Horde3D
 
