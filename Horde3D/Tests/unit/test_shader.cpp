@@ -122,10 +122,10 @@ enum class ShaderGenerator
     CorrectBinaryShader
 };
 
-static uint8 *generateBinaryShader( ShaderGenerator gen, uint32 &size )
+static std::vector<uint8_t> generateBinaryShader( ShaderGenerator gen, uint32 &size )
 {
-    uint8_t *data = new uint8_t[ 8192 ];
-    memset( data, 0, 8192 );
+    std::vector<uint8_t> data;
+    data.resize(8192, 0);
 
     switch( gen )
     {
@@ -145,17 +145,18 @@ static uint8 *generateBinaryShader( ShaderGenerator gen, uint32 &size )
             TestShaderResource tr( "model", 0 );
 
             FILE *f = fopen( "../../Content/shaders/model.shader", "rb" );
-            if ( !f ) return nullptr;
+            if ( !f ) return {};
 
             fseek( f, 0L, SEEK_END );
             auto fsize = ftell( f );
             fseek( f, 0L, SEEK_SET );
 
-            uint8 *tmp = new uint8[ fsize + 1 ];
-            auto read = fread( tmp, sizeof( char ), fsize, f );
+            std::vector<uint8> tmp;
+            tmp.resize(fsize + 1);
+            auto read = fread( tmp.data(), sizeof( char ), fsize, f );
             fclose( f );
 
-            if ( !tr.load( (const char *) tmp, fsize ) ) return nullptr;
+            if ( !tr.load( (const char *) tmp.data(), fsize ) ) return {};
 
             // shader does not have contexts as we are using null render backend and not opengl one
             // contexts are parsed relative to backend
@@ -164,7 +165,8 @@ static uint8 *generateBinaryShader( ShaderGenerator gen, uint32 &size )
             tr.addDummyShaderComb();
 
             uint32 binSize = 8192;
-            if ( !tr.test_generateBinaryShader( data, binSize ) ) return nullptr;
+            uint8_t* dataPtr = data.data();
+            if ( !tr.test_generateBinaryShader( dataPtr, binSize ) ) return {};
 
             size = binSize;
 
@@ -180,14 +182,15 @@ TEST_CASE( "load binary shader", "[unit-shader]" )
     Tester t; // init and deinit engine, should always be first and last to destroy
 
     TestShaderResource sr( "test", 0 );
-    std::unique_ptr< uint8_t > shData = nullptr;
+
+    std::vector<uint8_t> shData;
 
     SECTION( "check header" )
     {
         uint32 dataSize = 0;
-        shData.reset( generateBinaryShader( ShaderGenerator::HeaderOnly, dataSize ) );
+        shData = generateBinaryShader( ShaderGenerator::HeaderOnly, dataSize );
 
-        REQUIRE( sr.test_load( (const char *) shData.get(), dataSize ) == false );
+        REQUIRE( sr.test_load( (const char *) shData.data(), dataSize ) == false );
 
         REQUIRE( sr.checkBinaryShader() == true );
     }
@@ -195,9 +198,9 @@ TEST_CASE( "load binary shader", "[unit-shader]" )
     SECTION( "check load successful" )
     {
         uint32 dataSize = 0;
-        shData.reset( generateBinaryShader( ShaderGenerator::CorrectBinaryShader, dataSize ) );
+        shData = generateBinaryShader( ShaderGenerator::CorrectBinaryShader, dataSize );
 
-        REQUIRE( sr.test_load( (const char *) shData.get(), dataSize ) == true );
+        REQUIRE( sr.test_load( (const char *) shData.data(), dataSize ) == true );
         REQUIRE( sr.checkContexts() == true );
         REQUIRE( sr.checkSamplers() == true );
 //        REQUIRE( sr.checkBuffers() == true );
