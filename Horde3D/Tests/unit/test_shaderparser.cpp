@@ -17,20 +17,10 @@ class TestShaderParser : public ShaderParser
 {
 public:
     
-    TestShaderParser( const std::string shaderName ) : ShaderParser( shaderName )
+    TestShaderParser( const std::string& shaderName ) : ShaderParser( shaderName )
     {
-        // Init engine
-        _initialized = Modules::init( NULL_RENDER_BACKEND );
-        if ( !_initialized )
-            std::cout << "---Engine failed to initialize. Test will likely fail/crash!---" << std::endl;
     }
-    
-    ~TestShaderParser()
-    {
-        if ( _initialized )
-            Modules::release();
-    }
-    
+
     bool test_parseBinarySampler( char *data, uint32_t samplerCount )
     {
         return parseBinarySampler( data, samplerCount );
@@ -68,9 +58,28 @@ public:
     std::vector< ShaderContext > &getContexts() { return _contexts; }
     std::vector< ShaderBinaryData> &getCombinations() { return _binaryShaders; }
 
-private:
-    
-    bool _initialized;
+};
+
+class EngineSession
+{
+    public:
+        EngineSession()
+        {
+            // Init engine
+            _initialized = Modules::init( NULL_RENDER_BACKEND );
+            if ( !_initialized )
+                std::cout << "---Engine failed to initialize. Test will likely fail/crash!---" << std::endl;
+        }
+
+        ~EngineSession()
+        {
+            if ( _initialized )
+                Modules::release();
+        }
+
+    private:
+        bool _initialized;
+
 };
 
 enum class SamplerData
@@ -862,6 +871,7 @@ TEST_CASE( "create shader parser", "[unit-shader]" )
 
 TEST_CASE( "parse binary sampler", "[unit-shader]" )
 {
+    EngineSession session;
     TestShaderParser p( "test_shader" );
 
     std::vector< uint8_t > samplerData;
@@ -1001,6 +1011,7 @@ TEST_CASE( "parse binary sampler", "[unit-shader]" )
 
 TEST_CASE( "parse binary uniform", "[unit-shader]" )
 {
+    EngineSession session;
     TestShaderParser p( "test_shader" );
 
     std::vector< uint8_t > uniformData;
@@ -1078,6 +1089,7 @@ TEST_CASE( "parse binary uniform", "[unit-shader]" )
 
 TEST_CASE( "parse binary buffer", "[unit-shader]" )
 {
+    EngineSession session;
     TestShaderParser p( "test_shader" );
 
     std::vector< uint8_t > bufferData;
@@ -1119,6 +1131,7 @@ TEST_CASE( "parse binary buffer", "[unit-shader]" )
 
 TEST_CASE( "parse binary flags", "[unit-shader]" )
 {
+    EngineSession session;
     TestShaderParser p( "test_shader" );
 
     std::vector< uint8_t > flagData;
@@ -1151,6 +1164,7 @@ TEST_CASE( "parse binary flags", "[unit-shader]" )
 
 TEST_CASE( "parse binary context", "[unit-shader]" )
 {
+    EngineSession session;
     TestShaderParser p( "test_shader" );
 
     std::vector< uint8_t > contextData;
@@ -1257,6 +1271,7 @@ TEST_CASE( "parse binary context", "[unit-shader]" )
 
 TEST_CASE( "parse shader binary combination", "[unit-shader]" )
 {
+    EngineSession session;
     TestShaderParser p( "test_shader" );
 
     std::vector< uint8_t > combData;
