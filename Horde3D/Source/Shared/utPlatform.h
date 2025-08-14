@@ -18,10 +18,10 @@
 #if !defined( NDEBUG )
 	#include <assert.h>
 #endif
-#if defined(__MINGW32__)
-	#include <math.h>
+#if defined(__MINGW32__) || (__GNUC__ >= 14)
+    #include <math.h>
+    #include <cstdint>
 #endif
-#include <cinttypes>
 
 // Detect platform
 #if defined( WINCE )
