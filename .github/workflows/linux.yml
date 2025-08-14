@@ -192,9 +192,9 @@ jobs:
 
       # you could just call ".../cmake --build build-android" and just build all.
       # But in release mode, you may encounter an error that tells you that the Google Play requires the app to target at least API X or higher.
-      # We just want to check if it builds at all in release mode. We don't intent to publish the sample apk's to the play store.
-      # Maintaining the gradle is maybe something for the user.
-      # Build .apk's in debug mode is allowed though, so that call is actually being done in the next step.
+      # So no samples in release mode. But we can check if the Horde3D library builds at all in release mode.
+      # In the end, it is mostly up to SDL to keep up with the latest Android API.
+      # Building .apk's in debug mode is allowed though, so that call is actually being done in the next step.
       - name: Build libs
         run: |
           ${ANDROID_HOME}/cmake/${{ matrix.config.cmake }}/bin/cmake --build build-android --parallel $(nproc) --target libHorde3D.so
