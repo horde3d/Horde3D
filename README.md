@@ -1,3 +1,7 @@
+[![linux](https://github.com/horde3d/Horde3D/actions/workflows/linux.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/linux.yml)
+[![macos](https://github.com/horde3d/Horde3D/actions/workflows/macos.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/macos.yml)
+[![windows](https://github.com/horde3d/Horde3D/actions/workflows/windows.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/windows.yml)
+
 # Horde3D
 
 Horde3D is a 3D rendering engine written in C++ with an effort being as lightweight and conceptually clean as possible.
@@ -58,7 +62,7 @@ You need to have a C++11 compiler and [CMake 3.7+](http://www.cmake.org/) instal
 
 ### Build samples
 
-In order to build the samples you need [GLFW](http://www.glfw.org/download.html) *(>3.x)* or [SDL](https://github.com/libsdl-org/SDL/releases) *(>=2.0.10)*.
+In order to build the samples you need [GLFW](http://www.glfw.org/download.html) *(>3.x)* or [SDL](https://github.com/libsdl-org/SDL/releases) *(>=2.32.8)*.
 
 By default, if not present on the system, a default version will be automatically downloaded, built and linked for you.
 

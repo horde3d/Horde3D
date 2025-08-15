@@ -12,12 +12,13 @@ ShaderParser::ShaderParser( const std::string &shaderName ) : _shaderName( shade
     
 }
 
-
 ShaderParser::~ShaderParser()
 {
-    
+    for(auto& v : _binaryShaders)
+    {
+        delete[] v.data;
+    }
 }
-
 
 bool ShaderParser::raiseError( const std::string& msg, int line )
 {

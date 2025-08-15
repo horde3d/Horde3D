@@ -16,6 +16,25 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/BuildTools/CMake/Modules" ${CMAKE_MOD
 include(CheckFunctionExists)
 check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
+# Default to shared libs, except for some platforms. Making use of cmake's 'BUILD_SHARED_LIBS' option for this. https://cmake.org/cmake/help/v3.14/variable/BUILD_SHARED_LIBS.html
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    option(BUILD_SHARED_LIBS "Build shared libraries" OFF) # only static is supported for these platforms
+    if(BUILD_SHARED_LIBS)
+        message(FATAL_ERROR "Shared libs are not supported for '${CMAKE_SYSTEM_NAME}'. Must build with -DBUILD_SHARED_LIBS=No (default)")
+    endif()
+else()
+    option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+endif()
+if(NOT BUILD_SHARED_LIBS)
+    add_definitions(-DH3D_STATIC_LIBS)
+endif()
+
+option(HORDE3D_SANITIZE_ADDRESS "Enable address sanitizer in tests" OFF)
+option(HORDE3D_SANITIZE_THREAD "Enable thread sanitizer in tests" OFF)
+if(HORDE3D_SANITIZE_ADDRESS AND HORDE3D_SANITIZE_THREAD)
+    message(FATAL_ERROR "HORDE3D_SANITIZE_ADDRESS and HORDE3D_SANITIZE_THREAD are mutually exclusive")
+endif()
+
 # To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
 
@@ -28,13 +47,13 @@ if(HORDE3D_BUILD_EXAMPLES)
     # We can use SDL or GLFW
 
     # SDL is the only choice for IOS and Android
-    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR 
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR
        ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR
        ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" OFF)
         option(HORDE3D_USE_GLFW "Use GLFW for window creation/event handling" ON)
     else()
-        # IOS and android are not supported by glfw   
+        # IOS and android are not supported by glfw
         option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" ON)
     endif()
 
@@ -116,12 +135,12 @@ IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
     set(USE_GLES3 TRUE)
 	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
     set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
-    
+
     # On Linux set gradlew to be executable (a bit of a hack)
     if( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux" )
         execute_process( COMMAND chmod "+x" "${PROJECT_SOURCE_DIR}/BuildTools/android/gradlew" )
     endif()
-#     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}) 
+#     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME})
 #     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/android/app/src/main/jniLibs/${ANDROID_ABI} )
 ENDIF()
 
@@ -203,6 +222,26 @@ option(HORDE3D_BUILD_EDITOR "Build Horde3D Editor" OFF)
 if(HORDE3D_BUILD_EDITOR)
   add_subdirectory(Horde3DEditor)
 endif(HORDE3D_BUILD_EDITOR)
+
+# Sanitizer support
+if(HORDE3D_SANITIZE_ADDRESS)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR "Sanitizer supported only for gcc/clang")
+    endif()
+    message(STATUS "Address sanitizer enabled")
+    #         "${CMAKE_C_FLAGS} -Werror -fsanitize=undefined -fsanitize=address"
+    target_compile_options(Horde3D PUBLIC -fsanitize=address,undefined)
+    target_compile_options(Horde3D PUBLIC -fno-omit-frame-pointer)
+    target_link_options(Horde3D PUBLIC -fsanitize=address,undefined)
+elseif(HORDE3D_SANITIZE_THREAD)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR "Sanitizer supported only for gcc/clang")
+    endif()
+    message(STATUS "Thread sanitizer enabled")
+    target_compile_options(Horde3D PUBLIC -fsanitize=thread)
+    target_compile_options(Horde3D PUBLIC -fno-omit-frame-pointer)
+    target_link_options(Horde3D PUBLIC -fsanitize=thread)
+endif()
 
 if(POLICY CMP0058)
     cmake_policy(SET CMP0058 NEW)

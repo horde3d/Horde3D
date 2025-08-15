@@ -421,7 +421,9 @@ void * SDLBackend::createWindow( const WindowCreateParameters &params )
 	{
 		// Currently force to landscape mode
 //		SDL_SetHint( SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight" );
+#ifdef SDL_HINT_MOUSE_TOUCH_EVENTS
 		SDL_SetHint( SDL_HINT_MOUSE_TOUCH_EVENTS, "0" );
+#endif
 		SDL_SetHint( SDL_HINT_TOUCH_MOUSE_EVENTS, "0" );
 	}
 

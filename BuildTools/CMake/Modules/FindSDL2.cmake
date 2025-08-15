@@ -179,8 +179,9 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+		URL https://www.libsdl.org/release/SDL2-2.32.8.zip
 		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DANDROID_ABI=${ANDROID_ABI} -DANDROID_DL_LIBRARY=${ANDROID_DL_LIBRARY}
+		BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libSDL2.so
 		LOG_DOWNLOAD 1
 		LOG_UPDATE 1
 		LOG_CONFIGURE 1
@@ -193,7 +194,7 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-		URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+		URL https://www.libsdl.org/release/SDL2-2.32.8.zip
 		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_OSX_ARCHITEXTURES=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH} -DCMAKE_FRAMEWORK_PATH=${CMAKE_FRAMEWORK_PATH}
 		LOG_DOWNLOAD 1
 		LOG_UPDATE 1
@@ -206,7 +207,7 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 		MESSAGE(STATUS "External SDL project done")
 	else() # other platforms
 		ExternalProject_Add(project_sdl
-			URL https://www.libsdl.org/release/SDL2-2.0.9.zip
+			URL https://www.libsdl.org/release/SDL2-2.32.8.zip
 			CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
 			LOG_DOWNLOAD 1
 			LOG_UPDATE 1
@@ -252,7 +253,7 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 
 	# For android make sdl library path available for other projects (used for samples in android build)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
-		get_filename_component( SDL_LIB_PATH ${SDL2_LIBRARY} DIRECTORY )
+		get_filename_component( SDL_LIB_PATH ${SDL_LIBRARY_PATH} DIRECTORY )
 	ENDIF()
 
 	# Set path to sdl library in sample binary, so that linker could find it
