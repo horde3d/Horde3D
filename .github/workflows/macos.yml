@@ -121,4 +121,4 @@ jobs:
       - name: Build
         run: |
           cd build
-          xcodebuild -project Horde3D.xcodeproj -configuration Debug -sdk iphoneos build
+          xcodebuild -project Horde3D.xcodeproj -configuration ${{matrix.build_type}} -sdk iphoneos build
