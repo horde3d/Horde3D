@@ -116,6 +116,37 @@ string cleanPath( const string &path )
 		return cleanedPath;
 }
 
+bool getWord(istringstream& in, string& out, const std::string& delimiterChars)
+{
+	out.clear();
+	char c;
+
+	// skip leading delimiters
+	while (in.get(c))
+	{
+		if (delimiterChars.find(c) == string::npos)
+		{
+			out.push_back(c);
+			break;
+		}
+	}
+	if (out.empty())
+	{
+		return false;
+	}
+
+	// Read until next delimiter
+	while (in.get(c))
+	{
+		if (delimiterChars.find(c) != string::npos)
+		{
+			break;
+		}
+		out.push_back(c);
+	}
+
+	return true;
+}
 
 void log( const std::string &msg, bool verboseMessage )
 {
