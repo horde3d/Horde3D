@@ -119,7 +119,6 @@ jobs:
             sudo apt-get install -y clang-${{matrix.config.version}}
             sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{matrix.config.version}} 200
             sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{matrix.config.version}} 200
-            sudo update-alternatives --display clang  
           fi
           clang --version
           clang++ --version
