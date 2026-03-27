@@ -30,23 +30,23 @@ jobs:
 
       - name: Install dependencies
         run: |
-          $SUDO apt update
+          sudo apt-get update
           echo "installing dev libs"
-          sudo apt install -y cmake software-properties-common
+          sudo apt-get install -y cmake software-properties-common
           echo "Adding test repo for more compiler version support"
           sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-          sudo apt update
+          sudo apt-get update
           echo "installing openGL Libs"
-          $SUDO apt install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
+          sudo apt-get install -y libglfw3-dev libgl1-mesa-dev libegl1-mesa-dev libglu1-mesa-dev libgegl-dev libxext-dev
           echo "installing X11 libs"
-          $SUDO apt install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
+          sudo apt-get install -y libxcursor-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxfixes-dev libxrender-dev libxxf86vm-dev
 
       # taken from 'https://github.com/fmtlib/fmt/actions/runs/16595627500/workflow'
       - name: Install GCC ${{matrix.config.version}}
         if: ${{ matrix.config.compiler == 'gcc' }}
         run: |
           if [ "${{matrix.config.version}}" = "4.9" ]; then
-            sudo apt install -y libatomic1 libc6-dev libgomp1 libitm1 libmpc3
+            sudo apt-get install -y libatomic1 libc6-dev libgomp1 libitm1 libmpc3
             # https://launchpad.net/ubuntu/xenial/amd64/g++-4.9/4.9.3-13ubuntu2
             wget --no-verbose \
               http://launchpadlibrarian.net/230069137/libmpfr4_3.1.3-2_amd64.deb \
@@ -74,7 +74,7 @@ jobs:
               g++-4.9_4.9.3-13ubuntu2_amd64.deb
           else
             # Just use apt-get install if Listed here? https://askubuntu.com/questions/466651/how-do-i-use-the-latest-gcc-on-ubuntu/1163021#1163021
-            sudo apt install -y gcc-${{matrix.config.version}} g++-${{matrix.config.version}}
+            sudo apt-get install -y gcc-${{matrix.config.version}} g++-${{matrix.config.version}}
             sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-${{matrix.config.version}} 200
             sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-${{matrix.config.version}} 200
           fi
@@ -85,7 +85,7 @@ jobs:
         if: ${{ matrix.config.compiler == 'clang' }}
         run: |
           if [ "${{matrix.config.version}}" = "3.6" ]; then
-            sudo apt install libtinfo5
+            sudo apt-get install libtinfo5
             # https://code.launchpad.net/ubuntu/xenial/amd64/clang-3.6/1:3.6.2-3ubuntu2
             wget --no-verbose \
               http://launchpadlibrarian.net/230019046/libffi6_3.2.1-4_amd64.deb \
@@ -116,7 +116,7 @@ jobs:
               gcc-5-base_5.4.0-6ubuntu1~16.04.12_amd64.deb \
               clang-3.6_3.6.2-3ubuntu2_amd64.deb
           else
-            sudo apt install -y clang-${{matrix.config.version}}
+            sudo apt-get install -y clang-${{matrix.config.version}}
             sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{matrix.config.version}} 200
             sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${{matrix.config.version}} 200
             sudo update-alternatives --display clang  
