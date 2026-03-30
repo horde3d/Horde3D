@@ -36,6 +36,13 @@ jobs:
           cd build
           make -j $threads
 
+      - name: Print build errors
+        if: ${{ failure() }}
+        run: |
+          echo "==== logs in $(pwd) ===="
+          find ./ -name "*.log" -print -exec cat {} \;
+          exit 1
+
       - name: Run tests
         id: run_tests
         run: |

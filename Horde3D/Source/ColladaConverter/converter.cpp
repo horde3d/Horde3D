@@ -1324,7 +1324,7 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 				char value = 'a';
 				std::istringstream iss(material.effect->diffuseColor);
 				std::string token;
-				while(std::getline(iss, token, ' '))
+				while(getWord(iss, token))
 				{
 					outf << value++ << "=\"" << token << "\" ";
 				}				
@@ -1337,7 +1337,7 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 				char value = 'a';
 				std::istringstream iss(material.effect->specularColor);
 				std::string token;
-				while(std::getline(iss, token, ' ') && value < 'd' )
+				while(getWord(iss, token) && value < 'd' )
 				{
 					outf << value++ << "=\"" << token << "\" ";
 				}				
