@@ -37,7 +37,7 @@ class SceneTreeWidget : public QWidget, protected Ui_SceneTreeWidget
 
 	Q_OBJECT
 public:
-	SceneTreeWidget(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	SceneTreeWidget(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~SceneTreeWidget();
 
 	void save();

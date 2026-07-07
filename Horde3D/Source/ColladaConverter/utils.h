@@ -18,6 +18,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <string>
+#include <sstream>
 
 namespace Horde3D {
 namespace ColladaConverter {
@@ -28,8 +29,10 @@ std::string decodeURL( const std::string &url );
 std::string extractFileName( const std::string &fullPath, bool extension );
 std::string extractFilePath( const std::string &fullPath );
 std::string cleanPath( const std::string &path );
+bool getWord(std::istringstream& in, std::string& out, const std::string& delimiterChars = " \t");
 
-void log( const std::string &msg );
+void log( const std::string &msg, bool verboseMessage = false );
+void logSetVerbose( bool verbose );
 
 Matrix4f makeMatrix4f( float *floatArray16, bool y_up );
 

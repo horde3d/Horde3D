@@ -34,7 +34,7 @@ class CameraToolBar : public QWidget, protected Ui_CameraToolBar
 	friend class HordeSceneEditor;
 
 public:
-	CameraToolBar(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	CameraToolBar(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~CameraToolBar();
 
 	void setActiveCamera(const QCameraNode* camera);

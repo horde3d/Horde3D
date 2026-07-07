@@ -90,6 +90,9 @@ public:
 	
     QString toolTip( int /*column*/ )  { return tr("Double click to move the camera to the lights position"); }
 
+signals:
+	void materialChanged(const QString& materialFile);
+
 protected:
 	
 	//void addDebugRepresentation();

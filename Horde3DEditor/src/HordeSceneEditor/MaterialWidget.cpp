@@ -138,8 +138,8 @@ void MaterialWidget::closeMaterial()
                     this,
                     tr("Save changes?"),
                     tr("Save previous changes to material %1?").arg(m_currentMaterialFile),
-                    QMessageBox::Save | QMessageBox::Default,
-                    QMessageBox::Ignore | QMessageBox::Escape)==QMessageBox::Save)
+                    QMessageBox::Save | QMessageBox::Ignore,
+                    QMessageBox::Save ) == QMessageBox::Save)
             save();
     }
     m_saveButton->setEnabled(false);

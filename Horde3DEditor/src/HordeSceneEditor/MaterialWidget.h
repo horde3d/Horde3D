@@ -39,7 +39,7 @@ class MaterialWidget : public QWidget, protected Ui_MaterialWidget
 {
 	Q_OBJECT
 public:
-	MaterialWidget(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	MaterialWidget(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~MaterialWidget();
 	
 	void init();

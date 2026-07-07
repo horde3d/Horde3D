@@ -48,7 +48,7 @@ void TextureComboBox::init(const QString& resourcePath)
 		addTextures(resourcePath, resourcePath);
 	addItem(tr("Clone/Import Texture From Repository"), QVariant((int) H3DResTypes::Texture));
 	QHordeSceneEditorSettings settings;	
-	setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundColorRole );
+	setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );
 	if (count() == 1)
 		setCurrentIndex(-1);
 	blockSignals(false);
@@ -89,7 +89,7 @@ void TextureComboBox::currentChanged(int index)
 				addItem(tr("Clone/Import Texture From Repository"), QVariant((int) H3DResTypes::Texture));
 				blockSignals(false);
 				QHordeSceneEditorSettings settings;	
-				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundColorRole );
+				setItemData( count() - 1, settings.value( "ImportEntryColor", QColor( 132, 255, 136 ) ), Qt::BackgroundRole );
 				index2 = findText(newTexture);				
 			}
 			setCurrentIndex(index2);

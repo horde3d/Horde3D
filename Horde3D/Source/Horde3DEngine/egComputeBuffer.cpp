@@ -544,6 +544,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 {
 	if ( ( read || write ) && _bufferID && !_mapped )
 	{
+#ifndef __EMSCRIPTEN__ // 'setMemoryBarrier' not supported under emscripten
 		if ( elem == ComputeBufferResData::ComputeBufElem )
 		{
 			RenderDeviceInterface *rdi = Modules::renderer().getRenderDevice();
@@ -574,6 +575,7 @@ void *ComputeBufferResource::mapStream( int elem, int elemIdx, int stream, bool 
 			}
 
 		}
+#endif
 	}
 
 	return Resource::mapStream( elem, elemIdx, stream, read, write );

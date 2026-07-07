@@ -37,7 +37,7 @@ namespace glESExt
 	bool EXT_texture_filter_anisotropic = false;
 	bool EXT_disjoint_timer_query = false;
 	
-	bool  EXT_color_buffer_float = false;
+	bool EXT_color_buffer_float = false;
 
 	bool EXT_geometry_shader = false;
 	bool EXT_tessellation_shader = false;
@@ -55,7 +55,7 @@ namespace glESExt
 	bool OES_EGL_image_external = false;
 	bool KHR_debug = false;
 	
-	int	majorVersion = 1, minorVersion = 0;
+	int majorVersion = 1, minorVersion = 0;
 }
 
 
@@ -79,10 +79,13 @@ namespace h3dGLES
 	PFNGLEGLIMAGETARGETTEXTURE2DOESPROC glEGLImageTargetTexture2DOES = 0x0;
 
     PFNGLPATCHPARAMETERIOESPROC glPatchParameteri = 0x0;
+#ifndef __EMSCRIPTEN__
     PFNGLDISPATCHCOMPUTEPROC glDispatchCompute = 0x0;
-    PFNGLGETPROGRAMRESOURCEIVPROC glGetProgramResourceiv = 0x0;
     PFNGLMEMORYBARRIERPROC glMemoryBarrier = 0x0;
+
     PFNGLGETPROGRAMRESOURCEINDEXPROC glGetProgramResourceIndex = 0x0;
+#endif
+    PFNGLGETPROGRAMRESOURCEIVPROC glGetProgramResourceiv = 0x0;
 
 	PFNGLDEBUGMESSAGECONTROLKHRPROC glDebugMessageControlKHR = 0x0;
 	PFNGLDEBUGMESSAGEINSERTKHRPROC glDebugMessageInsertKHR = 0x0;

@@ -45,7 +45,8 @@ struct RenderCapabilities
 		GeometryShader = 2,
 		TessellationShader = 4,
 		ComputeShader = 8,
-        DebugBackend = 16
+        DebugBackend = 16,
+        BinaryShaders = 32
 	};
 };
 
@@ -73,7 +74,8 @@ public:
             float fov = 45.0f, float near_plane = 0.1f, float far_plane = 1000.0f,
             int width = 1280, int height = 720,
             bool fullscreen = false, bool show_cursor = false,
-            int benchmark_length = H3D_DEFAULT_SAMPLE_BENCHMARK_LENGTH );
+            int benchmark_length = H3D_DEFAULT_SAMPLE_BENCHMARK_LENGTH,
+            bool use_binary_shaders = false );
 	virtual ~SampleApplication();
 
 	bool init();
@@ -173,6 +175,8 @@ protected:
 	FrameworkBackend *getBackend() { return _backend; }
 	void *getWindowHandle() { return _winHandle; }
 	void recreateWindow();
+
+    bool checkAndGenerateBinaryShaders( bool forceRegenerate );
 //	static void keyEventHandler( int key, int scancode, int action, int mods );
 //	static void mouseMoveHandler( float x, float y, float prev_x, float prev_y );
 
@@ -195,6 +199,8 @@ protected:
     H3DNode      _cam;
 	int			 _renderInterface;
 	int			 _renderCaps;
+
+    bool         _useBinaryShaders;
 
 private:
 
@@ -225,6 +231,7 @@ private:
     bool         _showHelpPanel;
 
     bool         _invertMouseX, _invertMouseY;
+
 };
 
 #endif // _sample_app_H_

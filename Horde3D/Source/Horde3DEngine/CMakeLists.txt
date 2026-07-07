@@ -25,6 +25,7 @@ set(HORDE3D_SOURCES
 	egScene.cpp
 	egSceneGraphRes.cpp
 	egShader.cpp
+	egShaderParser.cpp
 	egTexture.cpp
 	utImage.cpp
 #	config.h
@@ -50,6 +51,7 @@ set(HORDE3D_SOURCES
 	egScene.h
 	egSceneGraphRes.h
 	egShader.h
+	egShaderParser.h
 	egTexture.h
 	utImage.h
 	utTimer.h
@@ -60,6 +62,7 @@ set(HORDE3D_SOURCES
 
 add_definitions(-DCMAKE )
 
+# Desktop GL render backends
 if (USE_GL2 OR USE_GL4)
 	if (USE_GL2)
 #		add_definitions(-DH3D_USE_GL2)
@@ -81,6 +84,7 @@ if (USE_GL2 OR USE_GL4)
 	list(APPEND HORDE3D_SOURCES "utOpenGL.cpp")
 endif(USE_GL2 OR USE_GL4)
 
+# GLES 3 render backend
 if (USE_GLES3)
 #	add_definitions(-DH3D_USE_GLES3)
 	set( H3D_USE_GLES3 1 )
@@ -93,18 +97,20 @@ if (USE_GLES3)
 
 endif (USE_GLES3)
 
+# Null render backend
+if ( USE_NULL )
+
+	set( H3D_USE_NULL 1 )
+
+    list(APPEND HORDE3D_SOURCES "egRendererBaseNull.h")
+	list(APPEND HORDE3D_SOURCES "egRendererBaseNull.cpp")
+endif( USE_NULL )
+
 # Add renderers, specified during build, in the config.h file
 configure_file( config.h.in ${CMAKE_BINARY_DIR}/config.h )
 
-# For all platforms except iOS, engine is built as shared library
-if (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
-	add_library(Horde3D STATIC ${HORDE3D_SOURCES} )
-else(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
-# Other platforms
-	add_library(Horde3D SHARED
-		${HORDE3D_SOURCES}
-		)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+# 'BUILD_SHARED_LIBS=Yes/No' will decide if it should be static or shared
+add_library(Horde3D ${HORDE3D_SOURCES} )
 
 option(RAPIDXML_NO_EXCEPTIONS "Disabling rapidxml exceptions will terminating application on xml parsing error" ON)
 if (RAPIDXML_NO_EXCEPTIONS)
@@ -192,4 +198,9 @@ if( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 
 	target_link_libraries(Horde3D ${EGL_LIBRARIES} ${OPENGLES2_LIBRARIES} ${HORDE3D_EXTENSION_LIBS})
 	target_link_libraries(Horde3D "-framework OpenGLES")
+endif()
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+	# just make sure the extension libs are linked
+	target_link_libraries(Horde3D ${HORDE3D_EXTENSION_LIBS})
 endif()

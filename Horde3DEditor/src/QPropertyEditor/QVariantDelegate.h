@@ -73,6 +73,9 @@ public:
 	/// QItemDelegate implementation
 	virtual void updateEditorGeometry(QWidget *editor,  const QStyleOptionViewItem &option, const QModelIndex &index) const;
 
+private slots:
+
+	void onEditorFinished( QObject *obj );
 private:
 	void parseEditorHints(QWidget* editor, const QString& editorHints) const;
 

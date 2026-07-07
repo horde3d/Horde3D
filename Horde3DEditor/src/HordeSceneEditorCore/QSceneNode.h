@@ -130,6 +130,13 @@ public:
 	void setEnabled(bool enabled);
 
 	/**
+	 * Returns whether scene node supports materials or not
+	 * 
+	 * Internal state is set during node instantiation
+	 */
+	bool supportsMaterials() { return m_supportsMaterials; }
+
+	/**
 	 * Can be reimplemented for custom behavior when a scene node gets activated (e.g. double clicked)
 	 */
 	virtual void activate() {}
@@ -151,6 +158,8 @@ protected:
 
 	unsigned int				m_hordeID;
 	bool						m_active;
+
+	bool						m_supportsMaterials;
 
 	enum UndoIDs {
 		TransformationID = 1, 

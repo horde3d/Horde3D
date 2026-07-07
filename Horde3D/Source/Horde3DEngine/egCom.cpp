@@ -16,6 +16,9 @@
 #include "egRenderer.h"
 #include <stdarg.h>
 #include <stdio.h>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 #include "utDebug.h"
 
@@ -212,6 +215,13 @@ void EngineLog::pushMessage( int level, const char *msg, va_list args )
 	OutputDebugString( TEXT("\r\n") );
 #elif defined( PLATFORM_ANDROID )
 	__android_log_print( ANDROID_LOG_DEBUG, "h3d", "%s%s\n", headers[std::min( (uint32)level, (uint32)5 )], _textBuf );
+
+#elif defined(__EMSCRIPTEN__)
+    auto out = level < 2 ? stderr : stdout;
+    fputs( headers[std::min( (uint32)level, (uint32)5 )], out );
+	fputs( _textBuf, out );
+	fputs( "\n", out );
+
 #else
 	fputs( headers[std::min( (uint32)level, (uint32)5 )], stderr );
 	fputs( _textBuf, stderr );

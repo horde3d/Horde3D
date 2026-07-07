@@ -52,7 +52,7 @@ QVariant PipelineTreeModel::data(const QModelIndex &index, int role) const
 	QXmlTreeNode *item = static_cast<QXmlTreeNode*>(index.internalPointer());
 	switch(role)
 	{
-	case Qt::BackgroundColorRole:
+	case Qt::BackgroundRole:
 		if( item->property("Type").toInt() ==  QPipelineNode::PIPELINESTAGENODE )
 			return QColor( 240, 240, 240 );
 		else

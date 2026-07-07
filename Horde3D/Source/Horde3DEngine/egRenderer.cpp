@@ -21,6 +21,7 @@
 
 #include "utDebug.h"
 
+// Check what backends should be included
 #if defined ( DESKTOP_OPENGL_AVAILABLE ) && !defined( H3D_USE_GLES3 )
 #	if defined( H3D_USE_GL2 )
 #		include "egRendererBaseGL2.h"
@@ -31,6 +32,12 @@
 #else
 #	include "egRendererBaseGLES3.h"
 #endif
+
+// Null backend, used for testing
+#if defined ( H3D_USE_NULL )
+#   include "egRendererBaseNull.h"
+#endif
+
 
 // Constants
 constexpr int defaultCameraView = 0;
@@ -348,6 +355,12 @@ RenderDeviceInterface *Renderer::createRenderDevice( int type )
 			return new RDI_GLES3::RenderDeviceGLES3();
 		}
 #endif
+#if defined ( H3D_USE_NULL )
+		case 256: // special case for Null backend that is used for testing (unit, intergration, engine performance, etc.)
+		{
+			return new RDI_Null::RenderDeviceNull();
+		}
+#endif
 		default:
 			Modules::log().writeError( "Incorrect render interface type or type not specified. Renderer cannot be initialized." );
 			break;
@@ -541,9 +554,9 @@ void Renderer::prepareRenderViews()
 	// Clear old views 
 	scm.clearRenderViews();
 
-	// WARNING! Currently lighting will not be present in the first frame, because scene update will happen
-	// after lights addition to render views. If that behavior is not desirable uncomment the following statement (may reduce performance a bit)
-//	scm.updateNodes();
+	// Update all nodes before preparing render views. This eliminates problems with frustum culling 
+	// lagging one frame behind for lights and camera movements.
+	scm.updateNodes();
 
 	//
 	// Step 1. Add views for camera and lights based on their frustums
@@ -568,7 +581,7 @@ void Renderer::prepareRenderViews()
 	}
 
 	// Generate render queue for camera and lights
-	scm.updateQueues( SceneNodeFlags::NoDraw );
+	scm.updateQueues( SceneNodeFlags::NoDraw, false, true );
 
 	//
 	// Step 2. Create temporary crop shadow frustums that are used for creating tighter shadow frustums to increase shadow quality
@@ -592,7 +605,7 @@ void Renderer::prepareRenderViews()
 	}
 
 	// Prepare render queues for crop frustums
-	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow );
+	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
 
 	//
 	// Step 3. Calculate final shadow frustums
@@ -612,7 +625,7 @@ void Renderer::prepareRenderViews()
 	}
 
 	// Shadow frustums are ready, prepare render queues for them
-	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow );
+	scm.updateQueues( SceneNodeFlags::NoDraw | SceneNodeFlags::NoCastShadow, false, true );
 
 	timer->setEnabled( false );
 }
@@ -625,7 +638,17 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 								 const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader )
 {
 	// Create shader program
-	uint32 shdObj = _renderDevice->createShader( vertexShader, fragmentShader, geometryShader, tessControlShader, tessEvaluationShader, computeShader );
+    RDIShaderCreateParams p;
+    p.type = RDIShaderType::SHADERTYPE_TEXT;
+    p.vertexShaderData = ( uint8 * ) vertexShader;
+    p.fragmentShaderData = ( uint8 * ) fragmentShader;
+    p.geometryShaderData = ( uint8 * ) geometryShader;
+    p.tessControlShaderData = ( uint8 * ) tessControlShader;
+    p.tessEvalShaderData = ( uint8 * ) tessEvaluationShader;
+    p.computeShaderData = ( uint8 * ) computeShader;
+    
+    return createShaderComb( sc, p );
+/*	uint32 shdObj = _renderDevice->createShader( p );
 	if( shdObj == 0 ) return false;
 	
 	sc.shaderObj = shdObj;
@@ -641,6 +664,7 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 	{
 		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
 	}
+*/
 
 // 	Misc general uniforms
 // 	sc.uni_frameBufSize = _renderDevice->getShaderConstLoc( shdObj, "frameBufSize" );
@@ -675,6 +699,30 @@ bool Renderer::createShaderComb( ShaderCombination &sc, const char *vertexShader
 // 	sc.uni_parColorArray = _renderDevice->getShaderConstLoc( shdObj, "parColorArray" );
 // 	
 // 	// Uniforms, requested by extensions
+
+//	return true;
+}
+
+
+bool Renderer::createShaderComb( ShaderCombination &sc, const RDIShaderCreateParams &shcparams )
+{
+	// Create shader program
+	uint32 shdObj = _renderDevice->createShader( shcparams );
+	if( shdObj == 0 ) return false;
+	
+	sc.shaderObj = shdObj;
+	_renderDevice->bindShader( shdObj );
+	
+	// Set standard uniforms
+	int loc =_renderDevice-> getShaderSamplerLoc( shdObj, "shadowMap" );
+	if( loc >= 0 ) _renderDevice->setShaderSampler( loc, 12 );
+
+	sc.uniLocs.reserve( _engineUniforms.size() );
+
+	for ( size_t i = 0; i < _engineUniforms.size(); ++i ) 
+	{
+		sc.uniLocs.emplace_back( _renderDevice->getShaderSamplerLoc( shdObj, _engineUniforms[ i ].uniformName.c_str() ) );
+	}
 
 	return true;
 }
@@ -1706,6 +1754,7 @@ void Renderer::drawLightShapes( const string &shaderContext, bool noShadows, int
 	}
 }
 
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 void Renderer::dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z )
 {
 	if ( !setMaterial( materialRes, context ) ) return;
@@ -1719,6 +1768,7 @@ void Renderer::dispatchCompute( MaterialResource *materialRes, const std::string
 
 	timer->endQuery();
 }
+#endif
 
 // =================================================================================================
 // Scene Node Rendering Functions
@@ -2102,7 +2152,7 @@ void Renderer::drawParticles( uint32 firstItem, uint32 lastItem, const std::stri
 		Modules::renderer().drawOccProxies( OCCPROXYLIST_RENDERABLES );	
 }
 
-
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 								   bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order,
 								   int occSet )
@@ -2202,6 +2252,7 @@ void Renderer::drawComputeResults( uint32 firstItem, uint32 lastItem, const std:
 
 	timer->endQuery();
 }
+#endif
 
 // =================================================================================================
 // Main Rendering Functions

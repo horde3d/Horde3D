@@ -24,6 +24,7 @@
 #define NODEWIDGET_H_
 
 #include <QPropertyEditor/QPropertyEditorWidget.h>
+#include "CustomTypes.h"
 
 class QSceneNode;
 class QXmlTreeNode;
@@ -46,7 +47,7 @@ public slots:
 	void moveObject(const float x, const float y, const float z);
 	void rotateObject(const float rx, const float ry, const float rz);
 	void scaleObject(const float sx, const float sy, const float sz);
-
+	void transformObject( const QMatrix4f m );
 signals:
 	void materialChanged(const QString materialFileName);
 	void modified(bool);

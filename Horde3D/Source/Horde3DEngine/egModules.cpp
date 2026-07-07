@@ -112,7 +112,9 @@ bool Modules::init( int backendType )
 	// Register render functions
 	renderer().registerRenderFunc( SceneNodeTypes::Mesh, Renderer::drawMeshes );
 	renderer().registerRenderFunc( SceneNodeTypes::Emitter, Renderer::drawParticles );
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
 	renderer().registerRenderFunc( SceneNodeTypes::Compute, Renderer::drawComputeResults );
+#endif
 
 	// Install extensions
 	installExtensions();

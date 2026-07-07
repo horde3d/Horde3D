@@ -34,4 +34,4 @@ MESSAGE(STATUS "Output to ${LIBRARY_OUTPUT_DIRECTORY} ${RUNTIME_OUTPUT_DIRECTORY
 
 ADD_LIBRARY( QTerrainNodeExtension SHARED  ${QTerrainNodeExtension_SOURCES}  ${QTerrainNodeExtension_HEADERS} ${QTerrainNodeExtension_FORMS} )
 
-TARGET_LINK_LIBRARIES( QTerrainNodeExtension ${QT_LIBRARIES} HordeSceneEditorCore QXmlTree QPropertyEditor ${LUA_LIBRARIES} Horde3D Horde3DUtils )
+TARGET_LINK_LIBRARIES( QTerrainNodeExtension ${QT_LIBRARIES} HordeSceneEditorCore QXmlTree QPropertyEditor EditorLib ${LUA_LIBRARIES} Horde3D Horde3DUtils )

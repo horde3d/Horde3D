@@ -23,6 +23,13 @@
 #include "FrustumProperty.h"
 #include "CustomTypes.h"
 
+#include <QtGlobal>
+#if QT_VERSION >= 0x060000
+    #include "../EditorLib/QRegExp.h"
+#else
+    #include <QtCore/QRegExp>
+#endif
+
 FrustumProperty::FrustumProperty(const QString& name /*= QString()*/, QObject* propertyObject /*= 0*/, QObject* parent /*= 0*/) : Property(name, propertyObject, parent)
 {
 	m_left = new Property("Left", this, this);
@@ -70,7 +77,7 @@ QVariant FrustumProperty::value(int role) const
 
 void FrustumProperty::setValue(const QVariant& value)
 {
-	if (value.type() == QVariant::String)
+	if (value.typeId() == QMetaType::QString)
 	{
 		QString v = value.toString();				
 		QRegExp rx("([+-]?([0-9]*[\\.,])?[0-9]+(e[+-]?[0-9]+)?)");

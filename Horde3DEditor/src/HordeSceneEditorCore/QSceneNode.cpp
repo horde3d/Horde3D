@@ -36,7 +36,7 @@
 #include <Horde3D.h>
 
 QSceneNode::QSceneNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode) : 
-QXmlTreeNode(xmlNode, row, model, parentNode), m_hordeID(0), m_active(true)
+QXmlTreeNode(xmlNode, row, model, parentNode), m_hordeID(0), m_active(true), m_supportsMaterials( false )
 {			
 	if( model )
 		m_knownNodeNames = model->nodeFactory()->sceneNodeNames();

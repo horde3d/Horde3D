@@ -106,7 +106,7 @@ namespace Lua
 			lua_settop(luaState,0); // empty stack
 			return QStringList();
 		}
-		QStringList retVal = QString(lua_tostring(luaState, -1)).split(',', QString::SkipEmptyParts);			
+		QStringList retVal = QString(lua_tostring(luaState, -1)).split(',', Qt::SkipEmptyParts);
 		// Add library names additionally
 		for (int i=0; i<retVal.size(); ++i)
 		{

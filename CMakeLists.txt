@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.14) # Native support for Android in CMAKE requi
 # Project details.
 project(Horde3D)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 SET(${PROJECT_NAME}_MAJOR_VERSION 2)
-SET(${PROJECT_NAME}_MINOR_VERSION 0)
+SET(${PROJECT_NAME}_MINOR_VERSION 1)
 SET(${PROJECT_NAME}_PATCH_LEVEL 0)
 
 # Add local repository for FindXXX.cmake modules.
@@ -16,8 +16,30 @@ SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/BuildTools/CMake/Modules" ${CMAKE_MOD
 include(CheckFunctionExists)
 check_function_exists(strncpy_s HAVE_STRNCPY_S)
 
+# Default to shared libs, except for some platforms. Making use of cmake's 'BUILD_SHARED_LIBS' option for this. https://cmake.org/cmake/help/v3.14/variable/BUILD_SHARED_LIBS.html
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS" OR CMAKE_SYSTEM_NAME STREQUAL "Emscripten")
+    option(BUILD_SHARED_LIBS "Build shared libraries" OFF) # only static is supported for these platforms
+    if(BUILD_SHARED_LIBS)
+        message(FATAL_ERROR "Shared libs are not supported for '${CMAKE_SYSTEM_NAME}'. Must build with -DBUILD_SHARED_LIBS=No (default)")
+    endif()
+else()
+    option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+endif()
+if(NOT BUILD_SHARED_LIBS)
+    add_definitions(-DH3D_STATIC_LIBS)
+endif()
+
+option(HORDE3D_SANITIZE_ADDRESS "Enable address sanitizer in tests" OFF)
+option(HORDE3D_SANITIZE_THREAD "Enable thread sanitizer in tests" OFF)
+if(HORDE3D_SANITIZE_ADDRESS AND HORDE3D_SANITIZE_THREAD)
+    message(FATAL_ERROR "HORDE3D_SANITIZE_ADDRESS and HORDE3D_SANITIZE_THREAD are mutually exclusive")
+endif()
+
 # To build or not to build examples (removes GLFW or SDL dependency)
 option(HORDE3D_BUILD_EXAMPLES "Builds Horde3D examples" ON)
+
+# Specifies whether to build tests
+option(HORDE3D_BUILD_TESTS "Build Horde3D unit and integration tests" OFF)
 
 # Check the required windowing backend
 if(HORDE3D_BUILD_EXAMPLES)
@@ -25,13 +47,13 @@ if(HORDE3D_BUILD_EXAMPLES)
     # We can use SDL or GLFW
 
     # SDL is the only choice for IOS and Android
-    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR 
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Windows" OR
        ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR
        ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" OFF)
         option(HORDE3D_USE_GLFW "Use GLFW for window creation/event handling" ON)
     else()
-        # IOS and android are not supported by glfw   
+        # IOS and android are not supported by glfw
         option(HORDE3D_USE_SDL "Use SDL for window creation/event handling" ON)
     endif()
 
@@ -52,7 +74,14 @@ if(HORDE3D_BUILD_EXAMPLES)
             set( HORDE3D_FORCE_DOWNLOAD_SDL OFF )
         endif()
 
-        find_package(SDL2)
+        IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Emscripten" )
+            add_definitions( "--use-port=sdl2" ) # With this flag emscripten itself will handle the rest, including include-directories and linking
+            add_link_options( "--use-port=sdl2" )
+            set(SDL2_FOUND TRUE)
+        ELSE()
+            find_package(SDL2)
+        ENDIF()
+
         IF(SDL2_FOUND)
             include_directories(${SDL2_INCLUDE_DIR})
         ENDIF(SDL2_FOUND)
@@ -68,32 +97,20 @@ else()
     message("Not building examples.")
 endif(HORDE3D_BUILD_EXAMPLES)
 
-# Render backend selection
+# Render backend selection defaults
 option(HORDE3D_USE_GL2 "Add OpenGL 2 render backend. Turns off ES3 render backend." ON)
 option(HORDE3D_USE_GL4 "Add OpenGL 4 render backend. Turns off ES3 render backend." ON)
 option(HORDE3D_USE_GLES3 "Add OpenGL ES 3 render backend. Turns off desktop GL backends." OFF)
+option(HORDE3D_USE_NULL "Add Null render backend. Used for testing. Can work with other render backends." OFF)
 
-if(HORDE3D_USE_GLES3)
-	set(USE_GLES3 TRUE)
-	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
-	set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
-endif(HORDE3D_USE_GLES3)
+if(HORDE3D_USE_NULL)
+    set(USE_NULL TRUE)
+endif(HORDE3D_USE_NULL)
 
-if(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
-	if(HORDE3D_USE_GL2)
-		set(USE_GL2 TRUE)
-	endif(HORDE3D_USE_GL2)
-	
-	if(HORDE3D_USE_GL4)
-		set(USE_GL4 TRUE)
-	endif(HORDE3D_USE_GL4)
-	
-	set(HORDE3D_USE_GLES3 OFF CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
-endif(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
-
-if (NOT HORDE3D_USE_GL2 AND NOT HORDE3D_USE_GL4 AND NOT HORDE3D_USE_GLES3 )
-    message( SEND_ERROR "Rendering backend is not selected!")
-endif()
+# Tests always enable Null render backend
+if(HORDE3D_BUILD_TESTS)
+    set(USE_NULL TRUE)
+endif(HORDE3D_BUILD_TESTS)
 
 # Set binaries output folder.
 SET(HORDE3D_OUTPUT_PATH_PREFIX "${PROJECT_BINARY_DIR}/Binaries")
@@ -118,12 +135,12 @@ IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
     set(USE_GLES3 TRUE)
 	set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
     set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
-    
+
     # On Linux set gradlew to be executable (a bit of a hack)
     if( ${CMAKE_HOST_SYSTEM_NAME} MATCHES "Linux" )
         execute_process( COMMAND chmod "+x" "${PROJECT_SOURCE_DIR}/BuildTools/android/gradlew" )
     endif()
-#     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}) 
+#     file(COPY "BuildTools/android" DESTINATION ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME})
 #     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${HORDE3D_OUTPUT_PATH_PREFIX}/${CMAKE_SYSTEM_NAME}/android/app/src/main/jniLibs/${ANDROID_ABI} )
 ENDIF()
 
@@ -142,11 +159,56 @@ IF( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
     set(HORDE3D_USE_GLES3 ON CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
 ENDIF()
 
+
+if( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+    # WebGL Only support OpenGL ES
+    set(HORDE3D_EMSCRIPTEN_STACK_SIZE 524288 CACHE STRING "emscripten stack size (-sSTACKSIZE=...)")
+    if(NOT HORDE3D_EMSCRIPTEN_STACK_SIZE)
+        set(HORDE3D_EMSCRIPTEN_STACK_SIZE 524288)
+    endif()
+
+    set(USE_GLES3 TRUE)
+    set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GLES3 ON CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
+
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+
+    add_link_options( -sFULL_ES3 )
+    add_link_options( -sSTACK_SIZE=${HORDE3D_EMSCRIPTEN_STACK_SIZE} )
+
+    if(HORDE3D_BUILD_EXAMPLES)
+        set (SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER "${HORDE3D_OUTPUT_PATH_PREFIX}/Content")
+    endif(HORDE3D_BUILD_EXAMPLES)
+endif()
+
 IF(MSVC)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup ")
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 ENDIF(MSVC)
 
+# Render backend selection
+if(HORDE3D_USE_GLES3)
+    set(USE_GLES3 TRUE)
+    set(HORDE3D_USE_GL2 OFF CACHE BOOL "Add OpenGL 2 render backend. Turns off ES3 render backend." FORCE)
+    set(HORDE3D_USE_GL4 OFF CACHE BOOL "Add OpenGL 4 render backend. Turns off ES3 render backend." FORCE)
+endif(HORDE3D_USE_GLES3)
+
+if(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
+    if(HORDE3D_USE_GL2)
+        set(USE_GL2 TRUE)
+    endif(HORDE3D_USE_GL2)
+
+    if(HORDE3D_USE_GL4)
+        set(USE_GL4 TRUE)
+    endif(HORDE3D_USE_GL4)
+
+    set(HORDE3D_USE_GLES3 OFF CACHE BOOL "Add OpenGL ES 3 render backend. Turns off desktop GL backends." FORCE)
+endif(HORDE3D_USE_GL2 OR HORDE3D_USE_GL4)
+
+if (NOT HORDE3D_USE_GL2 AND NOT HORDE3D_USE_GL4 AND NOT HORDE3D_USE_GLES3 )
+    message( SEND_ERROR "Rendering backend is not selected!")
+endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
 
@@ -160,6 +222,26 @@ option(HORDE3D_BUILD_EDITOR "Build Horde3D Editor" OFF)
 if(HORDE3D_BUILD_EDITOR)
   add_subdirectory(Horde3DEditor)
 endif(HORDE3D_BUILD_EDITOR)
+
+# Sanitizer support
+if(HORDE3D_SANITIZE_ADDRESS)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR "Sanitizer supported only for gcc/clang")
+    endif()
+    message(STATUS "Address sanitizer enabled")
+    #         "${CMAKE_C_FLAGS} -Werror -fsanitize=undefined -fsanitize=address"
+    target_compile_options(Horde3D PUBLIC -fsanitize=address,undefined)
+    target_compile_options(Horde3D PUBLIC -fno-omit-frame-pointer)
+    target_link_options(Horde3D PUBLIC -fsanitize=address,undefined)
+elseif(HORDE3D_SANITIZE_THREAD)
+    if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(FATAL_ERROR "Sanitizer supported only for gcc/clang")
+    endif()
+    message(STATUS "Thread sanitizer enabled")
+    target_compile_options(Horde3D PUBLIC -fsanitize=thread)
+    target_compile_options(Horde3D PUBLIC -fno-omit-frame-pointer)
+    target_link_options(Horde3D PUBLIC -fsanitize=thread)
+endif()
 
 if(POLICY CMP0058)
     cmake_policy(SET CMP0058 NEW)

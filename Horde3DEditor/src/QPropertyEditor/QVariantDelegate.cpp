@@ -31,14 +31,22 @@
 #include <QAbstractItemView>
 #include <QSignalMapper>
 
+#include <QtGlobal>
+#if QT_VERSION >= 0x060000
+    #include "QRegExp.h"
+#else
+    #include <QtCore/QRegExp>
+#endif
+
 
 QVariantDelegate::QVariantDelegate(QObject* parent) : QItemDelegate(parent)
 {
 	m_finishedMapper = new QSignalMapper(this);
-	connect(m_finishedMapper, SIGNAL(mapped(QWidget*)), this, SIGNAL(commitData(QWidget*)));
-	connect(m_finishedMapper, SIGNAL(mapped(QWidget*)), this, SIGNAL(closeEditor(QWidget*)));
+	connect(m_finishedMapper, &QSignalMapper::mappedObject, this, &QVariantDelegate::onEditorFinished);
+//	connect(m_finishedMapper, &QSignalMapper::mappedObject, this, &QVariantDelegate::closeEditor);
+	
+	//	connect(m_finishedMapper, SIGNAL(mappedObject(QWidget*)), this, SIGNAL(closeEditor(QWidget*)));
 }
-
 
 QVariantDelegate::~QVariantDelegate()
 {
@@ -48,26 +56,46 @@ QWidget *QVariantDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
 {
 	QWidget* editor = 0;
 	Property* p = static_cast<Property*>(index.internalPointer());
-	switch(p->value().type())
+	int propType = p->value().typeId();
+
+	if (propType >= QMetaType::User)
 	{
-	case QVariant::Color:
-	case QVariant::Int:
-	case QMetaType::Float:	
-	case QVariant::Double:	
-    case QVariant::UserType:
+		// handle user properties
 		editor = p->createEditor(parent, option);
-		if (editor)	
+		if (editor)
 		{
 			if (editor->metaObject()->indexOfSignal("editFinished()") != -1)
 			{
 				connect(editor, SIGNAL(editFinished()), m_finishedMapper, SLOT(map()));
 				m_finishedMapper->setMapping(editor, editor);
 			}
-			break; // if no editor could be created take default case
 		}
-	default:
-        if( !editor) editor = QItemDelegate::createEditor(parent, option, index);
+		else
+			if (!editor) editor = QItemDelegate::createEditor(parent, option, index);
 	}
+	else
+	{
+		switch (propType)
+		{
+		case QMetaType::QColor:
+		case QMetaType::Int:
+		case QMetaType::Float:
+		case QMetaType::Double:
+			editor = p->createEditor(parent, option);
+			if (editor)
+			{
+				if (editor->metaObject()->indexOfSignal("editFinished()") != -1)
+				{
+					connect(editor, SIGNAL(editFinished()), m_finishedMapper, SLOT(map()));
+					m_finishedMapper->setMapping(editor, editor);
+				}
+				break; // if no editor could be created take default case
+			}
+		default:
+			if (!editor) editor = QItemDelegate::createEditor(parent, option, index);
+		}
+	}
+	
 	parseEditorHints(editor, p->editorHints());
 	return editor;
 }
@@ -78,39 +106,54 @@ void QVariantDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
     editor->blockSignals(true);
 	QVariant data = index.model()->data(index, Qt::EditRole);	
 	
-	switch(data.type())
+	if (data.typeId() >= QMetaType::User)
 	{
-	case QVariant::Color:		 		
-	case QMetaType::Double:
-	case QMetaType::Float:
-	case QVariant::UserType:
-	case QVariant::Int:
-		if (static_cast<Property*>(index.internalPointer())->setEditorData(editor, data)) // if editor couldn't be recognized use default
-			break; 
-	default:
-		QItemDelegate::setEditorData(editor, index);
-		break;
+		if ( !static_cast<Property*>(index.internalPointer())->setEditorData(editor, data) ) // if editor couldn't be recognized use default
+			QItemDelegate::setEditorData(editor, index);
 	}
+	else
+	{
+		switch (data.typeId())
+		{
+		case QMetaType::QColor:
+		case QMetaType::Int:
+		case QMetaType::Float:
+		case QMetaType::Double:
+			if (static_cast<Property*>(index.internalPointer())->setEditorData(editor, data)) // if editor couldn't be recognized use default
+				break;
+		default:
+			QItemDelegate::setEditorData(editor, index);
+			break;
+		}
+	}
+
     editor->blockSignals(false);
 	m_finishedMapper->blockSignals(false);    
+}
+
+void QVariantDelegate::onEditorFinished( QObject *obj )
+{
+	QWidget *editor = static_cast< QWidget * >( obj );
+	emit commitData( editor );
+	emit closeEditor( editor );
 }
 
 void QVariantDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
 {	
 	QVariant data = index.model()->data(index, Qt::EditRole);	
-    unsigned int type = data.type();
-    switch(type)
+    unsigned int type = data.typeId();
+
+	if ( type < QMetaType::User )
 	{
-	case QVariant::Color:		
-	case QMetaType::Double:
-	case QMetaType::Float:				
-	case QVariant::UserType: 
-	case QVariant::Int:
-        break;
-	default:        
-		QItemDelegate::setModelData(editor, model, index);
-        return;
-	}
+		if (type != QMetaType::QColor ||
+			type != QMetaType::Int ||
+			type != QMetaType::Float ||
+			type != QMetaType::Double)
+		{
+			QItemDelegate::setModelData(editor, model, index);
+			return;
+		}
+	}	
 
     data = static_cast<Property*>(index.internalPointer())->editorData(editor);
     if (data.isValid())

@@ -300,12 +300,26 @@ struct DaeLibControllers
 	DaeMorph *findMorph( const std::string &id ) const
 	{
 		if( id == "" ) return 0x0;
-		
+
 		for( unsigned int i = 0; i < morphControllers.size(); ++i )
 		{
-			if( morphControllers[i]->id == id ) return morphControllers[i];
+			if( morphControllers[i]->id == id )
+			{
+				log( "Found morph controller with requested id " + id + "\n", true );
+				return morphControllers[i];
+			}
+			else
+			{
+				// Check for special cases. For example, Blender now creates <model-name>-morph, and id is <model-name>-mesh.
+				auto morphId = morphControllers[i]->id;
+				if (morphId.find("-morph") != std::string::npos && id.find("-mesh") != std::string::npos)
+				{
+					log( "Found morph controller with -morph for requested id " + id + "\n", true );
+					return morphControllers[i];
+				}
+			}
 		}
-		
+
 		return 0x0;
 	}
 	

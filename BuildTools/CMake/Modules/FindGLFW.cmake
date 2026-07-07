@@ -8,7 +8,8 @@
 # GLFW_INCLUDE_DIR, where to find glfw3.h
 #=============================================================================
 
-FIND_PATH(GLFW_INCLUDE_DIR glfw3.h
+FIND_PATH(GLFW_INCLUDE_DIR
+    NAMES glfw3.h GLFW/glfw3.h
 	HINTS
 	$ENV{GLFWDIR}
 	PATH_SUFFIXES include/GL include
@@ -17,6 +18,8 @@ FIND_PATH(GLFW_INCLUDE_DIR glfw3.h
 	/Library/Frameworks
 	/usr/local/include/GLFW
 	/usr/include/GLFW
+    /mingw64/include # mingw64
+    /include # ucrt64
 	/sw # Fink
 	/opt/local # DarwinPorts
 	/opt/csw # Blastwave
@@ -46,9 +49,9 @@ IF(NOT GLFW_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_GLFW)
     # It uses CMake's "ExternalProject_Add" target.
     MESSAGE(STATUS "Preparing external GLFW project")
     INCLUDE(ExternalProject)
-    ExternalProject_Add(project_glfw 
-        URL https://github.com/glfw/glfw/releases/download/3.3.2/glfw-3.3.2.zip
-        URL_MD5 f794d9ad899a64894782884be79d644b
+    ExternalProject_Add(project_glfw
+        URL https://github.com/glfw/glfw/releases/download/3.3.10/glfw-3.3.10.zip
+        URL_MD5 ca85f61c76a041e8be1a9f6e76e189f6
         CMAKE_ARGS -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_INSTALL_LIBDIR:PATH=lib -DGLFW_BUILD_DOCS:BOOL=OFF -DGLFW_BUILD_EXAMPLES:BOOL=OFF -DGLFW_BUILD_TESTS:BOOL=OFF
         LOG_DOWNLOAD 1
         LOG_UPDATE 1
@@ -56,6 +59,7 @@ IF(NOT GLFW_LIBRARY_PATH OR HORDE3D_FORCE_DOWNLOAD_GLFW)
         LOG_BUILD 1
         LOG_TEST 1
         LOG_INSTALL 1
+        DOWNLOAD_EXTRACT_TIMESTAMP 1
     )
     MESSAGE(STATUS "External GLFW project done")
 

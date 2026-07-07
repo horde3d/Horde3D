@@ -13,7 +13,10 @@
 #include "daeMain.h"
 #include "converter.h"
 #include "utPlatform.h"
+#include "utils.h"
 #include <algorithm>
+#include <string>
+#include <vector>
 
 #ifdef PLATFORM_WIN
 #   define WIN32_LEAN_AND_MEAN 1
@@ -28,6 +31,8 @@
 #	include <sys/stat.h>
 #	include <dirent.h>
 #endif
+
+#define H3D_CONVERTER_VERSION "Horde3D ColladaConv - 2.0.3"
 
 using namespace std;
 using namespace Horde3D;
@@ -132,12 +137,13 @@ void printHelp()
 	log( "-lodDist3 dist    distance for LOD3" );
 	log( "-lodDist4 dist    distance for LOD4" );
 	log( "-useMaterialId    use material id instead of material name" );
+	log( "-verbose    		print all messages, may help in debugging" );
 }
 
 
 int main( int argc, char **argv )
 {
-	log( "Horde3D ColladaConv - 2.0.0" );
+	log( H3D_CONVERTER_VERSION );
 	log( "" );
 	
 	if( argc < 2 )
@@ -210,6 +216,10 @@ int main( int argc, char **argv )
 		else if( _stricmp( arg.c_str(), "-useMaterialId" ) == 0 )
 		{
 			useMaterialId = true;
+		}
+		else if( _stricmp( arg.c_str(), "-verbose" ) == 0 )
+		{
+			logSetVerbose( true );
 		}
 		else
 		{

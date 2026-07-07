@@ -1,0 +1,131 @@
+name: macos
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macOS-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { cppstd: 11 }
+          - { cppstd: 17 }
+          - { cppstd: 20 }
+        build_type: [ Debug, Release ]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure
+        run: |
+          mkdir -p build && cd build
+          cmake .. \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+            -DCMAKE_CXX_STANDARD=${{ matrix.config.cppstd }} \
+            -DXCODE_ATTRIBUTE_ENABLE_BITCODE=No \
+            -DHORDE3D_BUILD_TESTS=Yes \
+            -DHORDE3D_BUILD_EXAMPLES=Yes
+
+      - name: Build
+        run: |
+          threads=`sysctl -n hw.logicalcpu`
+          cd build
+          make -j $threads
+
+      - name: Print build errors
+        if: ${{ failure() }}
+        run: |
+          echo "==== logs in $(pwd) ===="
+          find ./ -name "*.log" -print -exec cat {} \;
+          exit 1
+
+      - name: Run tests
+        id: run_tests
+        run: |
+          cd build/Binaries/Darwin/${{matrix.build_type}}
+          ./H3DUnitTests.app/Contents/MacOS/H3DUnitTests --success
+          # open H3DUnitTests.app --args --success
+
+      - name: Print crashlog
+        if: ${{ failure() && steps.run_tests.conclusion == 'failure' }}
+        run: |
+          sleep 20 # it takes one or two seconds for the log to appear... using 20 just to make sure
+          cd ~/Library/Logs/DiagnosticReports
+          logfile="$(ls -t ./ | head -n 1)"
+          echo "log file: '${logfile}'"
+          cat "${logfile}"
+          exit 1
+
+  ios:
+    runs-on: macos-15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - { abi: "arm64" }
+        build_type: [ Debug, Release ]
+
+    name: "ios (${{ matrix.config.abi }} ${{ matrix.build_type }})"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: 16.0 # for iOS 18.0 Platform. see https://github.com/actions/runner-images/blob/main/images/macos/macos-15-Readme.md
+
+      - name: Get CMake and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: 3.22
+          ninjaVersion: latest
+
+      - name: Install macOS Tools
+        run: |
+          brew update
+          brew install gcovr ccache || true
+
+      - name: Build SDL2
+        run: |
+          cmake --version
+          threads=`sysctl -n hw.logicalcpu`
+          wget https://github.com/libsdl-org/SDL/archive/refs/tags/release-2.30.2.zip -O sdl.zip
+          unzip sdl.zip
+          cd ./SDL-release-2.30.2
+          xcodebuild -project Xcode/SDL/SDL.xcodeproj -target 'Static Library-iOS' -configuration Release -sdk iphoneos clean build
+          find $(pwd) | grep -F libSDL2.a
+
+      - name: Configure
+        run: |
+          cmake --version
+          threads=`sysctl -n hw.logicalcpu`
+          SDL2LIB=$(find $(pwd) | grep -F libSDL2.a)
+          SDL2INCLUDE=$(dirname "$(find "$(pwd)" | grep -F SDL.h)")
+          mkdir -p build && cd build
+          echo "SDL2LIB: ${SDL2LIB}"
+          echo "SDL2INCLUDE: ${SDL2INCLUDE}"
+          cmake .. \
+            -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DPLATFORM=OS64 \
+            -DCMAKE_TOOLCHAIN_FILE=BuildTools/ios/ios.toolchain.cmake \
+            -DCMAKE_OSX_ARCHITECTURES=${{ matrix.config.abi }} \
+            -DCMAKE_VERBOSE_MAKEFILE=No \
+            -DHORDE3D_BUILD_TESTS=No \
+            -DHORDE3D_BUILD_EXAMPLES=Yes \
+            -DHORDE3D_USE_GL2=No \
+            -DHORDE3D_USE_GL4=No \
+            -DSDL2_INCLUDE_DIR="${SDL2INCLUDE}" \
+            -DSDL2_LIBRARY="${SDL2LIB}" \
+            -DHORDE3D_FORCE_DOWNLOAD_SDL=No \
+            -DHORDE3D_USE_GLES3=Yes \
+            -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
+
+      - name: Build
+        run: |
+          cd build
+          xcodebuild -project Horde3D.xcodeproj -configuration ${{matrix.build_type}} -sdk iphoneos build

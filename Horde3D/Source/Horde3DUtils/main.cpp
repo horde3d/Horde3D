@@ -44,6 +44,7 @@ namespace Horde3DUtils {
 
 ofstream            outf;
 map< int, string >  resourcePaths;
+std::string			shaderCachePath;
 
 
 string cleanPath( string path )
@@ -70,6 +71,31 @@ string cleanPath( string path )
 	return path;
 }
 
+string pathGetExtension( const string & path, size_t *dotPosition )
+{
+	string ext;
+
+	// Find the last dot, if any.
+	size_t dotIdx = path.find_last_of( "." );
+	if ( dotIdx != string::npos )
+	{
+		// Find the last directory separator, if any.
+		size_t dirSepIdx = path.find_last_of( "/\\" );
+
+		// If the dot is at the beginning of the file name, do not treat it as a file extension.
+		// e.g., a hidden file:  ".alpha".
+		// This test also incidentally avoids a dot that is really a current directory indicator.
+		// e.g.:  "alpha/./bravo"
+		if ( dotIdx > dirSepIdx + 1 )
+		{
+			ext = path.substr( dotIdx );
+			*dotPosition = dotIdx;
+		}
+	}
+
+	return ext;
+}
+
 }  // namespace
 
 
@@ -91,6 +117,12 @@ H3D_IMPL void h3dutSetResourcePath( int type, const char *path )
 	string s = path != 0x0 ? path : "";
 
 	resourcePaths[type] = cleanPath( s );
+}
+
+
+H3D_IMPL void h3dutSetShaderCachePath( const char *path )
+{
+	shaderCachePath = cleanPath( path );
 }
 
 
@@ -128,7 +160,32 @@ H3D_IMPL bool h3dutLoadResourcesFromDisk( const char *contentDir )
 		// Loop over search paths and try to open files
 		for( unsigned int i = 0; i < dirs.size(); ++i )
 		{
-			string fileName = dirs[i] + resourcePaths[h3dGetResType( res )] + "/" + h3dGetResName( res );
+			int resType = h3dGetResType( res );
+			const char *resName = h3dGetResName( res );
+			string fileName = dirs[i] + resourcePaths[ resType ] + "/" + resName;
+			if ( resType == H3DResTypes::Shader && !shaderCachePath.empty() )
+			{
+				// Special case for binary shaders - search for shader in shader cache
+				// Generate binary shader filename
+				string binShaderName;
+				size_t shaderExtDotPos = 0;
+				string shaderExtension = pathGetExtension( resName, &shaderExtDotPos );
+				if ( !shaderExtension.empty() )
+				{
+					binShaderName = std::string( resName ).erase( shaderExtDotPos, fileName.size() - shaderExtDotPos );
+					binShaderName += ".h3dsb";
+					binShaderName = shaderCachePath + "/" + binShaderName;
+
+					inf.clear();
+					inf.open( binShaderName.c_str(), ios::binary );
+					if( inf.good() )
+					{
+						fileName = binShaderName;
+						break;
+					}
+				}
+			}
+
 			inf.clear();
 			inf.open( fileName.c_str(), ios::binary );
 			if( inf.good() ) break;
@@ -654,6 +711,29 @@ H3D_IMPL bool h3dutScreenshot( const char *filename )
 	return bytesWritten == (size_t) width * height * 3 + 18;
 }
 
+
+H3D_IMPL bool h3dutCreateBinaryShader( H3DRes shaderResource, const char *filename )
+{
+	if ( h3dGetResType( shaderResource ) != H3DResTypes::Shader || !filename ) return false;
+
+	auto *data = (uint8 *) h3dMapResStream( shaderResource, H3DShaderRes::ShaderElem, 0, H3DShaderRes::ShaderBinaryStream, true, false );
+	if ( !data ) return false;
+
+	auto dataSize = h3dGetResParamI( shaderResource, H3DShaderRes::ShaderElem, 0, H3DShaderRes::ShaderBinarySizeI );
+
+	bool result = true;
+	size_t bytesWritten = 0;
+	FILE *f = fopen( filename, "wb" );
+	if( f )
+	{
+		bytesWritten = fwrite( data, 1, dataSize, f );
+		fclose( f );
+	}
+	else result = false;
+
+	h3dUnmapResStream( shaderResource );
+	return result;
+}
 
 // =================================================================================================
 // DLL entry point

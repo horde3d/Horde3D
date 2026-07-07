@@ -34,6 +34,8 @@ ChicagoSample::ChicagoSample( int argc, char** argv ) :
     _rx = -10; _ry = 60;
 
 	_curPipeline = 1;
+	_useBinaryShaders = true;
+	setRequiredCapabilities( RenderCapabilities::BinaryShaders );
 }
 
 

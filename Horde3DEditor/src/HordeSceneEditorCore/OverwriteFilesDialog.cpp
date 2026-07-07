@@ -82,8 +82,8 @@ void OverwriteFilesDialog::renameSelectedFiles()
 				this, 
 				tr("Warning"), 
 				tr("The file %1 already exists! Do you want to overwrite it?").arg(newFileName), 
-				QMessageBox::Yes | QMessageBox::Default, 
-				QMessageBox::No | QMessageBox::Escape) == QMessageBox::No)
+				QMessageBox::Yes | QMessageBox::No, 
+				QMessageBox::Yes) == QMessageBox::No)
 				return;
 			QFile::remove(job.Target.absoluteDir().absoluteFilePath(newFileName));
 		}

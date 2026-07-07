@@ -51,21 +51,29 @@ elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 	include( "ios" )
 
     # Set development team
-    SET_XCODE_PROPERTY(Terrain CODE_SIGN_IDENTITY ${IOS_CODE_SIGN_IDENTITY} )
-	SET_XCODE_PROPERTY(Terrain DEVELOPMENT_TEAM ${IOS_DEVELOPMENT_TEAM})
+    SET_XCODE_PROPERTY(Terrain CODE_SIGN_IDENTITY ${IOS_CODE_SIGN_IDENTITY} All)
+	SET_XCODE_PROPERTY(Terrain DEVELOPMENT_TEAM ${IOS_DEVELOPMENT_TEAM} All)
 
-	SET_XCODE_PROPERTY(Terrain ENABLE_BITCODE FALSE)
+	SET_XCODE_PROPERTY(Terrain ENABLE_BITCODE FALSE All)
 
-	SET_XCODE_PROPERTY(Terrain RESOURCE ${RESOURCES})
+	SET_XCODE_PROPERTY(Terrain RESOURCE ${RESOURCES} All)
 	SET(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${IOS_DEVELOPMENT_TEAM})
 	set_source_files_properties(${RESOURCES} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
 
 	# Attach required frameworks
 	target_link_libraries( Terrain "-framework AudioToolbox" "-framework AVFoundation" "-framework CoreAudio"
 									"-framework CoreAudioKit" "-framework CoreFoundation" "-framework CoreGraphics"
-									"-framework CoreMotion" "-framework CoreVideo" "-framework Foundation"
+									"-framework CoreMotion" "-framework CoreVideo" "-framework CoreHaptics" "-framework Foundation"
 									"-framework GameController" "-framework QuartzCore" "-framework UiKit"
 									"-framework Metal" "-framework OpenGLES")
+
+elseif( ${CMAKE_SYSTEM_NAME} MATCHES "Emscripten" )
+	add_executable(Terrain MACOSX_BUNDLE
+			app.cpp
+			main.cpp
+	)
+
+	target_link_options(Terrain PRIVATE --preload-file "${SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER}") # do not use '${PROJECT_BINARY_DIR}/Binaries/Content'. The contents does not exist when embedding
 
 else()
 	# Desktop platforms

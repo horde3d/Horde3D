@@ -34,6 +34,7 @@
 struct CopyJob
 {
 	CopyJob() {}
+	CopyJob(const QString& source, const QString& target) : Source(source), Target(target) {}
 	CopyJob(const QFileInfo& source, const QFileInfo& target) : Source(source), Target(target) {}
 	QFileInfo Source;
 	QFileInfo Target;

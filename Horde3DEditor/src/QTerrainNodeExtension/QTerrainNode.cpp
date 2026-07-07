@@ -64,6 +64,8 @@ QSceneNode* QTerrainNode::loadNode(const QDomElement& xmlNode, int row, SceneTre
 QTerrainNode::QTerrainNode(const QDomElement& xmlNode, int row, SceneTreeModel* model, QSceneNode* parentNode) :
 	QSceneNode(xmlNode, row, model, parentNode), m_heightMapID(0), m_materialID(0)
 {
+	m_supportsMaterials = true; // notify other parts that node supports materials
+
 	setObjectName("Terrain");	
 	addRepresentation();
 }

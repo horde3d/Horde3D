@@ -172,6 +172,9 @@ public:
 	// Shader & material handling
 	bool createShaderComb( ShaderCombination &sc, const char *vertexShader, const char *fragmentShader, const char *geometryShader,
 						   const char *tessControlShader, const char *tessEvaluationShader, const char *computeShader );
+    
+    bool createShaderComb( ShaderCombination &sc, const RDIShaderCreateParams &shcparams );
+    
 	void releaseShaderComb( ShaderCombination &sc );
 	void setShaderComb( ShaderCombination *sc );
 	void commitGeneralUniforms();
@@ -196,13 +199,16 @@ public:
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
 	static void drawParticles( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 		bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
-	static void drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass, 
+
+#ifndef __EMSCRIPTEN__ // Compute shaders are not supported under emscripten
+	static void drawComputeResults( uint32 firstItem, uint32 lastItem, const std::string &shaderContext, int theClass,
 									bool debugView, const Frustum *frust1, const Frustum *frust2, RenderingOrder::List order, int occSet );
+    void dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z );
+
+#endif
 
 	void render( CameraNode *camNode );
 	void finalizeFrame();
-
-	void dispatchCompute( MaterialResource *materialRes, const std::string &context, uint32 groups_x, uint32 groups_y, uint32 groups_z );
 
 	// Getters
 	uint32 getFrameID() const { return _frameID; }

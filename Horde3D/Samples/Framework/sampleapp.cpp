@@ -25,6 +25,10 @@
 #include <chrono>
 #include <array>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include "utPlatform.h"
 #include "config.h"
 
@@ -39,6 +43,8 @@
 #endif
 
 using namespace std;
+
+const std::string shaderCachePath = "shaderCache/";
 
 // Extracts an absolute path to the resources directory given the executable path.
 // It assumes that the ressources can be found in "[app path]/../../Content".
@@ -60,7 +66,11 @@ std::string extractResourcePath( char *fullPath )
 #else
     const unsigned int nbRfind = 1;
 #endif
-   
+
+#ifdef PLATFORM_EMSCRIPTEN
+    return SAMPLE_HORDE3D_EMSCRIPTEN_CONTENT_FOLDER;
+#endif
+
 #if defined( PLATFORM_ANDROID ) || defined( PLATFORM_IOS )
     // Android: Currently all assets are inside the apk in assets/Content folder. SDL searches in assets folder automatically.
     // IOS: Content folder should be at the top of the bundle
@@ -92,7 +102,7 @@ SampleApplication::SampleApplication(int argc, char** argv,
         float fov, float near_plane, float far_plane,
         int width, int height,
         bool fullscreen, bool show_cursor,
-        int benchmark_length ) :
+        int benchmark_length, bool use_binary_shaders ) :
     _x(15), _y(3), _z(20),
     _rx(-10), _ry(60),
     _velocity(0.1f),
@@ -113,9 +123,9 @@ SampleApplication::SampleApplication(int argc, char** argv,
     _prevMx(0), _prevMy(0),
     _winShowCursor(show_cursor), _winHasCursor(false),
     _fov(fov), _nearPlane(near_plane), _farPlane(far_plane),
-    _statMode(0), _freezeMode(0), _renderCaps( 0 ), _renderInterface( 0 ),
+    _statMode(0), _freezeMode(0), _renderInterface( 0 ), _renderCaps( 0 ),
     _debugViewMode(false), _wireframeMode(false),_showHelpPanel(false),
-    _invertMouseX( false ), _invertMouseY( false )
+    _invertMouseX( false ), _invertMouseY( false ), _useBinaryShaders( use_binary_shaders )
 {
     // Initialize backend
 	_backend = new Backend();
@@ -140,9 +150,39 @@ bool SampleApplication::init()
 	auto params = setupInitParameters( defaultRenderInterface() );
 	if ( !_backend->init( params ) ) return false;
 
+	// create default GL context and window
 	auto winParams = setupWindowParameters();
-	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) return false;
+	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) 
+	{
+	 _backend->logMessage( LogMessageLevel::Error, "Unable to create default GL context and window" );
 
+#if defined( H3D_USE_GL4 ) && defined ( H3D_USE_GL2 )
+	// Fallback to OpenGL2 backend
+	_backend->logMessage( LogMessageLevel::Info, "Trying OpenGL2 context" );
+
+	    release();
+	    _backend->release();
+
+
+	    _renderInterface = H3DRenderDevice::OpenGL2;
+	    params = setupInitParameters( _renderInterface );
+
+		if ( !_backend->init( params ) ) return false;
+
+		 winParams = setupWindowParameters();
+		if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) 
+		{
+		    _backend->logMessage( LogMessageLevel::Error, "Unable to create OpenGL2 context and window" );
+		    h3dutDumpMessages();
+
+		    return false;
+		}
+#else
+		h3dutDumpMessages();
+		return false;
+
+#endif
+	}
 	// Initialize engine
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
@@ -171,6 +211,7 @@ bool SampleApplication::init()
             return false;
         }
 #else
+		h3dutDumpMessages();
 		return false;
 #endif
 	}
@@ -178,8 +219,8 @@ bool SampleApplication::init()
 	// Samples require overlays extension in order to display information
 	if ( !h3dCheckExtension( "Overlays" ) )
 	{
-        _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
-
+       		 _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
+		h3dutDumpMessages();
 		return false;
 	}
 
@@ -197,11 +238,14 @@ bool SampleApplication::init()
 	// Init resources
 	if ( !initResources() )
 	{
-        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
+        	_backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
 
 		h3dutDumpMessages();
 		return false;
 	}
+
+	// If binary shaders are used but shader cache is empty - generate binary shaders
+    if ( _useBinaryShaders ) checkAndGenerateBinaryShaders( false ); // switch to true if shader regeneration is required
 
 	// Setup camera and resize buffers
 	int width, height;
@@ -303,6 +347,7 @@ BackendInitParameters SampleApplication::setupInitParameters( int render_interfa
 			params.majorVersion = 4;
 			params.minorVersion = 0;
 
+            if ( _renderCaps & RenderCapabilities::BinaryShaders ) params.minorVersion = 1;
 			if ( _renderCaps & RenderCapabilities::TessellationShader ) params.minorVersion = 1;
 			if ( _renderCaps & RenderCapabilities::ComputeShader ) params.minorVersion = 3;
             if ( _renderCaps & RenderCapabilities::DebugBackend ) params.debugContext = true;
@@ -476,7 +521,7 @@ int SampleApplication::run()
 #ifdef __EMSCRIPTEN__
 	const int simulate_infinite_loop = 1; // call the function repeatedly
 	const int fps = -1; // call the function as fast as the browser wants to render (typically 60fps)
-	emscripten_set_main_loop_arg( mainloop, this, fps, simulate_infinite_loop );
+	emscripten_set_main_loop_arg( mainLoop, this, fps, simulate_infinite_loop );
 #else
 	while ( _running )
 	{
@@ -604,6 +649,9 @@ bool SampleApplication::initResources()
     if ( _helpRows > 10 ) { _helpLabels[10] = "W/A/S/D:"; _helpValues[10] = "Movement"; }
     if ( _helpRows > 11 ) { _helpLabels[11] = "LShift:"; _helpValues[11] = "Turbo"; }
 	
+	if ( _useBinaryShaders ) // set shader cache path to load binary shaders from there
+        h3dutSetShaderCachePath( std::string( _resourcePath + "/" + shaderCachePath ).c_str() );
+
 	// 2. Load resources
     if ( !_backend->loadResources( _resourcePath.c_str() ) )
 	{
@@ -991,3 +1039,40 @@ void SampleApplication::setViewportSize( int width, int height )
 }
 
 
+bool SampleApplication::checkAndGenerateBinaryShaders( bool forceRegenerate )
+{
+    auto checkFileExists = []( std::string &file )
+    {
+        FILE *f;
+        if ( (f = fopen( file.c_str(), "r" )) )
+        {
+            fclose( f );
+            return true;
+        }
+        else return false;
+    };
+
+    bool result = true;
+
+    std::string path, name;
+    path.reserve( 255 ); name.reserve( 64 );
+
+    int res = 0;
+    while ( (res = h3dGetNextResource( H3DResTypes::Shader, res ) ) != 0 )
+    {
+        name = h3dGetResName( res );
+        path = _resourcePath + "/" + shaderCachePath + name;
+
+        // binary shader uses .h3dsb extension
+        size_t dotIdx = path.find_last_of( "." );
+        path = std::string( path ).erase( dotIdx, path.size() - dotIdx );
+        path += ".h3dsb";
+
+        if ( !checkFileExists( path ) || forceRegenerate )
+        {
+            result &= h3dutCreateBinaryShader( res, path.c_str() );
+        }
+    }
+
+    return result;
+}

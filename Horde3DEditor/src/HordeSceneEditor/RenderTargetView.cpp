@@ -25,7 +25,7 @@
 #include "ImgLabel.h"
 
 #include "HordeSceneEditor.h"
-#include "GLWidget.h"
+#include "OpenGLWidget.h"
 
 #include <QtCore/QEvent>
 #include <QtGui/QBitmap>
@@ -38,6 +38,8 @@
 #include <QtCore/QVector>
 #include <QApplication>
 #include <QtGui/QClipboard>
+#include <QCloseEvent>
+#include <QMouseEvent>
 
 #include <Horde3D.h>
 
@@ -144,8 +146,8 @@ void RenderTargetView::setRenderTarget(const QDomElement &renderTarget, unsigned
 
 	showBuffer(m_buffer->currentIndex());
 
-	if (m_imageLabel->pixmap())
-		resize(m_imageLabel->pixmap()->size() + QSize(30, 65));
+	if (!m_imageLabel->pixmap().isNull())
+		resize(m_imageLabel->pixmap().size() + QSize(30, 65));
 }
 
 void RenderTargetView::showBuffer(int index)
@@ -180,7 +182,7 @@ void RenderTargetView::showBuffer(int index)
 	else
 		m_imageLabel->setText("No Buffer available");
 
-	bool valid = m_imageLabel->pixmap()!=0;
+	bool valid = !m_imageLabel->pixmap().isNull();
 	if( valid )
 		m_buttonBox->setStandardButtons(QDialogButtonBox::Close | QDialogButtonBox::Save);
 	else
@@ -199,7 +201,7 @@ void RenderTargetView::showPixel(int x, int y)
 {
 	if (m_imgData && x > 0 && y > 0)
 	{
-		const int width = m_imageLabel->pixmap()->width();		
+		const int width = m_imageLabel->pixmap().width();
 		if (m_imgDepth == 1)
 		{
 			float v = m_imgData[y * width + x];
@@ -290,7 +292,7 @@ void RenderTargetView::saveBuffer()
 	QString fileName = QFileDialog::getSaveFileName(this, tr("Select filename"), QDir::currentPath(), filters);
 	if (!fileName.isEmpty())
 	{
-		QImage image(convertImageData(m_imgData, m_imageLabel->pixmap()->width(), m_imageLabel->pixmap()->height(), m_imgDepth, false));
+		QImage image(convertImageData(m_imgData, m_imageLabel->pixmap().width(), m_imageLabel->pixmap().height(), m_imgDepth, false));
 		QImageWriter writer(fileName);
 		if (!writer.write(image))
 			QMessageBox::warning(this, tr("Error"), writer.errorString());
@@ -299,9 +301,9 @@ void RenderTargetView::saveBuffer()
 
 void RenderTargetView::scaleImage(double factor)
 {
-	Q_ASSERT(m_imageLabel->pixmap());
+	Q_ASSERT(!m_imageLabel->pixmap().isNull());
 	m_scaleFactor *= factor;
-	m_imageLabel->resize(m_scaleFactor * m_imageLabel->pixmap()->size());
+	m_imageLabel->resize(m_scaleFactor * m_imageLabel->pixmap().size());
 
 	adjustScrollBar(m_scrollArea->horizontalScrollBar(), factor);
 	adjustScrollBar(m_scrollArea->verticalScrollBar(), factor);

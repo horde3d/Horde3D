@@ -21,6 +21,7 @@
 // ****************************************************************************************
 
 #include <QApplication>
+#include <QtGui/QSurfaceFormat>
 #include <QSplashScreen>
 #include "HordeSceneEditor.h"
 
@@ -31,6 +32,18 @@
 
 int main(int argc, char** argv)
 {
+	// From Qt docs:
+	// Calling QSurfaceFormat::setDefaultFormat() before constructing the QApplication instance is mandatory on some platforms (for
+	// example, macOS) when an OpenGL core profile context is requested. This is to ensure that resource sharing between contexts
+	// stays functional as all internal contexts are created using the correct version and profile.
+	// Set default GL Format
+	QSurfaceFormat format;
+	format.setProfile( QSurfaceFormat::CompatibilityProfile ); // for now, mac may have a problem
+	format.setDepthBufferSize( 32 );
+	format.setSwapBehavior( QSurfaceFormat::DoubleBuffer );
+//	format.setAlphaBufferSize( 8 );
+	QSurfaceFormat::setDefaultFormat( format );
+
 	QApplication app( argc, argv );
 	app.addLibraryPath(app.applicationDirPath()+QDir::separator()+"plugins");
 	app.setApplicationName("HordeSceneEditor");

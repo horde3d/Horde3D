@@ -30,6 +30,7 @@ using namespace std;
 namespace Horde3D {
 namespace ColladaConverter {
 
+static bool logVerbose = false;
 
 void removeGate( string &s )
 {
@@ -115,15 +116,68 @@ string cleanPath( const string &path )
 		return cleanedPath;
 }
 
-
-void log( const std::string &msg )
+bool getWord(istringstream& in, string& out, const std::string& delimiterChars)
 {
-	cout << msg << endl;
-	
-#ifdef PLATFORM_WIN
-	OutputDebugString( msg.c_str() );
-	OutputDebugString( "\r\n" );
-#endif
+	out.clear();
+	char c;
+
+	// skip leading delimiters
+	while (in.get(c))
+	{
+		if (delimiterChars.find(c) == string::npos)
+		{
+			out.push_back(c);
+			break;
+		}
+	}
+	if (out.empty())
+	{
+		return false;
+	}
+
+	// Read until next delimiter
+	while (in.get(c))
+	{
+		if (delimiterChars.find(c) != string::npos)
+		{
+			break;
+		}
+		out.push_back(c);
+	}
+
+	return true;
+}
+
+void log( const std::string &msg, bool verboseMessage )
+{
+	if ( verboseMessage )
+	{
+		if ( logVerbose )
+		{
+			cout << msg << endl;
+
+		#ifdef PLATFORM_WIN
+			OutputDebugString( msg.c_str() );
+			OutputDebugString( "\r\n" );
+		#endif
+		}
+	}
+	else
+	{
+		cout << msg << endl;
+
+	#ifdef PLATFORM_WIN
+		OutputDebugString( msg.c_str() );
+		OutputDebugString( "\r\n" );
+	#endif
+	}
+}
+
+
+void logSetVerbose( bool verbose )
+{
+	logVerbose = verbose;
+
 }
 
 

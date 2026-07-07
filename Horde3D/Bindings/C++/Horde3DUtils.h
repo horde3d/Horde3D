@@ -103,6 +103,21 @@ H3D_API const char *h3dutGetResourcePath( int type );
 */
 H3D_API void h3dutSetResourcePath( int type, const char *path );
 
+/* Function: h3dutSetShaderCachePath
+		Sets the search path for binary shaders.
+
+	Details:
+		This function sets the search path for binary shaders. Allows replacing text-based shaders if binary variant is found
+		at the search path.
+
+	Parameters:
+		path  - path where the binary shaders can be found ((back-)slashes at end are removed)
+
+	Returns:
+		nothing
+*/
+H3D_API void h3dutSetShaderCachePath( const char *path );
+
 /* Function: h3dutLoadResourcesFromDisk
 		Loads previously added resources from a data drive.
 	
@@ -246,7 +261,7 @@ H3D_API H3DNode h3dutPickNode( H3DNode cameraNode, float nwx, float nwy );
 	Returns:
 		None
 */
-H3D_API void h3dutGetScreenshotParam( int *width,  int *height);
+H3D_API void h3dutGetScreenshotParam( int *width,  int *height );
 
 /* Function: h3dutScreenshotRaw
 		Take screenshot and copy it to user provided `rgb` buffer.
@@ -263,4 +278,6 @@ H3D_API void h3dutGetScreenshotParam( int *width,  int *height);
 	Returns:
 		true if screenshot could be copied.
 */
-H3D_API bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len);
+H3D_API bool h3dutScreenshotRaw( unsigned char *rgb, int rgb_len );
+
+H3D_API bool h3dutCreateBinaryShader( H3DRes shaderResource, const char *filename );

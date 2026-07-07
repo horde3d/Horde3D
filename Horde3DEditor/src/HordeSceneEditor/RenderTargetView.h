@@ -36,7 +36,7 @@ class RenderTargetView : public QWidget, protected Ui_RenderTargetView
 {
 	Q_OBJECT
 public:
-	RenderTargetView(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	RenderTargetView(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~RenderTargetView();
 
 	void setRenderTarget(const QDomElement& renderTarget, unsigned int pipelineID);

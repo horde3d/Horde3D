@@ -34,7 +34,7 @@ class ColladaImporter : public QDialog, protected Ui_ColladaImporter
 {
 	Q_OBJECT
 public:
-	ColladaImporter(QWidget* parent = 0, Qt::WindowFlags flags = 0);
+	ColladaImporter(QWidget* parent = 0, Qt::WindowFlags flags = (Qt::WindowFlags) 0);
 	virtual ~ColladaImporter();
 
 	void initImportPath(const QString& resourcePath);

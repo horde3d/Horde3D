@@ -38,6 +38,9 @@
 // Use OpenGL 4 renderer. Can work with GL2 renderer.
 #cmakedefine H3D_USE_GL4
 
+// Use Null renderer. Used for testing. Can work with any other renderer.
+#cmakedefine H3D_USE_NULL
+
 // Number of render views created on startup
 #define H3D_RESERVED_VIEWS 64
 

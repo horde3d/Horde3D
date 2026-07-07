@@ -1,3 +1,7 @@
+[![linux](https://github.com/horde3d/Horde3D/actions/workflows/linux.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/linux.yml)
+[![macos](https://github.com/horde3d/Horde3D/actions/workflows/macos.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/macos.yml)
+[![windows](https://github.com/horde3d/Horde3D/actions/workflows/windows.yml/badge.svg)](https://github.com/horde3d/Horde3D/actions/workflows/windows.yml)
+
 # Horde3D
 
 Horde3D is a 3D rendering engine written in C++ with an effort being as lightweight and conceptually clean as possible.
@@ -58,7 +62,7 @@ You need to have a C++11 compiler and [CMake 3.7+](http://www.cmake.org/) instal
 
 ### Build samples
 
-In order to build the samples you need [GLFW](http://www.glfw.org/download.html) *(>3.x)* or [SDL](https://www.libsdl.org/download-2.0.php) *(>=2.0.9)*.
+In order to build the samples you need [GLFW](http://www.glfw.org/download.html) *(>3.x)* or [SDL](https://github.com/libsdl-org/SDL/releases) *(>=2.32.8)*.
 
 By default, if not present on the system, a default version will be automatically downloaded, built and linked for you.
 
@@ -143,14 +147,63 @@ Double click on this certificate. "Organizational Unit" is the Team ID.
 
 Please note that **ParticleVortex** and **Tessellator** sample will not run on iOS as OpenGL ES 3.2 is not available. 
 
+### Building for Web
+Before we go into this, There are some limitations one needs to be aware of: 
+ - WebGL does not support compute shaders.
+ - WebGL only supports versions up to OpenGL ES 3.0.
+
+As result of the above limitations, the samples **ParticleVortex** (compute + GLES 3.2) and **Tessellator** (GLES 3.2) are disabled when building for web.  
+
+To build for web, you will need [Emscripten](https://emscripten.org/). It is similar to how you build for Windows or Linux. 
+However, instead of using CMake, we will use emcmake ( supplied by emscripten ) 
+
+Follow the following steps to build the examples for web.
+- Follow the installation guide by emscripten. and make sure you have 'activated' the emscripten environment.
+- Make a new directory in the root directory, and call it 'build'
+- In the 'build' folder, run ```emcmake``` with the arguments: ```cmake ../```
+- Now that the project has been configured, run ```emmake``` with the arguments: ```make``` to start the build
+
+__On linux__, the whole process should look like this (once emscripten is activated)
+``` bash
+mkdir build
+cd build
+emcmake cmake ../
+emmake make -j4
+```
+
+#### Result
+In the folder ```build/Binaries/Emscripten/Release```, you should now see the html files of all examples. If you have python3 installed, you can test them by going to that folder, and launch  
+```bash
+python3 -m http.server 9000
+``` 
+Then open your browser, and navigate to [http://localhost:9000](http://localhost:9000). Click on any .html file, to see the result
+
 ### Build Horde3D scene editor
 
-There is also a scene editor available for Horde3D. To enabling build of the editor, first make sure you have the Qt 4.8 or any newer Qt 5.x SDK installed. To enable creating makefiles
-for the editor via cmake set the HORDE3D_BUILD_EDITOR flag to ON (default is OFF).
+There is also a scene editor available for Horde3D. To enabling build of the editor, first make sure you have the Qt 5.15 or any newer Qt 6.x SDK installed. 
+On Windows, install Qt via Qt online installer from qt.io. On Linux, Qt is usually preinstalled. If not, use your distribution package system to install qt.
+To enable creating makefiles for the editor via cmake set the HORDE3D_BUILD_EDITOR flag to ON (default is OFF).
 
     cmake -DHORDE3D_BUILD_EDITOR=ON
 
+CMake may not find Qt distribution files and configuration may fail. Usually, Qt5_DIR or Qt6_DIR are not found. 
+On Windows: in cmake gui select Qt6_DIR, go to your Qt installation directory -> lib/cmake/Qt6. Click Configure button. Configuration may also fail for several other components, like QtCoreTools or QtGuiTools. In this case, 
+select folders with the same name in lib/cmake/ until all the libraries are found.
+On Linux: usually found automatically. If not, use the same algorithm as for Windows. Usually, Qt cmake files are located in **/usr/lib/x86_64-linux-gnu/cmake**. 
+Console example:
+
+    cmake -DHORDE3D_BUILD_EDITOR=ON -DQt6_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt6 -B build
+
 As the editor needs Lua as a dependency you can either make sure the Lua development files can be found by cmake, or Lua will be automatically downloaded by CMake.
+
+On Windows, you usually generate Visual Studio solution. Open the solution file, select build type (Debug by default) and click "Rebuild solution". 
+**Note**: Editor is not set to be executed and/or debugged by default. You will have to set **Horde3DEditor** project as executable by clicking right mouse button on it - "Set as start up project".
+
+On Linux, either makefiles or ninja build files are used. Ninja builds faster than make (may be up to two-three times). After generating cmake cache, do the following:
+
+    cmake --build build
+	
+where **build** is the build directory you've chosen during cmake configuration.
 
 ## What's next
 

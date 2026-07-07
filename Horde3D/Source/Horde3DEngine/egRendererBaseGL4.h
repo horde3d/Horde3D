@@ -245,10 +245,10 @@ public:
 	void bindImageToTexture( uint32 texObj, void* eglImage );
 
 	// Shaders
-	uint32 createShader( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc,
-						 const char *tessControlShaderSrc, const char *tessEvaluationShaderSrc, const char *computeShaderSrc );
+	uint32 createShader( const struct RDIShaderCreateParams &shaderParameters );
 	void destroyShader(uint32 &shaderId );
 	void bindShader( uint32 shaderId );
+    bool getShaderBinary( uint32 shaderId, uint8 *&shaderData, uint32 *shaderFormat, uint32 *shaderSize );
 	std::string getShaderLog() const { return _shaderLog; }
 	int getShaderConstLoc( uint32 shaderId, const char *name );
 	int getShaderSamplerLoc( uint32 shaderId, const char *name );
@@ -321,8 +321,8 @@ protected:
 
 protected:
 
-	uint32 createShaderProgram( const char *vertexShaderSrc, const char *fragmentShaderSrc, const char *geometryShaderSrc, 
-								const char *tessControlShaderSrc, const char *tessEvalShaderSrc, const char *computeShaderSrc );
+	uint32 createShaderProgram( const struct RDIShaderCreateParams &shaderParameters );
+    uint32 compileShader( RDIShaderType sourceType, int shaderType, uint8 *data, uint32 dataSize );
 	bool linkShaderProgram( uint32 programObj );
 	void resolveRenderBuffer( uint32 rbObj );
 

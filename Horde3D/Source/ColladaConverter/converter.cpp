@@ -1232,6 +1232,9 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 		outf << "\t<!-- Morph targets: ";
 		for( unsigned int i = 0; i < _morphTargets.size(); ++i )
 		{
+			char msg[1024];
+			sprintf( msg, "Added Morph target: '%s'",  _morphTargets[i].name);
+			log( msg, true );
 			outf << "\"" << _morphTargets[i].name << "\" ";
 		}
 		outf << "-->\n\n";
@@ -1321,7 +1324,7 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 				char value = 'a';
 				std::istringstream iss(material.effect->diffuseColor);
 				std::string token;
-				while(std::getline(iss, token, ' '))
+				while(getWord(iss, token))
 				{
 					if(token.length() > 0)
 						outf << value++ << "=\"" << token << "\" ";
@@ -1335,7 +1338,7 @@ bool Converter::writeMaterials( const string &assetPath, const string &modelName
 				char value = 'a';
 				std::istringstream iss(material.effect->specularColor);
 				std::string token;
-				while(std::getline(iss, token, ' ') && value < 'd' )
+				while(getWord(iss, token) && value < 'd' )
 				{
 					if(token.length() > 0)
 						outf << value++ << "=\"" << token << "\" ";
