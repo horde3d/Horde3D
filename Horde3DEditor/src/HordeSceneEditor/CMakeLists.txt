@@ -154,7 +154,7 @@ SET(Horde3DEditor_FORMS
 source_group("Forms" FILES ${Horde3DEditor_FORMS})
 
 IF(MSVC)
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 ENDIF(MSVC)
 
 INCLUDE_DIRECTORIES("../HordeSceneEditorCore" "${CMAKE_CURRENT_SOURCE_DIR}/.." "${CMAKE_SOURCE_DIR}/Horde3D/Bindings/C++" "${CMAKE_CURRENT_BINARY_DIR}" ${LUA_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}  )
@@ -162,22 +162,22 @@ INCLUDE_DIRECTORIES("../HordeSceneEditorCore" "${CMAKE_CURRENT_SOURCE_DIR}/.." "
 ADD_DEFINITIONS(${QT_DEFINITIONS})
 
 IF( APPLE )
-set(MACOSX_BUNDLE_INFO_STRING "${PROJECT_NAME}")
-set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.horde3d.${PROJECT_NAME}")
-set(MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version 0.11.1")
-set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})
-set(MACOSX_BUNDLE_SHORT_VERSION_STRING 0.11.1)
-set(MACOSX_BUNDLE_BUNDLE_VERSION 0.11.1)
-set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2024. All Rights Reserved.")
+  set(MACOSX_BUNDLE_INFO_STRING "${PROJECT_NAME}")
+  set(MACOSX_BUNDLE_GUI_IDENTIFIER "org.horde3d.${PROJECT_NAME}")
+  set(MACOSX_BUNDLE_LONG_VERSION_STRING "${PROJECT_NAME} Version 0.11.1")
+  set(MACOSX_BUNDLE_BUNDLE_NAME ${PROJECT_NAME})
+  set(MACOSX_BUNDLE_SHORT_VERSION_STRING 0.11.1)
+  set(MACOSX_BUNDLE_BUNDLE_VERSION 0.11.1)
+  set(MACOSX_BUNDLE_COPYRIGHT "Copyright 2026. All Rights Reserved.")
 
-ADD_EXECUTABLE(Horde3DEditor
+  ADD_EXECUTABLE(Horde3DEditor
     MACOSX_BUNDLE
     ${Horde3DEditor_SOURCES}
     ${Horde3DEditor_HEADERS}
     ${Horde3DEditor_FORMS}
     ${Horde3DEditor_RESOURCES})
 else()
-    ADD_EXECUTABLE(Horde3DEditor
+  ADD_EXECUTABLE(Horde3DEditor
         ${Horde3DEditor_SOURCES}
         ${Horde3DEditor_HEADERS}
         ${Horde3DEditor_FORMS}
@@ -190,33 +190,33 @@ file(COPY Styles DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 file(COPY SampleScenes DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 if(UNIX AND NOT APPLE)
-    if(NOT CMAKE_INSTALL_DATADIR)
-       SET(CMAKE_INSTALL_DATADIR /usr/share CACHE PATH "Output directory for data and resource files")
-    endif(NOT CMAKE_INSTALL_DATADIR)
+  if(NOT CMAKE_INSTALL_DATADIR)
+    SET(CMAKE_INSTALL_DATADIR /usr/share CACHE PATH "Output directory for data and resource files")
+  endif(NOT CMAKE_INSTALL_DATADIR)
 
-    # Create desktop file with absolute path to the built executable
-    configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Horde3DEditor.desktop.in 
+  # Create desktop file with absolute path to the built executable
+  configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Horde3DEditor.desktop.in
                     ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Horde3DEditor.desktop )
 
-    # Install the desktop and appdata files
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Horde3DEditor.desktop
+  # Install the desktop and appdata files
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Horde3DEditor.desktop
             DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Horde3DEditor.appdata.xml
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Horde3DEditor.appdata.xml
             DESTINATION ${CMAKE_INSTALL_DATADIR}/appdata)
 
-    foreach(size 16 32 48 64)
-		install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/editor_${size}.png
-		        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps"
-		        RENAME horde3deditor.png)
-	endforeach()
+  foreach(size 16 32 48 64)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/editor_${size}.png
+          DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/${size}x${size}/apps"
+          RENAME horde3deditor.png)
+  endforeach()
 
-	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/editor.svg
-		    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Resources/editor.svg
+      DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
             RENAME  horde3deditor.svg)
 
-    # Install the editor
-    install(TARGETS Horde3DEditor DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-    install(DIRECTORY Styles DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-    install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-    
+  # Install the editor
+  install(TARGETS Horde3DEditor DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+  install(DIRECTORY Styles DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+  install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+
 endif()
