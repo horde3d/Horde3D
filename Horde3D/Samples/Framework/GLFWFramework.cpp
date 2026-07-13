@@ -42,7 +42,7 @@ bool GLFWBackend::init( const BackendInitParameters &params )
 			else glfwWindowHint( GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE );
 
 			if ( getPlatform() == Platform::MacOS ) glfwWindowHint( GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE );
-			
+
 			break;
 		case RenderAPI::OpenGLES3:
 			glfwWindowHint( GLFW_CLIENT_API, GLFW_OPENGL_ES_API );
@@ -100,7 +100,7 @@ void * GLFWBackend::createWindow( const WindowCreateParameters &params )
 		std::cout << "Context parameters:" << std::endl;
 		std::cout << "API: " << ( _usedInitParams.requestedAPI == RenderAPI::OpenGLES3 ? "OpenGL ES" : "OpenGL" ) << std::endl;
 		std::cout << "API version: " << "Major - " << _usedInitParams.majorVersion << "; Minor - " << _usedInitParams.minorVersion << std::endl;
-		
+
 		if ( _usedInitParams.requestedAPI != RenderAPI::OpenGLES3 && _usedInitParams.requestedAPI != RenderAPI::OpenGL2 )
 			std::cout << "Compatibility profile: " <<  _usedInitParams.forceGLCompatibilityProfile << std::endl;
 
@@ -151,7 +151,7 @@ bool GLFWBackend::destroyWindow( void *handle )
 void GLFWBackend::setWindowTitle( void *handle, const char *title )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
-	
+
 	glfwSetWindowTitle( wnd, title );
 }
 
@@ -178,7 +178,7 @@ void GLFWBackend::getSize( void *handle, int *width, int *height )
 {
 	GLFWwindow *wnd = ( GLFWwindow * ) handle;
 
-	glfwGetWindowSize( wnd, width, height );
+	glfwGetFramebufferSize( wnd, width, height );
 }
 
 void GLFWBackend::windowCloseListener( GLFWwindow* win )
@@ -202,7 +202,7 @@ void GLFWBackend::keyPressListener( GLFWwindow* win, int key, int scancode, int 
 void GLFWBackend::mouseMoveListener( GLFWwindow* win, double x, double y )
 {
 	GLFWBackend *device = static_cast< GLFWBackend* >( glfwGetWindowUserPointer( win ) );
-	if ( device->_mouseMoveEventHandler.isInitialized() ) device->_mouseMoveEventHandler.invoke( ( float ) x, ( float ) y, 
+	if ( device->_mouseMoveEventHandler.isInitialized() ) device->_mouseMoveEventHandler.invoke( ( float ) x, ( float ) y,
 														  device->_prevMouseX, device->_prevMouseY );
 
 	device->_prevMouseX = ( float ) x;
