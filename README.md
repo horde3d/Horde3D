@@ -48,7 +48,7 @@ Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of Direct
 
 ## Building
 
-You need to have a C++11 compiler and [CMake 3.7+](http://www.cmake.org/) installed.
+You need to have a C++14 compiler and [CMake 3.14+](http://www.cmake.org/) installed.
 
 ### Use of CMake for Windows, Linux, macOs
 

@@ -14,6 +14,40 @@
 <br />
 <p>You can find out here what has changed in the Horde3D SDK releases.</p>
 
+<h2>Version [2.1.0]</h2>
+
+<h4>Core Engine</h4>
+<ul>
+	<li>Support for binary shaders for OpenGL 4 and OpenGL ES backends.</li>
+	<li>Added C bindings for Horde3D API.</li>
+</ul>
+
+<h4>Samples</h4>
+<ul>
+	<li>Emscripten support.</li>
+	<li>GLFW updated to 3.4, SDL to 2.32.8 (versions that are downloaded if requested during build).</li>
+</ul>
+
+<h4>Infrastructure</h4>
+<ul>
+	<li>CI/CD builds for desktop and mobile platforms</li>
+</ul>
+
+<h4>Editor</h4>
+<ul>
+	<li>Horde3D editor's gizmos were reimplemented with Im3D framework, OpenGL 1 function calls were removed. libGLU is currently still used.</li>
+</ul>
+
+<h2>Version [2.0.2]</h2>
+
+<ul>
+	Minor release that addresses compile issues.
+
+    <li>Fix compiling with GLFW on new compilers and linux distros (fix library going to lib64 instead of lib during build).</li>
+    <li>Add mingw64 compiler support. Change library order for samples, so that mingw can compile them (other compilers compile with both library orders).</li>
+
+</ul>
+
 <h2>Version [2.0.1]</h2>
 
 <h4>Core Engine</h4>
@@ -21,7 +55,7 @@
 	<li>Fixed shadow issue with one light, when shadow disappears if camera is near shadow casting object or at a specific angle. </li>
 	<li>Fixed shadow issue with multiple lights, when shadow disappeared for one of the lights when shadow casting object is not visible by current camera. </li>
 	<li>Fixed compiling under Linux with GCC 10.</li>
-	
+
 </ul>
 
 <h4>Samples</h4>
@@ -240,7 +274,7 @@
 	<li>Added API functions setResourceParami, setResourceParamf, getResourceParamstr and setResourceParamstr.</li>
 	<li>Added EffectResParams enum and MaterialResParams enum to query and modify resource parameters.</li>
 	<li>Added MaxNumMessages to EngineOptions enum for setting the maximum number of log messages.</li>
-	<li>Modified castRay API function (and added getCastRayResult) to support querying several intersection points (thanks to CodePoet).</li>	
+	<li>Modified castRay API function (and added getCastRayResult) to support querying several intersection points (thanks to CodePoet).</li>
 	<li>Added API function hasEmitterFinished to check if an emitter is no longer active.</li>
 	<li>Modified API function queryUnloadedResource to take an index for querying the n-th unloaded resource.</li>
 	<li>Added API function isResourceLoaded to check if a resource has been loaded.</li>
@@ -353,7 +387,7 @@
 	<li>Renamed some API parameters for consistency. This should not break any code.</li>
 	<li>Modification: API function clear also resets pipeline now.</li>
 	<li>Modification: All emitter attributes can be set now using API function setEmitterParam.</li>
-	<li>Critical modification: Parameters from node type specific set-functions are no longer forwarded to child nodes when applied to a node of an inappropriate type.</li> 
+	<li>Critical modification: Parameters from node type specific set-functions are no longer forwarded to child nodes when applied to a node of an inappropriate type.</li>
 	<li>Replaced SDL by GLFW for the samples. This should fix some OpenGL initialization problems on ATI cards.</li>
 	<li>Made a plenty of internal code improvements (e.g. use of smart pointers for resources).<li>
 	<li>Replaced TinyXML by a faster and smaller parser written by Frank Vanden Berghen.</li>
@@ -425,7 +459,7 @@
 	<li>Optimization: Improved culling for lighting passes.</li>
 	<li>Reduced number of available texture channels from four to two to get 32 byte aligned vertex layout.</li>
 	<li>Optimized sample shaders and fixed some issues.</li>
-	<li>Made several other bugfixes and smaller improvements in engine core.</li> 
+	<li>Made several other bugfixes and smaller improvements in engine core.</li>
 	<li>Improved compatibility of Knight sample for older hardware by modifying post processing shader.</li>
 	<li>Switched default pipeline of Chicago sample to deferred shading which is faster now than the forward path.</li>
 	<li>Improved compatibility of Collada converter regarding materials.</li>

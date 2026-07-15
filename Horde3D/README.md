@@ -1,4 +1,4 @@
-Horde3D SDK v2.0.1
+Horde3D SDK v2.1.0
 ==================
 
 > Next-Generation Graphics Engine
@@ -21,6 +21,15 @@ These libraries are included directly as code in the SDK.
 
 ## Release Notes
 
+Release 2.1 brings support for binary shaders, emscripten support, CI support, and updates for GLFW and SDL.
+Notable features:
+ * Horde3D now supports binary shaders. You can compile shader and dump its binary form to disk, then load them when required. 
+ * Emscripten support for samples.
+ * Added C bindings for Horde3D api.
+ * Horde3D editor's gizmos were reimplemented with Im3D framework, OpenGL 1 function calls were removed.
+ * GLFW updated to 3.4, SDL to 2.32.8.
+
+ ***
 Release 2.0 brings support for Android and iOS, new features and performance improvements.
 Notable features:
 
@@ -47,9 +56,8 @@ Some notable features:
 
 ## License
 
-Copyright (C) 2006-2021 Nicolas Schulz and the Horde3D Team
+Copyright (C) 2006-2026 Nicolas Schulz and the Horde3D Team
 	
 The complete SDK is licensed under the terms of the Eclipse Public License (EPL).
 	
 Special thanks go to the University of Augsburg for supporting this project!
-	

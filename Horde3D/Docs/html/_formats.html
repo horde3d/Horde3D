@@ -446,7 +446,7 @@ In Horde3D materials are specified with an XML syntax.</p>
            </table>
        </td>
     </tr>
-    
+
     <tr>
         <td><b>Emitter</b></td>
         <td>
@@ -468,7 +468,7 @@ In Horde3D materials are specified with an XML syntax.</p>
                     <td><b>respawnCount</b></td>
                     <td>number of times a particle is reborn (-1 for inifinite) {required}</td>
                 </tr>
-                
+
                 <tr>
                     <td><b>delay</b></td>
                     <td>see <a href="_api.html#H3DEmitter">EmitterNodeParams</a> {optional}</td>
@@ -517,7 +517,7 @@ In Horde3D materials are specified with an XML syntax.</p>
                     <td><b>drawType</b></td>
                     <td>specifies how to treat data in compute buffer. Possible values: triangles, lines, points {required}</td>
                 </tr>
-                
+
                 <tr>
                     <td><b>aabbMinX</b></td>
                     <td>X position of the first point used for AABB creation {required}</td>
@@ -677,7 +677,7 @@ Compute node. Currently only <b>float data</b> can be stored in compute buffer.<
         <td><b>Data</b></td>
         <td>
             data that will be stored in compute buffer. Only float type data is supported. Values are separated with semicolon (<b>;</b>) symbol.
-			Last value should also be appended with <b>;</b> symbol. New line, space and tabulation symbols are ignored. 
+			Last value should also be appended with <b>;</b> symbol. New line, space and tabulation symbols are ignored.
         </td>
     </tr>
 </table>
@@ -741,7 +741,7 @@ it contains the triangle data as well as information about the skeleton of a mod
             </table>
     	</td>
     </tr>
-    
+
     <tr>
         <td><b>Joints</b></td>
         <td>Joint stream, just after the header
@@ -763,7 +763,7 @@ it contains the triangle data as well as information about the skeleton of a mod
             </table>
     	</td>
     </tr>
-    
+
     <tr>
         <td><b>Vertices</b></td>
         <td>Vertex stream, just after the joint stream
@@ -795,7 +795,7 @@ it contains the triangle data as well as information about the skeleton of a mod
             </table>
     	</td>
     </tr>
-    
+
     <tr>
         <td><b>Vertices - positions</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -819,7 +819,7 @@ it contains the triangle data as well as information about the skeleton of a mod
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Vertices - normals</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -846,7 +846,7 @@ it contains the triangle data as well as information about the skeleton of a mod
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Vertices - tangents</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -868,13 +868,13 @@ it contains the triangle data as well as information about the skeleton of a mod
     					Write tangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
     					To save space tangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
     				</td>
-    
+
     			</tr>
             </table>
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Vertices - bitangents</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -896,13 +896,13 @@ it contains the triangle data as well as information about the skeleton of a mod
     					Write bitangent data as contiguous array of X0,Y0,Z0,X1,Y1,Z1,...<br />
     					To save space bitangents are stored as <b>short</b>s. Before writing multiply your <b>float</b> with 32767 and convert it then to <b>short</b>
     				</td>
-    
+
     			</tr>
             </table>
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Vertices - joint indices</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -926,7 +926,7 @@ it contains the triangle data as well as information about the skeleton of a mod
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Vertices - joint weights</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -950,7 +950,7 @@ it contains the triangle data as well as information about the skeleton of a mod
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Vertices - texture coordinates set 0</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -974,7 +974,7 @@ it contains the triangle data as well as information about the skeleton of a mod
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Vertices - texture coordinates set 1</b></td>
     	<td>May be written at any position <i>inside</i> the vertex stream
@@ -998,7 +998,7 @@ it contains the triangle data as well as information about the skeleton of a mod
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Triangle indices</b></td>
     	<td>Triangle index stream, just after the vertex stream
@@ -1017,7 +1017,7 @@ it contains the triangle data as well as information about the skeleton of a mod
     	</td>
     </tr>
     <tr>
-    
+
     <tr>
         <td><b>Morph targets</b></td>
     	<td>Morph target stream, just after the triangle index stream
@@ -1200,7 +1200,7 @@ In newer versions it will also be used for Vulkan shaders.
 
 	<tr>
 	    <td><b>FX section. Samplers</b></td>
-		<td>Like FX section in text-based shader, this section provides information about samplers, variables 
+		<td>Like FX section in text-based shader, this section provides information about samplers, variables
             and contexts for the engine. FX section starts with samplers.
 			<table>
 				<tr>
@@ -1460,7 +1460,7 @@ In newer versions it will also be used for Vulkan shaders.
 				</tr>
                 <tr>
 					<td><b>combinationShaderSectionData</b></td>
-					<td><b>uint16</b></td>
+					<td><b>uint8*</b></td>
 					<td>binary data of the shader section.</td>
 				</tr>
 	        </table>
