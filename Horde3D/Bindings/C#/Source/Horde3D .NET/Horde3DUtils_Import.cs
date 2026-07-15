@@ -28,7 +28,7 @@ namespace Horde3DNET.Utils
         internal static extern void h3dutFreeMem(IntPtr ptr);
 
         [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
-        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
+        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type
         internal static extern bool h3dutDumpMessages();
 
         // Utilities
@@ -37,20 +37,20 @@ namespace Horde3DNET.Utils
 
         [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         internal static extern void h3dutSetResourcePath(h3d.H3DResTypes type, string path);
-             
+
 
         [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
-        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
+        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type
         internal static extern bool h3dutLoadResourcesFromDisk(string contentDir);
 
-        [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]        
+        [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
         internal static extern int h3dutCreateGeometryRes(string name, int numVertices, int numTriangleIndices,
                                            float[] posData, int[] indexData, short[] normalData,
                                            short[] tangentData, short[] bitangentData,
                                            float[] texData1, float[] texData2);
 
         [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
-        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
+        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type
         internal static extern bool h3dutCreateTGAImage(IntPtr pixels, uint width, uint height, uint bpp, out IntPtr outData, out uint outSize);
 
         [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
@@ -62,8 +62,16 @@ namespace Horde3DNET.Utils
         internal static extern int h3dutPickNode(int node, float nwx, float nwy);
 
         [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
-        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type 
+        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type
         internal static extern bool h3dutScreenshot(string filename);
+
+        [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type
+        internal static extern void h3dutSetShaderCachePath(string path);
+
+        [DllImport(UTILS_DLL, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl), SuppressUnmanagedCodeSecurity]
+        [return: MarshalAs(UnmanagedType.U1)]   // represents C++ bool type
+        internal static extern bool h3dutCreateBinaryShader(h3d.H3DResTypes shaderResource, string filename);
 
     }
 

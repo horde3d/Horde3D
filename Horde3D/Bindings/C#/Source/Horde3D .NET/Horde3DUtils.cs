@@ -18,7 +18,7 @@ namespace Horde3DNET.Utils
 {
     public static class Horde3DUtils
     {
-        /// <summary>        
+        /// <summary>
         /// MaxStatMode  - Maximum stat mode number supported in showFrameStats
         /// </summary>
         public const int MaxStatMode = 2;
@@ -31,7 +31,7 @@ namespace Horde3DNET.Utils
         {
             NativeMethodsUtils.h3dutFreeMem(ptr);
         }
-        
+
         /// <summary>
         /// This utility function pops all messages from the message queue and writes them to a HTML formated log file 'EngineLog.html'.
         /// </summary>
@@ -53,7 +53,7 @@ namespace Horde3DNET.Utils
         }
 
         /// <summary>
-        /// This function sets the search path for a specified resource type. 
+        /// This function sets the search path for a specified resource type.
         /// Whenever a new resource is added, the specified path is concatenated to the name of the created resource.
         /// </summary>
         /// <param name="type">type of resource</param>
@@ -66,7 +66,7 @@ namespace Horde3DNET.Utils
         }
 
         /// <summary>
-        /// This utility function loads previously added and still unloaded resources from a specified directory on a data drive. 
+        /// This utility function loads previously added and still unloaded resources from a specified directory on a data drive.
         /// All resource names are directly converted to filenames when being loaded.
         /// </summary>
         /// <param name="contenDir">directory where data is located on the drive</param>
@@ -106,8 +106,8 @@ namespace Horde3DNET.Utils
 
 
         /// <summary>
-        /// This utility function allocates memory for the pointer outData and creates a TGA image from the specified pixel data. 
-        /// The dimensions of the image have to be specified as well as the bit depth of the pixel data. 
+        /// This utility function allocates memory for the pointer outData and creates a TGA image from the specified pixel data.
+        /// The dimensions of the image have to be specified as well as the bit depth of the pixel data.
         /// The created TGA-image-data can be used as Texture2D or TexureCube resource in the engine.
         /// </summary>
         /// <remarks>
@@ -131,7 +131,7 @@ namespace Horde3DNET.Utils
             // Copy pixel content to memory location
             Marshal.Copy(pixels, 0, pixelPtr, pixels.Length);
 
-            // create TGA Image 
+            // create TGA Image
             bool result = NativeMethodsUtils.h3dutCreateTGAImage(pixelPtr, (uint)width, (uint)height, (uint)bpp, out dataPtr, out size);
 
             // free allocated memory
@@ -161,7 +161,7 @@ namespace Horde3DNET.Utils
         /// <returns>true if the file could be written, otherwise false</returns>
         public static bool createSnapshot(string filename)
         {
-            return NativeMethodsUtils.h3dutScreenshot(filename); 
+            return NativeMethodsUtils.h3dutScreenshot(filename);
         }
 
         /// <summary>
@@ -180,8 +180,8 @@ namespace Horde3DNET.Utils
         /// <param name="dx">calculated ray direction</param>
         /// <param name="dy">calculated ray direction</param>
         /// <param name="dz">calculated ray direction</param>
-        public static void pickRay( 
-            int cameraNode, float nwx, float nwy, 
+        public static void pickRay(
+            int cameraNode, float nwx, float nwy,
             out float ox, out float oy, out float oz,
             out float dx, out float dy, out float dz)
         {
@@ -201,5 +201,34 @@ namespace Horde3DNET.Utils
             return NativeMethodsUtils.h3dutPickNode(node, nwx, nwy);
         }
 
+        /// <summary>
+        /// This utility function sets the search path for binary shaders.
+        /// Allows replacing text-based shaders if binary variant is found at the search path.
+        /// </summary>
+        /// <param name="path">path where the binary shaders can be found ((back-)slashes at end are removed)</param>
+        /// <returns>nothing</returns>
+        public static void setShaderCachePath(string path)
+        {
+            if (path == null) throw new ArgumentNullException("path", Resources.StringNullExceptionString);
+
+            return NativeMethodsUtils.h3dutSetShaderCachePath(path);
+        }
+
+        /// <summary>
+        /// This utility function generates binary shader from existing shader resource.
+        /// This function creates a binary shader file with the specified name. Binary shader contains both engines information about the shader
+		/// and the device driver part.
+        /// WARNING: binary shaders are tightly coupled with device driver version. Binary shaders generated for one device driver version may
+		/// not work on other versions of the driver. Application has to decide whether binary shaders should be regenerated.
+        /// </summary>
+        /// <param name="shaderResource">shader to be turned to binary shader</param>
+        /// <param name="filename">filename and path of the output binary shader file</param>
+        /// <returns>nothing</returns>
+        public static bool createBinaryShader(h3d.H3DResTypes shaderResource, string filename)
+        {
+            if (filename == null) throw new ArgumentNullException("filename", Resources.StringNullExceptionString);
+
+            return NativeMethodsUtils.h3dutCreateBinaryShader(shaderResource, filename);
+        }
     }
 }

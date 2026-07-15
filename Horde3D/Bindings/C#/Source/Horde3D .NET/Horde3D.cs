@@ -44,7 +44,7 @@ namespace Horde3DNET
 
         /// <summary>
         /// Enum: H3DOptions
-        ///       The available engine option parameters.        		
+        ///       The available engine option parameters.
         ///   MaxLogLevel         - Defines the maximum log level; only messages which are smaller or equal to this value
         ///                         (hence more important) are published in the message queue. (Default: 4)
         ///   MaxNumMessages      - Defines the maximum number of messages that can be stored in the message queue (Default: 512)
@@ -65,7 +65,7 @@ namespace Horde3DNET
         ///   DumpFailedShaders   - Enables or disables storing of shader code that failed to compile in a text file; this can be
         ///                         useful in combination with the line numbers given back by the shader compiler. (Values: 0, 1; Default: 0)
         ///   GatherTimeStats     - Enables or disables gathering of time stats that are useful for profiling (Values: 0, 1; Default: 1)
-        ///   DebugRenderBackend  - Enables or disables logging of render backend diagnostic messages. May require additional actions on 
+        ///   DebugRenderBackend  - Enables or disables logging of render backend diagnostic messages. May require additional actions on
 		///					        application side, like creating a debug opengl context. (Values: 0, 1; Default: 0)
         /// </summary>
         public enum H3DOptions
@@ -90,7 +90,7 @@ namespace Horde3DNET
        /// <summary>
        /// Enum: H3DStats
        ///        The available engine statistic parameters.
-       /// 		
+       ///
        ///    TriCount          - Number of triangles that were pushed to the renderer
        ///    BatchCount        - Number of batches (draw calls)
        ///    LightPassCount    - Number of lighting passes
@@ -152,7 +152,7 @@ namespace Horde3DNET
 
         /// <summary>
         /// Enum: H3DResTypes
-        ///           The available resource types.        		
+        ///           The available resource types.
         ///       Undefined       - An undefined resource, returned by getResourceType in case of error
         ///       SceneGraph      - Scene graph subtree stored in XML format
         ///       Geometry        - Geometrical data containing bones, vertices and triangles
@@ -183,7 +183,7 @@ namespace Horde3DNET
         /// <summary>
         /// Enum: H3DResFlags
         ///        The available flags used when adding a resource.
-        			
+
         /// NoQuery           - Excludes resource from being listed by queryUnloadedResource function.
         /// NoTexCompression  - Disables texture compression for Texture resource.
         /// NoTexMipmaps      - Disables generation of mipmaps for Texture resource.
@@ -209,7 +209,7 @@ namespace Horde3DNET
         /// <summary>
         /// Enum: H3DFormats
 		///     The available resource stream formats.
-		
+
 		/// Unknown         - Unknown format
 		/// TEX_R8			- 8-bit texture with one color channel.
 		/// TEX_R16F		- Half float texture with one color channel.
@@ -273,7 +273,7 @@ namespace Horde3DNET
         /// <summary>
         /// Enum: H3DGeoRes
         ///           The available Geometry resource accessors.
-        		
+
         ///       GeometryElem          - Base element
         ///       GeoIndexCountI        - Number of indices [read-only]
         ///       GeoVertexCountI       - Number of vertices [read-only]
@@ -301,7 +301,7 @@ namespace Horde3DNET
         }
 
         /// Enum: H3DAnimRes
-        ///     The available Animation resource accessors.	  		
+        ///     The available Animation resource accessors.
         /// EntityElem      - Stored animation entities (joints and meshes)
         /// EntFrameCountI  - Number of frames stored for a specific entity [read-only]
         ///
@@ -344,14 +344,18 @@ namespace Horde3DNET
         /// Enum: H3DShaderRes
         ///       The available Shader resource accessors.
 
-        ///   ContextElem     - Context element 
-        ///   SamplerElem     - Sampler element
-        ///   UniformElem     - Uniform element
-        ///   ContNameStr     - Name of context [read-only]
-        ///   SampNameStr     - Name of sampler [read-only]
-        ///   UnifNameStr     - Name of uniform [read-only]
-        ///   UnifSizeI       - Size (number of components) of uniform [read-only]
-        ///   UnifDefValueF4  - Default value of uniform (a, b, c, d)
+        ///   ContextElem        - Context element
+        ///   SamplerElem        - Sampler element
+        ///   UniformElem        - Uniform element
+        ///   ContNameStr        - Name of context [read-only]
+        ///   SampNameStr        - Name of sampler [read-only]
+        ///   UnifNameStr        - Name of uniform [read-only]
+        ///   UnifSizeI          - Size (number of components) of uniform [read-only]
+        ///   UnifDefValueF4     - Default value of uniform (a, b, c, d)
+        ///   ShaderElem         - Shader element
+		///   ShaderTypeI        - Type of the shader (0 - text shader, 1 - binary)
+		///   ShaderBinaryStream - Binary shader data
+		///   ShaderBinarySize   - Size of the binary shader data
         /// </summary>
         public enum H3DShaderRes
         {
@@ -362,7 +366,11 @@ namespace Horde3DNET
             SampNameStr,
             UnifNameStr,
             UnifSizeI,
-            UnifDefValueF4
+            UnifDefValueF4,
+            ShaderElem,
+            ShaderTypeI,
+            ShaderBinaryStream,
+            ShaderBinarySize
         }
 
         /// <summary>
@@ -449,7 +457,7 @@ namespace Horde3DNET
         /// <summary>
         ///  Enum: H3DComputeBufRes
         ///        The available ComputeBuffer resource accessors.
-        ///        
+        ///
         ///     ComputeBufElem				- General compute buffer configuration
         ///     DrawParamsElem				- Specifies parameters for shader bindings
         ///     CompBufDataSizeI			- Size of the buffer
@@ -507,14 +515,14 @@ namespace Horde3DNET
         /// NoCastShadow   - Excludes scene node from list of shadow casters
         /// NoRayQuery     - Excludes scene node from ray intersection queries
         /// Inactive       - Deactivates scene node so that it is completely ignored
-        ///                  (combination of all flags above)            
+        ///                  (combination of all flags above)
         /// </summary>
         public enum H3DNodeFlags
         {
             NoDraw = 1,
             NoCastShadow = 2,
             NoRayQuery = 4,
-            Inactive = 7  // NoDraw | NoCastShadow | NoRayQuery        
+            Inactive = 7  // NoDraw | NoCastShadow | NoRayQuery
         };
 
         /// <summary>
@@ -724,7 +732,7 @@ namespace Horde3DNET
         /// <summary>
         /// Enum: H3DModelUpdateFlags
         ///       The available flags for h3dUpdateModel.
-        ///       
+        ///
         /// Animation  - Apply animation
         /// Geometry   - Apply morphers and software skinning
         /// ChildNodes - Manually update child nodes and calculate their AABB. Useful when meshes are added procedurally to model
@@ -771,7 +779,7 @@ namespace Horde3DNET
         /// be caught by checking the return value of the corresponding API function.
         /// More information about the error can be retrieved by checking the message queue,
         /// provided that the message level is set accordingly.
-        /// </remarks>        
+        /// </remarks>
         /// <returns>true in there was an error, otherwise false</returns>
         public static bool getError()
         {
@@ -795,7 +803,7 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// This function releases the engine and frees all objects and associated memory. 
+        /// This function releases the engine and frees all objects and associated memory.
         /// It should be called when the application is destroyed.
         /// </summary>
         public static void release()
@@ -817,14 +825,14 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// This is the main function of the engine. 
-        /// It executes all the rendering, animation and other tasks. 
-        /// The function can be called several times per frame, 
+        /// This is the main function of the engine.
+        /// It executes all the rendering, animation and other tasks.
+        /// The function can be called several times per frame,
         /// for example in order to write to different
         /// output buffers.
         /// <param name="node">camera node used for rendering scene</param>
         /// <returns>true in case of success, otherwise false</returns>
-        /// </summary>       
+        /// </summary>
         public static void render(int node)
         {
             NativeMethodsEngine.h3dRender(node);
@@ -842,7 +850,7 @@ namespace Horde3DNET
 
         /// <summary>
         /// This function removes all nodes from the scene graph except the root node and releases all resources.
-        /// Warning: All resource and node IDs are invalid after calling this function.         
+        /// Warning: All resource and node IDs are invalid after calling this function.
         /// </summary>
         public static void clear()
         {
@@ -857,7 +865,7 @@ namespace Horde3DNET
         /// If 0 is provided as function pointer, the callback is deleted.
         /// </summary>
         /// <param name="log_cb">function pointer to call</param>
-        public static void setMessageCallback( log_callBack log_cb ) 
+        public static void setMessageCallback( log_callBack log_cb )
         {
             NativeMethodsEngine.h3dSetMessageCallback( log_cb );
         }
@@ -944,7 +952,7 @@ namespace Horde3DNET
         /// <param name="material">material resource used for rendering</param>
         /// <param name="flags">overlay flags (reserved for future use)</param>
         public static void showOverlays(
-                         float[] verts, int vertCount, 
+                         float[] verts, int vertCount,
                          float colR, float colG, float colB, float colA,
                          int materialRes, int flags )
         {
@@ -961,10 +969,10 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// This utility function uses overlays to display a text string at a specified position on the screen. 
+        /// This utility function uses overlays to display a text string at a specified position on the screen.
         /// </summary>
         /// <remarks>
-        /// The font texture of the specified font material has to be a regular 16x16 grid containing all ASCII characters in row-major order. 
+        /// The font texture of the specified font material has to be a regular 16x16 grid containing all ASCII characters in row-major order.
         /// The layer corresponds to the layer parameter of overlays.
         /// Part of overlays extension.
         /// </remarks>
@@ -976,7 +984,7 @@ namespace Horde3DNET
         /// <param name="colG">green part of font color</param>
         /// <param name="colB">blue part of font color</param>
         /// <param name="fontMatRes">font material resource used for rendering</param>
-        /// <param name="layer">layer index of the font overlays (values: 0-7)</param>        
+        /// <param name="layer">layer index of the font overlays (values: 0-7)</param>
         public static void showText(string text, float x, float y, float size,
                                     float colR, float colG, float colB,
                                     int fontMatRes)
@@ -1023,7 +1031,7 @@ namespace Horde3DNET
 
         // --- Resource functions ---
         /// <summary>
-        /// This function returns the type of a specified resource. 
+        /// This function returns the type of a specified resource.
         /// If the resource handle is invalid, the function returns the resource type 'Unknown'.
         /// </summary>
         /// <param name="res">handle to the resource whose type will be returned</param>
@@ -1037,7 +1045,7 @@ namespace Horde3DNET
         /// Returns the name of a resource.
         /// </summary>
         /// This function returns a pointer to the name of a specified resource. If the resource handle
-        /// is invalid, the function returns an empty string.        
+        /// is invalid, the function returns an empty string.
         /// <param name="res">handle to the resource</param>
         /// <returns>name of the resource or empty string in case of failure</returns>
         public static string getResName(int res)
@@ -1073,7 +1081,7 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// Finds a resource element with the specified property value.        
+        /// Finds a resource element with the specified property value.
         /// </summary>
         /// <remarks>This function searches in a specified resource for the first element of the specified type that has the property with the specified name set to the specified search value.  If such element is found, its index is returned, otherwise the function returns -1.  All string comparisons done for the search are case-sensitive.</remarks>
         /// <param name="type">the resource to be accessed</param>
@@ -1092,7 +1100,7 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// This function tries to add a resource of a specified type and name to the resource manager. 
+        /// This function tries to add a resource of a specified type and name to the resource manager.
         /// If a resource of the same type and name is already found, the handle to the existing resource is returned instead of creating a new one.
         /// </summary>
         /// <param name="type">type of the resource</param>
@@ -1156,7 +1164,7 @@ namespace Horde3DNET
 		/// (e.g. the corresponding file was not found). In this case, the resource remains in the unloaded state
 		/// but is no more returned when querying unloaded resources. When the specified resource is already loaded,
         /// the function returns false.
-        /// 
+        ///
         /// *Important Note: XML-data must be NULL-terminated*
         /// </remarks>
         /// <param name="name">res handle to the resource for which data will be loaded</param>
@@ -1164,7 +1172,7 @@ namespace Horde3DNET
         /// <param name="size">size of the data block</param>
         /// <returns>true in case of success, otherwise false</returns>
         public static bool loadResource(int res, byte[] data, int size)
-        {            
+        {
             if (data == null) throw new ArgumentNullException("data");
 
             if (data.Length < size)
@@ -1191,7 +1199,7 @@ namespace Horde3DNET
         /// <summary>
         /// This function unloads a previously loaded resource and restores the default values it had before loading. The state is set back to unloaded which makes it possible to load the resource again.
         /// </summary>
-        /// <param name="res">handle to resource to be unloaded</param>        
+        /// <param name="res">handle to resource to be unloaded</param>
         public static void unloadResource(int res)
         {
             NativeMethodsEngine.h3dUnloadResource((int)res);
@@ -1211,14 +1219,14 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// Finds a resource element with the specified property value.        
+        /// Finds a resource element with the specified property value.
         /// </summary>
         /// <remarks>
         /// This function searches in a specified resource for the first element of the specified
         /// type that has the property with the specified name set to the specified search value.
         /// If such element is found, its index is returned, otherwise the function returns -1. All
         /// string comparisons done for the search are case-sensitive.
-        /// </remarks>        
+        /// </remarks>
         /// <param name="res">handle to the resource to be accessed</param>
         /// <param name="elem">element type</param>
         /// <param name="param">parameter name</param>
@@ -1254,7 +1262,7 @@ namespace Horde3DNET
         /// <param name="elem">element type</param>
         /// <param name="elemIdx">index of element</param>
         /// <param name="param">parameter to be modified</param>
-        /// <param name="value">new value for the specified parameter</param>        
+        /// <param name="value">new value for the specified parameter</param>
         public static void setResParamI(int res, int elem, int elemIdx, int param, int value)
         {
             NativeMethodsEngine.h3dSetResParamI(res, elem, elemIdx, param, value);
@@ -1265,7 +1273,7 @@ namespace Horde3DNET
         /// </summary>
         /// This function returns a specified property of the specified resource.
         /// The property must be of the type float.
-        /// <param name="res">handle to the resource to be accessed</param>        
+        /// <param name="res">handle to the resource to be accessed</param>
         /// <param name="elem">element type</param>
         /// <param name="elemIdx">index of element</param>
         /// <param name="param">parameter to be accessed</param>
@@ -1286,7 +1294,7 @@ namespace Horde3DNET
         /// <param name="elemIdx">index of element</param>
         /// <param name="compIdx">component of the parameter to be accessed</param>
         /// <param name="param">parameter to be modified</param>
-        /// <param name="value">new value for the specified parameter</param>        
+        /// <param name="value">new value for the specified parameter</param>
         public static void setResParamF(int res, int elem, int elemIdx, int param, int compIdx, float value)
         {
             NativeMethodsEngine.h3dSetResParamF(res, elem, elemIdx, param, compIdx, value);
@@ -1297,10 +1305,10 @@ namespace Horde3DNET
         /// </summary>
         /// This function returns a specified property of the specified resource.
         /// The property must be of the type string (const char *).
-        ///         
+        ///
         /// <param name="res">handle to the resource to be accessed</param>
         /// <param name="elem">element type</param>
-        /// <param name="elemIdx">index of element</param>       
+        /// <param name="elemIdx">index of element</param>
         /// <param name="param">parameter to be accessed</param>
         /// <returns>value of the property or empty string if no such property exists</returns>
         public static string getResParamStr(int res, int elem, int elemIdx, int param)
@@ -1349,7 +1357,7 @@ namespace Horde3DNET
         /// Unmaps a previously mapped resource stream.
         /// </summary>
         /// This function unmaps a resource stream that has been mapped before.
-        /// <param name="res">handle to the resource to be unmapped</param>        
+        /// <param name="res">handle to the resource to be unmapped</param>
         public static void unmapResStream(int res)
         {
             NativeMethodsEngine.h3dUnmapResStream(res);
@@ -1365,11 +1373,11 @@ namespace Horde3DNET
         /// <returns>handle to an unloaded resource or 0</returns>
         public static int queryUnloadedResource(int index)
         {
-            return NativeMethodsEngine.h3dQueryUnloadedResource(index);            
+            return NativeMethodsEngine.h3dQueryUnloadedResource(index);
         }
 
         /// <summary>
-        /// This function releases resources that are no longer used. 
+        /// This function releases resources that are no longer used.
         /// Unused resources were either told to be released by the user calling removeResource() or are no more referenced by any other engine objects.
         /// </summary>
         public static void releaseUnusedResources()
@@ -1410,7 +1418,7 @@ namespace Horde3DNET
         /// <param name="tessControlPreamble">preamble text of tessellation control shaders (default: empty string)</param>
         /// <param name="tessEvalPreamble">preamble text of tessellation evaluation shaders (default: empty string)</param>
         /// <param name="computePreamble">preamble text of compute shaders (default: empty string)</param>
-        public static void setShaderPreambles(string vertPreamble, string fragPreamble, string geomPreamble, 
+        public static void setShaderPreambles(string vertPreamble, string fragPreamble, string geomPreamble,
                                               string tessControlPreamble, string tessEvalPreamble, string computePreamble)
         {
             NativeMethodsEngine.h3dSetShaderPreambles(vertPreamble, fragPreamble, geomPreamble, tessControlPreamble, tessEvalPreamble, computePreamble);
@@ -1435,12 +1443,12 @@ namespace Horde3DNET
         }
 
         /// <summary>
-        /// This function sets the base width and height which affects render targets with relative (in percent) size 
+        /// This function sets the base width and height which affects render targets with relative (in percent) size
         /// specification. Changing the base size is usually desired after engine initialization and when the window
         /// is being resized. Note that in case several cameras use the same pipeline resource instance, the change
         /// will affect all cameras.
         /// </summary>
-        /// <param name="pipeRes">the pipeline resource instance to be changed</param>        
+        /// <param name="pipeRes">the pipeline resource instance to be changed</param>
         /// <param name="width">base width in pixels used for render targets with relative size</param>
         /// <param name="height">base height in pixels used for render targets with relative size</param>
         public static void resizePipelineBuffers(int pipeRes, int width, int height)
@@ -1471,10 +1479,10 @@ namespace Horde3DNET
         {
             if ( dataBuffer == null )
             {
-                return NativeMethodsEngine.h3dGetRenderTargetData(pipelineRes, targetName, bufIndex, out width, 
+                return NativeMethodsEngine.h3dGetRenderTargetData(pipelineRes, targetName, bufIndex, out width,
                                                                   out height, out compCount, IntPtr.Zero, bufferSize);
             }
-            else 
+            else
             {
                 // allocate memory for resource data
                 IntPtr ptr = Marshal.AllocHGlobal(bufferSize + 1);
@@ -1486,7 +1494,7 @@ namespace Horde3DNET
                 Marshal.WriteByte(ptr, bufferSize, 0x00);
 
                 // load resource
-                bool result = NativeMethodsEngine.h3dGetRenderTargetData(pipelineRes, targetName, bufIndex, out width, 
+                bool result = NativeMethodsEngine.h3dGetRenderTargetData(pipelineRes, targetName, bufIndex, out width,
                                                                   out height, out compCount, ptr, bufferSize);
                 // copy data
                 Marshal.PtrToStructure(ptr, dataBuffer);
@@ -1500,7 +1508,7 @@ namespace Horde3DNET
 
         // SceneGraph functions
         /// <summary>
-        /// This function returns the type of a specified scene node. 
+        /// This function returns the type of a specified scene node.
         /// If the node handle is invalid, the function returns the node type 'Unknown'.
         /// </summary>
         /// <param name="node">handle to the scene node whose type will be returned</param>
@@ -1539,7 +1547,7 @@ namespace Horde3DNET
         /// <summary>
         /// Returns the handle to a child node.
         /// </summary>
-        /// 
+        ///
         /// This function looks for the n-th (index) child node of a specified node and returns its handle. If the child
         /// doesn't exist, the function returns 0.
         /// <param name="node">handle to the parent node</param>
@@ -1564,7 +1572,7 @@ namespace Horde3DNET
         /// <summary>
         /// This function removes the specified node and all of it's children from the scene.
         /// </summary>
-        /// <param name="node">handle to the node to be removed</param>        
+        /// <param name="node">handle to the node to be removed</param>
         public static void removeNode(int node)
         {
             NativeMethodsEngine.h3dRemoveNode(node);
@@ -1599,7 +1607,7 @@ namespace Horde3DNET
         /// <param name="rz">z variable where rotation of the node in Euler angles (degrees) will be stored</param>
         /// <param name="sx">x variable where scale of the node will be stored</param>
         /// <param name="sy">y variable where scale of the node will be stored</param>
-        /// <param name="sz">z variable where scale of the node will be stored</param>        
+        /// <param name="sz">z variable where scale of the node will be stored</param>
         public static void getNodeTransform(int node, out float px, out float py, out float pz,
                                 out float rx, out float ry, out float rz, out float sx, out float sy, out float sz)
         {
@@ -1619,7 +1627,7 @@ namespace Horde3DNET
         /// <param name="rz">z rotation of the node in Euler angles (degrees)</param>
         /// <param name="sx">x scale of the node</param>
         /// <param name="sy">y scale of the node</param>
-        /// <param name="sz">z scale of the node</param>        
+        /// <param name="sz">z scale of the node</param>
         public static void setNodeTransform(int node, float px, float py, float pz,
                                 float rx, float ry, float rz, float sx, float sy, float sz)
         {
@@ -1631,25 +1639,25 @@ namespace Horde3DNET
         /// </summary>
         /// <param name="node">handle to the scene node whose matrices will be accessed</param>
         /// <param name="relMat">pointer to a variable where the address of the relative transformation matrix will be stored</param>
-        /// <param name="absMat">pointer to a variable where the address of the absolute transformation matrix will be stored</param>        
+        /// <param name="absMat">pointer to a variable where the address of the absolute transformation matrix will be stored</param>
         public static void getNodeTransMats(int node, out IntPtr relMat, out IntPtr absMat)
         {
             NativeMethodsEngine.h3dGetNodeTransMats(node, out relMat, out absMat);
         }
 
         /// <summary>
-        /// This function sets the relative transformation matrix of the specified scene node. 
+        /// This function sets the relative transformation matrix of the specified scene node.
         /// It is basically the same as setNodeTransform but takes directly a matrix instead of individual transformation parameters.
         /// </summary>
         /// <param name="node">handle to the scene node whose matrix will be updated</param>
-        /// <param name="mat4x4">array of a 4x4 matrix in column major order</param>        
+        /// <param name="mat4x4">array of a 4x4 matrix in column major order</param>
         public static void setNodeTransMat(int node, float[] mat4x4)
         {
             if (mat4x4.Length != 16) throw new ArgumentOutOfRangeException("mat4x4", Resources.MatrixOutOfRangeExceptionString);
 
             NativeMethodsEngine.h3dSetNodeTransMat(node, mat4x4);
         }
-   
+
         /// <summary>
         /// Gets a property of a scene node.
         /// </summary>
@@ -1670,7 +1678,7 @@ namespace Horde3DNET
         /// The property must be of the type int or ResHandle.</remarks>
         /// <param name="node">handle to the node to be modified</param>
         /// <param name="param">parameter to be modified</param>
-        /// <param name="value">new value for the specified parameter</param>        
+        /// <param name="value">new value for the specified parameter</param>
         public static void setNodeParamI(int node, int param, int value)
         {
             NativeMethodsEngine.h3dSetNodeParamI(node, param, value);
@@ -1698,7 +1706,7 @@ namespace Horde3DNET
         /// <param name="node">handle to the node to be modified</param>
         /// <param name="param">parameter to be modified</param>
         /// <param name="compIdx>component of the parameter to be modified</param>
-        /// <param name="value">new value for the specified parameter</param>        
+        /// <param name="value">new value for the specified parameter</param>
         public static void setNodeParamF(int node, int param, int compIdx, float value)
         {
             NativeMethodsEngine.h3dSetNodeParamF(node, param, compIdx, value);
@@ -1722,10 +1730,10 @@ namespace Horde3DNET
         /// </summary>
         /// This function sets a specified property of the specified node to a specified value.
         /// The property must be of the type string.
-        /// 
+        ///
         /// <param name="node">handle to the node to be modified</param>
         /// <param name="param">parameter to be modified</param>
-        /// <param name="value">new value for the specified parameter</param>        
+        /// <param name="value">new value for the specified parameter</param>
         public static void setNodeParamStr(int node, int param, string value)
         {
             if( value == null) throw new ArgumentNullException("value", Resources.StringNullExceptionString);
@@ -1757,8 +1765,8 @@ namespace Horde3DNET
 
 
         /// <summary>
-        /// This function stores the world coordinates of the axis aligned bounding box of a specified node in the specified variables. 
-        /// The bounding box is represented using the minimum and maximum coordinates on all three axes. 
+        /// This function stores the world coordinates of the axis aligned bounding box of a specified node in the specified variables.
+        /// The bounding box is represented using the minimum and maximum coordinates on all three axes.
         /// </summary>
         /// <param name="node">handle to the node which will be accessed</param>
         /// <param name="minX">variable where minimum x-coordinates will be stored</param>
@@ -1777,9 +1785,9 @@ namespace Horde3DNET
         /// <summary>
         /// Finds scene nodes with the specified properties.
         /// </summary>
-        /// <remarks> This function loops recursively over all children of startNode and 
-        /// adds them to an internal list of results if they match the specified name and type. 
-        /// The result list is cleared each time this function is called. The function returns the 
+        /// <remarks> This function loops recursively over all children of startNode and
+        /// adds them to an internal list of results if they match the specified name and type.
+        /// The result list is cleared each time this function is called. The function returns the
         /// number of nodes which were found and added to the list.</remarks>
         /// <param name="node"></param>
         /// <param name="name"></param>
@@ -1818,12 +1826,12 @@ namespace Horde3DNET
         {
             NativeMethodsEngine.h3dSetNodeUniforms(node, uniformData, count);
         }
-        
+
         /// <summary>
         /// This function checks recursively if the specified ray intersects the specified node or one of its children.
         /// The function finds intersections relative to the ray origin and returns the number of intersecting scene
         /// nodes. The ray is a line segment and is specified by a starting point (the origin) and a finite direction
-        /// vector which also defines its length. Currently this function is limited to returning intersections with Meshes.        
+        /// vector which also defines its length. Currently this function is limited to returning intersections with Meshes.
         /// </summary>
         /// <param name="node">node at which intersection check is beginning</param>
         /// <param name="ox">ray origin</param>
@@ -1916,19 +1924,19 @@ namespace Horde3DNET
         ///
         /// The layer determines the priority of the animation and how the weights are distributed. See
         /// h3dSetModelAnimParams for more information.
-        ///		
+        ///
         /// A simple way to do animation mixing is using additive animations. If a stage is configured to be
         /// additive, the engine calculates the difference between the current frame and the first frame in the
         /// animation and adds this delta to the current transformation of the joints or meshes. Additive animations
         /// ignore the weight and layer settings. They are only applied by the engine if a non-additive animation
-        /// is assigned to the model as well.        
+        /// is assigned to the model as well.
         /// </remarks>
         /// <param name="node">handle to the Model node to be modified</param>
         /// <param name="stage">index of the animation stage to be configured</param>
         /// <param name="animationRes">handle to Animation resource (can be 0)</param>
         /// <param name="layer">layer id</param>
         /// <param name="startNode">name of first node to which animation shall be applied (or empty string)</param>
-        /// <param name="additive">flag indicating whether stage is additive</param>        
+        /// <param name="additive">flag indicating whether stage is additive</param>
         public static void setupModelAnimStage(int node, int stage, int animationRes, int layer, string startNode, bool additive)
         {
             if (startNode == null) throw new ArgumentNullException("startNode", Resources.StringNullExceptionString);
@@ -1939,13 +1947,13 @@ namespace Horde3DNET
         /// <summary>
         /// This function gets the current animation time and weight for a specified stage of the specified model.</summary>
         /// <remarks>
-        /// The time corresponds to the frames of the animation and the animation is looped if the time is higher than the maximum number of frames in the Animation resource. 
+        /// The time corresponds to the frames of the animation and the animation is looped if the time is higher than the maximum number of frames in the Animation resource.
         /// The weight is used for animation blending and determines how much influence the stage has compared to the other active stages.
         /// </remarks>
         /// <param name="node">handle to the node to be accessed</param>
         /// <param name="stage">index of the animation stage to be accessed</param>
         /// <param name="time">variable where the time of the animation stage will be stored</param>
-        /// <param name="weight">variable where the blend weight of the animation stage will be stored</param>        
+        /// <param name="weight">variable where the blend weight of the animation stage will be stored</param>
         public static void getModelAnimParams(int node, int stage, out float time, out float weight)
         {
             NativeMethodsEngine.h3dGetModelAnimParams(node, stage, out time, out weight);
@@ -1954,15 +1962,15 @@ namespace Horde3DNET
         /// <summary>
         /// This function sets the current animation time and weight for a specified stage of the specified model.</summary>
         /// <remarks>
-        /// The time corresponds to the frames of the animation and the animation is looped if the time is higher than the maximum number of frames in the Animation resource. 
-        /// The weight is used for animation blending and determines how much influence the stage has compared to the other active stages. 
-        /// When the sum of the weights of all stages is more than one, the animations on the lower stages get priority. 
+        /// The time corresponds to the frames of the animation and the animation is looped if the time is higher than the maximum number of frames in the Animation resource.
+        /// The weight is used for animation blending and determines how much influence the stage has compared to the other active stages.
+        /// When the sum of the weights of all stages is more than one, the animations on the lower stages get priority.
         /// The function operates on Model nodes but accepts also Group nodes in which case the call is passed recursively to the Model child nodes.
         /// </remarks>
         /// <param name="node">handle to the node to be modified</param>
         /// <param name="stage">index of the animation stage to be modified</param>
         /// <param name="time">new animation time</param>
-        /// <param name="weight">new animation weight</param>        
+        /// <param name="weight">new animation weight</param>
         public static void setModelAnimParams(int node, int stage, float time, float weight)
         {
             NativeMethodsEngine.h3dSetModelAnimParams(node, stage, time, weight);
@@ -1981,7 +1989,7 @@ namespace Horde3DNET
 
             return NativeMethodsEngine.h3dSetModelMorpher(node, target, weight);
         }
-        
+
 
         /// <summary>
         /// Applies animation and/or geometry updates.
@@ -2019,7 +2027,7 @@ namespace Horde3DNET
             return (int)NativeMethodsEngine.h3dAddMeshNode(parent, name, matRes, primType, batchStart, batchCount, vertRStart, vertREnd);
         }
 
-   
+
         // Joint specific
         /// <summary>
         /// This function creates a new Joint node and attaches it to the specified parent node.
@@ -2065,7 +2073,7 @@ namespace Horde3DNET
 
             return (int)NativeMethodsEngine.h3dAddCameraNode(parent, name, pipelineRes);
         }
-        
+
 
 
         /// <summary>
@@ -2075,7 +2083,7 @@ namespace Horde3DNET
         /// <param name="fov">field of view (FOV) in degrees</param>
         /// <param name="aspect">aspect ratio</param>
         /// <param name="nearDist">distance of near clipping plane</param>
-        /// <param name="farDist">distance of far clipping plane</param>        
+        /// <param name="farDist">distance of far clipping plane</param>
         public static void setupCameraView(int node, float fov, float aspect, float nearDist, float farDist)
         {
             NativeMethodsEngine.h3dSetupCameraView(node, fov, aspect, nearDist, farDist);
@@ -2132,7 +2140,7 @@ namespace Horde3DNET
         /// This function advances the simulation time of a particle system and continues the particle simulation with timeDelta being the time elapsed since the last call of this function.
         /// </summary>
         /// <param name="node">handle to the Emitter node which will be modified</param>
-        /// <param name="timeDelta">time delta in seconds</param>        
+        /// <param name="timeDelta">time delta in seconds</param>
         public static void updateEmitter(int node, float timeDelta)
         {
             NativeMethodsEngine.h3dUpdateEmitter(node, timeDelta);
