@@ -19,7 +19,6 @@
 
 #include "utDebug.h"
 
-
 namespace Horde3D {
 
 using namespace std;
@@ -32,7 +31,7 @@ using namespace std;
 AnimationResource::AnimationResource( const string &name, int flags ) :
 	Resource( ResourceTypes::Animation, name, flags )
 {
-	initDefault();	
+	initDefault();
 }
 
 
@@ -47,7 +46,7 @@ Resource *AnimationResource::clone()
 	AnimationResource *res = new AnimationResource( "", _flags );
 
 	*res = *this;
-	
+
 	return res;
 }
 
@@ -71,7 +70,7 @@ bool AnimationResource::raiseError( const string &msg )
 	initDefault();
 
 	Modules::log().writeError( "Animation resource '%s': %s", _name.c_str(), msg.c_str() );
-	
+
 	return false;
 }
 
@@ -86,23 +85,23 @@ bool AnimationResource::load( const char *data, int size )
 {
 	if( !Resource::load( data, size ) ) return false;
 
-	// Make sure header is available
-	if( size < 8 )
+	// Make sure header and information about entity count and frames is available
+	if( size < 16 )
 		return raiseError( "Invalid animation resource" );
-	
+
 	char *pData = (char *)data;
-	
+
 	// Check header and version
 	char id[4];
 	pData = elemcpy_le(id, (char*)(pData), 4);
 	if( id[0] != 'H' || id[1] != '3' || id[2] != 'D' || id[3] != 'A' )
 		return raiseError( "Invalid animation resource" );
-	
+
 	uint32 version;
 	pData = elemcpy_le(&version, (uint32*)(pData), 1);
 	if( version != 2 && version != 3 )
 		return raiseError( "Unsupported version of animation resource" );
-	
+
 	// Load animation data
 	uint32 numEntities;
 	pData = elemcpy_le(&numEntities, (uint32*)(pData), 1);
@@ -112,16 +111,20 @@ bool AnimationResource::load( const char *data, int size )
 
 	for( uint32 i = 0; i < numEntities; ++i )
 	{
+    	uint32 entityBytes = 256 + 16 + 24 + version == 3 ? 1 : 0; // name + quaternion + (transvec + scalevec)
+        if( size - 16 < entityBytes * ( i + 1 ) ) // 16 is header and numEntities and numFrames
+    		return raiseError( "Invalid/corrupted animation resource" );
+
 		char name[256], compressed = 0;
 		AnimResEntity &entity = _entities[i];
-		
+
 		pData = elemcpy_le(name, (char*)(pData), 256);
 		entity.nameId = AnimationController::hashName( name );
-		
+
 		// Animation compression
 		if( version == 3 )
 		{
-			pData = elemcpy_le(&compressed, (char*)(pData), 1); 
+			pData = elemcpy_le(&compressed, (char*)(pData), 1);
 		}
 
 		entity.frames.resize( compressed ? 1 : _numFrames );
@@ -154,7 +157,7 @@ bool AnimationResource::load( const char *data, int size )
 
 	// Sort entities by name id
 	std::sort( _entities.begin(), _entities.end(), AnimEntCompFunc() );
-	
+
 	return true;
 }
 
@@ -257,12 +260,12 @@ void AnimationController::registerNode( IAnimatableNode *node )
 void AnimationController::mapAnimRes( uint32 node, uint32 stage )
 {
 //	static std::string maskStart, maskEnd;
-	
+
 	_dirty = true;
-	
+
 	AnimationResource *animRes = _animStages[stage].anim;
 	if( animRes == 0x0 )
-	{	
+	{
 		_nodeList[node].animEntities[stage] = 0x0;
 		return;
 	}
@@ -273,7 +276,7 @@ void AnimationController::mapAnimRes( uint32 node, uint32 stage )
 	if( _animStages[stage].startNodeNameId != 0 )
 	{
 		includeNode = false;
-		
+
 		IAnimatableNode *animNode = _nodeList[node].node;
 		while( animNode != 0x0 )
 		{
@@ -285,7 +288,7 @@ void AnimationController::mapAnimRes( uint32 node, uint32 stage )
 			animNode = animNode->getANParent();
 		}
 	}
-	
+
 	// Find node in animation resource if not masked out
 	if( includeNode )
 	{
@@ -302,7 +305,7 @@ void AnimationController::mapAnimRes( uint32 node, uint32 stage )
 void AnimationController::updateActiveList()
 {
 	_activeStages.resize( 0 );
-	
+
 	// Create list of active blend stages that is sorted by layers (higher layers first)
 	for( uint32 i = 0, si = (uint32)_animStages.size(); i < si; ++i )
 	{
@@ -322,7 +325,7 @@ void AnimationController::updateActiveList()
 			if( !inserted ) _activeStages.push_back( i );
 		}
 	}
-	
+
 	// Add additive animations at the end
 	for( uint32 i = 0, s = (uint32)_animStages.size(); i < s; ++i )
 	{
@@ -338,11 +341,11 @@ bool AnimationController::setupAnimStage( int stage, AnimationResource *anim, in
                                           const string &startNode, bool additive )
 {
 	if( (unsigned)stage >= _animStages.size() )
-	{	
+	{
 		Modules::setError( "Invalid stage in h3dSetupModelAnimStage" );
 		return false;
 	}
-	
+
 	AnimStage &curStage = _animStages[stage];
 	curStage.anim = anim;
 	curStage.layer = layer;
@@ -360,7 +363,7 @@ bool AnimationController::setupAnimStage( int stage, AnimationResource *anim, in
 bool AnimationController::setAnimParams( int stage, float time, float weight )
 {
 	if( (unsigned)stage > _animStages.size() )
-	{	
+	{
 		Modules::setError( "Invalid stage in h3dSetModelAnimParams" );
 		return false;
 	}
@@ -372,7 +375,7 @@ bool AnimationController::setAnimParams( int stage, float time, float weight )
 	curStage.weight = weight;
 
 	_dirty = true;
-	
+
 	return true;
 }
 
@@ -383,10 +386,10 @@ bool AnimationController::animate()
 
 	Quaternion nodeRotQuat;
 	Vec3f nodeTransVec, nodeScaleVec;
-	
+
 	Timer *timer = Modules::stats().getTimer( EngineStats::AnimationTime );
 	if( Modules::config().gatherTimeStats ) timer->setEnabled( true );
-	
+
 	// Animate
 	for( size_t i = 0, si = _nodeList.size(); i < si; ++i )
 	{
@@ -418,7 +421,7 @@ bool AnimationController::animate()
 			if( j == 0 || curStage.layer != prevLayer )
 			{
 				remainingWeight *= 1.0f - minf( layerWeightSum, 1.0f );
-				
+
 				// Find layer weight sum
 				layerWeightSum = curStage.weight;
 				for( size_t k = j + 1, sk = _activeStages.size(); k < sk; ++k )
@@ -428,13 +431,13 @@ bool AnimationController::animate()
 					else
 						break;
 				}
-				
+
 				prevLayer = curStage.layer;
 			}
-			
+
 			AnimResEntity *animEnt = _nodeList[i].animEntities[stageIdx];
 			if( animEnt == 0x0 || layerWeightSum < Math::Epsilon ) continue;
-			
+
 			uint32 numFrames = (uint32)animEnt->frames.size();
 			if( numFrames > 0 )
 			{
