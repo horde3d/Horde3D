@@ -179,8 +179,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.zip
-		URL_MD5 259f45f71a0de5a8f6c556f5ea838cac
+		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
+		URL_MD5 7df28be966308a4a51aac87f4e0cf16a
 		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DANDROID_ABI=${ANDROID_ABI} -DANDROID_DL_LIBRARY=${ANDROID_DL_LIBRARY} -DCMAKE_TLS_VERIFY=OFF
 		BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libSDL2.so
 		LOG_DOWNLOAD 1
@@ -196,8 +196,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.zip
-		URL_MD5 259f45f71a0de5a8f6c556f5ea838cac
+		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
+		URL_MD5 7df28be966308a4a51aac87f4e0cf16a
 		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_OSX_ARCHITEXTURES=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH} -DCMAKE_FRAMEWORK_PATH=${CMAKE_FRAMEWORK_PATH} -DCMAKE_TLS_VERIFY=OFF
 		LOG_DOWNLOAD 1
 		LOG_UPDATE 1
@@ -211,22 +211,9 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 		MESSAGE(STATUS "External SDL project done")
 	else() # other platforms
 
-  	IF(MSVC)
-      SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
-    ELSE(MSVC)
-  	IF (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
-  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.so )
-  	ELSEIF (UNIX AND NOT APPLE)
-  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
-  	ELSE()
-  		# Mac
-  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.dylib )
-  	ENDIF()
-    ENDIF(MSVC)
-
 		ExternalProject_Add(project_sdl
-			URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.zip
-			URL_MD5 259f45f71a0de5a8f6c556f5ea838cac
+			URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
+			URL_MD5 7df28be966308a4a51aac87f4e0cf16a
 			CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
 			LOG_DOWNLOAD 1
 			LOG_UPDATE 1
@@ -243,6 +230,21 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	endif()
 
 	ExternalProject_Get_Property(project_sdl install_dir)
+	
+	IF(MSVC)
+      SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
+	  MESSAGE(STATUS "Path to sdl is:${SDL_LIBRARY_PATH}")
+    ELSE(MSVC)
+  	IF (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.so )
+  	ELSEIF (UNIX AND NOT APPLE)
+  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
+  	ELSE()
+  		# Mac
+  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.dylib )
+  	ENDIF()
+    ENDIF(MSVC)
+	
     SET(SDL2_INCLUDE_DIR
         ${install_dir}/include/SDL2
     )
@@ -259,8 +261,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 
 	# Copy library to binaries folder
 	if(MSVC)
-		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}\\bin\\SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Debug\\" )
-		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}\\bin\\SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Release\\" )
+		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}/bin/SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Debug" )
+		add_custom_command(TARGET project_sdl POST_BUILD VERBATIM COMMAND ${CMAKE_COMMAND} -E copy "${install_dir}/bin/SDL2.dll" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}Release" )
 	endif()
 
 	# For android make sdl library path available for other projects (used for samples in android build)

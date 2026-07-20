@@ -220,3 +220,18 @@ if(UNIX AND NOT APPLE)
   install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/plugins DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 endif()
+
+if(MSVC)
+	# Copy required QT libraries to output directory
+	SET(BIN_DBG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug)
+	SET(BIN_REL ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
+
+	ADD_CUSTOM_COMMAND(
+	  TARGET Horde3DEditor
+	  POST_BUILD
+	  COMMAND
+		CD $<$<CONFIG:Debug>:${BIN_DBG}>$<$<CONFIG:Release>:${BIN_REL}> &&
+		${WINDEPLOYQT_EXECUTABLE} Horde3DEditor.exe
+		   --verbose 1 --dir . --plugindir plugins --compiler-runtime
+		)
+endif()
