@@ -211,19 +211,6 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 		MESSAGE(STATUS "External SDL project done")
 	else() # other platforms
 
-  	IF(MSVC)
-      SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
-    ELSE(MSVC)
-  	IF (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
-  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.so )
-  	ELSEIF (UNIX AND NOT APPLE)
-  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
-  	ELSE()
-  		# Mac
-  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.dylib )
-  	ENDIF()
-    ENDIF(MSVC)
-
 		ExternalProject_Add(project_sdl
 			URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
 			URL_MD5 7df28be966308a4a51aac87f4e0cf16a
@@ -243,6 +230,21 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	endif()
 
 	ExternalProject_Get_Property(project_sdl install_dir)
+	
+	IF(MSVC)
+      SET(SDL_LIBRARY_PATH ${install_dir}/lib/SDL2.lib ) # still needs dll in the end, static libraries are incomplete and not recomended
+	  MESSAGE(STATUS "Path to sdl is:${SDL_LIBRARY_PATH}")
+    ELSE(MSVC)
+  	IF (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2.so )
+  	ELSEIF (UNIX AND NOT APPLE)
+  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
+  	ELSE()
+  		# Mac
+  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.dylib )
+  	ENDIF()
+    ENDIF(MSVC)
+	
     SET(SDL2_INCLUDE_DIR
         ${install_dir}/include/SDL2
     )
