@@ -488,6 +488,8 @@ float getRenderDeviceCapabilities( int param )
 			return rdi->getCaps().texDXT ? 1.0f : 0.0f;
 		case RenderDeviceCapabilities::TextureCompressionETC2:
 			return rdi->getCaps().texETC2 ? 1.0f : 0.0f;
+		case RenderDeviceCapabilities::BinaryShaders:
+			return rdi->getCaps().binaryShaders ? 1.0f : 0.0f;
 		default:
 			Modules::setError( "Invalid param for h3dGetDeviceCapabilities" );
 			return Math::NaN;

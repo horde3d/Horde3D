@@ -210,7 +210,8 @@ struct RenderDeviceCapabilities
 		TextureCompressionDXT,
 		TextureCompressionETC2,
 		TextureCompressionBPTC,
-		TextureCompressionASTC
+		TextureCompressionASTC,
+		BinaryShaders
 	};
 };
 

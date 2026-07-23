@@ -179,6 +179,7 @@ struct H3DDeviceCapabilities
 	TextureCompressionETC2	- GPU supports ETC2 compressed textures (RGB, RGBA)
 	TextureCompressionBPTC	- GPU supports BC6 and BC7 compressed textures
 	TextureCompressionASTC	- GPU supports ASTC compressed textures (RGBA)
+	BinaryShaders           - GPU driver supports binary shaders
 	*/
 	enum List
 	{
@@ -189,7 +190,8 @@ struct H3DDeviceCapabilities
 		TextureCompressionDXT,
 		TextureCompressionETC2,
 		TextureCompressionBPTC,
-		TextureCompressionASTC
+		TextureCompressionASTC,
+		BinaryShaders
 	};
 };
 
