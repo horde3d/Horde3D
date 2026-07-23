@@ -154,15 +154,14 @@ bool SampleApplication::init()
 	auto winParams = setupWindowParameters();
 	if ( ( _winHandle = _backend->createWindow( winParams ) ) == nullptr ) 
 	{
-	 _backend->logMessage( LogMessageLevel::Error, "Unable to create default GL context and window" );
+		_backend->logMessage( LogMessageLevel::Error, "Unable to create default GL context and window" );
 
 #if defined( H3D_USE_GL4 ) && defined ( H3D_USE_GL2 )
-	// Fallback to OpenGL2 backend
-	_backend->logMessage( LogMessageLevel::Info, "Trying OpenGL2 context" );
+		// Fallback to OpenGL2 backend
+		_backend->logMessage( LogMessageLevel::Info, "Trying OpenGL2 context" );
 
 	    release();
 	    _backend->release();
-
 
 	    _renderInterface = H3DRenderDevice::OpenGL2;
 	    params = setupInitParameters( _renderInterface );
@@ -183,6 +182,7 @@ bool SampleApplication::init()
 
 #endif
 	}
+
 	// Initialize engine
 	if ( !h3dInit( ( H3DRenderDevice::List ) _renderInterface ) )
 	{
@@ -219,7 +219,7 @@ bool SampleApplication::init()
 	// Samples require overlays extension in order to display information
 	if ( !h3dCheckExtension( "Overlays" ) )
 	{
-       		 _backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
+       	_backend->logMessage( LogMessageLevel::Error, "Unable to find overlays extension" );
 		h3dutDumpMessages();
 		return false;
 	}
@@ -238,7 +238,7 @@ bool SampleApplication::init()
 	// Init resources
 	if ( !initResources() )
 	{
-        	_backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
+        _backend->logMessage( LogMessageLevel::Error, "Unable to initialize resources" );
 
 		h3dutDumpMessages();
 		return false;
@@ -543,7 +543,7 @@ int SampleApplication::run()
         double avgFPS = _benchmarkLength / ( std::chrono::duration_cast<std::chrono::duration< double > >( t - _t0 ).count() );
         const char* fpsLabel = "Average FPS:";
 		const char* fpsValue = new char[ 16 ];
-        sprintf( (char*)fpsValue, "%.2f", avgFPS );
+        snprintf( (char*)fpsValue, 16, "%.2f", avgFPS );
 
         std::cout << fpsLabel << " " << fpsValue << std::endl;
 
@@ -746,7 +746,7 @@ void SampleApplication::render()
         if ( _sampleCount == 0 ) {
             strcpy(buf, "MSAA: off");
         } else {
-            sprintf( buf, "MSAA: %d", _sampleCount );
+            snprintf( buf, 64, "MSAA: %d", _sampleCount );
         }
         h3dShowText( buf, 0.03f, 0.26f, 0.026f, 1, 1, 1, _fontMatRes );
 	}

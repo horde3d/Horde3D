@@ -188,7 +188,7 @@ void Converter::checkNodeName( SceneNode *node )
 			if( !findNode( newName, node ) )
 			{
 				char msg[1024];
-				sprintf( msg, "Warning: Node with name '%s' already exists. "
+				snprintf( msg, 512, "Warning: Node with name '%s' already exists. "
 				         "Node was renamed to '%s'.", node->name, newName );
 				log( msg );
 				
@@ -1233,7 +1233,7 @@ bool Converter::writeSceneGraph( const string &assetPath, const string &assetNam
 		for( unsigned int i = 0; i < _morphTargets.size(); ++i )
 		{
 			char msg[1024];
-			sprintf( msg, "Added Morph target: '%s'",  _morphTargets[i].name);
+			snprintf( msg, 256, "Added Morph target: '%s'",  _morphTargets[i].name);
 			log( msg, true );
 			outf << "\"" << _morphTargets[i].name << "\" ";
 		}
