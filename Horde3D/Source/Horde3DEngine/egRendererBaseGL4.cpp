@@ -451,8 +451,13 @@ bool RenderDeviceGL4::init()
 	_caps.texETC2 = glExt::ARB_ES3_compatibility;
 	_caps.texBPTC = glExt::ARB_texture_compression_bptc;
 	_caps.texASTC = glExt::KHR_texture_compression_astc;
+
+#ifndef PLATFORM_MAC
     _caps.binaryShaders = glExt::majorVersion >= 4 && glExt::minorVersion >= 1;
-    
+#else
+	_caps.binaryShaders = false; // support for OpenGL on mac is bad and binary shaders do not work (at least on M4)
+#endif
+
 	// Find maximum number of storage buffers in compute shader
 	glGetIntegerv( GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS, (GLint *) &_maxComputeBufferAttachments );
 	// Init states before creating test render buffer, to
