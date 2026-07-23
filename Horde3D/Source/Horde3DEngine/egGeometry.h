@@ -92,18 +92,18 @@ public:
 	
 	GeometryResource( const std::string &name, int flags );
 	~GeometryResource();
-	Resource *clone();
+	Resource *clone() override;
 	
-	void initDefault();
-	void release();
-	bool load( const char *data, int size );
+	void initDefault() override;
+	void release() override;
+	bool load( const char *data, int size ) override;
 
-	int getElemCount( int elem ) const;
-	int getElemParamI( int elem, int elemIdx, int param ) const;
+	int getElemCount( int elem ) const override;
+	int getElemParamI( int elem, int elemIdx, int param ) const override;
 	const char *getElemParamStr( int elem, int elemIdx, int param ) const override;
 
-	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write );
-	void unmapStream();
+	void *mapStream( int elem, int elemIdx, int stream, bool read, bool write ) override;
+	void unmapStream() override;
 
 	void updateDynamicVertData();
 
