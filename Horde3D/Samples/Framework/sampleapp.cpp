@@ -244,6 +244,10 @@ bool SampleApplication::init()
 		return false;
 	}
 
+	// Disable binary shaders if they are not supported by GPU driver
+	if ( h3dGetDeviceCapabilities( H3DDeviceCapabilities::BinaryShaders ) == 0.0f )
+		_useBinaryShaders = false;
+
 	// If binary shaders are used but shader cache is empty - generate binary shaders
     if ( _useBinaryShaders ) checkAndGenerateBinaryShaders( false ); // switch to true if shader regeneration is required
 
