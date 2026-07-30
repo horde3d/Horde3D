@@ -25,6 +25,8 @@
 #include <QSplashScreen>
 #include "HordeSceneEditor.h"
 
+#include "utPlatform.h"
+
 #include "cstdlib"
 
 #ifdef MEMORYCHECK
@@ -48,7 +50,13 @@ int main(int argc, char** argv)
 	// stays functional as all internal contexts are created using the correct version and profile.
 	// Set default GL Format
 	QSurfaceFormat format;
-	format.setProfile( QSurfaceFormat::CompatibilityProfile ); // for now, mac may have a problem
+#ifdef PLATFORM_MAC
+	format.setVersion(4, 1); 
+	format.setProfile( QSurfaceFormat::CoreProfile ); 
+#else
+	format.setProfile( QSurfaceFormat::CompatibilityProfile ); 
+#endif
+
 	format.setDepthBufferSize( 32 );
 	format.setSwapBehavior( QSurfaceFormat::DoubleBuffer );
 //	format.setAlphaBufferSize( 8 );
