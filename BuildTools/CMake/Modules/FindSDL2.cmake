@@ -179,8 +179,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	IF( ${CMAKE_SYSTEM_NAME} STREQUAL "Android" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
-		URL_MD5 7df28be966308a4a51aac87f4e0cf16a
+		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10.tar.gz
+		URL_MD5 7b234751c91737168d88c83041ca5aa9
 		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DANDROID_PLATFORM=${ANDROID_PLATFORM} -DANDROID_ABI=${ANDROID_ABI} -DANDROID_DL_LIBRARY=${ANDROID_DL_LIBRARY} -DCMAKE_TLS_VERIFY=OFF
 		BUILD_BYPRODUCTS <INSTALL_DIR>/lib/libSDL2.so
 		LOG_DOWNLOAD 1
@@ -196,8 +196,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	elseif( ${CMAKE_SYSTEM_NAME} MATCHES "iOS" )
 		# Create external project for sdl with parameters specific for android
 		ExternalProject_Add(project_sdl
-		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
-		URL_MD5 7df28be966308a4a51aac87f4e0cf16a
+		URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10.tar.gz
+		URL_MD5 7b234751c91737168d88c83041ca5aa9
 		CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}	-DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR> -DCMAKE_OSX_ARCHITEXTURES=${CMAKE_OSX_ARCHITECTURES} -DCMAKE_OSX_DEPLOYMENT_TARGET=${CMAKE_OSX_DEPLOYMENT_TARGET} -DCMAKE_FIND_ROOT_PATH=${CMAKE_FIND_ROOT_PATH} -DCMAKE_FRAMEWORK_PATH=${CMAKE_FRAMEWORK_PATH} -DCMAKE_TLS_VERIFY=OFF
 		LOG_DOWNLOAD 1
 		LOG_UPDATE 1
@@ -212,8 +212,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
 	else() # other platforms
 
 		ExternalProject_Add(project_sdl
-			URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8.tar.gz
-			URL_MD5 7df28be966308a4a51aac87f4e0cf16a
+			URL https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10.tar.gz
+			URL_MD5 7b234751c91737168d88c83041ca5aa9
 			CMAKE_ARGS -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
 			LOG_DOWNLOAD 1
 			LOG_UPDATE 1
@@ -241,7 +241,8 @@ IF (HORDE3D_FORCE_DOWNLOAD_SDL)
   		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.so )
   	ELSE()
   		# Mac
-  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.dylib )
+  		SET(SDL_LIBRARY_PATH ${install_dir}/lib/libSDL2-2.0.0.dylib )
+		MESSAGE(STATUS "Path to sdl is:${SDL_LIBRARY_PATH}")
   	ENDIF()
     ENDIF(MSVC)
 	
