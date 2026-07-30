@@ -352,7 +352,7 @@ void Im3d_NewFrame( QOpenGLFunctions_3_1* glf, int h3d_camera )
 	const qreal display_scale = g_view->devicePixelRatio(); // support scaled display
 	QPoint p = g_view->mapFromGlobal( QCursor::pos() ) * display_scale;
 	Vec2 cursorPos = Vec2( p.x(), p.y() );
-	cursorPos = (cursorPos / ad.m_viewportSize) * 2.0f - 1.0f;
+	cursorPos = (cursorPos / ad.m_viewportSize) * (2.0f - 1.0f);
 	cursorPos.y = -cursorPos.y; // window origin is top-left, ndc is bottom-left
 	Vec3 rayOrigin, rayDirection;
 	if (ortho)
