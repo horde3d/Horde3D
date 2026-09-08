@@ -11,40 +11,40 @@ Horde3D requires a fully OpenGL 2.0 compatible graphics card. In terms of Direct
 ## Features
 
 - Modern, cross-platform, shader-based architecture (requires OpenGL 2.0+)
-    - Lightweight, non-intrusive design with very few dependencies, avoiding complexity where possible
-    - C-style API for easy usage from virtually any programming language
+  - Lightweight, non-intrusive design with very few dependencies, avoiding complexity where possible
+  - C-style API for easy usage from virtually any programming language
 - Resource management
-    - Garbage collected resources, loaded from virtually any type of data stream
-    - Hot-reloading of resources for more increased productivity during development
-    - Access to vertex data for collision detection and interoperability with physics engines
+  - Garbage collected resources, loaded from virtually any type of data stream
+  - Hot-reloading of resources for more increased productivity during development
+  - Access to vertex data for collision detection and interoperability with physics engines
 - Übershader-based, customizable rendering pipeline
-    - Hot-reloading of pipelines for rapid testing of different rendering techniques
-    - Support for post processing effects like bloom, DOF or motion blur
-    - Support for almost all forward, deferred and High Dynamic Range rendering techniques
-    - Support for real-time reflections and other techniques that require several cameras
-    - Support for geometry, tessellation and compute shaders
-    - Real-time shadows using Parallel Split Shadow Maps (PSSM)
-    - Particle systems that can cast shadows and have effects like motion blur
+  - Hot-reloading of pipelines for rapid testing of different rendering techniques
+  - Support for post processing effects like bloom, DOF or motion blur
+  - Support for almost all forward, deferred and High Dynamic Range rendering techniques
+  - Support for real-time reflections and other techniques that require several cameras
+  - Support for geometry, tessellation and compute shaders
+  - Real-time shadows using Parallel Split Shadow Maps (PSSM)
+  - Particle systems that can cast shadows and have effects like motion blur
 - Unified scene system
-    - World, models and skeletons are scene nodes instead of special objects
-    - Frustum culling based on spatial graph
-    - Hardware occlusion culling
-    - Level of detail for model geometry and materials
+  - World, models and skeletons are scene nodes instead of special objects
+  - Frustum culling based on spatial graph
+  - Hardware occlusion culling
+  - Level of detail for model geometry and materials
 - Unified, low-level animation system
-    - Key frame animation for joints and meshes
-    - Skeletal animation with up to 4 weights per vertex for articulated models
-    - Layered animation blending and mixing using masks and additive channels
-    - Morph targets for facial animation and lip synchronization
-    - Access to joint data for dynamic animations and ragdoll physics
+  - Key frame animation for joints and meshes
+  - Skeletal animation with up to 4 weights per vertex for articulated models
+  - Layered animation blending and mixing using masks and additive channels
+  - Morph targets for facial animation and lip synchronization
+  - Access to joint data for dynamic animations and ragdoll physics
 - Content Pipeline
-    - Mixture of binary and XML formats for best tradeoff between performance and productivity
-        - Pipeline, material and scene descriptions are XML
-        - Model and animation are binary for maximum performance
-        - Textures are common image formats (DDS, PNG, JPEG, etc.)
-    - COLLADA Converter for importing assets from many common DCC tools
-      - Calculation of tangent space basis for normal mapping
-      - Optimization of geometry for GPU post-transform vertex cache
-    - Editor for composing scenes, developing shaders and rendering techniques
+  - Mixture of binary and XML formats for best tradeoff between performance and productivity
+    - Pipeline, material and scene descriptions are XML
+    - Model and animation are binary for maximum performance
+    - Textures are common image formats (DDS, PNG, JPEG, etc.)
+  - COLLADA Converter for importing assets from many common DCC tools
+    - Calculation of tangent space basis for normal mapping
+    - Optimization of geometry for GPU post-transform vertex cache
+  - Editor for composing scenes, developing shaders and rendering techniques
 
 ## Building
 
@@ -69,8 +69,9 @@ By default, if not present on the system, a default version will be automaticall
 You could force this behavior using `HORDE3D_FORCE_DOWNLOAD_GLFW` flag with CMake (from your build directory):
 
      cmake -DHORDE3D_FORCE_DOWNLOAD_GLFW=ON ..
+
 With SDL you can use `HORDE3D_FORCE_DOWNLOAD_SDL` flag with CMake (from your build directory):
-    
+
      cmake -DHORDE3D_FORCE_DOWNLOAD_SDL=ON ..
 
 On **Debian/Ubuntu** platforms, you also need to install the following packages:
@@ -86,20 +87,31 @@ You could also skip sample building using `HORDE3D_BUILD_EXAMPLES` flag with CMa
 Building for Android requires using two build systems: CMake and Gradle. Gradle project is included in Horde3D distribution. 
 
 Requirements:
+
 - [Android NDK](https://developer.android.com/ndk/downloads)
 - [Android SDK](https://developer.android.com/studio#downloads)
 - Java runtime
 
 Android Studio is recommended, but not required.
 
+Tested on Ubuntu 26.04 with OpenJDK 21, NDK r27d, SDK 36.
+
+To build from console use the following command (in relation to Horde3D source directory):
+
+```bash
+mkdir build_android && cd build_android
+cmake -G "Ninja"   -DCMAKE_TOOLCHAIN_FILE=<path to android ndk>/build/cmake/android.toolchain.cmake   -DANDROID_ABI=arm64-v8a   -DANDROID_PLATFORM=android-27 -DHORDE3D_USE_GLES3=ON -DHORDE3D_USE_SDL=ON -DHORDE3D_FORCE_DOWNLOAD_SDL=ON -DANDROID_SDK_ROOT_PATH=<path to android sdk> -DANDROID_SDK_BUILD_TOOLS_PATH=<path to android sdk>/build-tools/36.0.0/  ..
+ninja
+```
+
 CMake GUI usage is recommended. Following instruction depends on using GUI for building.
 
 - Select Horde3D source folder and folder where cmake intermediates and binaries would be stored
 - Hit "Add Entry" button and add new cmake variable "ANDROID_ABI". Tested value is **arm64-v8a**.
-- Hit "Add Entry" button again and add new cmake variable "ANDROID_PLATFORM". Tested value is **android-24**.
+- Hit "Add Entry" button again and add new cmake variable "ANDROID_PLATFORM". Tested value is **android-27**.
 - Hit "Add Entry" button again and add new cmake variable "ANDROID_DL_LIBRARY". Cmake may incorrectly specify libdl.a instead of libdl.so and that can lead to problems with libSDL so we have to do it manually. Please set the path to: **Android NDK/toolchains/llvm/prebuilt/<platform>/sysroot/usr/lib/aarch64-linux-android/<version>/libdl.so**
---  where platform is: **windows-x86_64, linux-x86_64**
--- version is android target api version: **24, 25, ..., 29**.
+  --  where platform is: **windows-x86_64, linux-x86_64**
+  -- version is android target api version: **24, 25, ..., 29**.
 - Hit configure button, create the folder if asked, and select "Unix makefiles" and "Specify toolchain file for cross-compiling".
 - Select the toolchain file that is located in the **Android NDK/build/cmake/android.toolchain.cmake**
 - On Windows CMake may not be able to find make.exe program that is in the NDK. Please specify the make program in **CMAKE_MAKE_PROGRAM** field and set it to **ANDROID NDK/prebuilt/windows-x86_64/bin/make.exe**
@@ -148,9 +160,11 @@ Double click on this certificate. "Organizational Unit" is the Team ID.
 Please note that **ParticleVortex** and **Tessellator** sample will not run on iOS as OpenGL ES 3.2 is not available. 
 
 ### Building for Web
+
 Before we go into this, There are some limitations one needs to be aware of: 
- - WebGL does not support compute shaders.
- - WebGL only supports versions up to OpenGL ES 3.0.
+
+- WebGL does not support compute shaders.
+- WebGL only supports versions up to OpenGL ES 3.0.
 
 As result of the above limitations, the samples **ParticleVortex** (compute + GLES 3.2) and **Tessellator** (GLES 3.2) are disabled when building for web.  
 
@@ -158,13 +172,15 @@ To build for web, you will need [Emscripten](https://emscripten.org/). It is sim
 However, instead of using CMake, we will use emcmake ( supplied by emscripten ) 
 
 Follow the following steps to build the examples for web.
+
 - Follow the installation guide by emscripten. and make sure you have 'activated' the emscripten environment.
 - Make a new directory in the root directory, and call it 'build'
 - In the 'build' folder, run ```emcmake``` with the arguments: ```cmake ../```
 - Now that the project has been configured, run ```emmake``` with the arguments: ```make``` to start the build
 
 __On linux__, the whole process should look like this (once emscripten is activated)
-``` bash
+
+```bash
 mkdir build
 cd build
 emcmake cmake ../
@@ -172,10 +188,13 @@ emmake make -j4
 ```
 
 #### Result
+
 In the folder ```build/Binaries/Emscripten/Release```, you should now see the html files of all examples. If you have python3 installed, you can test them by going to that folder, and launch  
+
 ```bash
 python3 -m http.server 9000
-``` 
+```
+
 Then open your browser, and navigate to [http://localhost:9000](http://localhost:9000). Click on any .html file, to see the result
 
 ### Build Horde3D scene editor
@@ -202,7 +221,7 @@ On Windows, you usually generate Visual Studio solution. Open the solution file,
 On Linux, either makefiles or ninja build files are used. Ninja builds faster than make (may be up to two-three times). After generating cmake cache, do the following:
 
     cmake --build build
-	
+
 where **build** is the build directory you've chosen during cmake configuration.
 
 ## What's next
