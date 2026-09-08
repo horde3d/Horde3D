@@ -1,4 +1,4 @@
-package com.horde3d.sampleapp;
+package com.horde3d.${ANDROID_NAME_LOWER};
 
 import org.libsdl.app.SDLActivity;
 

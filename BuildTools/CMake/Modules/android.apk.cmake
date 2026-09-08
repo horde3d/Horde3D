@@ -28,7 +28,7 @@
 ## Options
 ##################################################
 set(ANDROID_SDK_BUILD_TOOLS_PATH "" CACHE STRING "Path to Android SDK build tools")
-set(ANDROID_APK_API_LEVEL "24" CACHE STRING "Android APK API level")
+set(ANDROID_APK_API_LEVEL "27" CACHE STRING "Android APK API level")
 set(ANDROID_APK_INSTALL "0" CACHE BOOL "Install created apk file on the device automatically?")
 set(ANDROID_APK_RUN "0" CACHE BOOL "Run created apk file on the device automatically? (installs it automatically as well, \"ANDROID_APK_INSTALL\"-option is ignored)")
 set(ANDROID_APK_SIGNER_KEYSTORE	"~/my-release-key.keystore" CACHE STRING "Keystore for signing the apk file (only required for release apk)")
@@ -67,6 +67,7 @@ set(ANDROID_THIS_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})	# Directory this CMake fil
 ##################################################
 macro(android_create_apk name apk_package_name apk_directory libs_directory android_directory assets_directory)
   set(ANDROID_NAME ${name})
+  string(TOLOWER ${name} ANDROID_NAME_LOWER)
   set(ANDROID_APK_PACKAGE ${apk_package_name})
 
   # Set ANDROID_SDK_ROOT variable required on Linux
@@ -83,21 +84,45 @@ macro(android_create_apk name apk_package_name apk_directory libs_directory andr
     set( APKSIGNER_BIN ${ANDROID_SDK_BUILD_TOOLS_PATH}/apksigner )
   endif()
   
-  
+  set(PREPARE_TARGET "${ANDROID_NAME}_prepare")
+
+  add_custom_target(${PREPARE_TARGET}
+    # Копируем проект
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${android_directory}" "${apk_directory}"
+    # Удаляем старый build
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/build"
+    # Очищаем целевую папку java перед переименованием (чтобы не было Directory not empty)
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/java/com/horde3d/${ANDROID_NAME_LOWER}"
+    # Переименовываем
+    COMMAND ${CMAKE_COMMAND} -E rename "${apk_directory}/app/src/main/java/com/horde3d/sampleapp" "${apk_directory}/app/src/main/java/com/horde3d/${ANDROID_NAME_LOWER}"
+    # Пересоздаем jniLibs
+    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}"
+
+    COMMENT "Preparing Android project structure for ${ANDROID_NAME}..."
+  )
+
+  # CMake would launch only after all folders & files are correctly configured
+  add_dependencies(${ANDROID_NAME} ${PREPARE_TARGET})
+
   # Copy project
   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy_directory
       "${android_directory}" "${apk_directory}")
   
   # Remove build directory
-  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/build")
-  
-  # Create the directory for the libraries
-  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
-  add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
+#   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/build")
+#
+#   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E rename "${apk_directory}/app/src/main/java/com/horde3d/sampleapp" "${apk_directory}/app/src/main/java/com/horde3d/${ANDROID_NAME_LOWER}")
+#
+#   # Create the directory for the libraries
+#   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E remove_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
+#   add_custom_command(TARGET ${ANDROID_NAME} PRE_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E make_directory "${apk_directory}/app/src/main/jniLibs/${ANDROID_ABI}")
+#
   # add_custom_command(TARGET ${ANDROID_NAME} POST_BUILD
   #   COMMAND ${CMAKE_COMMAND} -E copy_directory
   #   "${CMAKE_SOURCE_DIR}/libs" "${apk_directory}/libs/")
