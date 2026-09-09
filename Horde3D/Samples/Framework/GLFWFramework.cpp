@@ -26,7 +26,7 @@ bool GLFWBackend::init( const BackendInitParameters &params )
 	glfwWindowHint( GLFW_DEPTH_BITS, params.depthBits );
 	glfwWindowHint( GLFW_SAMPLES, params.sampleCount );
 
-	if ( _curPlatform == Platform::MacOS ) glfwWindowHint( GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE );
+	if ( _curPlatform == Platform::MacOS ) glfwWindowHint( GLFW_COCOA_RETINA_FRAMEBUFFER, GLFW_TRUE );
 
 	// Specify context parameters
 	switch ( params.requestedAPI )
